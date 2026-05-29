@@ -1,0 +1,35 @@
+{
+  "name": "tonality-detector",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Live key (tonality) detector using microphone input, FFT spectrum analysis on 8s sliding windows, and Krumhansl-Schmuckler key correlation.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "sweep": "tsx scripts/parameterSweep.ts",
+    "extract:backing": "tsx scripts/extractBackingExtracts.ts",
+    "analyze:backing": "tsx scripts/analyzeBacking.ts"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.0.1",
+    "@types/node": "^25.9.1",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "audio-decode": "^2.2.2",
+    "jsdom": "^25.0.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.5"
+  }
+}
