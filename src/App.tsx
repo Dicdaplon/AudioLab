@@ -30,6 +30,8 @@ const DEFAULT_SETTINGS: ToneBaseSettings = {
 const DEFAULT_FFT_SETTINGS: FftSettings = {
   noiseMethod: "median",
   lowpassCutoffHz: 2,
+  showDerivative: false,
+  showScaleNotes: true,
 };
 
 type Tab = "detector" | "game" | "jumper" | "fft";
@@ -189,6 +191,8 @@ export default function App() {
           noiseMethod={tonality.fft.noiseMethod}
           tempoEnvelopeDb={tonality.tempoAnalysis.envelopeDb}
           lowpassCutoffHz={tonality.tempoAnalysis.lowpassCutoffHz}
+          timeSignal={tonality.tempoAnalysis.timeSignal}
+          sampleRate={tonality.tempoAnalysis.sampleRate}
           settings={fftSettings}
           onSettingsChange={setFftSettings}
         />

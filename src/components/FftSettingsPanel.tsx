@@ -3,6 +3,8 @@ import { NoiseFloorMethod } from "../analysis/noiseFloor";
 export interface FftSettings {
   noiseMethod: NoiseFloorMethod;
   lowpassCutoffHz: number;
+  showDerivative: boolean;
+  showScaleNotes: boolean;
 }
 
 interface FftSettingsPanelProps {
@@ -54,6 +56,38 @@ export function FftSettingsPanel({ settings, onChange }: FftSettingsPanelProps) 
           />
         </label>
         <small>Controls tempo envelope analysis (Section 2)</small>
+      </div>
+
+      <div className="settings-group">
+        <label>
+          <input
+            type="checkbox"
+            checked={settings.showDerivative}
+            onChange={(e) =>
+              onChange({
+                ...settings,
+                showDerivative: e.target.checked,
+              })
+            }
+          />
+          Show FFT Derivative (dB/Hz)
+        </label>
+      </div>
+
+      <div className="settings-group">
+        <label>
+          <input
+            type="checkbox"
+            checked={settings.showScaleNotes}
+            onChange={(e) =>
+              onChange({
+                ...settings,
+                showScaleNotes: e.target.checked,
+              })
+            }
+          />
+          Show Major Scale Notes (A, C, D, E, G)
+        </label>
       </div>
     </section>
   );

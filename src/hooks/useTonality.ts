@@ -24,7 +24,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   createAnalyser,
   readSpectrumDb,
-  startTimeCapture,
   type AnalyserSetup,
 } from "../audio/analyser";
 import { openMicrophone, type MicSource } from "../audio/micStream";
@@ -44,10 +43,10 @@ import {
   HIGH_WATER_MARK_MEMORY_MIN,
   type HighWaterMarkMode,
 } from "../analysis/highWaterMark";
-import { TimeRingBuffer } from "../analysis/timeBuffer";
-import { computeFftDb } from "../analysis/timeFft";
 import { estimateNoiseFloor, type NoiseFloorMethod } from "../analysis/noiseFloor";
 import { LowpassFilter } from "../analysis/lowpass";
+import { TimeRingBuffer } from "../analysis/timeBuffer";
+import { computeFftDb } from "../analysis/timeFft";
 
 export interface UseTonalityOptions {
   /** Live acquisition window length (seconds). Was "short key window". */
@@ -131,11 +130,13 @@ export interface TonalityState {
     noiseMethod: NoiseFloorMethod;
   };
 
-  /** Tempo analysis state (Section 2: lowpass-filtered envelope). */
+  /** Tempo analysis state (Section 2: lowpass-filtered envelope + time signal). */
   tempoAnalysis: {
     envelopeDb: Float32Array;
     binHz: number;
     lowpassCutoffHz: number;
+    timeSignal: Float32Array;
+    sampleRate: number;
   };
 }
 
@@ -230,6 +231,8 @@ export function useTonality(options: UseTonalityOptions = {}) {
       envelopeDb: new Float32Array(0),
       binHz: 0,
       lowpassCutoffHz: opts.lowpassCutoffHz,
+      timeSignal: new Float32Array(0),
+      sampleRate: 0,
     },
   }));
 
@@ -242,10 +245,11 @@ export function useTonality(options: UseTonalityOptions = {}) {
   const filterRef = useRef<HighWaterMarkFilter | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // FFT analysis.
+  // Tempo analysis: a single lowpass filter applied to the time-domain signal
+  // (at the audio sample rate) before its FFT is computed for Section 2.
+  const lowpassTimeFilterRef = useRef<LowpassFilter | null>(null);
+  // Time-domain signal buffer (8 seconds) for display.
   const timeBufferRef = useRef<TimeRingBuffer | null>(null);
-  const lowpassFilterRef = useRef<LowpassFilter | null>(null);
-  const prevSpectrumDbRef = useRef<Float32Array | null>(null);
 
   // Latest opts (always up-to-date inside the interval callback).
   const optsRef = useRef(opts);
@@ -293,6 +297,7 @@ export function useTonality(options: UseTonalityOptions = {}) {
     f.setMode(opts.maxFilterMode);
   }, [opts.maxFilterTolerancy, opts.maxFilterMemory, opts.maxFilterMode]);
 
+
   /**
    * Clear all sliding-window buffers + filter memory, without stopping the
    * mic. Display state is also wiped to zero vectors. After a reset, the
@@ -304,9 +309,6 @@ export function useTonality(options: UseTonalityOptions = {}) {
     tonalityWindowRef.current?.reset();
     presenceWindowRef.current?.reset();
     filterRef.current?.reset();
-    timeBufferRef.current?.reset();
-    lowpassFilterRef.current?.reset();
-    prevSpectrumDbRef.current = null;
     setState((s) => ({
       ...s,
       instantaneousChroma: emptyVector(),
@@ -333,6 +335,8 @@ export function useTonality(options: UseTonalityOptions = {}) {
         envelopeDb: new Float32Array(0),
         binHz: 0,
         lowpassCutoffHz: s.tempoAnalysis.lowpassCutoffHz,
+        timeSignal: new Float32Array(0),
+        sampleRate: s.tempoAnalysis.sampleRate,
       },
     }));
   }, []);
@@ -352,9 +356,8 @@ export function useTonality(options: UseTonalityOptions = {}) {
     tonalityWindowRef.current = null;
     presenceWindowRef.current = null;
     filterRef.current = null;
+    lowpassTimeFilterRef.current = null;
     timeBufferRef.current = null;
-    lowpassFilterRef.current = null;
-    prevSpectrumDbRef.current = null;
     setState((s) => ({ ...s, running: false }));
   }, []);
 
@@ -369,6 +372,10 @@ export function useTonality(options: UseTonalityOptions = {}) {
 
       micRef.current = mic;
       analyserRef.current = analyser;
+
+      // Initialize time-domain buffer for 8-second signal display.
+      const timeBufferCapacity = Math.round(8 * analyser.sampleRate);
+      timeBufferRef.current = new TimeRingBuffer(timeBufferCapacity);
       chordWindowRef.current = new ChromaWindow({
         windowSeconds: o.chordWindowSeconds,
         framesPerSecond: o.framesPerSecond,
@@ -391,25 +398,11 @@ export function useTonality(options: UseTonalityOptions = {}) {
         mode: o.maxFilterMode,
       });
 
-      // Initialize FFT analysis buffers if enabled.
-      if (o.fftEnabled) {
-        const timeBufferCapacity = Math.round(8 * analyser.sampleRate); // 8 seconds
-        timeBufferRef.current = new TimeRingBuffer(timeBufferCapacity);
-        lowpassFilterRef.current = new LowpassFilter(o.lowpassCutoffHz, analyser.sampleRate);
-        prevSpectrumDbRef.current = null;
-
-        // Start time-domain audio capture.
-        try {
-          await startTimeCapture(analyser, (samples) => {
-            timeBufferRef.current?.push(samples);
-          });
-        } catch (err) {
-          // Worklet loading may fail; log but continue without time capture.
-          console.warn(
-            `Failed to start time capture: ${err instanceof Error ? err.message : String(err)}`,
-          );
-        }
-      }
+      // FFT analysis uses the spectrum dB from the AnalyserNode directly.
+      // Section 2 lowpass filter operates on the time-domain signal at the
+      // audio sample rate; (re)built lazily inside the frame loop so cutoff
+      // changes take effect.
+      lowpassTimeFilterRef.current = null;
 
       const periodMs = 1000 / o.framesPerSecond;
       intervalRef.current = setInterval(() => {
@@ -423,6 +416,35 @@ export function useTonality(options: UseTonalityOptions = {}) {
         if (!a || !wChord || !wLive || !wTon || !wPres || !filt) return;
 
         const db = readSpectrumDb(a);
+
+        // Capture time-domain samples for display.
+        //
+        // getFloatTimeDomainData() returns the most recent `fftSize` samples
+        // every time it is called. Because we poll at framesPerSecond (e.g.
+        // 10 fps) while each window holds ~0.34 s of audio (16384 samples at
+        // 48 kHz), consecutive frames overlap heavily (~70%). Pushing the full
+        // window each frame makes a single transient (e.g. a clap) appear 3-4
+        // times in the ring buffer.
+        //
+        // To avoid duplication we only push the *new* tail of the window: the
+        // number of samples the stream advanced since the previous frame,
+        // which is approximately sampleRate / framesPerSecond. We clamp to the
+        // window length in case a frame is delayed.
+        const timeBuf = timeBufferRef.current;
+        if (timeBuf && a.analyser) {
+          const windowLen = a.analyser.fftSize;
+          const timeDomainData = new Float32Array(windowLen);
+          a.analyser.getFloatTimeDomainData(timeDomainData);
+
+          const advance = Math.min(
+            windowLen,
+            Math.max(1, Math.round(a.sampleRate / curOpts.framesPerSecond)),
+          );
+          // The newest `advance` samples are at the end of the window.
+          const newSamples = timeDomainData.subarray(windowLen - advance);
+          timeBuf.push(newSamples);
+        }
+
         const mag = dbSpectrumToMagnitude(db);
         const inst = spectrumToChroma(mag, {
           sampleRate: a.sampleRate,
@@ -463,43 +485,76 @@ export function useTonality(options: UseTonalityOptions = {}) {
         wPres.push(indicator);
         const presence = wPres.aggregateRaw();
 
-        // FFT analysis (Section 1 + Section 2).
-        let fftSpectrumDb: Float32Array = new Float32Array(0);
-        let fftBinHz = 0;
-        let fftNoiseFloorDb = -100;
+        // FFT analysis: use the spectrum dB directly from the AnalyserNode.
+        const fftSpectrumDb = new Float32Array(db);
+        const fftBinHz = binHz;
+        const noiseFloor = estimateNoiseFloor(fftSpectrumDb, curOpts.noiseMethod);
+        const fftNoiseFloorDb = noiseFloor.noiseFloorDb;
+
+        // Section 2: Tempo / low-frequency modulation analysis.
+        //
+        // 1. Extract the 8-second time-domain signal.
+        // 2. Apply the lowpass filter to that *time-domain signal* (at the
+        //    audio sample rate). This isolates slow modulation (note onsets,
+        //    vibrato, tremolo).
+        // 3. Compute the FFT of the filtered signal and display its spectrum.
+        //
+        // The filtered time signal is also what we plot in the time-domain
+        // view, so the user sees the same data that feeds the spectrum.
+        let rawTimeSignal: Float32Array = new Float32Array(0);
+        const timeBufDisplay = timeBufferRef.current;
+        if (timeBufDisplay) {
+          rawTimeSignal = timeBufDisplay.lastSeconds(8, a.sampleRate);
+        }
+
+        // (Re)build the time-domain lowpass filter if the cutoff changed.
+        if (!lowpassTimeFilterRef.current) {
+          lowpassTimeFilterRef.current = new LowpassFilter(
+            curOpts.lowpassCutoffHz,
+            a.sampleRate,
+          );
+        } else {
+          lowpassTimeFilterRef.current.setCutoff(
+            curOpts.lowpassCutoffHz,
+            a.sampleRate,
+          );
+        }
+
+        // Filter the whole 8 s window from scratch each frame. We reset state
+        // first so the result depends only on the current buffer contents
+        // (the buffer itself already advances over time), giving a stable,
+        // zero-phase-independent rendering.
+        const lp = lowpassTimeFilterRef.current;
+        lp.reset();
+        const filteredTimeSignal =
+          rawTimeSignal.length > 0
+            ? lp.processFrame(rawTimeSignal)
+            : new Float32Array(0);
+
+        // FFT of the filtered time-domain signal for the Section 2 spectrum.
+        //
+        // The full 8 s window at audio rate (≈384k samples @ 48 kHz) would
+        // force a ~512k-point FFT every frame, which is far too expensive in
+        // pure JS. Since we only display 0–50 Hz, we run the FFT over the most
+        // recent power-of-two-sized chunk (≈1.4 s), giving sub-Hz resolution
+        // there while keeping the transform small enough to run at 10 fps.
         let tempoEnvelopeDb: Float32Array = new Float32Array(0);
         let tempoBinHz = 0;
-
-        if (curOpts.fftEnabled) {
-          const timeBuf = timeBufferRef.current;
-          const lpFilter = lowpassFilterRef.current;
-          if (timeBuf && lpFilter) {
-            // Section 1: Compute FFT magnitude + noise floor.
-            const timeSignal = timeBuf.lastSeconds(1, a.sampleRate); // 1 second
-            const fftResult = computeFftDb(timeSignal, a.sampleRate);
-            fftSpectrumDb = fftResult.spectrumDb as Float32Array;
-            fftBinHz = fftResult.binHz;
-
-            const noiseFloor = estimateNoiseFloor(fftResult.spectrumDb, curOpts.noiseMethod);
-            fftNoiseFloorDb = noiseFloor.noiseFloorDb;
-
-            // Section 2: Temporal envelope analysis via lowpass filtering.
-            const prevDb = prevSpectrumDbRef.current;
-            if (prevDb && prevDb.length === fftResult.spectrumDb.length) {
-              // For each bin, compute the instantaneous envelope by lowpass filtering
-              // the dB magnitude over time.
-              const envelope = new Float32Array(fftResult.spectrumDb.length);
-              for (let k = 0; k < fftResult.spectrumDb.length; k++) {
-                // Lowpass filter the dB value at this bin.
-                const dbVal = fftResult.spectrumDb[k];
-                envelope[k] = lpFilter.processSample(dbVal);
-              }
-              tempoEnvelopeDb = envelope;
-              tempoBinHz = fftBinHz;
-            }
-            prevSpectrumDbRef.current = new Float32Array(fftResult.spectrumDb);
-          }
+        if (filteredTimeSignal.length > 1) {
+          const FFT_MAX_SAMPLES = 1 << 16; // 65536
+          const fftInput =
+            filteredTimeSignal.length > FFT_MAX_SAMPLES
+              ? filteredTimeSignal.subarray(
+                  filteredTimeSignal.length - FFT_MAX_SAMPLES,
+                )
+              : filteredTimeSignal;
+          const fftResult = computeFftDb(fftInput, a.sampleRate);
+          tempoEnvelopeDb = fftResult.spectrumDb;
+          tempoBinHz = fftResult.binHz;
         }
+
+        // Display the filtered time-domain signal.
+        const timeSignalForDisplay = filteredTimeSignal;
 
         setState({
           running: true,
@@ -537,6 +592,8 @@ export function useTonality(options: UseTonalityOptions = {}) {
             envelopeDb: tempoEnvelopeDb,
             binHz: tempoBinHz,
             lowpassCutoffHz: curOpts.lowpassCutoffHz,
+            timeSignal: timeSignalForDisplay,
+            sampleRate: a.sampleRate,
           },
         });
       }, periodMs);

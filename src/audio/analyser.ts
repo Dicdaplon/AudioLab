@@ -67,10 +67,12 @@ export function readSpectrumDb(setup: AnalyserSetup): Float32Array {
  * The worklet must be registered before calling this.
  *
  * @param setup AnalyserSetup (must have an analyser source connected).
+ * @param source The audio source node (MediaStreamAudioSourceNode or similar) to tap.
  * @param callback Function called with each audio block.
  */
 export async function startTimeCapture(
   setup: AnalyserSetup,
+  source: AudioNode,
   callback: AudioBlockCallback,
 ): Promise<void> {
   const context = setup.analyser.context;
@@ -92,16 +94,14 @@ export async function startTimeCapture(
   // Set up message handler.
   workletNode.port.onmessage = (event) => {
     if (event.data.type === "audioBlock" && Array.isArray(event.data.data)) {
+      console.log(`[timeCapture] Received ${event.data.data.length} samples`);
       callback(new Float32Array(event.data.data));
     }
   };
 
   // Connect the worklet in parallel (it doesn't modify audio).
-  // It should be connected to the same source as the analyser.
-  const analyserSource = setup.analyser;
-  analyserSource.disconnect(setup.analyser);
-  analyserSource.connect(workletNode);
-  analyserSource.connect(setup.analyser);
+  // The source connects to BOTH the analyser AND the worklet.
+  source.connect(workletNode);
 
   // Store callback and node for cleanup later.
   setup.audioBlockCallback = callback;

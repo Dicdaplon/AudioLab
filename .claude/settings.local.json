@@ -23,7 +23,19 @@
       "Bash(npm config *)",
       "Bash(find f:/AdobeProject -maxdepth 4 -type f \\\\\\( -iname \"*.mp3\" -o -iname \"*.wav\" -o -iname \"*.flac\" \\\\\\) 2>/dev/null | head -40)",
       "Read(//f/AdobeProject/**)",
-      "Bash(ffmpeg -version)"
+      "Bash(ffmpeg -version)",
+      "Bash(node -e ' *)",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(xargs grep -l \"AudioWorklet\\\\|processorAdded\")",
+      "Bash(xargs grep -l \"worklet\\\\|Worklet\")",
+      "Bash(pkill -f \"npm run dev\")",
+      "Bash(pkill -9 node)",
+      "Bash(grep -n \"DEFAULT_FFT_SETTINGS\" f:\\\\\\\\AdobeProject\\\\\\\\TonalityDetector\\\\\\\\src\\\\\\\\hooks\\\\\\\\useTonality.ts)",
+      "Bash(pkill -9 node npm)",
+      "Bash(taskkill /F /IM node.exe)",
+      "Bash(taskkill /F /IM npm.exe)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

@@ -7,10 +7,6 @@ interface TimeSignalPlotProps {
   height?: number;
 }
 
-/**
- * Canvas-based time-domain signal visualization.
- * Shows the raw waveform of the input audio.
- */
 export function TimeSignalPlot({
   signal,
   sampleRate,
@@ -35,24 +31,32 @@ export function TimeSignalPlot({
     if (!ctx) return;
 
     ctx.scale(dpr, dpr);
-
-    // Clear canvas.
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, width, height);
 
     if (signal.length === 0) {
       ctx.fillStyle = "gray";
       ctx.font = "14px sans-serif";
-      ctx.fillText("No signal", 10, height / 2);
+      ctx.fillText("No data", 10, height / 2);
       return;
     }
 
     const padding = 40;
     const plotWidth = width - 2 * padding;
     const plotHeight = height - 2 * padding;
-    const centerY = height / 2;
 
-    // Draw axes.
+    let minAmp = 0,
+      maxAmp = 0;
+    for (let i = 0; i < signal.length; i++) {
+      if (Number.isFinite(signal[i])) {
+        minAmp = Math.min(minAmp, signal[i]);
+        maxAmp = Math.max(maxAmp, signal[i]);
+      }
+    }
+    const ampRange = Math.max(Math.abs(minAmp), Math.abs(maxAmp));
+    const scaledMin = -ampRange;
+    const scaledMax = ampRange;
+
     ctx.strokeStyle = "black";
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -61,53 +65,56 @@ export function TimeSignalPlot({
     ctx.lineTo(width - padding, height - padding);
     ctx.stroke();
 
-    // Find signal range.
-    let maxAmp = 1e-6;
-    for (const s of signal) {
-      maxAmp = Math.max(maxAmp, Math.abs(s));
-    }
-
-    // Draw center line.
-    ctx.strokeStyle = "#eee";
+    const zeroY = height - padding - ((0 - scaledMin) / (scaledMax - scaledMin)) * plotHeight;
+    ctx.strokeStyle = "#ddd";
     ctx.lineWidth = 0.5;
     ctx.beginPath();
-    ctx.moveTo(padding, centerY);
-    ctx.lineTo(width - padding, centerY);
+    ctx.moveTo(padding, zeroY);
+    ctx.lineTo(width - padding, zeroY);
     ctx.stroke();
 
-    // Draw waveform.
+    ctx.fillStyle = "black";
+    ctx.font = "12px sans-serif";
+    ctx.textAlign = "center";
+    const durationSeconds = signal.length / sampleRate;
+    const timeStep = durationSeconds > 5 ? 1 : 0.5;
+    for (let t = 0; t <= durationSeconds; t += timeStep) {
+      const idx = Math.round((t / durationSeconds) * signal.length);
+      const x = padding + (idx / signal.length) * plotWidth;
+      ctx.fillText(`${t.toFixed(1)}s`, x, height - padding + 20);
+    }
+
+    ctx.textAlign = "right";
+    for (let amp = -ampRange; amp <= ampRange; amp += ampRange / 2) {
+      const y = height - padding - ((amp - scaledMin) / (scaledMax - scaledMin)) * plotHeight;
+      ctx.fillText(amp.toFixed(2), padding - 10, y + 4);
+    }
+
     ctx.strokeStyle = "rgb(70, 130, 180)";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    const downsample = Math.ceil(signal.length / plotWidth);
-    for (let i = 0; i < signal.length; i += downsample) {
-      const sample = signal[i];
+    for (let i = 0; i < signal.length; i++) {
+      const ampNorm = Number.isFinite(signal[i])
+        ? (signal[i] - scaledMin) / (scaledMax - scaledMin)
+        : 0.5;
       const x = padding + (i / signal.length) * plotWidth;
-      const yNorm = sample / maxAmp; // Normalize to [-1, 1].
-      const y = centerY - yNorm * (plotHeight / 2);
+      const y = height - padding - ampNorm * plotHeight;
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     }
     ctx.stroke();
 
-    // Draw time axis labels.
-    ctx.fillStyle = "black";
-    ctx.font = "12px sans-serif";
-    ctx.textAlign = "center";
-    const durationSec = signal.length / sampleRate;
-    const timeStep = durationSec > 1 ? 0.1 : 0.01;
-    for (let t = 0; t <= durationSec; t += timeStep) {
-      const idx = Math.round(t * sampleRate);
-      if (idx >= signal.length) break;
-      const x = padding + (idx / signal.length) * plotWidth;
-      ctx.fillText(`${t.toFixed(2)}s`, x, height - padding + 15);
+    if (title) {
+      ctx.fillStyle = "black";
+      ctx.font = "bold 12px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(title, width / 2, padding - 10);
     }
 
-    // Draw labels.
     ctx.fillStyle = "black";
     ctx.font = "bold 12px sans-serif";
     ctx.textAlign = "left";
-    ctx.fillText("Time →", width / 2, height - 5);
+    ctx.fillText("Time (s) →", width / 2, height - 5);
     ctx.save();
     ctx.translate(10, height / 2);
     ctx.rotate(-Math.PI / 2);
@@ -116,10 +123,5 @@ export function TimeSignalPlot({
     ctx.restore();
   }, [signal, sampleRate, height]);
 
-  return (
-    <div className="time-signal-plot">
-      {title && <h4>{title}</h4>}
-      <canvas ref={canvasRef} style={{ border: "1px solid #ccc", width: "100%", height }} />
-    </div>
-  );
+  return <div className="time-signal-plot"><canvas ref={canvasRef} /></div>;
 }

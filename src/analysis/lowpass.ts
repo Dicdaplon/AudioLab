@@ -134,6 +134,27 @@ export class LowpassFilter {
   }
 
   /**
+   * Update the cutoff frequency (recompute biquad coefficients).
+   * @param cutoffHz New cutoff frequency in Hz.
+   * @param sampleRate Sample rate in Hz.
+   */
+  setCutoff(cutoffHz: number, sampleRate: number): void {
+    if (cutoffHz <= 0 || sampleRate <= 0) {
+      throw new Error(
+        `cutoffHz and sampleRate must be > 0 (got ${cutoffHz}, ${sampleRate})`,
+      );
+    }
+    if (cutoffHz >= sampleRate / 2) {
+      throw new Error(
+        `cutoffHz (${cutoffHz}) must be < Nyquist (${sampleRate / 2})`,
+      );
+    }
+    const normalizedFreq = cutoffHz / (sampleRate / 2);
+    this.coeffs1 = designButterworthBiquad(normalizedFreq);
+    this.coeffs2 = designButterworthBiquad(normalizedFreq);
+  }
+
+  /**
    * Process a single sample through the cascaded biquad filter.
    * @param x Input sample.
    * @return Filtered output sample.
