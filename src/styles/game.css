@@ -356,6 +356,7 @@
   flex-direction: column;
   gap: var(--sp-2);
   min-width: 0;
+  container: field / inline-size;
 }
 
 .gate__head {

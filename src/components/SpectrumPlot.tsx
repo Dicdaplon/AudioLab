@@ -28,6 +28,8 @@ interface SpectrumPlotProps {
   binHz: number;
   noiseFloorDb: number;
   title?: string;
+  /** Extra mono annotation after the frequency range, e.g. the noise floor. */
+  meta?: string;
   height?: number;
   /** Overlay the frequency slope of the spectrum (dB/Hz), centred mid-plot. */
   showSlope?: boolean;
@@ -54,6 +56,7 @@ export function SpectrumPlot({
   binHz,
   noiseFloorDb,
   title = "Magnitude spectrum",
+  meta,
   height = 280,
   showSlope = false,
   showScaleNotes = false,
@@ -257,7 +260,7 @@ export function SpectrumPlot({
   return (
     <PlotFigure
       title={title}
-      meta={`${formatHz(minFreqHz)}–${formatHz(maxShown)} Hz`}
+      meta={`${formatHz(minFreqHz)}–${formatHz(maxShown)} Hz${meta ? ` · ${meta}` : ""}`}
       legend={legend}
       xLabel="Frequency (Hz)"
       yLabel="Magnitude (dB)"

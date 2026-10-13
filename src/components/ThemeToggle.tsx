@@ -2,7 +2,8 @@ import { useState } from "react";
 
 import { applyTheme, resolveTheme, type Theme } from "../ui/theme";
 
-const LABEL: Record<Theme, string> = { dark: "☾ Dark", light: "☀ Light" };
+const GLYPH: Record<Theme, string> = { dark: "☾", light: "☀" };
+const LABEL: Record<Theme, string> = { dark: "Dark", light: "Light" };
 
 /**
  * Explicit theme choice, persisted. The visible text names the current
@@ -20,7 +21,8 @@ export function ThemeToggle() {
 
   return (
     <button type="button" className="btn btn--quiet theme-toggle" onClick={toggle}>
-      {LABEL[theme]}
+      <span aria-hidden="true">{GLYPH[theme]}</span>
+      <span className="theme-toggle__word">{LABEL[theme]}</span>
       <span className="visually-hidden"> — switch to the {next} theme</span>
     </button>
   );

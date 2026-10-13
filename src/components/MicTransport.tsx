@@ -33,7 +33,7 @@ export const MicTransport = memo(function MicTransport({
   return (
     <div className="transport">
       <span className="badge badge--live" data-state={state} role="status">
-        {BADGE[state]}
+        <span className="transport__text">{BADGE[state]}</span>
       </span>
       {live ? (
         <button type="button" className="btn btn--danger btn--touch" onClick={onStop}>
@@ -58,7 +58,7 @@ export const MicTransport = memo(function MicTransport({
         title="Clears the analysis buffers (chroma windows and peak memory); the microphone stays on."
       >
         <Icon name="reset" />
-        Reset
+        <span className="transport__text">Reset</span>
       </button>
     </div>
   );

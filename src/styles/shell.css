@@ -162,10 +162,35 @@
   white-space: nowrap;
 }
 
+/* Under 480 px the bar cannot hold the brand, the LED, three buttons and
+   their words: the words go to screen readers only, the icons stay. */
 @media (max-width: 479px) {
-  /* Three controls do not fit a 360 px bar with the brand: hide the words. */
-  .transport .btn--quiet {
+  .topbar .transport__text,
+  .topbar .theme-toggle__word {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .topbar .badge--live {
+    gap: 0;
+  }
+
+  .topbar .btn--quiet,
+  .topbar .theme-toggle {
     padding-inline: var(--sp-2);
+  }
+
+  .topbar .btn--touch {
+    padding-inline: var(--sp-3);
+  }
+
+  .topbar__inner {
+    column-gap: var(--sp-2);
   }
 }
 

@@ -48,6 +48,11 @@
   border-radius: 0 0 var(--r-3) var(--r-3);
 }
 
+/* The summary already says "Settings". */
+.rail-details__body .panel__head {
+  display: none;
+}
+
 .rail {
   position: sticky;
   top: calc(var(--header-h) + var(--sp-4));

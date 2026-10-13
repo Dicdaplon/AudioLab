@@ -48,6 +48,8 @@ const BONUS_ICON: Record<BonusType, IconName> = {
   samenote: "target",
 };
 
+const MAX_SCALE = 1.6;
+
 /** Horizontal centre of an entity: right edge at progress 0, the wolf at 1. */
 function entityX(progress: number): number {
   return SCENE_WIDTH - progress * (SCENE_WIDTH - WOLF_X);
@@ -65,7 +67,8 @@ export function Scene({ store, onRestart }: SceneProps) {
     shallowEqual,
   );
   const [viewportRef, viewportWidth] = usePlotWidth(SCENE_WIDTH);
-  const scale = Math.min(1, viewportWidth / SCENE_WIDTH);
+  // Fill the viewport; cap the magnification so sprites stay in proportion.
+  const scale = Math.min(MAX_SCALE, viewportWidth / SCENE_WIDTH);
 
   return (
     <div

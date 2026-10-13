@@ -165,7 +165,8 @@
 
 /* --- Field rows ---------------------------------------------------------- */
 
-/* label | control | value. Under 720 px the control drops to a second line. */
+/* label | control | value. In a narrow container (the settings rail, a
+   phone) the control drops to its own line. */
 .field {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -178,7 +179,7 @@
   min-height: var(--control-h);
 }
 
-@media (min-width: 720px) {
+@container field (min-width: 420px) {
   .field {
     grid-template-columns: minmax(8rem, 11rem) 1fr 4.5rem;
     grid-template-areas: "label control value";
@@ -215,7 +216,7 @@
     "control control";
 }
 
-@media (min-width: 720px) {
+@container field (min-width: 420px) {
   .field--select {
     grid-template-areas: "label control control";
   }

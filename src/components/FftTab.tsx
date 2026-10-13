@@ -59,17 +59,13 @@ export function FftTab({ mic, spectrum, settings, onSettingsChange }: FftTabProp
         </SettingsRail>
       </div>
 
-      <Panel
-        title="Magnitude spectrum"
-        meta={`${spectrum.noiseMethod} floor ${spectrum.noiseFloorDb.toFixed(1)} dB`}
-        className="panel--bed fft__spectrum"
-        as="section"
-      >
+      <Panel className="panel--bed fft__spectrum" as="section">
         <SpectrumPlot
           spectrumDb={spectrum.spectrumDb}
           binHz={spectrum.binHz}
           noiseFloorDb={spectrum.noiseFloorDb}
           title="Magnitude spectrum"
+          meta={`${spectrum.noiseMethod} floor ${spectrum.noiseFloorDb.toFixed(1)} dB`}
           height={compact ? 220 : 280}
           showSlope={settings.showSlope}
           showScaleNotes={settings.showScaleNotes}
