@@ -1,13 +1,13 @@
 /**
  * AnalyserNode setup and polling.
  *
- * We use a large FFT (16384) to get ~3 Hz bin resolution at 48 kHz, which is
- * enough to resolve adjacent semitones in the low-mid register where most
- * tonal content lives. Smoothing is disabled because we average ourselves
- * across the sliding window.
+ * A 16384-point FFT gives a bin spacing of sampleRate / 16384 (≈ 2.9 Hz at
+ * 48 kHz). The AnalyserNode applies a Blackman window whose main lobe spans
+ * about ±3 bins (±9 Hz), so adjacent semitones are only cleanly separated
+ * from roughly A3 (220 Hz, semitone spacing 13 Hz) upwards; below ~150 Hz a
+ * single note leaks into the neighbouring pitch classes. Smoothing is
+ * disabled because we average ourselves across the sliding windows.
  */
-
-export type AudioBlockCallback = (samples: Float32Array) => void;
 
 export interface AnalyserSetup {
   analyser: AnalyserNode;
@@ -15,14 +15,18 @@ export interface AnalyserSetup {
   sampleRate: number;
   /** Pre-allocated buffer to receive getFloatFrequencyData (dB) output. */
   dbBuffer: Float32Array<ArrayBuffer>;
-  /** Callback for time-domain audio blocks (if time capture is active). */
-  audioBlockCallback?: AudioBlockCallback;
 }
 
 export interface AnalyserOptions {
   fftSize?: number;
   /** AnalyserNode internal smoothing constant. 0 = no smoothing. */
   smoothingTimeConstant?: number;
+  /**
+   * `minDecibels` / `maxDecibels` only define the mapping used by
+   * `getByteFrequencyData`. The float API used here returns the raw
+   * 20·log10 magnitudes (silence reads -Infinity), so these two values do
+   * not clamp anything in this project; they are exposed for completeness.
+   */
   minDecibels?: number;
   maxDecibels?: number;
 }
@@ -60,57 +64,4 @@ export function readSpectrumDb(setup: AnalyserSetup): Float32Array {
   // (not a SharedArrayBuffer). The buffer above is constructed accordingly.
   setup.analyser.getFloatFrequencyData(setup.dbBuffer);
   return setup.dbBuffer;
-}
-
-/**
- * Start time-domain audio capture via an AudioWorkletNode.
- * The worklet must be registered before calling this.
- *
- * @param setup AnalyserSetup (must have an analyser source connected).
- * @param source The audio source node (MediaStreamAudioSourceNode or similar) to tap.
- * @param callback Function called with each audio block.
- */
-export async function startTimeCapture(
-  setup: AnalyserSetup,
-  source: AudioNode,
-  callback: AudioBlockCallback,
-): Promise<void> {
-  const context = setup.analyser.context;
-
-  // Load and register the worklet code.
-  try {
-    await context.audioWorklet.addModule(new URL("./timeCapture.worklet.ts", import.meta.url));
-  } catch (err) {
-    throw new Error(
-      `Failed to load time capture worklet: ${err instanceof Error ? err.message : String(err)}`,
-    );
-  }
-
-  // Create the worklet node.
-  const workletNode = new AudioWorkletNode(context, "time-capture");
-
-  // Set up message handler.
-  workletNode.port.onmessage = (event) => {
-    if (event.data.type === "audioBlock" && Array.isArray(event.data.data)) {
-      console.log(`[timeCapture] Received ${event.data.data.length} samples`);
-      callback(new Float32Array(event.data.data));
-    }
-  };
-
-  // Connect the worklet in parallel (it doesn't modify audio).
-  // The source connects to BOTH the analyser AND the worklet.
-  source.connect(workletNode);
-
-  // Store callback and node for cleanup later.
-  setup.audioBlockCallback = callback;
-
-  // Activate the message port (required in some browsers).
-  workletNode.port.start?.();
-}
-
-/**
- * Stop time-domain audio capture.
- */
-export function stopTimeCapture(setup: AnalyserSetup): void {
-  setup.audioBlockCallback = undefined;
 }
