@@ -11,9 +11,8 @@ export default defineConfig({
     port: 5173,
     open: true,
   },
+  // Test projects (unit / dom / samples) are declared in vitest.workspace.ts.
   test: {
-    environment: "jsdom",
-    include: ["tests/**/*.{test,spec}.{ts,tsx}"],
     coverage: {
       reporter: ["text", "html"],
     },

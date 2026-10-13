@@ -30,15 +30,17 @@ Ouvre ensuite `http://127.0.0.1:5173` et autorise l'accès au microphone.
 
 ## Scripts
 
-| Commande             | Effet                                                     |
-| -------------------- | --------------------------------------------------------- |
-| `npm run dev`        | Lance le serveur de développement Vite                    |
-| `npm run build`      | Type-check (`tsc -b`) puis bundle de production           |
-| `npm run preview`    | Sert le build de prod en local                            |
-| `npm test`           | Lance toute la suite Vitest une fois                      |
-| `npm run test:watch` | Vitest en mode watch                                      |
-| `npm run typecheck`  | Vérification TypeScript sans émission                     |
-| `npm run sweep`      | Sweep paramétrique sur tous les samples (voir ci-dessous) |
+| Commande               | Effet                                                     |
+| ---------------------- | --------------------------------------------------------- |
+| `npm run dev`          | Lance le serveur de développement Vite                    |
+| `npm run build`        | Type-check (`tsc -b`) puis bundle de production           |
+| `npm run preview`      | Sert le build de prod en local                            |
+| `npm test`             | Tests rapides (projets Vitest `unit` + `dom`)             |
+| `npm run test:samples` | Régression sur les fichiers audio de `tests/Sample`       |
+| `npm run test:all`     | Toute la suite (unit + dom + samples)                     |
+| `npm run test:watch`   | Vitest en mode watch                                      |
+| `npm run typecheck`    | Vérification TypeScript sans émission                     |
+| `npm run sweep`        | Sweep paramétrique sur tous les samples (voir ci-dessous) |
 
 ---
 
@@ -369,7 +371,7 @@ gamme exotique, pondération inhabituelle des degrés).
 > **Modules** : [`src/analysis/highWaterMark.ts`](src/analysis/highWaterMark.ts),
 > [`src/analysis/presenceTonality.ts`](src/analysis/presenceTonality.ts) ·
 > **Tests** : [`tests/highWaterMark.test.ts`](tests/highWaterMark.test.ts) +
-> intégration dans [`tests/samples.test.ts`](tests/samples.test.ts)
+> intégration dans [`tests/samples/`](tests/samples/)
 
 ---
 

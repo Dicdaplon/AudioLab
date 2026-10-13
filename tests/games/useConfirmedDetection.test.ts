@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { StrictMode, createElement, type ReactNode } from "react";
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";

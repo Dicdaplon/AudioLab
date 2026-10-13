@@ -1,4 +1,3 @@
-// @vitest-environment node
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { describe, it, expect } from "vitest";
@@ -8,12 +7,12 @@ import {
   computeChromaSequence,
   runPresenceTonality,
   slidingChordHistogram,
-} from "../src/analysis/offline/offlinePipeline";
-import { decodeAudioFile } from "../src/analysis/offline/decodeAudio";
-import { keyShortName, relativeMajorTonic } from "../src/analysis/keyDetection";
+} from "../../src/analysis/offline/offlinePipeline";
+import { decodeAudioFile } from "../../src/analysis/offline/decodeAudio";
+import { keyShortName, relativeMajorTonic } from "../../src/analysis/keyDetection";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const SAMPLES_DIR = path.join(__dirname, "Sample");
+const SAMPLES_DIR = path.join(__dirname, "..", "Sample");
 const FL_DIR = path.join(SAMPLES_DIR, "FLStudio");
 const BACKING_DIR = path.join(SAMPLES_DIR, "Backing");
 
