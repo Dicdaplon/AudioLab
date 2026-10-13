@@ -1,48 +1,76 @@
 # Architecture
 
 How AudioLab is organised, how audio flows from the microphone to the screen, and where to
-plug in new analyses. For the maths behind each stage, see [THEORY.md](THEORY.md).
+plug in new analyses. For the maths behind each stage, see [THEORY.md](THEORY.md); for
+mounting the SDK in another application, see [INTEGRATION.md](INTEGRATION.md).
+
+## Packages
+
+The repository is an npm workspace with two publishable packages and one private app.
+
+| Package           | Path             | What it is                                                                              | Depends on                                      |
+| ----------------- | ---------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `@audiolab/core`  | `packages/core`  | Framework-free TypeScript: DSP, engines, Web Audio adapters, settings, note maths       | nothing (`audio-decode` optional, offline only) |
+| `@audiolab/react` | `packages/react` | Hooks, components, canvas plots, games, theme helpers and the Loupe stylesheets         | `@audiolab/core`; peers `react`, `react-dom`    |
+| `@audiolab/lab`   | `apps/lab`       | The demo app deployed to GitHub Pages: a shell (brand, top bar, tabs) composing the SDK | both packages                                   |
+
+Dependencies point one way: **lab → react → core**. Core never imports React or a Node
+built-in outside its `offline` subpath (ESLint enforces both), so the signal processing is
+testable in Node with synthetic signals and real recordings, and a browser bundle never
+pulls `node:fs`. The lab contains no analysis or UI code of its own; if something is
+needed there, it belongs in a package.
+
+```mermaid
+flowchart LR
+    Lab["apps/lab<br/>shell · tabs · theme toggle"] --> React
+    React["@audiolab/react<br/>hooks · components · plots · games · styles.css"] --> Core
+    Core["@audiolab/core<br/>DSP · engines · Web Audio · settings"]
+    Offline["@audiolab/core/offline<br/>decode + frame files (Node)"] --> Core
+```
+
+Each package has one entry (`src/index.ts`) that is the public API; everything not
+re-exported there is internal. Workspace consumers resolve the packages through the
+`audiolab-source` export condition (TypeScript `customConditions`, Vite / Vitest
+`resolve.conditions`), so development and tests run from the sources; the production
+build of the lab and external consumers use the `dist` built by tsup.
 
 ## Layers
 
-| Layer      | Path                     | Depends on                             | Browser APIs     | Tested in             |
-| ---------- | ------------------------ | -------------------------------------- | ---------------- | --------------------- |
-| Utilities  | `src/utils/`             | nothing                                | none             | Node                  |
-| DSP        | `src/analysis/*.ts`      | `utils`                                | none             | Node                  |
-| Engines    | `src/analysis/engine/`   | DSP modules                            | none             | Node                  |
-| Offline    | `src/analysis/offline/`  | engines, DSP, `audio-decode`           | none (Node only) | Node, samples         |
-| Config     | `src/config/`            | DSP (types and defaults)               | none             | Node                  |
-| Audio      | `src/audio/`             | nothing in `src/`                      | Web Audio, media | Node + fake Web Audio |
-| Hooks      | `src/hooks/`             | audio, engines, DSP, config            | via `audio`      | jsdom                 |
-| Games      | `src/features/games/`    | DSP (chord templates, chroma)          | none in engines  | Node + jsdom          |
-| Components | `src/components/`, `App` | hooks, config, DSP, utils, audio types | canvas           | jsdom (partly)        |
-
-Dependencies point one way: UI → hooks → (audio, engines) → DSP → utils. Nothing below
-the hooks imports React, and nothing in `src/analysis/` touches the DOM or the Web Audio
-API. That is what makes the signal processing testable in Node with synthetic signals and
-real recordings.
+| Layer      | Path                                 | Depends on                          | Browser APIs       | Tested in             |
+| ---------- | ------------------------------------ | ----------------------------------- | ------------------ | --------------------- |
+| Notes      | `core/src/utils/notes.ts`            | nothing                             | none               | Node                  |
+| DSP        | `core/src/analysis/*.ts`             | notes                               | none               | Node                  |
+| Engines    | `core/src/analysis/engine/`          | DSP modules                         | none               | Node                  |
+| Offline    | `core/src/offline/`                  | engines, DSP, `audio-decode`        | none (Node only)   | Node, samples         |
+| Settings   | `core/src/config/`                   | DSP (types and defaults)            | none               | Node                  |
+| Audio      | `core/src/audio/`                    | nothing else in core                | Web Audio, media   | Node + fake Web Audio |
+| Hooks      | `react/src/hooks/`                   | core                                | via `audio`        | jsdom                 |
+| UI helpers | `react/src/ui/`                      | core (types), React                 | canvas, matchMedia | jsdom                 |
+| Games      | `react/src/games/`                   | core (chord templates, chroma)      | none in engines    | Node + jsdom          |
+| Components | `react/src/components/`, `LoupeRoot` | hooks, ui, core                     | canvas             | jsdom                 |
+| App        | `apps/lab/src/App.tsx`               | `@audiolab/react`, `@audiolab/core` | none               | jsdom (smoke)         |
 
 ```mermaid
 flowchart TD
     App["App.tsx<br/>tabs, settings state"]
     Comp["components/<br/>views, canvas plots"]
-    Games["features/games/<br/>pure game engines + views"]
+    Games["games/<br/>pure game engines + views"]
     Hooks["hooks/<br/>useMicrophone · useTonality · useTempoAnalysis"]
     Audio["audio/<br/>micStream · analyser · sampleCapture · worklet"]
     Engine["analysis/engine/<br/>TonalityEngine · TempoAnalyzer"]
     DSP["analysis/*.ts<br/>chroma · windows · key · chord · FFT · lowpass"]
-    Offline["analysis/offline/<br/>decode + frame files (Node)"]
+    Offline["offline/<br/>decode + frame files (Node)"]
     Config["config/settings.ts"]
-    Utils["utils/<br/>notes · plotMath"]
+    Notes["utils/notes.ts"]
 
     App --> Comp & Games & Hooks & Config
-    Comp --> Hooks & Config & DSP & Utils
+    Comp --> Hooks & Config & DSP & Notes
     Games --> DSP
     Hooks --> Audio & Engine & Config
     Engine --> DSP
     Offline --> Engine & DSP
     Config --> DSP
-    DSP --> Utils
+    DSP --> Notes
 ```
 
 ## Data flow
@@ -76,7 +104,8 @@ failure is mapped by `audio/errors.ts` to a stable code (`permission-denied`,
 `useMicrophone` owns the single session shared by every tab. It is race-safe: a second
 `start()` while one is pending is ignored, and a session token makes a `stop()` or an
 unmount during the permission prompt dispose the stream as soon as it arrives (this also
-covers React StrictMode's double mount).
+covers React StrictMode's double mount). The environment check is exposed as
+`unsupported`, run after mount so server-rendered markup never disagrees with the client.
 
 ### 2. Key and chord path (`useTonality`, `TonalityEngine`)
 
@@ -97,8 +126,8 @@ most recent frames, so moving a slider does not reset the analysis. `reset()` cl
 windows without closing the microphone.
 
 `TonalityEngine` has no browser dependency. The same class is driven by the offline
-pipeline (`analysis/offline/offlinePipeline.ts`) from decoded files, so the sample
-regression tests run the code that runs in the browser from the chroma onwards.
+pipeline (`@audiolab/core/offline`) from decoded files, so the sample regression tests run
+the code that runs in the browser from the chroma onwards.
 
 ### 3. Tempo path (`useTempoAnalysis`, `TempoAnalyzer`)
 
@@ -109,10 +138,15 @@ context's sample rate and calls `startSampleCapture()`:
   thread, collects the 128-sample render quanta into 2048-sample batches
   (`SampleBatcher`) and transfers each batch to the main thread with `postMessage`
   (about 23 messages per second at 48 kHz). The node outputs silence and is connected to
-  the destination so the graph keeps rendering it.
-- **Fallback: AnalyserNode polling** every 20 ms. The number of new samples is measured
-  from `context.currentTime`, so late timer ticks neither drop nor duplicate audio; gaps
-  longer than the 4096-sample window (throttled tab) are filled with zeros.
+  the destination so the graph keeps rendering it. The processor is bundled to a string
+  at build time (`scripts/buildWorklet.ts` → `sampleCaptureWorklet.source.ts`, committed
+  and checked by a test) and loaded through a Blob URL, so consumers need no bundler
+  support for worklets.
+- **Fallback: AnalyserNode polling** every 20 ms, used when there is no AudioWorklet or
+  the module fails to load (for instance a CSP without `blob:`). The number of new
+  samples is measured from `context.currentTime`, so late timer ticks neither drop nor
+  duplicate audio; gaps longer than the 4096-sample window (throttled tab) are filled
+  with zeros.
 
 Every received batch goes straight into `analyzer.pushSamples()`, which updates the onset
 envelope incrementally. A 5 Hz timer calls `analyze()` (FFT of the last 8 s of envelope)
@@ -121,9 +155,14 @@ the timer.
 
 ### 4. UI
 
-`App.tsx` holds the active tab and the settings (`DetectorSettings`, `FftSettings` from
-`config/settings.ts`), calls `useMicrophone` and `useTonality`, and passes slices of the
-`TonalityFrame` down:
+`LoupeRoot` renders the `.loupe` element that carries every design token
+(`styles/tokens.css`) and exposes it through context; `useVizTheme` reads the `--al-viz-*`
+tokens from that element with `getComputedStyle` (canvas code cannot use `var()`) and
+re-reads them when `<html data-theme>` or the OS preference changes.
+
+`App.tsx` (lab) holds the active tab and the settings (`DetectorSettings`,
+`FftSettings` from core), calls `useMicrophone` and `useTonality`, and passes slices of
+the `TonalityFrame` down:
 
 - **Detector tab:** chroma bars (instantaneous, 1 s, live, tonality), chord ranking, two
   key rankings, presence view, and the settings panel.
@@ -137,8 +176,12 @@ the timer.
 - **FFT tab:** spectrum plot with noise floor, slope and pentatonic overlays; onset
   envelope and beat spectrum from `useTempoAnalysis`.
 
-Plots are drawn on `<canvas>` with helpers from `utils/plotMath.ts`; long signals are
+Plots are drawn on `<canvas>` with helpers from `ui/plotMath.ts`; long signals are
 reduced to one min/max pair per pixel column.
+
+Every module of `@audiolab/react` is SSR-safe: no `window` / `document` access at module
+scope, and nothing the server cannot know (media queries, stored theme, microphone
+support, random draws) is read during the first render.
 
 ## Threads
 
@@ -173,33 +216,44 @@ tab slows the key/chord updates; the worklet capture itself stays gapless.
 
 ## Build and deployment
 
-- Vite bundles the worklet as a separate file through the `?worker&url` import in
-  `audio/sampleCaptureWorkletUrl.ts`. That one-line module exists so tests can mock the
-  URL.
-- `base: "./"` makes every asset URL relative, so the same build works at the GitHub
-  Pages sub-path `/AudioLab/` and locally.
-- `deploy.yml` builds on every push to `main` and publishes `dist/` with
-  `actions/deploy-pages`.
+- Each package is built by **tsup** (`packages/*/tsup.config.ts`): ESM, source maps and
+  `.d.ts` in `dist/`. Chosen over Vite's library mode because one tool produces the
+  bundle and the declarations, keeps dependencies external by reading `package.json`,
+  and can re-insert the `"use client"` directive as a banner (bundlers drop per-module
+  directives). `@audiolab/react` also emits `styles.css` (bundled partials) and
+  `fonts.css` (its `@fontsource` imports kept external).
+- `exports` maps declare `types` and `default` conditions plus the workspace-only
+  `audiolab-source` condition; `sideEffects` is `false` for core and `["*.css"]` for
+  react, so consumers tree-shake everything but the stylesheets.
+- The lab is built by Vite with `base: "./"`, so the same build works at the GitHub
+  Pages sub-path `/AudioLab/` and locally; `deploy.yml` publishes `apps/lab/dist` on every
+  push to `main`.
+- `npm run check:packages` runs publint and arethetypeswrong on the packed tarballs
+  (CI does too). Versions and changelogs are managed with Changesets.
 
 ## Testing seams
 
-- `tests/helpers/fakeWebAudio.ts` fakes `AudioContext`, `AnalyserNode`,
+- `packages/core/tests/helpers/fakeWebAudio.ts` fakes `AudioContext`, `AnalyserNode`,
   `AudioWorkletNode` and `getUserMedia`, so the hooks and audio adapters are tested in
   jsdom, including start/stop races and the worklet-to-fallback switch.
-- `tests/helpers/synth.ts` and `liveRig.ts` generate deterministic audio and emulate the
-  AnalyserNode framing, so `TonalityEngine` is tested end-to-end from samples.
-- `analysis/offline/` decodes real files in Node for the `samples` project and the
-  scripts in `scripts/`.
+- `synth.ts` and `liveRig.ts` (same directory) generate deterministic audio and emulate
+  the AnalyserNode framing, so `TonalityEngine` is tested end-to-end from samples.
+- `@audiolab/core/offline` decodes real files in Node for the `samples` project and the
+  scripts in `packages/core/scripts/`.
+- `packages/react/tests/ssr.test.ts` renders every view with `react-dom/server` in plain
+  Node, and `hydration.test.tsx` hydrates that markup in jsdom and fails on any
+  recoverable error.
 
 ## Extension points
 
-| To add...                        | Change                                                                                                                     |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Chord qualities (7th, sus, dim)  | Add intervals to `QUALITY_INTERVALS` and the quality to `ChordQuality` in `chordDetection.ts`; templates are built from it |
-| Other key profiles               | Replace or add entries in `KEY_PROFILES` (`keyDetection.ts`), e.g. Temperley or harmonic-minor profiles                    |
-| Harmonic weighting of the chroma | `spectrumToChroma()` in `chroma.ts`: per-bin weights or harmonic suppression before folding                                |
-| A new per-frame analysis         | A pure module in `src/analysis/`, called from `TonalityEngine.pushChroma()` and exposed in `TonalityFrame`                 |
-| A new sample-accurate analysis   | Another consumer of `startSampleCapture()` with its own engine class, mounted by the view that needs it                    |
-| A new tab or game                | A component under `src/features/` reading the hook state passed from `App.tsx`; keep the rules in a pure reducer           |
-| A new regression fixture         | Drop the file under `tests/Sample/` and assert its measured rank in `tests/samples/`                                       |
-| Re-tuning the defaults           | `npm run sweep`, then update `HIGH_WATER_MARK_DEFAULTS` / `config/settings.ts`                                             |
+| To add...                        | Change                                                                                                                                       |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Chord qualities (7th, sus, dim)  | Add intervals to `QUALITY_INTERVALS` and the quality to `ChordQuality` in `core/src/analysis/chordDetection.ts`; templates are built from it |
+| Other key profiles               | Replace or add entries in `KEY_PROFILES` (`keyDetection.ts`), e.g. Temperley or harmonic-minor profiles                                      |
+| Harmonic weighting of the chroma | `spectrumToChroma()` in `chroma.ts`: per-bin weights or harmonic suppression before folding                                                  |
+| A new per-frame analysis         | A pure module in `core/src/analysis/`, called from `TonalityEngine.pushChroma()` and exposed in `TonalityFrame`                              |
+| A new sample-accurate analysis   | Another consumer of `startSampleCapture()` with its own engine class, mounted by the view that needs it                                      |
+| A new component or game          | In `packages/react`, re-exported from `src/index.ts` with `"use client"` at the top; keep the rules in a pure reducer                        |
+| A new regression fixture         | Drop the file under `packages/core/tests/Sample/` and assert its measured rank in `tests/samples/`                                           |
+| Re-tuning the defaults           | `npm run sweep`, then update `HIGH_WATER_MARK_DEFAULTS` / `config/settings.ts`                                                               |
+| Changing the worklet             | Edit `sampleCapture.worklet.ts`, run `npm run build:worklet -w packages/core`, commit the regenerated source string                          |
