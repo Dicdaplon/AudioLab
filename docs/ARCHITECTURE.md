@@ -1,167 +1,205 @@
 # Architecture
 
-## Vue d'ensemble
+How AudioLab is organised, how audio flows from the microphone to the screen, and where to
+plug in new analyses. For the maths behind each stage, see [THEORY.md](THEORY.md).
 
-Le projet sépare strictement trois couches :
+## Layers
 
-| Couche        | Dossier           | Dépendances navigateur ? | Testable en Vitest pur |
-| ------------- | ----------------- | ------------------------ | ---------------------- |
-| Analyse DSP   | `src/analysis/`   | Non                      | Oui                    |
-| Capture audio | `src/audio/`      | Oui (Web Audio API)      | Indirectement          |
-| UI React      | `src/components/` | Oui                      | jsdom                  |
+| Layer      | Path                     | Depends on                             | Browser APIs     | Tested in             |
+| ---------- | ------------------------ | -------------------------------------- | ---------------- | --------------------- |
+| Utilities  | `src/utils/`             | nothing                                | none             | Node                  |
+| DSP        | `src/analysis/*.ts`      | `utils`                                | none             | Node                  |
+| Engines    | `src/analysis/engine/`   | DSP modules                            | none             | Node                  |
+| Offline    | `src/analysis/offline/`  | engines, DSP, `audio-decode`           | none (Node only) | Node, samples         |
+| Config     | `src/config/`            | DSP (types and defaults)               | none             | Node                  |
+| Audio      | `src/audio/`             | nothing in `src/`                      | Web Audio, media | Node + fake Web Audio |
+| Hooks      | `src/hooks/`             | audio, engines, DSP, config            | via `audio`      | jsdom                 |
+| Games      | `src/features/games/`    | DSP (chord templates, chroma)          | none in engines  | Node + jsdom          |
+| Components | `src/components/`, `App` | hooks, config, DSP, utils, audio types | canvas           | jsdom (partly)        |
 
-L'orchestration vit dans le hook
-[`src/hooks/useTonality.ts`](../src/hooks/useTonality.ts), qui colle les trois
-couches ensemble et fait tourner **trois fenêtres glissantes** depuis le même
-flux de chromas instantanés.
+Dependencies point one way: UI → hooks → (audio, engines) → DSP → utils. Nothing below
+the hooks imports React, and nothing in `src/analysis/` touches the DOM or the Web Audio
+API. That is what makes the signal processing testable in Node with synthetic signals and
+real recordings.
 
-> Pour le détail mathématique de chaque étape (formules de chroma, Krumhansl,
-> templates d'accord, softmax), voir le [README](../README.md#fondations-mathématiques).
+```mermaid
+flowchart TD
+    App["App.tsx<br/>tabs, settings state"]
+    Comp["components/<br/>views, canvas plots"]
+    Games["features/games/<br/>pure game engines + views"]
+    Hooks["hooks/<br/>useMicrophone · useTonality · useTempoAnalysis"]
+    Audio["audio/<br/>micStream · analyser · sampleCapture · worklet"]
+    Engine["analysis/engine/<br/>TonalityEngine · TempoAnalyzer"]
+    DSP["analysis/*.ts<br/>chroma · windows · key · chord · FFT · lowpass"]
+    Offline["analysis/offline/<br/>decode + frame files (Node)"]
+    Config["config/settings.ts"]
+    Utils["utils/<br/>notes · plotMath"]
 
-## Pipeline pas-à-pas
-
-### 1. Capture (`audio/micStream.ts`)
-
-`getUserMedia` est appelé avec **toutes** les contraintes de traitement audio
-désactivées (`echoCancellation`, `noiseSuppression`, `autoGainControl`). Ces
-filtres modifient le spectre de manière non-linéaire et faussent l'analyse.
-
-Le `MediaStream` est connecté à un `AudioContext` (taux d'échantillonnage natif
-du navigateur, typiquement 44 100 ou 48 000 Hz).
-
-### 2. AnalyserNode (`audio/analyser.ts`)
-
-- `fftSize = 16384` → résolution fréquentielle ≈ 2,9 Hz à 48 kHz.
-- `smoothingTimeConstant = 0` → pas de lissage interne ; on fait nos propres
-  moyennes plus tard.
-- Sortie : `getFloatFrequencyData(buf)` → spectre **en dB** dans `[minDecibels,
-maxDecibels]` (par défaut `[-100, -10]`).
-
-### 3. dB → magnitude linéaire (`analysis/chroma.ts`)
-
-`magnitude = 10^(dB / 20)`, avec un seuil plancher à `-90 dB`.
-
-### 4. Spectre → chroma (`analysis/chroma.ts`)
-
-Repli de chaque bin FFT dans sa classe de hauteur ; énergie sommée, puis
-L1-normalisée. Bande par défaut `[55 Hz, 5 000 Hz]`.
-
-### 5. Trois fenêtres glissantes en parallèle (`analysis/windowing.ts`)
-
-Le hook maintient **trois** `ChromaWindow` indépendantes. À chaque frame
-(10 Hz), le même chroma instantané est `push()`ed dans les trois buffers.
-
-| Fenêtre        | $T$  | $N = T \cdot 10$ | Estimateur         | Cadence visuelle utile |
-| -------------- | ---- | ---------------- | ------------------ | ---------------------- |
-| chord          | 1 s  | 10 frames        | `detectChord()`    | ~1 Hz visible          |
-| shortKey (8 s) | 8 s  | 80 frames        | `detectMajorKey()` | ~0.5 Hz visible        |
-| longKey (30 s) | 30 s | 300 frames       | `detectMajorKey()` | très stable            |
-
-### 6. Détection de tonalité (`analysis/keyDetection.ts`)
-
-**24 corrélations** Pearson : 12 contre les profils Krumhansl-Schmuckler
-**majeurs** rotés + 12 contre les profils **mineurs** rotés. Softmax conjoint
-sur les 24 scores à $\tau = 0.1$. Identique pour les deux fenêtres de tonalité.
-
-Le `detectMajorKey` historique est conservé comme wrapper : il filtre les
-12 majeurs et re-normalise les probabilités à 1, pour les callers qui ne
-veulent que les majeurs.
-
-### 7. Détection d'accord (`analysis/chordDetection.ts`)
-
-24 templates binaires (12 maj + 12 min), similarité cosinus, softmax à
-$\tau = 0.1$.
-
-### 8. Affichage (`components/`)
-
-- `ChromaView` : barres verticales 12-canaux. Une instance par chroma
-  (instantané, 1 s, 8 s, 30 s).
-- `KeyProbabilities` : top-1 + liste des 12 tonalités. Deux instances (8 s et
-  30 s).
-- `ChordView` : top-1 + liste tronquée des accords les plus probables.
-
-## Diagramme
-
-```
-┌──────────────────┐
-│  Microphone      │
-└────────┬─────────┘
-         │ MediaStream
-         ▼
-┌──────────────────┐
-│  AudioContext    │
-└────────┬─────────┘
-         │
-         ▼
-┌──────────────────┐
-│  AnalyserNode    │  fftSize 16384, smoothing 0
-└────────┬─────────┘
-         │ getFloatFrequencyData (dB, length 8192)
-         ▼
-┌──────────────────┐
-│ dbSpectrumToMag  │
-└────────┬─────────┘
-         ▼
-┌──────────────────┐
-│ spectrumToChroma │  8192 bins → 12-D chroma (instantané)
-└────────┬─────────┘
-         │  (10 Hz)
-         │
-         ├─────────────────────────────────────────┐
-         │                                         │
-         ▼                                         ▼
-┌──────────────────┐                    ┌──────────────────┐
-│ ChromaWindow 1s  │                    │ ChromaWindow 8s  │
-└────────┬─────────┘                    └────────┬─────────┘
-         │ aggregate                             │ aggregate
-         ▼                                       ▼
-┌──────────────────┐                    ┌──────────────────┐
-│  detectChord()   │                    │  detectKey()     │
-│  24 templates    │                    │ 24 keys (Pearson)│
-│  cosinus + softmx│                    │ maj+min + softmax│
-└──────────────────┘                    └──────────────────┘
-         │                                       │
-         └──────────────┐         ┌──────────────┘
-                        ▼         ▼
-                ┌──────────────────────┐
-                │ ChromaWindow 30s     │ ───► detectKey()
-                └──────────────────────┘       (idem, plus stable)
+    App --> Comp & Games & Hooks & Config
+    Comp --> Hooks & Config & DSP & Utils
+    Games --> DSP
+    Hooks --> Audio & Engine & Config
+    Engine --> DSP
+    Offline --> Engine & DSP
+    Config --> DSP
+    DSP --> Utils
 ```
 
-## Choix de paramètres
+## Data flow
 
-| Paramètre               | Valeur    | Justification                                                |
-| ----------------------- | --------- | ------------------------------------------------------------ |
-| `fftSize`               | 16384     | ~2,9 Hz/bin à 48 kHz → résout les demi-tons dès le bas grave |
-| `framesPerSecond`       | 10        | Compromis latence / charge CPU                               |
-| `chordWindowSeconds`    | 1         | Granularité musicale typique d'un accord en pop/rock         |
-| `shortKeyWindow…`       | 8         | Fenêtre réactive aux modulations                             |
-| `longKeyWindow…`        | 30        | Fenêtre stable, donne la tonalité globale                    |
-| `minFreq / maxFreq`     | 55 / 5000 | Couvre A1–D♯8                                                |
-| `temperature` (softmax) | 0.1       | Distribution piquée mais lisible                             |
-| `smoothingTimeConstant` | 0         | Le lissage temporel est fait par `ChromaWindow`              |
+One microphone session feeds two independent analysis paths.
 
-## Coût marginal des fenêtres multiples
+```mermaid
+flowchart LR
+    Mic["Microphone<br/>getUserMedia, AGC/NS/EC off"] --> Src["MediaStreamAudioSourceNode"]
+    Src --> An["AnalyserNode<br/>FFT 16384, Blackman"]
+    Src --> WL["AudioWorkletNode<br/>sample-capture"]
+    An -- "getFloatFrequencyData<br/>every 100 ms" --> TE["TonalityEngine"]
+    An -- "FFT tab only" --> NF["spectrum copy<br/>+ noise floor"]
+    WL -- "postMessage<br/>2048-sample batches" --> TA["TempoAnalyzer"]
+    TE --> UT["useTonality state"]
+    NF --> UT
+    TA -- "analyze() at 5 Hz" --> UTA["useTempoAnalysis state"]
+    UT --> Views["Detector tab · games · FFT spectrum"]
+    UTA --> Tempo["FFT tab: onset envelope, beat spectrum, BPM"]
+```
 
-Le chroma instantané est calculé **une seule fois** par frame. Chaque
-`ChromaWindow` supplémentaire ajoute :
+### 1. Microphone session (`useMicrophone`, `audio/micStream.ts`)
 
-- 1 buffer circulaire de `N × 12 × 4` octets (Float32),
-- 1 moyenne en $O(N \cdot 12)$ par aggregate (rapide : ≤ 3 600 multiplications
-  pour la fenêtre 30 s).
+`openMicrophone()` checks the environment first (secure context, `mediaDevices`,
+`AudioContext`), then calls `getUserMedia` with echo cancellation, noise suppression and
+auto gain control turned off and one channel requested. It creates the `AudioContext`,
+resumes it if suspended, and returns a `MicSource` with an idempotent `dispose()`. Any
+failure is mapped by `audio/errors.ts` to a stable code (`permission-denied`,
+`no-device`, `insecure-context`, ...) and an actionable message.
 
-Le coût dominant reste la FFT du navigateur (taillée pour 16 384 échantillons
-toutes les 100 ms).
+`useMicrophone` owns the single session shared by every tab. It is race-safe: a second
+`start()` while one is pending is ignored, and a session token makes a `stop()` or an
+unmount during the permission prompt dispose the stream as soon as it arrives (this also
+covers React StrictMode's double mount).
 
-## Étendre
+### 2. Key and chord path (`useTonality`, `TonalityEngine`)
 
-- **Accords étendus** : ajouter des entrées dans `QUALITY_INTERVALS` (par ex.
-  `dom7 : [0, 4, 7, 10]`). Le reste du pipeline est agnostique au nombre de
-  templates.
-- **Profils mineurs alternatifs** : remplacer `KRUMHANSL_MINOR_PROFILE` par
-  les profils harmonique/mélodique pour mieux capter le `#7` du jazz.
-- **Pondération harmonique (HPCP)** : avant le repli en chroma, pondérer
-  les bins par log-fréquence ou retirer les harmoniques supérieurs (HPS).
-- **AudioWorklet** : déporter la boucle `setInterval` dans un
-  `AudioWorkletNode` pour éviter de bloquer le main thread sur les longues
-  sessions.
+`useTonality(mic, options)` creates an AnalyserNode (`fftSize` 16384, smoothing 0) on the
+session and a `TonalityEngine`, then polls with `setInterval` at `framesPerSecond`
+(10 Hz). Each tick:
+
+1. `readSpectrumDb()` fills a pre-allocated buffer with the dB spectrum.
+2. `engine.processDbSpectrum()` converts it to magnitude (−90 dB gate), folds it into a
+   chroma, pushes it into the chord, live and tonality windows, runs the high-water-mark
+   filter on the live window and pushes the resulting indicator into the presence window,
+   then returns a `TonalityFrame` (all chromas, rankings, filter state, signal level).
+3. When the FFT tab is visible (`fftEnabled`), the dB spectrum is copied and the noise
+   floor is estimated over 0–4 kHz. Other tabs skip this work.
+
+Settings changes call `engine.configure()`: windows are resized in place, keeping their
+most recent frames, so moving a slider does not reset the analysis. `reset()` clears the
+windows without closing the microphone.
+
+`TonalityEngine` has no browser dependency. The same class is driven by the offline
+pipeline (`analysis/offline/offlinePipeline.ts`) from decoded files, so the sample
+regression tests run the code that runs in the browser from the chroma onwards.
+
+### 3. Tempo path (`useTempoAnalysis`, `TempoAnalyzer`)
+
+`useTempoAnalysis` is mounted only by the FFT tab. It creates a `TempoAnalyzer` for the
+context's sample rate and calls `startSampleCapture()`:
+
+- **Preferred: AudioWorklet.** `sampleCapture.worklet.ts` runs on the audio rendering
+  thread, collects the 128-sample render quanta into 2048-sample batches
+  (`SampleBatcher`) and transfers each batch to the main thread with `postMessage`
+  (about 23 messages per second at 48 kHz). The node outputs silence and is connected to
+  the destination so the graph keeps rendering it.
+- **Fallback: AnalyserNode polling** every 20 ms. The number of new samples is measured
+  from `context.currentTime`, so late timer ticks neither drop nor duplicate audio; gaps
+  longer than the 4096-sample window (throttled tab) are filled with zeros.
+
+Every received batch goes straight into `analyzer.pushSamples()`, which updates the onset
+envelope incrementally. A 5 Hz timer calls `analyze()` (FFT of the last 8 s of envelope)
+and publishes the result. Leaving the tab unmounts the hook, which stops the capture and
+the timer.
+
+### 4. UI
+
+`App.tsx` holds the active tab and the settings (`DetectorSettings`, `FftSettings` from
+`config/settings.ts`), calls `useMicrophone` and `useTonality`, and passes slices of the
+`TonalityFrame` down:
+
+- **Detector tab:** chroma bars (instantaneous, 1 s, live, tonality), chord ranking, two
+  key rankings, presence view, and the settings panel.
+- **Chord game:** consumes `chords` (1 s window). `useConfirmedDetection` turns the noisy
+  per-frame top-1 into discrete events: a chord counts after 3 consecutive frames with a
+  score of at least 0.18.
+- **Wolf Jumper:** consumes `instantaneousChroma` (notes: argmax of the last 3 frames,
+  confirmed twice), `chords`, and `signalLevelDb` (noise gate). The game itself is a pure
+  reducer (`engine.ts`) with a seeded RNG and its own game clock, held in a small
+  external store so only the scene re-renders at display rate.
+- **FFT tab:** spectrum plot with noise floor, slope and pentatonic overlays; onset
+  envelope and beat spectrum from `useTempoAnalysis`.
+
+Plots are drawn on `<canvas>` with helpers from `utils/plotMath.ts`; long signals are
+reduced to one min/max pair per pixel column.
+
+## Threads
+
+```mermaid
+sequenceDiagram
+    participant AT as Audio thread
+    participant MT as Main thread
+    participant R as React render
+
+    loop every 128 samples (render quantum)
+        AT->>AT: AnalyserNode updates its FFT buffer
+        AT->>AT: worklet process(): batcher.push(channel)
+    end
+    AT-->>MT: postMessage(Float32Array[2048], transfer)
+    MT->>MT: TempoAnalyzer.pushSamples()
+    loop setInterval 100 ms
+        MT->>MT: getFloatFrequencyData → TonalityEngine
+        MT->>R: setFrame(TonalityFrame)
+    end
+    loop setInterval 200 ms (FFT tab)
+        MT->>MT: TempoAnalyzer.analyze()
+        MT->>R: setState(TempoFrame)
+    end
+```
+
+Only the sample capture runs on the audio thread. The AnalyserNode's FFT is computed by
+the browser; everything else (chroma, windows, detection, onset envelope, beat
+spectrum) runs on the main thread. The per-frame cost is small: one pass over 8192 bins
+plus O(12) window updates and 48 correlations of length 12 every 100 ms, and one
+4096-point FFT every 200 ms for the tempo. The trade-off is that a throttled background
+tab slows the key/chord updates; the worklet capture itself stays gapless.
+
+## Build and deployment
+
+- Vite bundles the worklet as a separate file through the `?worker&url` import in
+  `audio/sampleCaptureWorkletUrl.ts`. That one-line module exists so tests can mock the
+  URL.
+- `base: "./"` makes every asset URL relative, so the same build works at the GitHub
+  Pages sub-path `/AudioLab/` and locally.
+- `deploy.yml` builds on every push to `main` and publishes `dist/` with
+  `actions/deploy-pages`.
+
+## Testing seams
+
+- `tests/helpers/fakeWebAudio.ts` fakes `AudioContext`, `AnalyserNode`,
+  `AudioWorkletNode` and `getUserMedia`, so the hooks and audio adapters are tested in
+  jsdom, including start/stop races and the worklet-to-fallback switch.
+- `tests/helpers/synth.ts` and `liveRig.ts` generate deterministic audio and emulate the
+  AnalyserNode framing, so `TonalityEngine` is tested end-to-end from samples.
+- `analysis/offline/` decodes real files in Node for the `samples` project and the
+  scripts in `scripts/`.
+
+## Extension points
+
+| To add...                        | Change                                                                                                                     |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Chord qualities (7th, sus, dim)  | Add intervals to `QUALITY_INTERVALS` and the quality to `ChordQuality` in `chordDetection.ts`; templates are built from it |
+| Other key profiles               | Replace or add entries in `KEY_PROFILES` (`keyDetection.ts`), e.g. Temperley or harmonic-minor profiles                    |
+| Harmonic weighting of the chroma | `spectrumToChroma()` in `chroma.ts`: per-bin weights or harmonic suppression before folding                                |
+| A new per-frame analysis         | A pure module in `src/analysis/`, called from `TonalityEngine.pushChroma()` and exposed in `TonalityFrame`                 |
+| A new sample-accurate analysis   | Another consumer of `startSampleCapture()` with its own engine class, mounted by the view that needs it                    |
+| A new tab or game                | A component under `src/features/` reading the hook state passed from `App.tsx`; keep the rules in a pure reducer           |
+| A new regression fixture         | Drop the file under `tests/Sample/` and assert its measured rank in `tests/samples/`                                       |
+| Re-tuning the defaults           | `npm run sweep`, then update `HIGH_WATER_MARK_DEFAULTS` / `config/settings.ts`                                             |
