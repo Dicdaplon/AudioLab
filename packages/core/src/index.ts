@@ -46,6 +46,15 @@ export {
   type HighWaterMarkOptions,
 } from "./analysis/highWaterMark";
 export { detectKeyFromPresence } from "./analysis/presenceTonality";
+export {
+  SCALES,
+  SCALE_NAMES_EN,
+  matchScales,
+  scalePitchClasses,
+  type MatchScalesOptions,
+  type ScaleDefinition,
+  type ScaleMatch,
+} from "./analysis/scales";
 export { applyHannWindow, fftInPlace, fftMagnitude } from "./analysis/fft";
 export {
   computeFftDb,
