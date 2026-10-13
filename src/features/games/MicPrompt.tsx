@@ -10,7 +10,7 @@ export function MicPrompt({ message, onStart }: MicPromptProps) {
       <p>🎤 {message}</p>
       {onStart && (
         <button type="button" className="mic-btn mic-start" onClick={onStart}>
-          Démarrer le micro
+          Start microphone
         </button>
       )}
     </div>

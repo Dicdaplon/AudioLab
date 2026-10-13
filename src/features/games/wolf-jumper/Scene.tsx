@@ -126,10 +126,10 @@ function GameOverOverlay({ store, onRestart }: SceneProps) {
       <div className="jumper-overlay-card">
         <h3>Game Over</h3>
         <p>
-          Score : <strong>{score}</strong> · Meilleur streak : <strong>{bestStreak}</strong>
+          Score: <strong>{score}</strong> · Best streak: <strong>{bestStreak}</strong>
         </p>
         <button type="button" className="mic-btn mic-start" onClick={onRestart}>
-          Rejouer
+          Play again
         </button>
       </div>
     </div>

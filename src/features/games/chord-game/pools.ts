@@ -10,11 +10,11 @@ export interface ChordPool {
 /** Chord subsets the player can practise with. */
 export const CHORD_POOLS: Record<PoolKey, ChordPool> = {
   "open-major": {
-    label: "Majeurs ouverts (guitare)",
+    label: "Open major (guitar)",
     chords: ["C", "G", "D", "A", "E", "F"],
   },
   "open-minor": {
-    label: "Mineurs ouverts (guitare)",
+    label: "Open minor (guitar)",
     chords: ["Am", "Em", "Dm"],
   },
   "open-mix": {
@@ -22,15 +22,15 @@ export const CHORD_POOLS: Record<PoolKey, ChordPool> = {
     chords: ["C", "G", "D", "A", "E", "F", "Am", "Em", "Dm"],
   },
   "all-major": {
-    label: "Tous majeurs (12)",
+    label: "All major",
     chords: CHORD_TEMPLATES.filter((c) => c.quality === "maj").map((c) => c.name),
   },
   "all-minor": {
-    label: "Tous mineurs (12)",
+    label: "All minor",
     chords: CHORD_TEMPLATES.filter((c) => c.quality === "min").map((c) => c.name),
   },
   all: {
-    label: "Tous les accords (24)",
+    label: "All chords",
     chords: CHORD_TEMPLATES.map((c) => c.name),
   },
 };

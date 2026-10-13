@@ -94,9 +94,9 @@ export interface BonusTypeDef {
 
 export const BONUS_TYPES: readonly BonusTypeDef[] = [
   { id: "hp", icon: "❤", short: "+2", color: "#ff5050", label: "+2 HP" },
-  { id: "shield", icon: "🛡", short: "7s", color: "#4cc9f0", label: "Bouclier 7 s" },
+  { id: "shield", icon: "🛡", short: "7s", color: "#4cc9f0", label: "Shield 7 s" },
   { id: "slow", icon: "🐢", short: "7s", color: "#8338ec", label: "Slow 7 s" },
-  { id: "samenote", icon: "🎯", short: "×5", color: "#ffd60a", label: "Même note ×5" },
+  { id: "samenote", icon: "🎯", short: "×5", color: "#ffd60a", label: "Same note ×5" },
 ];
 
 export function findBonusTypeDef(type: BonusType): BonusTypeDef {

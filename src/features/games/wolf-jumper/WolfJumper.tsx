@@ -73,7 +73,9 @@ export function WolfJumper({
         chordProbability={chords[0]?.probability ?? 0}
       />
 
-      {!running && <MicPrompt message="Démarre le micro pour lancer le jeu." onStart={onStart} />}
+      {!running && (
+        <MicPrompt message="Start the microphone to begin the game." onStart={onStart} />
+      )}
 
       <div className="game-actions">
         <button type="button" className="mic-btn mic-reset" onClick={reset}>
@@ -82,13 +84,12 @@ export function WolfJumper({
       </div>
 
       <p className="game-hint">
-        Joue la <strong>note</strong> sur l'obstacle pour le détruire (kill chain : toutes les notes
-        identiques sur l'écran tombent d'un coup). Les bonus dorés sont des <strong>accords</strong>{" "}
-        à jouer pour activer un effet : ❤+2, 🛡 7 s, 🐢 7 s, 🎯 5 notes identiques. La vitesse
-        augmente avec le score ({(INITIAL_TRAVEL_MS / 1000).toFixed(1)} s →{" "}
-        {(MIN_TRAVEL_MS / 1000).toFixed(1)} s). Détection note ≈ 300 ms (smoothing 3 frames + 2
-        frames de confirmation). Détection accord = top-1 sur la fenêtre 1 s + 3 frames de
-        confirmation.
+        Play the <strong>note</strong> shown on an enemy to destroy it (chain kill: every enemy with
+        the same note on screen goes down at once). Golden bonuses are <strong>chords</strong>: play
+        one to trigger its effect: ❤+2, 🛡 7 s, 🐢 7 s, 🎯 5 identical notes. Speed increases with
+        the score ({(INITIAL_TRAVEL_MS / 1000).toFixed(1)} s → {(MIN_TRAVEL_MS / 1000).toFixed(1)}{" "}
+        s). Note detection ≈ 300 ms (3-frame smoothing + 2 confirmation frames). Chord detection =
+        top-1 over the 1 s window + 3 confirmation frames.
       </p>
     </div>
   );

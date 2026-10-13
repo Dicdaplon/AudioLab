@@ -92,10 +92,10 @@ export function ChordGame({ chords, running, onStart }: ChordGameProps) {
 
   return (
     <div className="chord-game">
-      {!running && <MicPrompt message="Démarre le micro pour jouer." onStart={onStart} />}
+      {!running && <MicPrompt message="Start the microphone to play." onStart={onStart} />}
 
       <div className="game-pool">
-        <label htmlFor="pool">Banque d'accords :</label>
+        <label htmlFor="pool">Chord set:</label>
         <select id="pool" value={poolKey} onChange={(e) => changePool(e.target.value as PoolKey)}>
           {POOL_KEYS.map((key) => (
             <option key={key} value={key}>
@@ -106,19 +106,19 @@ export function ChordGame({ chords, running, onStart }: ChordGameProps) {
       </div>
 
       <div className={`game-target ${justHit ? "hit" : ""}`}>
-        <span className="game-target-label">Joue :</span>
+        <span className="game-target-label">Play:</span>
         <span className="game-target-name">{target}</span>
       </div>
 
       <div className="game-progress">
         <div className="game-progress-fill" style={{ width: `${(progress * 100).toFixed(0)}%` }} />
         <span className="game-progress-text">
-          {confirmation.count}/{CONFIRMATIONS_NEEDED} frames consécutives
+          {confirmation.count}/{CONFIRMATIONS_NEEDED} consecutive frames
         </span>
       </div>
 
       <div className="game-detected">
-        <span>Détecté : </span>
+        <span>Detected: </span>
         <span
           className={"game-detected-name " + (running && topName === target ? "match" : "no-match")}
         >
@@ -137,18 +137,18 @@ export function ChordGame({ chords, running, onStart }: ChordGameProps) {
           <span className="game-stat-value">{stats.streak}</span>
         </div>
         <div>
-          <span className="game-stat-label">Meilleur</span>
+          <span className="game-stat-label">Best</span>
           <span className="game-stat-value">{stats.bestStreak}</span>
         </div>
         <div>
-          <span className="game-stat-label">Passés</span>
+          <span className="game-stat-label">Skipped</span>
           <span className="game-stat-value">{stats.skipped}</span>
         </div>
       </div>
 
       <div className="game-actions">
         <button type="button" className="mic-btn mic-reset" onClick={skip}>
-          Passer
+          Skip
         </button>
         <button type="button" className="mic-btn mic-reset" onClick={resetScores}>
           Reset score
@@ -156,9 +156,9 @@ export function ChordGame({ chords, running, onStart }: ChordGameProps) {
       </div>
 
       <p className="game-hint">
-        Validation : l'accord ciblé doit être détecté en top-1 pendant {CONFIRMATIONS_NEEDED} frames
-        consécutives avec une probabilité ≥ {(MIN_PROBABILITY * 100).toFixed(0)}%. Tiens l'accord ≈
-        1 s pour que la fenêtre d'analyse se stabilise.
+        To validate, the target chord must be detected as top-1 for {CONFIRMATIONS_NEEDED}{" "}
+        consecutive frames with a probability ≥ {(MIN_PROBABILITY * 100).toFixed(0)}%. Hold the
+        chord for about 1 s so the analysis window can settle.
       </p>
     </div>
   );

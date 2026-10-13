@@ -38,7 +38,7 @@ export function NoiseGate({
         <div
           className={`jumper-noisegate-threshold ${gateOpen ? "open" : "closed"}`}
           style={{ left: percent(meterFraction(thresholdDb)) }}
-          title="Seuil du noise gate"
+          title="Noise gate threshold"
         />
         <span className="jumper-noisegate-current">{signalLevelDb.toFixed(0)} dB</span>
       </div>

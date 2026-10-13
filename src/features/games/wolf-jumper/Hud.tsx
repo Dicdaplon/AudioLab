@@ -44,17 +44,17 @@ export function Hud({ store }: { store: ReadableStore<GameState> }) {
             <span className="jumper-stat-value">{hud.streak}</span>
           </div>
           <div>
-            <span className="jumper-stat-label">Meilleur</span>
+            <span className="jumper-stat-label">Best</span>
             <span className="jumper-stat-value">{hud.bestStreak}</span>
           </div>
           <div>
-            <span className="jumper-stat-label">Vitesse</span>
+            <span className="jumper-stat-label">Speed</span>
             <span className="jumper-stat-value">{(travelMs / 1000).toFixed(1)}s</span>
           </div>
         </div>
 
         <div className="jumper-hp">
-          <span className="jumper-hp-label">PV</span>
+          <span className="jumper-hp-label">HP</span>
           <div className="jumper-hp-hearts">
             {Array.from({ length: MAX_HP }, (_, i) => (
               <span key={i} className={i < hud.hp ? "heart full" : "heart empty"}>
@@ -85,7 +85,7 @@ export function Hud({ store }: { store: ReadableStore<GameState> }) {
           </div>
         )}
         {!shieldOn && !slowOn && hud.sameNoteRemaining === 0 && (
-          <div className="jumper-effect placeholder">aucun effet actif</div>
+          <div className="jumper-effect placeholder">no active effect</div>
         )}
       </div>
     </>
@@ -111,13 +111,13 @@ export function DetectionStatus({
   return (
     <div className="jumper-status">
       <div className="jumper-status-row">
-        <span className="jumper-status-label">Note détectée :</span>
+        <span className="jumper-status-label">Detected note:</span>
         <span className="jumper-status-detected">{gateOpen ? noteName : "—"}</span>
         <span className="jumper-status-energy">({(noteEnergy * 100).toFixed(0)}%)</span>
-        <span className="jumper-status-label">| Accord :</span>
+        <span className="jumper-status-label">| Chord:</span>
         <span className="jumper-status-detected">{gateOpen ? chordName : "—"}</span>
         <span className="jumper-status-energy">({(chordProbability * 100).toFixed(0)}%)</span>
-        {!gateOpen && <span className="jumper-status-gated">[gate fermé]</span>}
+        {!gateOpen && <span className="jumper-status-gated">[gate closed]</span>}
       </div>
     </div>
   );
