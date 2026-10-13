@@ -130,7 +130,7 @@ function EnemySprite({ enemy }: { enemy: Enemy }) {
           top: GROUND_Y - ENEMY_SIZE + enemy.laneY,
           width: ENEMY_SIZE,
           height: ENEMY_SIZE,
-          "--pc": `var(--viz-pc-${enemy.pc})`,
+          "--pc": `var(--al-viz-pc-${enemy.pc})`,
         } as CSSProperties
       }
     >

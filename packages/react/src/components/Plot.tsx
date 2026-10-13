@@ -6,7 +6,7 @@ export interface LegendItem {
   label: string;
   /** "line" (solid) or "dash". */
   kind: "line" | "dash";
-  /** A CSS colour, usually a var(--viz-*) reference. */
+  /** A CSS colour, usually a var(--al-viz-*) reference. */
   colour: string;
 }
 

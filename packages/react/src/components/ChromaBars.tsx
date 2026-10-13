@@ -56,7 +56,7 @@ export function ChromaBars({
         const v = Math.min(1, Math.max(0, (values[i] ?? 0) / scale));
         const style = {
           "--v": v.toFixed(3),
-          "--pc": `var(--viz-pc-${i})`,
+          "--pc": `var(--al-viz-pc-${i})`,
         } as CSSProperties;
         return (
           <div

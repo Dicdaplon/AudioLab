@@ -90,7 +90,7 @@ export function Hud({ store }: { store: ReadableStore<GameState> }) {
             <li
               className="al-badge al-badge--effect"
               data-type="samenote"
-              style={{ "--pc": `var(--viz-pc-${sameNote.pc})` } as CSSProperties}
+              style={{ "--pc": `var(--al-viz-pc-${sameNote.pc})` } as CSSProperties}
             >
               <Icon name="target" size={14} />
               Same note {sameNote.name} <span className="al-num">×{hud.sameNoteRemaining}</span>
