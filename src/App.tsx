@@ -3,15 +3,11 @@ import { useMemo, useState } from "react";
 import { checkMicrophoneSupport } from "./audio/errors";
 import { Brand } from "./components/Brand";
 import { ChordGame } from "./features/games/chord-game/ChordGame";
-import { ChordView } from "./components/ChordView";
-import { ChromaView } from "./components/ChromaView";
-import { KeyProbabilities } from "./components/KeyProbabilities";
+import { DetectorTab } from "./components/DetectorTab";
 import { MicNotice } from "./components/MicNotice";
 import { MicTransport, type MicState } from "./components/MicTransport";
-import { SettingsPanel } from "./components/SettingsPanel";
 import { TabBar, type TabDef } from "./components/TabBar";
 import { ThemeToggle } from "./components/ThemeToggle";
-import { ToneBaseTonalityView } from "./components/ToneBaseTonalityView";
 import { WolfJumper } from "./features/games/wolf-jumper/WolfJumper";
 import { FftTab } from "./components/FftTab";
 import {
@@ -39,6 +35,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>("detector");
   const [settings, setSettings] = useState<DetectorSettings>(DEFAULT_DETECTOR_SETTINGS);
   const [fftSettings, setFftSettings] = useState<FftSettings>(DEFAULT_FFT_SETTINGS);
+  const [colourByPitch, setColourByPitch] = useState(false);
 
   // Environment check (secure context, getUserMedia, AudioContext): once.
   const unsupported = useMemo(() => checkMicrophoneSupport(), []);
@@ -104,62 +101,13 @@ export default function App() {
           tabIndex={-1}
         >
           {tab === "detector" && (
-            <>
-              <SettingsPanel
-                settings={settings}
-                onChange={setSettings}
-                currentThreshold={tonality.filterThreshold}
-                lastPeak={tonality.filterLastPeak}
-              />
-
-              <section className="chroma-panels">
-                <ChromaView title="Instantaneous chroma" chroma={tonality.instantaneousChroma} />
-                <ChromaView
-                  title={`Chord window (${ANALYSIS_DEFAULTS.chordWindowSeconds}s)`}
-                  chroma={tonality.chordChroma}
-                />
-                <ChromaView
-                  title={`Live acquisition (${settings.liveAcquisitionSeconds}s)`}
-                  chroma={tonality.liveAcquisitionChroma}
-                />
-                <ChromaView
-                  title={`Tonality acquisition (${settings.tonalityAcquisitionSeconds}s)`}
-                  chroma={tonality.tonalityAcquisitionChroma}
-                />
-              </section>
-
-              <section className="result-panels">
-                <ChordView
-                  chords={tonality.chords}
-                  windowSeconds={ANALYSIS_DEFAULTS.chordWindowSeconds}
-                  topN={6}
-                />
-                <KeyProbabilities
-                  label="Live acquisition"
-                  keys={tonality.liveKeys}
-                  windowSeconds={settings.liveAcquisitionSeconds}
-                  topN={5}
-                />
-                <KeyProbabilities
-                  label="Tonality acquisition"
-                  keys={tonality.tonalityKeys}
-                  windowSeconds={settings.tonalityAcquisitionSeconds}
-                  topN={5}
-                />
-              </section>
-
-              <section className="tone-base-section">
-                <ToneBaseTonalityView
-                  presence={tonality.presenceHistogram}
-                  filteredLiveChroma={tonality.filteredLiveChroma}
-                  presenceIndicator={tonality.presenceIndicator}
-                  keys={tonality.presenceKeys}
-                  liveSeconds={settings.liveAcquisitionSeconds}
-                  tonalitySeconds={settings.tonalityAcquisitionSeconds}
-                  topN={6}
-                />
-              </section>
-            </>
+            <DetectorTab
+              data={tonality}
+              settings={settings}
+              onSettingsChange={setSettings}
+              colourByPitch={colourByPitch}
+              onColourByPitchChange={setColourByPitch}
+            />
           )}
 
           {tab === "game" && (

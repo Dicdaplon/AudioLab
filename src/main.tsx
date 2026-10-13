@@ -7,6 +7,8 @@ import "./styles/base.css";
 import "./styles/shell.css";
 import "./styles/controls.css";
 import "./styles/panel.css";
+import "./styles/readouts.css";
+import "./styles/layout.css";
 
 const rootEl = document.getElementById("root");
 if (!rootEl) throw new Error("missing #root element");

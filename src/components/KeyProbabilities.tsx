@@ -1,61 +1,30 @@
 import type { KeyScore } from "../analysis/keyDetection";
+import { keyRows } from "../ui/rankRows";
+import { Panel } from "./Panel";
+import { RankList } from "./RankList";
 
 interface KeyProbabilitiesProps {
   keys: KeyScore[];
   windowSeconds: number;
-  /** How many ranked keys to list under the top one. Default 12 (all). */
+  /** How many ranked keys to list. Default 12. */
   topN?: number;
-  /** Optional display label, e.g. "Live acquisition" or "Tonality acquisition". */
-  label?: string;
+  /** Panel title, e.g. "Live key candidates". */
+  title: string;
 }
 
-export function KeyProbabilities({
-  keys,
-  windowSeconds,
-  topN = 12,
-  label = "Tonalité",
-}: KeyProbabilitiesProps) {
-  if (keys.length === 0) {
-    return (
-      <div className="key-probs empty">
-        <h3>
-          {label} ({windowSeconds}s)
-        </h3>
-        <p>En attente du signal…</p>
-      </div>
-    );
-  }
-  const top = keys[0];
-  const rest = keys.slice(0, topN);
+/** Ranked key candidates of one acquisition window. */
+export function KeyProbabilities({ keys, windowSeconds, topN = 12, title }: KeyProbabilitiesProps) {
   return (
-    <div className="key-probs">
-      <h3>
-        {label} ({windowSeconds}s)
-      </h3>
-      <div className="key-top">
-        <span className="key-top-label">Tonalité estimée</span>
-        <span className="key-top-name">{top.name}</span>
-        <span className="key-top-prob">{(top.probability * 100).toFixed(1)}%</span>
-      </div>
-      <p className="key-list-hint">
-        Top {topN} sur 24 tonalités candidates (12 majeures + 12 mineures), classées par probabilité
-        (softmax sur la corrélation de Pearson <code>r</code>).
+    <Panel title={title} meta={`${windowSeconds} s`}>
+      {keys.length === 0 ? (
+        <p className="waiting">Waiting for signal…</p>
+      ) : (
+        <RankList rows={keyRows(keys, topN)} label={title} />
+      )}
+      <p className="hint">
+        Top {topN} of 24 candidate keys (12 major + 12 minor), ranked by probability (softmax over
+        the Pearson correlation <code>r</code> with the Krumhansl-Schmuckler profiles).
       </p>
-      <ol className="key-list">
-        {rest.map((k) => (
-          <li key={`${k.tonic}-${k.mode}`}>
-            <span className="key-name">{k.name}</span>
-            <div className="key-bar">
-              <div
-                className="key-bar-fill"
-                style={{ width: `${(k.probability * 100).toFixed(2)}%` }}
-              />
-            </div>
-            <span className="key-pct">{(k.probability * 100).toFixed(1)}%</span>
-            <span className="key-corr">r={k.correlation.toFixed(2)}</span>
-          </li>
-        ))}
-      </ol>
-    </div>
+    </Panel>
   );
 }

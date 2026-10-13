@@ -1,0 +1,288 @@
+/* =========================================================================
+   Readouts: the hero value, ranked lists, chroma bars and waiting states.
+   ========================================================================= */
+
+/* --- Waiting state ------------------------------------------------------- */
+
+.waiting {
+  font-size: var(--step--1);
+  font-style: italic;
+  color: var(--color-ink-muted);
+}
+
+/* --- Readout ------------------------------------------------------------- */
+
+.readout {
+  --readout-tint: var(--color-line-strong);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding: var(--panel-pad);
+  padding-left: calc(var(--panel-pad) + 3px);
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-left: 3px solid var(--readout-tint);
+  border-radius: var(--r-3);
+  transition: border-color var(--dur-1) var(--ease-out);
+}
+
+.readout[data-mode="maj"] {
+  --readout-tint: var(--viz-mode-major);
+}
+
+.readout[data-mode="min"] {
+  --readout-tint: var(--viz-mode-minor);
+}
+
+.readout__meta {
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* The one place the serif speaks. Min width so "F# minor" → "C major" does
+   not reflow the row. */
+.readout__value {
+  min-width: 6ch;
+  font-family: var(--font-voice);
+  font-size: var(--step-4);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-display);
+  color: var(--color-ink);
+  overflow-wrap: anywhere;
+}
+
+.readout__qualifier {
+  font-size: 0.5em;
+  font-style: italic;
+  font-weight: 600;
+  color: var(--readout-tint);
+}
+
+.readout__empty {
+  color: var(--color-ink-faint);
+}
+
+.readout__hint {
+  font-size: var(--step--1);
+  font-style: italic;
+  color: var(--color-ink-muted);
+}
+
+.readout__prob {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--step-1);
+  color: var(--color-ink);
+}
+
+/* Confidence: ink-muted segments; the top one is earned in the accent. */
+.readout__confidence {
+  --segments-fill: var(--color-ink-muted);
+}
+
+.readout__confidence .segments__seg:last-child[data-filled] {
+  background: var(--color-accent);
+}
+
+.readout--compact .readout__value {
+  font-size: var(--step-2);
+}
+
+.readout--compact .readout__prob {
+  font-size: var(--step-0);
+}
+
+/* --- Ranked list --------------------------------------------------------- */
+
+.ranklist {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ranklist__row {
+  --ranklist-tint: var(--color-ink-muted);
+  display: grid;
+  grid-template-columns: 4.5rem 1fr 3.5rem 3.5rem;
+  gap: var(--sp-2);
+  align-items: center;
+  min-height: 24px;
+  font-size: var(--step--1);
+  color: var(--color-ink-muted);
+}
+
+@media (min-width: 480px) {
+  .ranklist__row {
+    grid-template-columns: minmax(5.5rem, 7rem) 1fr 4.5rem 4.5rem;
+    gap: var(--sp-3);
+  }
+}
+
+.ranklist__row[data-mode="maj"] {
+  --ranklist-tint: var(--viz-mode-major);
+}
+
+.ranklist__row[data-mode="min"] {
+  --ranklist-tint: var(--viz-mode-minor);
+}
+
+.ranklist__row[aria-current="true"] .ranklist__name {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+.ranklist__name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ranklist__bar {
+  display: block;
+  height: 6px;
+  border-radius: var(--r-1);
+  background: var(--color-sunken);
+  overflow: hidden;
+}
+
+.ranklist__fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-1);
+  background: var(--ranklist-tint);
+  transition: width var(--dur-live) linear;
+}
+
+.ranklist__pct {
+  text-align: right;
+  color: var(--color-ink);
+}
+
+.ranklist__stat {
+  text-align: right;
+  font-size: var(--step--2);
+}
+
+/* --- Chroma bars --------------------------------------------------------- */
+
+.chroma {
+  --chroma-h: 112px;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 3px;
+  width: 100%;
+  min-width: 0;
+}
+
+.chroma__bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+/* The track is the bed with a 1 px baseline; the fill grows from it. */
+.chroma__track {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: var(--chroma-h);
+  box-shadow: inset 0 -1px 0 var(--viz-grid-strong);
+}
+
+.chroma__fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(var(--v) * 100%);
+  min-height: 1px;
+  border-radius: var(--r-1) var(--r-1) 0 0;
+  background: var(--chroma-colour);
+  transition: height var(--dur-live) linear;
+}
+
+.chroma[data-colour="single"] .chroma__bar {
+  --chroma-colour: color-mix(in srgb, var(--viz-signal) 85%, transparent);
+}
+
+.chroma[data-colour="single"] .chroma__bar[data-max] {
+  --chroma-colour: var(--viz-signal-strong);
+}
+
+/* Legal because the note name sits under every bar. */
+.chroma[data-colour="pitch"] .chroma__bar {
+  --chroma-colour: var(--pc);
+}
+
+/* On/off slots keep an outline so the twelve positions stay visible. */
+.chroma--binary .chroma__track {
+  box-shadow: inset 0 0 0 1px var(--color-line-strong);
+}
+
+.chroma__label {
+  padding-top: var(--sp-1);
+  font-family: var(--font-mono);
+  font-size: var(--step--3);
+  line-height: 1.2;
+  color: var(--color-ink-muted);
+}
+
+.chroma__bar[data-sharp] .chroma__label {
+  font-weight: 500;
+}
+
+.chroma__bar[data-tonic] .chroma__label {
+  color: var(--color-ink);
+  font-weight: 600;
+  box-shadow: inset 0 -2px 0 var(--color-accent);
+}
+
+@media (max-width: 479px) {
+  .chroma {
+    --chroma-h: 96px;
+    gap: 2px;
+  }
+}
+
+/* A chroma block with a surtitre caption, used inside a wider panel. */
+.chroma-figure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding: var(--sp-3);
+  background: var(--color-bed);
+  border: 1px solid var(--color-line);
+  border-radius: var(--r-2);
+}
+
+/* --- Presence tonality panel -------------------------------------------- */
+
+.tonebase__bars {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 720px) {
+  .tonebase__bars {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.tonebase__result {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-3);
+  align-items: start;
+}
+
+@media (min-width: 720px) {
+  .tonebase__result {
+    grid-template-columns: minmax(12rem, 1fr) 2fr;
+  }
+}

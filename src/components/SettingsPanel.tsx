@@ -2,7 +2,7 @@ import { memo } from "react";
 
 import { HIGH_WATER_MARK_MEMORY_MAX, HIGH_WATER_MARK_MEMORY_MIN } from "../analysis/highWaterMark";
 import type { DetectorSettings } from "../config/settings";
-import { RangeField, SelectField } from "./Field";
+import { RangeField, SelectField, Switch } from "./Field";
 import { Panel } from "./Panel";
 
 interface SettingsPanelProps {
@@ -12,6 +12,9 @@ interface SettingsPanelProps {
   currentThreshold?: number;
   /** Last observed peak value (informational). */
   lastPeak?: number;
+  /** Colour the chroma bars by pitch class instead of magnitude. */
+  colourByPitch: boolean;
+  onColourByPitchChange: (value: boolean) => void;
 }
 
 export const SettingsPanel = memo(function SettingsPanel({
@@ -19,6 +22,8 @@ export const SettingsPanel = memo(function SettingsPanel({
   onChange,
   currentThreshold = 0,
   lastPeak = 0,
+  colourByPitch,
+  onColourByPitchChange,
 }: SettingsPanelProps) {
   const update = (patch: Partial<DetectorSettings>): void => {
     onChange({ ...settings, ...patch });
@@ -86,6 +91,10 @@ export const SettingsPanel = memo(function SettingsPanel({
           <dd className="stat__value">{lastPeak.toFixed(4)}</dd>
         </div>
       </dl>
+
+      <Switch id="colour-by-pitch" checked={colourByPitch} onChange={onColourByPitchChange}>
+        Colour chroma bars by pitch class
+      </Switch>
 
       <p className="hint">
         The presence filter keeps only the chroma bins above a fraction (the tolerance) of the

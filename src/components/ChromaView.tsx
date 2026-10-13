@@ -1,27 +1,19 @@
-import { NOTE_NAMES } from "../utils/notes";
+import { ChromaBars } from "./ChromaBars";
+import { Panel } from "./Panel";
 
 interface ChromaViewProps {
   chroma: Float32Array;
-  title?: string;
+  title: string;
+  /** Mono annotation, e.g. "8 s". */
+  meta?: string;
+  colourByPitch?: boolean;
 }
 
-export function ChromaView({ chroma, title }: ChromaViewProps) {
-  const max = Math.max(1e-9, ...Array.from(chroma));
+/** One chroma window in a bed panel. */
+export function ChromaView({ chroma, title, meta, colourByPitch }: ChromaViewProps) {
   return (
-    <div className="chroma-view">
-      {title && <h3>{title}</h3>}
-      <div className="chroma-bars">
-        {NOTE_NAMES.map((name, i) => {
-          const value = chroma[i] ?? 0;
-          const height = Math.round((value / max) * 100);
-          return (
-            <div key={name} className="chroma-bar">
-              <div className="chroma-bar-fill" style={{ height: `${height}%` }} />
-              <span className="chroma-bar-label">{name}</span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+    <Panel title={title} meta={meta} className="panel--bed">
+      <ChromaBars values={chroma} label={title} colourByPitch={colourByPitch} />
+    </Panel>
   );
 }
