@@ -5,8 +5,8 @@ React hooks, components, canvas plots and ear-training games on top of
 [AudioLab](https://github.com/Dicdaplon/AudioLab) — see it live at
 <https://dicdaplon.github.io/AudioLab/>.
 
-> Not published on npm yet. Until the first release, install from local tarballs or
-> `file:` paths: see [docs/INTEGRATION.md](../../docs/INTEGRATION.md#6-developing-across-the-two-repositories).
+> Not published on npm yet. Until the first release, `npm pack` the packages into the
+> host's vendor folder: see [docs/INTEGRATION.md](../../docs/INTEGRATION.md#8-developing-across-the-two-repositories).
 
 ```bash
 npm install @audiolab/react @audiolab/core
@@ -58,18 +58,19 @@ export function KeyFinder() {
 
 ## API overview
 
-| Group    | Exports                                                                                                                                                                                                                                          |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Root     | `LoupeRoot` (renders the `.loupe` element every token and plot colour hangs on; `as`, `className` and any HTML attribute), `useLoupeRoot`, `LOUPE_ROOT_CLASS`                                                                                    |
-| Hooks    | `useMicrophone` → `{ mic, running, starting, error, unsupported, start, stop }`; `useTonality(mic, options)` → the `TonalityFrame` fields plus `fft` and `reset`; `useTempoAnalysis(mic, options)`; `useConfirmedDetection` / `stepConfirmation` |
-| Detector | `DetectorTab` (the whole bench), `Readout`, `RankList`, `ChromaBars`, `ChromaView`, `ChordView`, `KeyProbabilities`, `ToneBaseTonalityView`, `SettingsPanel`, `SettingsRail`, `Panel`, `Segments`                                                |
-| FFT      | `FftTab`, `FftSettingsPanel`, `SpectrumPlot`, `TempoPlot`, `TimeSignalPlot`, `PlotFigure`                                                                                                                                                        |
-| Controls | `RangeField`, `SelectField`, `Switch`, `Icon`, `MicTransport`, `MicNotice`, `MicPrompt`, `TabBar` (+ `tabId` / `panelId`), `ThemeToggle`                                                                                                         |
-| Games    | `ChordGame`, `WolfJumper`                                                                                                                                                                                                                        |
-| Theme    | `applyTheme`, `resolveTheme`, `readStoredTheme`, `systemTheme`, `isTheme`, `THEME_STORAGE_KEY`; `useVizTheme` / `readVizTheme` / `DEFAULT_VIZ_THEME` (canvas colours); `useMediaQuery`, `BREAKPOINTS`; `chordRows`, `keyRows`, `splitKeyName`    |
+| Group    | Exports                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Root     | `LoupeRoot` (renders the `.loupe` element every token and plot colour hangs on; `as`, `className` and any HTML attribute), `useLoupeRoot`, `LOUPE_ROOT_CLASS`                                                                                                                                                                                                                                                                          |
+| Hooks    | `useMicrophone({ context?, stream? })` → `{ mic, running, starting, error, unsupported, start, stop }` (a host-owned context is never closed); `useTonality(mic, options)` → the `TonalityFrame` fields plus `fft` and `reset`; `useTempoAnalysis(mic, options)`; `usePitch(mic, { referenceA4?, updatesPerSecond? })` → `{ estimate, captureMethod }` for a tuner; `useConfirmedDetection` (`stepConfirmation` re-exported from core) |
+| Detector | `DetectorTab` (the whole bench), `Readout`, `RankList`, `ChromaBars`, `ChromaView`, `ChordView`, `KeyProbabilities`, `ToneBaseTonalityView`, `SettingsPanel`, `SettingsRail`, `Panel`, `Segments`                                                                                                                                                                                                                                      |
+| FFT      | `FftTab`, `FftSettingsPanel`, `SpectrumPlot`, `TempoPlot`, `TimeSignalPlot`, `PlotFigure`                                                                                                                                                                                                                                                                                                                                              |
+| Controls | `RangeField`, `SelectField`, `Switch`, `Icon`, `MicTransport`, `MicNotice`, `MicPrompt`, `TabBar` (+ `tabId` / `panelId`), `ThemeToggle`                                                                                                                                                                                                                                                                                               |
+| Games    | `ChordGame` (`confirmations`, `minProbability`), `WolfJumper` (`config`: note pool, bonus chords, speeds, health; `detection`), `CHORD_POOL_LABELS_EN`, `bonusTypeLabels`; the engines themselves are in `@audiolab/core/games`                                                                                                                                                                                                        |
+| Theme    | `applyTheme`, `resolveTheme`, `readStoredTheme`, `systemTheme`, `isTheme`, `THEME_STORAGE_KEY`; `useVizTheme` / `readVizTheme` / `DEFAULT_VIZ_THEME` (canvas colours); `useMediaQuery`, `BREAKPOINTS`; `chordRows`, `keyRows`, `splitKeyName`                                                                                                                                                                                          |
 
 Prop types are reachable through `React.ComponentProps<typeof DetectorTab>`. Internals
-(canvas helpers, the game engines and stores, pools) are not exported.
+(canvas helpers, stores) are not exported; the game engines, pools and the confirmation
+step live in `@audiolab/core/games` so a host can build its own UI on them.
 
 ## Styling and theming
 

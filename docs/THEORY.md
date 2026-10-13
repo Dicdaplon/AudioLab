@@ -17,8 +17,10 @@ Contents:
 8. [FFT tab: spectrum view](#8-fft-tab-spectrum-view)
 9. [FFT tab: tempo analysis](#9-fft-tab-tempo-analysis)
 10. [Offline pipeline vs live path](#10-offline-pipeline-vs-live-path)
-11. [Limitations and ideas](#11-limitations-and-ideas)
-12. [References](#12-references)
+11. [Pitch detection (McLeod pitch method)](#11-pitch-detection-mcleod-pitch-method)
+12. [Scale matching](#12-scale-matching)
+13. [Limitations and ideas](#13-limitations-and-ideas)
+14. [References](#14-references)
 
 ## 1. Signal path
 
@@ -389,7 +391,115 @@ those by emulating the AnalyserNode framing. Note also that window lengths are s
 seconds but the filter memory $M$ is set in frames, so $M = 3$ is 0.3 s live and about
 0.14 s in the offline sweep that chose it.
 
-## 11. Limitations and ideas
+## 11. Pitch detection (McLeod pitch method)
+
+The tuner needs one frequency, not a chroma: a 12-bin histogram cannot tell 440 from
+445 Hz, and the AnalyserNode's 2.9 Hz bins are 11 cents wide at 440 Hz. The pitch is
+read in the time domain, from the same gapless sample stream as the tempo (section 9.2),
+with the McLeod pitch method (MPM) in `analysis/pitch.ts`.
+
+**Normalised square difference.** For a window $x_0 \dots x_{W-1}$ and a lag $\tau$,
+
+$
+r(\tau) = \sum_{j=0}^{W-1-\tau} x_j\,x_{j+\tau}, \qquad
+m(\tau) = \sum_{j=0}^{W-1-\tau} \left(x_j^2 + x_{j+\tau}^2\right), \qquad
+n(\tau) = \frac{2\,r(\tau)}{m(\tau)} \in [-1, 1].
+$
+
+$n$ is the autocorrelation normalised by the energy of the two segments it compares
+(equivalently $1 - d(\tau)/m(\tau)$ with $d$ the square difference function). Unlike the
+plain autocorrelation, whose peaks shrink with the lag because fewer samples overlap and
+with a decaying note because the later segment is quieter, $n$ peaks at **1** at every
+multiple of the period for any periodic signal, whatever its envelope: a plucked string
+reads the same on the attack and in the decay. $r$ is computed with two FFTs on the
+zero-padded window ($N = 2W$: $r = \mathrm{IFFT}(|X|^2)$, and since $|X|^2$ is real and even
+a second forward FFT does the job), $m$ by the recursion
+$m(\tau+1) = m(\tau) - x_{W-1-\tau}^2 - x_\tau^2$ from $m(0) = 2\sum x_j^2$. The window
+mean is removed first so a DC offset cannot keep $n$ positive.
+
+**Peak picking.** The candidates are the local maxima of the positive lobes that follow
+the main lobe at $\tau = 0$ (a lobe still rising at the last lag is not a candidate: its
+period is beyond the search range). Let $n_{\max}$ be the highest; the pitch is the
+**first** candidate with $n(\tau) \ge k\,n_{\max}$, $k = 0.9$. Taking the first peak above
+a fraction of the best, rather than the best, is what removes the octave-too-low error:
+the peak at $2\tau_0$ is as high as the one at $\tau_0$ for a stationary tone. A signal
+whose fundamental is weak or absent (partials 2…6 only) still peaks at $\tau_0$, because
+the partials are periodic with the fundamental's period and only partially constructive
+at $\tau_0/2$ ($n(\tau_0/2) \approx 0.26$ for $1/k$ amplitudes, well under $k$). The
+estimate is dropped when the chosen peak's value, the **clarity**, is below 0.8 (noise,
+chords), when the window RMS is below −60 dBFS (silence) or when the lag is outside
+$[f_s/f_{\max}, f_s/f_{\min}]$.
+
+**Sub-sample precision.** The integer peak $\tau$ is refined by the vertex of the parabola
+through $(a, b, c) = (n(\tau-1), n(\tau), n(\tau+1))$:
+
+$
+\delta = \frac{a - c}{2\,(a - 2b + c)}, \qquad \hat\tau = \tau + \delta .
+$
+
+For a cosine-shaped peak of angular frequency $\omega$ sampled $d$ off its true maximum
+the bias is about $d\,(\omega d)^2 / 3$: at 1.4 kHz ($\tau_0 \approx 34$ samples at
+48 kHz, $\omega = 0.185$, $|d| \le 0.5$) that is 0.0014 samples, or 0.07 cents. Harmonic-
+rich tones have sharper peaks and a larger bias, so when the window holds several
+periods the lag is re-read at the **largest usable multiple** $K\hat\tau$ (the peak must
+be a local maximum with $n \ge 0.8$): the interpolation error in samples is the same there
+and the period is $\hat\tau_K / K$. Then $f_0 = f_s / \hat\tau$,
+$\text{midi} = 69 + 12 \log_2 (f_0 / f_{A4})$ (rounded), and the cents are the
+remainder × 100. $f_{A4}$ is configurable (440 Hz by default).
+
+**Window.** 2048 samples: the lags are searched up to $W/2$, so the lowest detectable
+note is 46.9 Hz at 48 kHz (two periods in the window) and `minFrequency` is set to
+60 Hz; the hop is 1024 samples (21 ms). One analysis costs two 4096-point FFTs plus
+$O(W)$ bookkeeping, about 0.2 ms in Node.
+
+**Tracker.** `PitchTracker` keeps a ring buffer, analyses every hop and reports the
+**median** of the last three fractional MIDI values (one wrong frame cannot move the
+reading), `null` when fewer than two of the three are valid (silence drops the display
+within ~40 ms), and holds the current note name until the pitch is more than
+50 + 10 cents away from it, so a quarter-tone does not make the name flap while the
+cents still move.
+
+**Measured on synthetic signals** (the generators in `tests/helpers/synth.ts`; no
+recorded single-string fixture exists in the repository), 61 frequencies from 70 Hz to
+1.4 kHz with random detuning, at 44.1 and 48 kHz, worst case:
+
+| Signal                                                           | Max error (cents) |
+| ---------------------------------------------------------------- | ----------------- |
+| Pure sine                                                        | 0.002             |
+| Plucked-string-like (12 partials $1/k$, decaying), attack        | 0.07              |
+| Same, 600 ms into the decay                                      | 0.22              |
+| Same with stiffness $B = 10^{-5}$ ($f_k = k f_0\sqrt{1 + Bk^2}$) | 0.47              |
+| Same with $B = 2\cdot 10^{-5}$                                   | 0.93              |
+| Partials 2–6 only, or $f_0$ 30 dB down (196 Hz)                  | < 0.01            |
+
+The stiff-string rows are not detector error as such: the partials of a stiff string
+are sharp of $k f_0$, the period they agree on is shorter than $1/f_0$, and the ear hears
+that pitch too. The tests pin "< 1 cent" on every row.
+
+## 12. Scale matching
+
+`analysis/scales.ts` answers "which scales contain the notes I heard?" from the presence
+histogram of section 7 (or any 12 weights $w_p$). A pitch class is **played** when
+$w_p$ exceeds a threshold ($P$ = the played set, $|P| \ge 1$). Every scale of the list
+(intervals from the tonic) is rotated to the 12 tonics ($S$ = its pitch classes) and the
+candidates are sorted by:
+
+1. $|P \setminus S|$, the played notes **outside** the scale (0 first);
+2. $|S \setminus P|$, the scale notes **missing** from what was played;
+3. $\sum_{p \in P \cap S} w_p \big/ \sum_{p \in P} w_p$, the share of the played weight
+   inside the scale (so when two scales each exclude one heard note, the one excluding
+   the fainter note wins);
+4. the position of the scale in the list, then the tonic.
+
+Each match also carries a display score
+$s = \frac{\sum_{p \in P \cap S} w_p}{\sum_{p \in P} w_p} \cdot \frac{|P \cap S|}{|S|}$:
+1 for a scale whose notes were all heard and nothing else. The ordering is the
+lexicographic one above, not a sort on $s$. Scales that share a pitch-class set (C major
+pentatonic / A minor pentatonic, the seven modes of C major) tie on 1–3 and are listed
+in list order: the engine does not decide the tonic between relatives, the key profiles
+of section 5 do that.
+
+## 13. Limitations and ideas
 
 - **Harmonics.** No harmonic handling in the chroma: the 5th harmonic adds a major third
   (biasing minor chords towards major). A 1/octave weight or HPS-style attenuation would
@@ -403,8 +513,12 @@ seconds but the filter memory $M$ is set in frames, so $M = 3$ is 0.3 s live and
   more templates. Alternative key profiles (Temperley, harmonic minor) could be compared.
 - **Tempo.** Octave disambiguation (autocorrelation or harmonic sum), and a beat-phase
   tracker for a visual metronome.
+- **Pitch.** Monophonic by construction; a polyphonic reading would need a different
+  model. The multiples refinement assumes a steady note over the window; vibrato is
+  averaged. A recorded single-string fixture would turn the synthetic figures above into
+  a real baseline.
 
-## 12. References
+## 14. References
 
 - C. L. Krumhansl and E. J. Kessler, "Tracing the dynamic changes in perceived tonal
   organization in a spatial representation of musical keys", _Psychological Review_
@@ -414,5 +528,7 @@ seconds but the filter memory $M$ is set in frames, so $M = 3$ is 0.3 s live and
   Music", _ICMC_, 1999.
 - D. P. W. Ellis, "Beat tracking by dynamic programming", _Journal of New Music Research_
   36(1), 2007.
+- P. McLeod and G. Wyvill, "A smarter way to find pitch", _ICMC_, 2005 (the normalised
+  square difference function and its peak picking).
 - R. G. Lyons, _Understanding Digital Signal Processing_, 3rd ed., Prentice Hall, 2010
   (windows, bilinear transform).

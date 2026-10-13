@@ -1,8 +1,9 @@
 # AudioLab
 
-**Real-time audio analysis in the browser, as a reusable SDK: key and chord detection,
-spectrum and noise floor, tempo estimation and two microphone-driven ear-training games,
-built on the Web Audio API with hand-written, unit-tested DSP.**
+**Real-time audio analysis in the browser, as a reusable SDK: key, chord and pitch
+detection (a tuner), scale matching, spectrum and noise floor, tempo estimation and two
+microphone-driven ear-training games whose rules ship as pure engines, built on the Web
+Audio API with hand-written, unit-tested DSP.**
 
 [![CI](https://github.com/Dicdaplon/AudioLab/actions/workflows/ci.yml/badge.svg)](https://github.com/Dicdaplon/AudioLab/actions/workflows/ci.yml)
 [![Deploy](https://github.com/Dicdaplon/AudioLab/actions/workflows/deploy.yml/badge.svg)](https://github.com/Dicdaplon/AudioLab/actions/workflows/deploy.yml)
@@ -41,13 +42,13 @@ name of the lab and of its design system, Loupe, after l’école du loup(é)._
 This repository is an npm workspace. The analysis and the UI are split into two
 packages; the demo app only composes them. They are **not published on npm yet**: until
 the first release, install them from local tarballs or `file:` paths (see
-[docs/INTEGRATION.md](docs/INTEGRATION.md#6-developing-across-the-two-repositories)).
+[docs/INTEGRATION.md](docs/INTEGRATION.md#8-developing-across-the-two-repositories)).
 
-| Package                                       | Path             | Contents                                                                                                                                                                                    |
-| --------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`@audiolab/core`](packages/core/README.md)   | `packages/core`  | Framework-free TypeScript: DSP (chroma, key, chord, FFT, filters), `TonalityEngine`, `TempoAnalyzer`, Web Audio adapters, settings. Node-only file pipeline under `@audiolab/core/offline`. |
-| [`@audiolab/react`](packages/react/README.md) | `packages/react` | React 18/19 hooks, components, canvas plots, the chord game and Wolf Jumper, theme helpers, and the Loupe design system (`styles.css`, optional `fonts.css`). SSR-safe, `"use client"`.     |
-| `@audiolab/lab` (private)                     | `apps/lab`       | The demo above: a Vite shell (brand, tabs, theme toggle) around the SDK, deployed to GitHub Pages.                                                                                          |
+| Package                                       | Path             | Contents                                                                                                                                                                                                                                                              |
+| --------------------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`@audiolab/core`](packages/core/README.md)   | `packages/core`  | Framework-free TypeScript: DSP (chroma, key, chord, pitch, scales, FFT, filters), `TonalityEngine`, `TempoAnalyzer`, `PitchTracker`, Web Audio adapters, settings. Game engines under `@audiolab/core/games`, Node-only file pipeline under `@audiolab/core/offline`. |
+| [`@audiolab/react`](packages/react/README.md) | `packages/react` | React 18/19 hooks, components, canvas plots, the chord game and Wolf Jumper, theme helpers, and the Loupe design system (`styles.css`, optional `fonts.css`). SSR-safe, `"use client"`.                                                                               |
+| `@audiolab/lab` (private)                     | `apps/lab`       | The demo above: a Vite shell (brand, tabs, theme toggle) around the SDK, deployed to GitHub Pages.                                                                                                                                                                    |
 
 ### Quick start for consumers
 
@@ -101,17 +102,26 @@ Measured by the test suites (`npm test`, `npm run test:samples`), which pin thes
 For key detection, a minor key and its relative major share the same notes, so either is
 accepted.
 
-| Task                             | Data                                                                  | Result                                                                  |
-| -------------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Chord recognition                | Synthetic triads, all 24, across octaves and ±30 cents of detuning    | 24 / 24 top-1, probability > 0.8                                        |
-| Key detection                    | Synthetic cadences, all 24 keys                                       | 24 / 24 top-1 on the three key paths                                    |
-| Key detection, presence pipeline | 15 real recordings (guitar, FL Studio, backing tracks)                | 12 / 15 top-1, 15 / 15 top-2                                            |
-| Key detection, energy pipeline   | Same 15 recordings                                                    | 10 / 15 top-1, 13 / 15 top-2                                            |
-| Chord progressions               | 8 recordings, 1 s sliding windows                                     | the grid’s chords are the top winners in every file; 79–98 % of windows |
-| Tempo                            | Click tracks at 90, 120, 150, 180 BPM (48 kHz) and 100 BPM (44.1 kHz) | within 3 BPM; 60 BPM reads as 120 (octave error, see limitations)       |
+| Task                              | Data                                                                  | Result                                                                  |
+| --------------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Chord recognition                 | Synthetic triads, all 24, across octaves and ±30 cents of detuning    | 24 / 24 top-1, probability > 0.8                                        |
+| Key detection                     | Synthetic cadences, all 24 keys                                       | 24 / 24 top-1 on the three key paths                                    |
+| Key detection, presence pipeline  | 15 real recordings (guitar, FL Studio, backing tracks)                | 12 / 15 top-1, 15 / 15 top-2                                            |
+| Key detection, energy pipeline    | Same 15 recordings                                                    | 10 / 15 top-1, 13 / 15 top-2                                            |
+| Chord progressions                | 8 recordings, 1 s sliding windows                                     | the grid’s chords are the top winners in every file; 79–98 % of windows |
+| Tempo                             | Click tracks at 90, 120, 150, 180 BPM (48 kHz) and 100 BPM (44.1 kHz) | within 3 BPM; 60 BPM reads as 120 (octave error, see limitations)       |
+| Pitch (tuner), pure tones         | 61 sines from 70 Hz to 1.4 kHz, ±15 cents detuning, 44.1 and 48 kHz   | max error 0.002 cents, clarity 1.00                                     |
+| Pitch, plucked-string-like tones  | Same sweep, 12 decaying partials, on the attack and 600 ms later      | max error 0.07 cents (attack), 0.22 cents (decayed)                     |
+| Pitch, stiff strings              | Same, inharmonicity B = 1e-5 and 2e-5                                 | max error 0.47 and 0.93 cents (the stretched partials pull the period)  |
+| Pitch, weak / missing fundamental | Partials 2–6 only, or the fundamental 30 dB down (196 Hz)             | right octave, error < 0.01 cents                                        |
+| Pitch, silence / white noise      | Zeros, −60 dBFS tone, uniform noise                                   | null (no reading)                                                       |
+| Scale matching                    | C D E G A                                                             | C major pentatonic and A minor pentatonic first, then A blues           |
 
 The recordings are a small, personal set: these numbers are regression baselines, not a
-benchmark.
+benchmark. The pitch figures are measured on **synthetic** signals (the generators in
+`packages/core/tests/helpers/synth.ts`; the tests pin "< 1 cent", the maxima above come
+from a 61-point sweep with the same generators): the repository holds no recorded
+single-string fixture.
 
 ## Features
 
@@ -122,6 +132,14 @@ benchmark.
   ranked against the same key profiles.
 - **Chord detection.** 24 major/minor triad templates scored by cosine similarity on a
   1 s chroma window.
+- **Tuner.** McLeod pitch method on 2048-sample windows from the gapless sample capture:
+  note, octave, cents against a configurable A4, clarity; median smoothing and a
+  note-name hysteresis in `PitchTracker`.
+- **Scale finder.** `matchScales` ranks twelve built-in scales (and any caller-provided
+  interval list) on every tonic against the presence histogram, with the missing and
+  outside notes.
+- **Host-owned audio.** `openMicrophone({ context, stream })` works on the host's
+  `AudioContext` (Tone.js) and never closes what it did not create.
 - **Spectrum view.** AnalyserNode magnitude spectrum (0–4 kHz) with a noise-floor
   estimate (median, mean or 80th percentile), an optional slope overlay and A minor
   pentatonic reference lines.
@@ -132,6 +150,9 @@ benchmark.
   over several frames. Six chord pools, from open guitar chords to all 24 triads.
 - **Wolf Jumper.** A small arcade game: play the note shown on an incoming enemy to
   destroy it, play chords to collect bonuses. Includes an adjustable noise gate.
+- **Game engines as pure modules.** `@audiolab/core/games` holds the reducers, pools and
+  confirmation logic of both games, keyed by pitch classes and chord references rather
+  than labels, with a configurable Wolf Jumper (note pool, bonus chords, speeds, health).
 
 ## How it works
 
@@ -139,8 +160,9 @@ benchmark.
 Microphone ─► MediaStreamAudioSourceNode ─┬─► AnalyserNode (FFT 16384, Blackman, dB) ── polled at 10 Hz
                                           │      ├─► TonalityEngine ─► chroma ─► windows ─► keys / chords / presence
                                           │      └─► spectrum + noise floor             (FFT tab only)
-                                          └─► AudioWorklet "sample-capture"             (FFT tab only)
-                                                 └─► TempoAnalyzer ─► onset envelope ─► beat spectrum ─► BPM
+                                          └─► AudioWorklet "sample-capture"             (FFT and Tuner tabs)
+                                                 ├─► TempoAnalyzer ─► onset envelope ─► beat spectrum ─► BPM
+                                                 └─► PitchTracker ─► NSDF (MPM) ─► note, cents, clarity
 ```
 
 **Capture.** `getUserMedia` opens a mono stream with echo cancellation, noise
@@ -169,6 +191,16 @@ smoothed by a 4th-order Butterworth lowpass, decimated to about 94 Hz, and analy
 over 8 s with a zero-padded FFT. The peak of the spectrum, weighted by a log-Gaussian
 tempo prior centred on 120 BPM, gives the estimate.
 
+**Pitch.** The tuner reads the same sample stream: every 1024 samples the last 2048 go
+through the McLeod pitch method (normalised square difference function via two FFTs,
+first key maximum above 90 % of the highest, parabolic interpolation refined at the
+largest usable multiple of the lag). A median over three frames and a note-name
+hysteresis at ±60 cents keep the display steady; silence and noise read as nothing.
+
+**Scales.** The presence histogram (which pitch classes were there over 30 s) is matched
+against scale templates on every tonic, ranked by inclusion: no played note outside the
+scale first, then the fewest unplayed scale notes, then the weight inside the scale.
+
 Deep dives: [docs/THEORY.md](docs/THEORY.md) (the maths and DSP decisions, with
 numbers), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (package boundaries, layers,
 data flow, threads, extension points) and [docs/INTEGRATION.md](docs/INTEGRATION.md)
@@ -176,17 +208,17 @@ data flow, threads, extension points) and [docs/INTEGRATION.md](docs/INTEGRATION
 
 ## Tech stack
 
-| Area     | Choice                                                                                               |
-| -------- | ---------------------------------------------------------------------------------------------------- |
-| UI       | React 19 in the lab (SDK peer range `^18.2 \|\| ^19`), plain CSS, canvas plots (no chart library)    |
-| Language | TypeScript (strict), ES modules                                                                      |
-| Packages | npm workspaces, tsup (ESM + `.d.ts`), export maps, Changesets, publint + arethetypeswrong in CI      |
-| Build    | Vite 5 for the lab (`base: "./"` for Pages); the AudioWorklet is bundled to a string and Blob-loaded |
-| Audio    | Web Audio API: `getUserMedia`, `AnalyserNode`, `AudioWorkletNode`                                    |
-| DSP      | Hand-written: radix-2 FFT, chroma, Butterworth biquads, key/chord scoring (no DSP deps)              |
-| Tests    | Vitest 2 (unit / dom / samples projects), Testing Library, jsdom, v8 coverage                        |
-| Quality  | ESLint 9 (typescript-eslint, react-hooks, package-boundary rules), Prettier                          |
-| CI/CD    | GitHub Actions: checks + coverage + package checks, sample regression suite, GitHub Pages deploy     |
+| Area     | Choice                                                                                                      |
+| -------- | ----------------------------------------------------------------------------------------------------------- |
+| UI       | React 19 in the lab (SDK peer range `^18.2 \|\| ^19`), plain CSS, canvas plots (no chart library)           |
+| Language | TypeScript (strict), ES modules                                                                             |
+| Packages | npm workspaces, tsup (ESM + `.d.ts`), export maps (`.`, `./games`, `./offline`), Changesets, publint + attw |
+| Build    | Vite 5 for the lab (`base: "./"` for Pages); the AudioWorklet is bundled to a string and Blob-loaded        |
+| Audio    | Web Audio API: `getUserMedia`, `AnalyserNode`, `AudioWorkletNode`                                           |
+| DSP      | Hand-written: radix-2 FFT, chroma, Butterworth biquads, key/chord scoring, MPM pitch (no DSP deps)          |
+| Tests    | Vitest 2 (unit / dom / samples projects), Testing Library, jsdom, v8 coverage                               |
+| Quality  | ESLint 9 (typescript-eslint, react-hooks, package-boundary rules), Prettier                                 |
+| CI/CD    | GitHub Actions: checks + coverage + package checks, sample regression suite, GitHub Pages deploy            |
 
 The packages have no runtime dependencies besides `react` / `react-dom` (peers of
 `@audiolab/react`).
@@ -237,11 +269,11 @@ the permission prompt.
 The DSP lives in plain TypeScript modules with no browser dependency, so most of it is
 tested in Node against signals whose answer is known analytically.
 
-| Vitest project | Files                                      | Environment | Content                                                                                                         |
-| -------------- | ------------------------------------------ | ----------- | --------------------------------------------------------------------------------------------------------------- |
-| `unit`         | `packages/*/tests/**/*.test.ts`, `apps/*`  | Node        | DSP maths, engines, offline pipeline, audio adapters against a fake Web Audio API, game logic, server rendering |
-| `dom`          | `packages/*/tests/**/*.test.tsx`, `apps/*` | jsdom       | Hooks (start/stop races, worklet and fallback capture), components, hydration, the lab shell                    |
-| `samples`      | `packages/core/tests/samples/*.test.ts`    | Node        | Real recordings decoded from MP3/WAV and run through the shared `TonalityEngine`                                |
+| Vitest project | Files                                      | Environment | Content                                                                                                                               |
+| -------------- | ------------------------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `unit`         | `packages/*/tests/**/*.test.ts`, `apps/*`  | Node        | DSP maths, pitch and scales, engines, offline pipeline, audio adapters against a fake Web Audio API, game engines, server rendering   |
+| `dom`          | `packages/*/tests/**/*.test.tsx`, `apps/*` | jsdom       | Hooks (start/stop races, host-owned contexts, worklet and fallback capture, pitch), components, hydration, the lab shell and its tabs |
+| `samples`      | `packages/core/tests/samples/*.test.ts`    | Node        | Real recordings decoded from MP3/WAV and run through the shared `TonalityEngine`                                                      |
 
 - **Synthetic signals.** Seeded generators (`packages/core/tests/helpers/synth.ts`)
   produce tones, chords, scales and click tracks; an AnalyserNode emulation
@@ -249,26 +281,31 @@ tested in Node against signals whose answer is known analytically.
   Examples: a bin-centred sine reads 0 dB in `computeFftDb`; the Butterworth filter is
   −3.01 dB at the cutoff; click tracks at 90–180 BPM are estimated within 3 BPM; I–IV–V–I
   and i–iv–V–i cadences in all 24 keys are ranked first by all three key paths; all 24
-  triads are detected top-1.
+  triads are detected top-1; pure and plucked-string-like tones from 70 Hz to 1.4 kHz
+  are read within 1 cent by the pitch detector at 44.1 and 48 kHz.
 - **Real audio.** 17 fixtures (clean guitar recordings, FL Studio renders with drums and
   noise, backing-track extracts). Assertions pin the measured ranks with a small slack,
   e.g. "the 4 most frequent chords of `CAmDmG_2_1.mp3` are exactly {D, Bm, Em, A}".
 - **Package shape.** The generated worklet string is compared with a fresh bundle; every
   view is rendered with `react-dom/server` in Node and hydrated in jsdom without
   recoverable errors.
-- **Measured on the current `main`:** `npm run coverage` runs 481 tests in 48 files
-  (about 8 s); `npm run test:samples` runs 44 tests in 4 files (about 6 s).
+- **Game engines.** The Wolf Jumper reducer is tested action by action with a fixed seed;
+  a seed-1 sequence is pinned so the move of the engine to `@audiolab/core/games` (and
+  any future tuning change) is visible.
+- **Measured on the current `main`:** `npm run coverage` runs 562 tests in 54 files
+  (about 12 s); `npm run test:samples` runs 44 tests in 4 files (about 6 s).
 
 Coverage (v8, unit + dom) and the thresholds enforced in
 [`vitest.config.ts`](vitest.config.ts):
 
 | Scope                               | Lines (measured / min) | Branches (measured / min) | Functions (measured / min) |
 | ----------------------------------- | ---------------------- | ------------------------- | -------------------------- |
-| All package and lab sources         | 98.8 % / 86 %          | 95.4 % / 92 %             | 96.9 % / 93 %              |
-| `packages/core/src/analysis`        | 99.3 % / 99 %          | 97.7 % / 97 %             | 100 % / 100 %              |
+| All package and lab sources         | 98.7 % / 86 %          | 95.8 % / 92 %             | 96.9 % / 93 %              |
+| `packages/core/src/analysis`        | 99.5 % / 99 %          | 98.3 % / 97 %             | 100 % / 100 %              |
 | `packages/core/src/analysis/engine` | 100 % / 99 %           | 97.3 % / 96 %             | 100 % / 100 %              |
 | `packages/core/src/offline`         | 100 % / 99 %           | 95.1 % / 93 %             | 100 % / 100 %              |
-| `packages/core/src/audio`           | 100 % / 99 %           | 94.5 % / 92 %             | 100 % / 100 %              |
+| `packages/core/src/audio`           | 100 % / 99 %           | 95.2 % / 92 %             | 100 % / 100 %              |
+| `packages/core/src/games`           | 100 % / —              | 100 % / —                 | 100 % / —                  |
 | `packages/react/src/hooks`          | 100 % / 99 %           | 100 % / 98 %              | 100 % / 100 %              |
 
 **CI** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs on every push to
@@ -291,9 +328,12 @@ packages/core/                @audiolab/core
 │   │   ├── chordDetection.ts 24 triad templates, cosine + softmax
 │   │   ├── highWaterMark.ts  Adaptive peak-relative threshold filter
 │   │   ├── presenceTonality.ts  Key ranking from a presence histogram
+│   │   ├── pitch.ts          MPM pitch detection (NSDF, peak picking), PitchTracker for a tuner
+│   │   ├── scales.ts         Scale definitions and matchScales (ranking by inclusion)
 │   │   ├── fft.ts · timeFft.ts · lowpass.ts · noiseFloor.ts · spectrumSlope.ts · timeBuffer.ts · math.ts
 │   │   └── engine/           TonalityEngine (per-frame pipeline), TempoAnalyzer (onset → beat spectrum → BPM)
 │   ├── audio/                Web Audio adapters: micStream, errors, analyser, sampleCapture (+ worklet, bundled string)
+│   ├── games/                `@audiolab/core/games`: Wolf Jumper reducer + config, chord game pools and scoring, confirmation, seeded RNG
 │   ├── offline/              `@audiolab/core/offline`: file decoding, framing (Node only)
 │   ├── config/settings.ts    Settings types and defaults
 │   └── utils/notes.ts        Note maths
@@ -303,13 +343,13 @@ packages/react/               @audiolab/react
 ├── src/
 │   ├── index.ts              Public API
 │   ├── LoupeRoot.tsx         The `.loupe` root and its context
-│   ├── hooks/                useMicrophone, useTonality, useTempoAnalysis
+│   ├── hooks/                useMicrophone, useTonality, useTempoAnalysis, usePitch
 │   ├── components/           Detector views, FFT tab, canvas plots, controls, transport, tabs
-│   ├── games/                Chord game and Wolf Jumper (pure engines + views), useConfirmedDetection
+│   ├── games/                Chord game and Wolf Jumper views, stores and hooks over the core engines, labels
 │   ├── ui/                   Icons, canvas helpers, viz theme, theme contract, media queries
 │   └── styles/               Loupe tokens and component styles (bundled to styles.css), fonts.css
 └── tests/                    Components, hooks, games, SSR and hydration smoke tests
-apps/lab/                     The demo app: index.html, App.tsx (shell + tabs), app.css, smoke test
+apps/lab/                     The demo app: index.html, App.tsx (shell + tabs), Tuner and Scales tabs, app.css, tests
 docs/                         ARCHITECTURE.md, THEORY.md, INTEGRATION.md
 .changeset/                   Pending release notes
 ```
@@ -329,7 +369,13 @@ docs/                         ARCHITECTURE.md, THEORY.md, INTEGRATION.md
 - **Harmonics.** The chroma has no harmonic suppression: the 5th harmonic adds a major
   third, which can push minor chords towards major.
 - **Vocabulary.** Major and minor triads only (no sevenths, sus, diminished or
-  augmented); Western 12-TET tuning with A4 = 440 Hz; mono input.
+  augmented); Western 12-TET tuning with A4 = 440 Hz (the tuner's reference is the only
+  adjustable one); mono input.
+- **Pitch detection is monophonic.** MPM reads one note at a time; chords and dense
+  noise give no estimate. A 2048-sample window reaches down to 60 Hz at 48 kHz (two
+  periods); stiff strings read a fraction of a cent sharp of their nominal fundamental.
+  Validated on synthetic tones only: no recorded single-string fixture exists in the
+  repository yet.
 - **Scores are not probabilities.** The softmax outputs rank candidates and sum to 1,
   but they are not calibrated confidences.
 - **Main-thread analysis.** The spectrum is polled with `setInterval` on the main thread;

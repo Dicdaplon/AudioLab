@@ -1,13 +1,15 @@
 # Integrating the SDK in a host application
 
 A guide for hosts like MusicalBook (Next.js 15 App Router, React 19, TypeScript): how to
-mount the AudioLab components in a page, keep the host's theme and styles intact, work
-on both repositories at once, and ship a release.
+mount the AudioLab components in a page, keep the host's theme and styles intact, share
+the host's AudioContext, build a custom UI on the engines alone, work on both
+repositories at once, and ship a release.
 
 ## 1. Install
 
-> Not published on npm yet. Until the first release, install from local tarballs or
-> `file:` paths: see [section 6](#6-developing-across-the-two-repositories).
+> Not published on npm yet. Until the first release, the official install path is
+> `npm pack` into the host's vendor folder: see
+> [section 8](#8-developing-across-the-two-repositories).
 
 ```bash
 npm install @audiolab/react @audiolab/core
@@ -166,22 +168,131 @@ Security Policy, allow `blob:` in `script-src` (or `worker-src`); otherwise the 
 falls back to AnalyserNode polling, which is fine for the detector and the games and only
 loses sample accuracy for the tempo estimate.
 
-## 6. Developing across the two repositories
+## 6. Sharing the host's AudioContext
 
-The simplest loop that reproduces exactly what npm would install:
+A page must run **one** `AudioContext`. A host that already has one (Tone.js, a synth, a
+player) passes it to the session and the SDK never creates, resumes-for-itself or closes
+a context of its own:
+
+```tsx
+"use client";
+import * as Tone from "tone";
+import { useMicrophone, usePitch } from "@audiolab/react";
+
+export function Tuner() {
+  // Tone owns the context; the SDK only connects nodes to it.
+  const microphone = useMicrophone({ context: Tone.getContext().rawContext as AudioContext });
+  const { estimate } = usePitch(microphone.mic, { referenceA4: 442 });
+  return (
+    <button onClick={() => Tone.start().then(microphone.start)}>
+      {estimate ? `${estimate.pitchClass} ${estimate.cents.toFixed(0)} cents` : "Start"}
+    </button>
+  );
+}
+```
+
+Rules, enforced by `openMicrophone` and tested:
+
+- nothing happens before the click: `start()` is the first call that touches
+  `getUserMedia`; call it (and `Tone.start()`) from a user gesture;
+- a provided context is **resumed if suspended** and **never closed**; `dispose()` /
+  `stop()` only disconnect the SDK's source node and stop the tracks the SDK acquired;
+- a provided `stream` is used as is and its tracks are never stopped;
+- `mic.ownsContext` and `mic.ownsStream` tell what the session will release.
+
+The analysis nodes (`AnalyserNode`, the sample-capture `AudioWorkletNode`) are created
+on the given context and disconnected when the hooks unmount. The worklet outputs
+silence and is connected to the destination so the graph keeps rendering it; it does
+not interfere with the host's own routing.
+
+## 7. Engines for custom UIs
+
+A host with its own look (and its own note names, "Do Ré Mi") imports `@audiolab/core`
+and `@audiolab/core/games` only. Everything the engines return is a key or a number:
+pitch classes 0–11 (C = 0), MIDI numbers, cents, `{ root, quality }` chord references,
+scale and pool ids. No English label reaches the host.
+
+**Tuner.** `usePitch(mic)` (or `PitchTracker` + `startSampleCapture` without React)
+gives `{ frequency, midi, pitchClass, cents, clarity }` or `null`; map `pitchClass` to
+your own names and draw the cents.
+
+**Scale finder.** Feed `matchScales` the `presenceHistogram` of `useTonality` (or any
+12 weights): each match carries `scaleId`, `tonic`, `missing` and `outside` pitch
+classes. Pass your own `ScaleDefinition[]` to add scales; use `SCALE_NAMES_EN` or your
+own map for labels.
+
+**Wolf Jumper.** The whole game is `gameReducer` over a `GameState` from
+`createInitialState(seed, config)`; the host owns the clock and the detector:
+
+```ts
+import {
+  createInitialState,
+  gameReducer,
+  dominantNote,
+  pushChromaFrame,
+  stepConfirmation,
+  EMPTY_CONFIRMATION,
+  chordKey,
+  parseChordKey,
+  WOLF_JUMPER_DETECTION_DEFAULTS as D,
+} from "@audiolab/core/games";
+
+let game = createInitialState(seed, { notePool: [9, 0, 2, 4, 7] }); // A minor pentatonic
+game = gameReducer(game, { type: "start" });
+
+// Animation loop (requestAnimationFrame): advance the game clock.
+game = gameReducer(game, { type: "tick", dtMs });
+
+// Detector loop (10 Hz, from TonalityEngine frames): notes and chords, debounced.
+frames = pushChromaFrame(frames, frame.instantaneousChroma, D.noteSmoothFrames);
+const note = dominantNote(frames);
+const step = stepConfirmation(noteRun, note?.pc ?? null, note?.energy ?? 0, {
+  required: D.noteConfirmations,
+  minProbability: D.minNoteEnergy,
+});
+noteRun = step.state;
+if (step.confirmed !== null) game = gameReducer(game, { type: "noteDetected", pc: step.confirmed });
+
+const top = frame.chords[0];
+const chordStep = stepConfirmation(chordRun, top ? chordKey(top) : null, top?.probability ?? 0, {
+  required: D.chordConfirmations,
+  minProbability: D.minChordProbability,
+});
+chordRun = chordStep.state;
+if (chordStep.confirmed !== null) {
+  game = gameReducer(game, { type: "chordDetected", chord: parseChordKey(chordStep.confirmed) });
+}
+```
+
+Render `game.enemies` (`pc`, `progress` 0 → 1, `laneY`, `status`), `game.bonuses`
+(`chord`, `type`), `game.hp` / `game.config.maxHp`, `game.score`; `gameReducer` returns
+the same object when nothing changed. Every tuning value (speeds, spawn rhythm, bonus
+durations, lanes) is in `WOLF_JUMPER_DEFAULTS` and overridable in `config`.
+
+**Chord game.** `pickChord(CHORD_POOLS[poolId], previous)` draws the target,
+`stepConfirmation` with `CHORD_GAME_DEFAULTS` confirms a hit when the detector's top
+chord `sameChord`s the target, `chordGameReducer` keeps score / streak / skipped.
+
+## 8. Developing across the two repositories
+
+Until the packages are on npm, this is the **official install path** and it reproduces
+exactly what npm would install:
 
 ```bash
 # in AudioLab
 npm run build:packages
 npm pack -w packages/core -w packages/react --pack-destination ../MusicalBook/web/vendor
+# prints the file names, audiolab-core-<version>.tgz and audiolab-react-<version>.tgz
+# (the packages are at 0.0.0 until the first release: audiolab-core-0.0.0.tgz)
 
 # in MusicalBook/web
-npm install ./vendor/audiolab-core-0.1.0.tgz ./vendor/audiolab-react-0.1.0.tgz
+npm install ./vendor/audiolab-core-0.0.0.tgz ./vendor/audiolab-react-0.0.0.tgz
 ```
 
-Repeat the pack / install after each SDK change. If npm keeps an old tarball (same
-version, same file name), delete `node_modules/@audiolab` and the lock entry, or bump the
-version with a changeset first.
+A host that only uses the engines installs the core tarball alone. Repeat the pack /
+install after each SDK change. If npm keeps an old tarball (same version, same file
+name), delete `node_modules/@audiolab` and the lock entry, or bump the version with a
+changeset first.
 
 For a tighter loop, `file:` dependencies on the package directories work too
 (`"@audiolab/react": "file:../../AudioLab/packages/react"`) — they install symlinks, so
@@ -195,7 +306,7 @@ same way a host does (`LoupeRoot`, the hooks, the tabs) and its production build
 the packages' `dist`. In development and in tests, the `audiolab-source` export condition
 resolves the packages to their TypeScript sources so no build step is needed.
 
-## 7. Releases
+## 9. Releases
 
 Versioning uses [Changesets](https://github.com/changesets/changesets); the two packages
 are linked and always release together.
