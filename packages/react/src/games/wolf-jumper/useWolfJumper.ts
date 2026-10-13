@@ -1,33 +1,39 @@
 "use client";
 
 /**
- * Glue between the live detector and the Wolf Jumper engine.
+ * Glue between the live detector and the Wolf Jumper engine
+ * (`@audiolab/core/games`).
  *
  *   - Owns the game store and runs the requestAnimationFrame loop, only while
  *     the mic is running and the game is not over.
- *   - NOTES: argmax of the last 3 instantaneous chromas (≈ 300 ms smoothing),
- *     confirmed 2 consecutive frames → fast and snappy.
- *   - CHORDS: top-1 of the detector's 1 s chord window, confirmed 3 frames
- *     with probability ≥ MIN_CHORD_PROB → robust.
+ *   - NOTES: argmax of the last `noteSmoothFrames` instantaneous chromas
+ *     (≈ 300 ms smoothing), confirmed `noteConfirmations` consecutive
+ *     frames → fast and snappy.
+ *   - CHORDS: top-1 of the detector's 1 s chord window, confirmed
+ *     `chordConfirmations` frames with a score ≥ `minChordProbability` → robust.
  *   - Both pipelines are gated by the noise gate (signal-level dB threshold).
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { ChordScore } from "@audiolab/core";
-import { useConfirmedDetection } from "../useConfirmedDetection";
 import {
-  CHORD_CONFIRMATIONS,
-  DEFAULT_NOISE_GATE_DB,
-  MIN_CHORD_PROB,
-  MIN_NOTE_ENERGY,
-  NOTE_CONFIRMATIONS,
-  NOTE_SMOOTH_FRAMES,
-  findNoteDef,
-} from "./constants";
-import { createInitialState, gameReducer, type GameAction, type GameState } from "./engine";
-import { dominantNote, pushChromaFrame, type DominantNote } from "./noteDetection";
-import { randomSeed } from "./rng";
+  chordKey,
+  createInitialState,
+  dominantNote,
+  gameReducer,
+  parseChordKey,
+  pushChromaFrame,
+  randomSeed,
+  WOLF_JUMPER_DETECTION_DEFAULTS,
+  type DominantNote,
+  type GameAction,
+  type GameState,
+  type WolfJumperConfig,
+  type WolfJumperDetectionConfig,
+} from "@audiolab/core/games";
+import { useConfirmedDetection } from "../useConfirmedDetection";
+import { DEFAULT_NOISE_GATE_DB } from "./constants";
 import { createStore, useStoreSelector, type Store } from "./store";
 
 export type GameStore = Store<GameState, GameAction>;
@@ -37,6 +43,10 @@ export interface WolfJumperInputs {
   chords: ChordScore[];
   running: boolean;
   signalLevelDb: number;
+  /** Game tuning (note pool, bonus chords, speeds, health, ...), read once at mount. */
+  config?: Partial<WolfJumperConfig>;
+  /** Detection tuning (smoothing, confirmations, thresholds). */
+  detection?: Partial<WolfJumperDetectionConfig>;
 }
 
 export interface WolfJumperController {
@@ -51,18 +61,29 @@ export interface WolfJumperController {
 }
 
 const selectGameOver = (s: GameState) => s.gameOver;
+const selectNotePool = (s: GameState) => s.config.notePool;
 
 export function useWolfJumper({
   instantaneousChroma,
   chords,
   running,
   signalLevelDb,
+  config,
+  detection,
 }: WolfJumperInputs): WolfJumperController {
   const [store] = useState<GameStore>(() =>
-    createStore(gameReducer, createInitialState(randomSeed())),
+    createStore(gameReducer, createInitialState(randomSeed(), config)),
   );
   const gameOver = useStoreSelector(store, selectGameOver);
+  const notePool = useStoreSelector(store, selectNotePool);
   const playing = running && !gameOver;
+  const {
+    noteSmoothFrames = WOLF_JUMPER_DETECTION_DEFAULTS.noteSmoothFrames,
+    noteConfirmations = WOLF_JUMPER_DETECTION_DEFAULTS.noteConfirmations,
+    minNoteEnergy = WOLF_JUMPER_DETECTION_DEFAULTS.minNoteEnergy,
+    chordConfirmations = WOLF_JUMPER_DETECTION_DEFAULTS.chordConfirmations,
+    minChordProbability = WOLF_JUMPER_DETECTION_DEFAULTS.minChordProbability,
+  } = detection ?? {};
 
   useAnimationFrames(
     playing,
@@ -75,15 +96,15 @@ export function useWolfJumper({
   const listening = playing && gateOpen;
 
   // --- Notes ---
-  const chromaFrames = useChromaHistory(instantaneousChroma, NOTE_SMOOTH_FRAMES);
+  const chromaFrames = useChromaHistory(instantaneousChroma, noteSmoothFrames);
   const note = useMemo(() => dominantNote(chromaFrames), [chromaFrames]);
-  const noteInPool = note !== null && findNoteDef(note.pc) !== undefined;
+  const noteInPool = note !== null && notePool.includes(note.pc);
   useConfirmedDetection({
     frame: instantaneousChroma,
     label: listening && noteInPool ? note.pc : null,
     probability: note?.energy ?? 0,
-    required: NOTE_CONFIRMATIONS,
-    minProbability: MIN_NOTE_ENERGY,
+    required: noteConfirmations,
+    minProbability: minNoteEnergy,
     onConfirm: (pc) => store.dispatch({ type: "noteDetected", pc }),
   });
 
@@ -91,11 +112,11 @@ export function useWolfJumper({
   const topChord = chords[0];
   useConfirmedDetection({
     frame: chords,
-    label: listening && topChord ? topChord.name : null,
+    label: listening && topChord ? chordKey(topChord) : null,
     probability: topChord?.probability ?? 0,
-    required: CHORD_CONFIRMATIONS,
-    minProbability: MIN_CHORD_PROB,
-    onConfirm: (name) => store.dispatch({ type: "chordDetected", name }),
+    required: chordConfirmations,
+    minProbability: minChordProbability,
+    onConfirm: (key) => store.dispatch({ type: "chordDetected", chord: parseChordKey(key) }),
   });
 
   const reset = useCallback(() => store.dispatch({ type: "reset" }), [store]);

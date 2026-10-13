@@ -3,29 +3,40 @@
 /**
  * Chord ear-training game.
  *
- * The app picks a target chord. The user plays it on their instrument.
- * Detection is considered a "hit" when the live detector reports the target
- * chord as top-1 for `CONFIRMATIONS_NEEDED` consecutive frames — that filters
- * out transient false matches during chord changes.
+ * The app picks a target chord from a pool. The user plays it on their
+ * instrument. Detection is considered a "hit" when the live detector
+ * reports the target chord as top-1 for `confirmations` consecutive frames
+ * (that filters out transient false matches during chord changes).
  *
  * Once a hit is confirmed, score / streak increment and a new (different)
- * target chord is drawn.
+ * target chord is drawn. The rules (pools, draw, scoring, confirmation)
+ * come from `@audiolab/core/games`; this file is the English UI.
  */
 
 import { useCallback, useEffect, useReducer, useState } from "react";
 
-import type { ChordScore } from "@audiolab/core";
+import { type ChordScore, chordName } from "@audiolab/core";
+import {
+  CHORD_GAME_DEFAULTS,
+  CHORD_POOLS,
+  CHORD_POOL_IDS,
+  type ChordPoolId,
+  type ChordRef,
+  chordGameReducer,
+  chordKey,
+  DEFAULT_CHORD_POOL,
+  INITIAL_CHORD_GAME_STATS,
+  pickChord,
+  sameChord,
+} from "@audiolab/core/games";
 import { SelectField } from "../../components/Field";
 import { Panel } from "../../components/Panel";
 import { Segments } from "../../components/Segments";
 import { Icon } from "../../ui/Icon";
 import { MicPrompt } from "../MicPrompt";
 import { useConfirmedDetection } from "../useConfirmedDetection";
-import { CHORD_POOLS, DEFAULT_POOL, POOL_KEYS, pickChord, type PoolKey } from "./pools";
-import { INITIAL_STATS, chordGameReducer } from "./scoring";
+import { CHORD_POOL_LABELS_EN } from "./labels";
 
-const CONFIRMATIONS_NEEDED = 3; // ~300 ms at 10 Hz on top of the 1 s chord window
-const MIN_PROBABILITY = 0.18;
 const HIT_FLASH_MS = 350;
 
 interface ChordGameProps {
@@ -35,41 +46,51 @@ interface ChordGameProps {
   running: boolean;
   /** Tells the user how to start the mic if it isn't running. */
   onStart?: () => void;
+  /** Consecutive frames needed for a hit. Default `CHORD_GAME_DEFAULTS.confirmations`. */
+  confirmations?: number;
+  /** Minimum top-1 score of a counted frame. Default `CHORD_GAME_DEFAULTS.minProbability`. */
+  minProbability?: number;
 }
 
-export function ChordGame({ chords, running, onStart }: ChordGameProps) {
-  const [poolKey, setPoolKey] = useState<PoolKey>(DEFAULT_POOL);
-  const pool = CHORD_POOLS[poolKey].chords;
+export function ChordGame({
+  chords,
+  running,
+  onStart,
+  confirmations = CHORD_GAME_DEFAULTS.confirmations,
+  minProbability = CHORD_GAME_DEFAULTS.minProbability,
+}: ChordGameProps) {
+  const [poolId, setPoolId] = useState<ChordPoolId>(DEFAULT_CHORD_POOL);
+  const pool = CHORD_POOLS[poolId];
 
   // The first target is drawn after mount: a random draw during render would
   // differ between the server and the client and break hydration.
-  const [target, setTarget] = useState("");
+  const [target, setTarget] = useState<ChordRef | null>(null);
   useEffect(() => {
     if (!target) setTarget(pickChord(pool));
   }, [pool, target]);
-  const [stats, dispatch] = useReducer(chordGameReducer, INITIAL_STATS);
+  const [stats, dispatch] = useReducer(chordGameReducer, INITIAL_CHORD_GAME_STATS);
   const [justHit, setJustHit] = useState(false);
 
   const top = chords[0];
   const topName = top?.name ?? "—";
   const topProb = top?.probability ?? 0;
-  const match = running && topName === target;
+  const match = running && top !== undefined && target !== null && sameChord(top, target);
 
   const advance = useCallback(
     (kind: "hit" | "skip") => {
       dispatch({ type: kind });
       if (kind === "hit") setJustHit(true);
-      setTarget(pickChord(pool, target));
+      setTarget(pickChord(pool, target ?? undefined));
     },
     [pool, target],
   );
 
   const confirmation = useConfirmedDetection({
     frame: chords,
-    label: running && top?.name === target ? target : null,
+    label: match ? chordKey(target) : null,
     probability: topProb,
-    required: CONFIRMATIONS_NEEDED,
-    minProbability: MIN_PROBABILITY,
+    required: confirmations,
+    minProbability,
     onConfirm: () => advance("hit"),
   });
   const { reset: resetConfirmation } = confirmation;
@@ -91,10 +112,10 @@ export function ChordGame({ chords, running, onStart }: ChordGameProps) {
     setTarget(pickChord(pool));
   };
 
-  const changePool = (key: PoolKey) => {
-    setPoolKey(key);
-    const nextPool = CHORD_POOLS[key].chords;
-    if (!nextPool.includes(target)) {
+  const changePool = (id: ChordPoolId) => {
+    setPoolId(id);
+    const nextPool = CHORD_POOLS[id];
+    if (!target || !nextPool.some((c) => sameChord(c, target))) {
       setTarget(pickChord(nextPool));
       resetConfirmation();
     }
@@ -108,12 +129,12 @@ export function ChordGame({ chords, running, onStart }: ChordGameProps) {
         <SelectField
           id="pool"
           label="Chord set"
-          value={poolKey}
-          onChange={(v) => changePool(v as PoolKey)}
+          value={poolId}
+          onChange={(v) => changePool(v as ChordPoolId)}
         >
-          {POOL_KEYS.map((key) => (
-            <option key={key} value={key}>
-              {CHORD_POOLS[key].label} ({CHORD_POOLS[key].chords.length})
+          {CHORD_POOL_IDS.map((id) => (
+            <option key={id} value={id}>
+              {CHORD_POOL_LABELS_EN[id]} ({CHORD_POOLS[id].length})
             </option>
           ))}
         </SelectField>
@@ -125,17 +146,19 @@ export function ChordGame({ chords, running, onStart }: ChordGameProps) {
           aria-label="Target chord"
         >
           <span className="al-surtitre">Play</span>
-          <strong className="al-readout__value">{target || "—"}</strong>
+          <strong className="al-readout__value">
+            {target ? chordName(target.root, target.quality) : "—"}
+          </strong>
         </div>
 
         <div className="al-game__progress">
           <Segments
-            count={CONFIRMATIONS_NEEDED}
+            count={confirmations}
             filled={confirmation.count}
-            label={`${confirmation.count} of ${CONFIRMATIONS_NEEDED} consecutive frames`}
+            label={`${confirmation.count} of ${confirmations} consecutive frames`}
           />
           <span className="al-game__progress-text al-num">
-            {confirmation.count}/{CONFIRMATIONS_NEEDED} consecutive frames
+            {confirmation.count}/{confirmations} consecutive frames
           </span>
         </div>
 
@@ -182,9 +205,9 @@ export function ChordGame({ chords, running, onStart }: ChordGameProps) {
         </div>
 
         <p className="al-hint">
-          To validate, the target chord must be detected as top-1 for {CONFIRMATIONS_NEEDED}{" "}
-          consecutive frames with a probability ≥ {(MIN_PROBABILITY * 100).toFixed(0)} %. Hold the
-          chord for about 1 s so the analysis window can settle.
+          To validate, the target chord must be detected as top-1 for {confirmations} consecutive
+          frames with a probability ≥ {(minProbability * 100).toFixed(0)} %. Hold the chord for
+          about 1 s so the analysis window can settle.
         </p>
       </Panel>
     </div>

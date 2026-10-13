@@ -3,36 +3,16 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ChordScore } from "@audiolab/core";
-import { MAX_HP } from "../../src/games/wolf-jumper/constants";
-import { dominantNote, pushChromaFrame } from "../../src/games/wolf-jumper/noteDetection";
+import { WOLF_JUMPER_DEFAULTS } from "@audiolab/core/games";
 import { useWolfJumper, type WolfJumperInputs } from "../../src/games/wolf-jumper/useWolfJumper";
+
+const MAX_HP = WOLF_JUMPER_DEFAULTS.maxHp;
 
 function chroma(pc: number, energy = 0.8): Float32Array {
   const c = new Float32Array(12).fill(0.02);
   c[pc] = energy;
   return c;
 }
-
-describe("noteDetection", () => {
-  it("keeps the last N well-formed frames", () => {
-    let h: readonly Float32Array[] = [];
-    const frames = [chroma(0), chroma(2), chroma(4), chroma(5)];
-    for (const f of frames) h = pushChromaFrame(h, f, 3);
-    expect(h).toEqual(frames.slice(1));
-    expect(pushChromaFrame(h, new Float32Array(0), 3)).toBe(h);
-  });
-
-  it("returns the strongest pitch class of the averaged frames", () => {
-    const n = dominantNote([chroma(0, 0.9), chroma(7, 0.5), chroma(7, 0.5)]);
-    expect(n?.pc).toBe(7);
-    expect(n?.energy).toBeCloseTo((0.5 + 0.5 + 0.02) / 3);
-  });
-
-  it("returns null without frames or on silence", () => {
-    expect(dominantNote([])).toBeNull();
-    expect(dominantNote([new Float32Array(12)])).toBeNull();
-  });
-});
 
 describe("useWolfJumper", () => {
   let frameCallbacks: Map<number, FrameRequestCallback>;
@@ -61,7 +41,7 @@ describe("useWolfJumper", () => {
   }
 
   const chord = (name: string, probability = 0.6): ChordScore[] => [
-    { root: 0, quality: "maj", name, similarity: 0.9, probability },
+    { root: 7, quality: "maj", name, similarity: 0.9, probability },
   ];
 
   function setup(initial: Partial<WolfJumperInputs> = {}) {
@@ -150,7 +130,7 @@ describe("useWolfJumper", () => {
       hook.result.current.store.dispatch({
         type: "spawnBonus",
         bonusType: "shield",
-        chordName: "G",
+        chord: { root: 7, quality: "maj" },
       }),
     );
     update({ chords: chord("G") });
@@ -159,6 +139,25 @@ describe("useWolfJumper", () => {
     update({ chords: chord("G") });
     expect(state().bonuses[0].status).toBe("collected");
     expect(state().effects.shieldUntil).toBeGreaterThan(0);
+  });
+
+  it("ignores notes outside a restricted note pool and applies detection settings", () => {
+    const { hook, update, state } = setup({
+      config: { notePool: [9, 0, 2, 4, 7], maxHp: 2 },
+      detection: { noteConfirmations: 3 },
+    });
+    expect(state().hp).toBe(2);
+    act(() => {
+      hook.result.current.store.dispatch({ type: "spawnEnemy", pc: 11 });
+      hook.result.current.store.dispatch({ type: "spawnEnemy", pc: 0 });
+    });
+    for (let i = 0; i < 4; i++) update({ instantaneousChroma: chroma(11) });
+    expect(state().score).toBe(0);
+    // One frame for the 3-frame smoothing to flip to C, then three confirmations.
+    for (let i = 0; i < 3; i++) update({ instantaneousChroma: chroma(0) });
+    expect(state().score).toBe(0);
+    update({ instantaneousChroma: chroma(0) });
+    expect(state().score).toBe(1);
   });
 
   it("reset starts a new game", () => {

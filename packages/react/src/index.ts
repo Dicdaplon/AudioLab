@@ -4,7 +4,8 @@
  * Hooks, presentational components, canvas plots and games on top of
  * @audiolab/core, styled by the Loupe design system (`./styles.css`). Every
  * module here is a client module. Modules that are not re-exported from
- * this file (canvas helpers, game engines, stores) are internal. Prop types
+ * this file (canvas helpers, stores) are internal; the game engines live in
+ * `@audiolab/core/games`. Prop types
  * of a component are available through `React.ComponentProps<typeof X>`.
  */
 
@@ -27,14 +28,17 @@ export {
 } from "./hooks/useTempoAnalysis";
 export { usePitch, type PitchState, type UsePitchOptions } from "./hooks/usePitch";
 export {
-  stepConfirmation,
   useConfirmedDetection,
-  type ConfirmationOptions,
-  type ConfirmationState,
-  type ConfirmationStep,
   type UseConfirmedDetectionArgs,
   type UseConfirmedDetectionResult,
 } from "./games/useConfirmedDetection";
+// The pure confirmation step lives in @audiolab/core/games; re-exported for convenience.
+export {
+  stepConfirmation,
+  type ConfirmationOptions,
+  type ConfirmationState,
+  type ConfirmationStep,
+} from "@audiolab/core/games";
 
 // --- Readouts and detector views -------------------------------------------
 
@@ -73,7 +77,9 @@ export { panelId, tabId } from "./ui/tabIds";
 // --- Games ------------------------------------------------------------------
 
 export { ChordGame } from "./games/chord-game/ChordGame";
+export { CHORD_POOL_LABELS_EN } from "./games/chord-game/labels";
 export { WolfJumper } from "./games/wolf-jumper/WolfJumper";
+export { bonusTypeLabels, type BonusTypeLabels } from "./games/wolf-jumper/constants";
 export { MicPrompt } from "./games/MicPrompt";
 
 // --- Theme ------------------------------------------------------------------

@@ -51,7 +51,8 @@ function buildTemplate(root: number, quality: ChordQuality): Float32Array {
   return t;
 }
 
-function displayName(root: number, quality: ChordQuality): string {
+/** Chord symbol with English note names: "C", "F#m". */
+export function chordName(root: number, quality: ChordQuality): string {
   return quality === "maj" ? NOTE_NAMES[root] : `${NOTE_NAMES[root]}m`;
 }
 
@@ -63,7 +64,7 @@ export const CHORD_TEMPLATES: readonly ChordTemplate[] = (() => {
       templates.push({
         root,
         quality,
-        name: displayName(root, quality),
+        name: chordName(root, quality),
         template: buildTemplate(root, quality),
       });
     }

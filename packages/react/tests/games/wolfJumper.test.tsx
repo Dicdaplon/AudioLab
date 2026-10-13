@@ -1,8 +1,10 @@
 import { act, cleanup, fireEvent, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { MAX_HP } from "../../src/games/wolf-jumper/constants";
+import { WOLF_JUMPER_DEFAULTS } from "@audiolab/core/games";
 import { WolfJumper } from "../../src/games/wolf-jumper/WolfJumper";
+
+const MAX_HP = WOLF_JUMPER_DEFAULTS.maxHp;
 
 describe("WolfJumper", () => {
   let frameCallbacks: Map<number, FrameRequestCallback>;

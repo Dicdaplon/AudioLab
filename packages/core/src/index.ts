@@ -31,6 +31,7 @@ export {
 } from "./analysis/keyDetection";
 export {
   CHORD_TEMPLATES,
+  chordName,
   cosineSimilarity,
   detectChord,
   type ChordQuality,

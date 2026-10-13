@@ -9,15 +9,21 @@
 
 import type { CSSProperties } from "react";
 
+import { pitchClassName } from "@audiolab/core";
+import {
+  computeTravelMs,
+  shieldRemainingMs,
+  slowRemainingMs,
+  type GameState,
+} from "@audiolab/core/games";
 import { Segments } from "../../components/Segments";
 import { Icon } from "../../ui/Icon";
-import { MAX_HP, findNoteDef } from "./constants";
-import { computeTravelMs, shieldRemainingMs, slowRemainingMs, type GameState } from "./engine";
 import { shallowEqual, useStoreSelector, type ReadableStore } from "./store";
 
 const toTenths = (ms: number) => Math.ceil(ms / 100);
 
 const selectHud = (s: GameState) => ({
+  config: s.config,
   score: s.score,
   streak: s.streak,
   bestStreak: s.bestStreak,
@@ -32,8 +38,9 @@ const formatTenths = (tenths: number) => `${(tenths / 10).toFixed(1)} s`;
 
 export function Hud({ store }: { store: ReadableStore<GameState> }) {
   const hud = useStoreSelector(store, selectHud, shallowEqual);
-  const travelMs = computeTravelMs(hud.score);
-  const sameNote = hud.sameNotePc !== null ? findNoteDef(hud.sameNotePc) : undefined;
+  const maxHp = hud.config.maxHp;
+  const travelMs = computeTravelMs(hud.score, hud.config);
+  const sameNotePc = hud.sameNotePc;
   const shieldOn = hud.shieldTenths > 0;
   const slowOn = hud.slowTenths > 0;
   const noEffect = !shieldOn && !slowOn && hud.sameNoteRemaining === 0;
@@ -64,12 +71,12 @@ export function Hud({ store }: { store: ReadableStore<GameState> }) {
           <span className="al-surtitre">HP</span>
           <Segments
             className="al-segments--hp"
-            count={MAX_HP}
+            count={maxHp}
             filled={hud.hp}
-            label={`HP ${hud.hp} of ${MAX_HP}`}
+            label={`HP ${hud.hp} of ${maxHp}`}
           />
           <span className="al-num al-hud__hp-text">
-            {hud.hp} / {MAX_HP}
+            {hud.hp} / {maxHp}
           </span>
         </div>
 
@@ -86,14 +93,15 @@ export function Hud({ store }: { store: ReadableStore<GameState> }) {
               Slow <span className="al-num">{formatTenths(hud.slowTenths)}</span>
             </li>
           )}
-          {hud.sameNoteRemaining > 0 && sameNote && (
+          {hud.sameNoteRemaining > 0 && sameNotePc !== null && (
             <li
               className="al-badge al-badge--effect"
               data-type="samenote"
-              style={{ "--pc": `var(--al-viz-pc-${sameNote.pc})` } as CSSProperties}
+              style={{ "--pc": `var(--al-viz-pc-${sameNotePc})` } as CSSProperties}
             >
               <Icon name="target" size={14} />
-              Same note {sameNote.name} <span className="al-num">×{hud.sameNoteRemaining}</span>
+              Same note {pitchClassName(sameNotePc)}{" "}
+              <span className="al-num">×{hud.sameNoteRemaining}</span>
             </li>
           )}
           {noEffect && <li className="al-hud__placeholder">no active effect</li>}

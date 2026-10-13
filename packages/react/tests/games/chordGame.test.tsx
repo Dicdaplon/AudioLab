@@ -3,58 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ChordScore } from "@audiolab/core";
 import { ChordGame } from "../../src/games/chord-game/ChordGame";
-import { CHORD_POOLS, pickChord } from "../../src/games/chord-game/pools";
-import { INITIAL_STATS, chordGameReducer } from "../../src/games/chord-game/scoring";
-
-describe("pickChord", () => {
-  it("returns an empty string for an empty pool", () => {
-    expect(pickChord([])).toBe("");
-  });
-
-  it("returns the only chord of a single-chord pool, even if excluded", () => {
-    expect(pickChord(["C"], "C")).toBe("C");
-  });
-
-  it("never returns the excluded chord when there is a choice", () => {
-    const pool = ["C", "G", "D"];
-    for (const r of [0, 0.34, 0.67, 0.999]) {
-      expect(pickChord(pool, "G", () => r)).not.toBe("G");
-    }
-  });
-
-  it("maps the rng output onto the pool", () => {
-    expect(pickChord(["C", "G", "D"], undefined, () => 0)).toBe("C");
-    expect(pickChord(["C", "G", "D"], undefined, () => 0.999)).toBe("D");
-  });
-
-  it("builds the 12-chord pools from the templates", () => {
-    expect(CHORD_POOLS["all-major"].chords).toHaveLength(12);
-    expect(CHORD_POOLS["all-minor"].chords).toHaveLength(12);
-    expect(CHORD_POOLS.all.chords).toHaveLength(24);
-  });
-});
-
-describe("chordGameReducer", () => {
-  it("increments score, streak and best streak on a hit", () => {
-    const s = chordGameReducer(chordGameReducer(INITIAL_STATS, { type: "hit" }), { type: "hit" });
-    expect(s).toEqual({ score: 2, streak: 2, bestStreak: 2, skipped: 0 });
-  });
-
-  it("breaks the streak on a skip but keeps the best streak", () => {
-    let s = chordGameReducer(INITIAL_STATS, { type: "hit" });
-    s = chordGameReducer(s, { type: "skip" });
-    s = chordGameReducer(s, { type: "hit" });
-    expect(s).toEqual({ score: 2, streak: 1, bestStreak: 1, skipped: 1 });
-  });
-
-  it("resets everything", () => {
-    const s = chordGameReducer(
-      { score: 3, streak: 1, bestStreak: 2, skipped: 4 },
-      { type: "reset" },
-    );
-    expect(s).toEqual(INITIAL_STATS);
-  });
-});
 
 describe("ChordGame", () => {
   beforeEach(() => {
@@ -67,8 +15,13 @@ describe("ChordGame", () => {
     vi.useRealTimers();
   });
 
+  const ROOTS: Record<string, [number, "maj" | "min"]> = {
+    C: [0, "maj"],
+    G: [7, "maj"],
+    Am: [9, "min"],
+  };
   const chord = (name: string, probability = 0.5): ChordScore[] => [
-    { root: 0, quality: "maj", name, similarity: 0.9, probability },
+    { root: ROOTS[name][0], quality: ROOTS[name][1], name, similarity: 0.9, probability },
   ];
 
   function setup(running = true) {
@@ -139,6 +92,19 @@ describe("ChordGame", () => {
       vi.advanceTimersByTime(400);
     });
     expect(target?.hasAttribute("data-hit")).toBe(false);
+  });
+
+  it("honours custom confirmation settings", () => {
+    const view = render(<ChordGame chords={[]} running confirmations={2} minProbability={0.5} />);
+    const play = (frame: ChordScore[]) =>
+      view.rerender(<ChordGame chords={frame} running confirmations={2} minProbability={0.5} />);
+    play(chord("C", 0.4));
+    play(chord("C", 0.4));
+    expect(view.container.querySelector(".al-stat__value")?.textContent).toBe("0");
+    play(chord("C", 0.6));
+    play(chord("C", 0.6));
+    expect(view.container.querySelector(".al-stat__value")?.textContent).toBe("1");
+    expect(view.container.querySelector(".al-game__progress-text")?.textContent).toMatch(/\/2/);
   });
 
   it("shows the mic prompt and calls onStart while stopped", () => {

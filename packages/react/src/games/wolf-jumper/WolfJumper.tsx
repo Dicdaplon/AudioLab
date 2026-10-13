@@ -15,18 +15,18 @@
  *       Same note ×5   next 5 enemy spawns share the same note
  *   - Score, streak and best streak are tracked. HP reaches 0 → Game Over.
  *
- * Layout only: the rules live in `engine.ts`, detection and the animation
- * loop in `useWolfJumper.ts`. This component re-renders with the detector
- * (~10 Hz); per-frame updates stay inside `Scene`.
+ * Layout only: the rules live in `@audiolab/core/games`, detection and the
+ * animation loop in `useWolfJumper.ts`. This component re-renders with the
+ * detector (~10 Hz); per-frame updates stay inside `Scene`.
  */
 
 import { useState } from "react";
 
-import type { ChordScore } from "@audiolab/core";
+import { type ChordScore, pitchClassName } from "@audiolab/core";
+import type { WolfJumperConfig, WolfJumperDetectionConfig } from "@audiolab/core/games";
 import { Icon } from "../../ui/Icon";
 import { useMediaQuery } from "../../ui/useMediaQuery";
 import { MicPrompt } from "../MicPrompt";
-import { INITIAL_TRAVEL_MS, MIN_TRAVEL_MS, findNoteDef } from "./constants";
 import { DetectionStatus, Hud } from "./Hud";
 import { NoiseGate } from "./NoiseGate";
 import { Scene } from "./Scene";
@@ -43,6 +43,10 @@ interface WolfJumperProps {
   signalLevelDb: number;
   /** Start mic callback. */
   onStart?: () => void;
+  /** Game tuning (note pool, bonus chords, speeds, health, ...), read once at mount. */
+  config?: Partial<WolfJumperConfig>;
+  /** Detection tuning (smoothing, confirmations, thresholds). */
+  detection?: Partial<WolfJumperDetectionConfig>;
 }
 
 export function WolfJumper({
@@ -51,6 +55,8 @@ export function WolfJumper({
   running,
   signalLevelDb,
   onStart,
+  config,
+  detection,
 }: WolfJumperProps) {
   // Under reduced motion nothing moves until the player asks for it.
   const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
@@ -62,7 +68,10 @@ export function WolfJumper({
     chords,
     running: playing,
     signalLevelDb,
+    config,
+    detection,
   });
+  const tuning = store.getState().config;
 
   return (
     <div className="al-game al-game--jumper">
@@ -105,7 +114,7 @@ export function WolfJumper({
 
         <DetectionStatus
           gateOpen={gateOpen}
-          noteName={(note && findNoteDef(note.pc)?.name) ?? "—"}
+          noteName={note ? pitchClassName(note.pc) : "—"}
           noteEnergy={note?.energy ?? 0}
           chordName={chords[0]?.name ?? "—"}
           chordProbability={chords[0]?.probability ?? 0}
@@ -122,9 +131,11 @@ export function WolfJumper({
       <p className="al-hint">
         Play the <strong>note</strong> shown on an enemy to destroy it (chain kill: every enemy with
         the same note on screen goes down at once). Bonus boxes are <strong>chords</strong>: play
-        one to trigger its effect: +2 HP, shield 7 s, slow 7 s, or 5 identical notes. Speed
-        increases with the score ({(INITIAL_TRAVEL_MS / 1000).toFixed(1)} s →{" "}
-        {(MIN_TRAVEL_MS / 1000).toFixed(1)} s). Note detection ≈ 300 ms (3-frame smoothing + 2
+        one to trigger its effect: +{tuning.hpBonusAmount} HP, shield{" "}
+        {(tuning.shieldDurationMs / 1000).toFixed(0)} s, slow{" "}
+        {(tuning.slowDurationMs / 1000).toFixed(0)} s, or {tuning.sameNoteCount} identical notes.
+        Speed increases with the score ({(tuning.initialTravelMs / 1000).toFixed(1)} s →{" "}
+        {(tuning.minTravelMs / 1000).toFixed(1)} s). Note detection ≈ 300 ms (3-frame smoothing + 2
         confirmation frames). Chord detection = top-1 over the 1 s window + 3 confirmation frames.
       </p>
     </div>

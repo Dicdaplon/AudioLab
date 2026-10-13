@@ -23,6 +23,7 @@ export default defineConfig({
         // Re-export barrels and the generated worklet string.
         "packages/*/src/index.ts",
         "packages/core/src/offline/index.ts",
+        "packages/core/src/games/index.ts",
         "packages/core/src/audio/sampleCaptureWorklet.source.ts",
       ],
       reporter: ["text-summary", "text", "html", "lcov"],

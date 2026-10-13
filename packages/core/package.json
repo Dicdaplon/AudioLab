@@ -34,6 +34,11 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./games": {
+      "audiolab-source": "./src/games/index.ts",
+      "types": "./dist/games/index.d.ts",
+      "default": "./dist/games/index.js"
+    },
     "./offline": {
       "audiolab-source": "./src/offline/index.ts",
       "types": "./dist/offline/index.d.ts",

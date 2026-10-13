@@ -10,6 +10,16 @@
 
 import type { CSSProperties } from "react";
 
+import { chordName, pitchClassName } from "@audiolab/core";
+import {
+  shieldRemainingMs,
+  slowRemainingMs,
+  type Bonus,
+  type BonusType,
+  type Enemy,
+  type GameState,
+  type WolfJumperConfig,
+} from "@audiolab/core/games";
 import { WOLF_ASPECT } from "./wolfArt";
 import { WolfSprite } from "./WolfSprite";
 import { Icon, type IconName } from "../../ui/Icon";
@@ -21,20 +31,12 @@ import {
   SCENE_HEIGHT,
   SCENE_WIDTH,
   WOLF_X,
-  findBonusTypeDef,
-  findNoteDef,
-  type BonusType,
+  bonusTypeLabels,
 } from "./constants";
-import {
-  shieldRemainingMs,
-  slowRemainingMs,
-  type Bonus,
-  type Enemy,
-  type GameState,
-} from "./engine";
 import { shallowEqual, useStoreSelector, type ReadableStore } from "./store";
 
 const selectScene = (s: GameState) => ({
+  config: s.config,
   enemies: s.enemies,
   bonuses: s.bonuses,
   shieldOn: shieldRemainingMs(s) > 0,
@@ -68,7 +70,7 @@ interface SceneProps {
 }
 
 export function Scene({ store, onRestart }: SceneProps) {
-  const { enemies, bonuses, shieldOn, slowOn, gameOver } = useStoreSelector(
+  const { config, enemies, bonuses, shieldOn, slowOn, gameOver } = useStoreSelector(
     store,
     selectScene,
     shallowEqual,
@@ -108,7 +110,7 @@ export function Scene({ store, onRestart }: SceneProps) {
           <EnemySprite key={e.id} enemy={e} />
         ))}
         {bonuses.map((b) => (
-          <BonusSprite key={b.id} bonus={b} />
+          <BonusSprite key={b.id} bonus={b} config={config} />
         ))}
 
         {gameOver && <GameOverOverlay store={store} onRestart={onRestart} />}
@@ -118,7 +120,6 @@ export function Scene({ store, onRestart }: SceneProps) {
 }
 
 function EnemySprite({ enemy }: { enemy: Enemy }) {
-  const note = findNoteDef(enemy.pc);
   return (
     <div
       className="al-scene__note"
@@ -134,13 +135,13 @@ function EnemySprite({ enemy }: { enemy: Enemy }) {
         } as CSSProperties
       }
     >
-      <span>{note?.name}</span>
+      <span>{pitchClassName(enemy.pc)}</span>
     </div>
   );
 }
 
-function BonusSprite({ bonus }: { bonus: Bonus }) {
-  const typeDef = findBonusTypeDef(bonus.type);
+function BonusSprite({ bonus, config }: { bonus: Bonus; config: WolfJumperConfig }) {
+  const labels = bonusTypeLabels(bonus.type, config);
   return (
     <div
       className="al-scene__bonus"
@@ -152,11 +153,13 @@ function BonusSprite({ bonus }: { bonus: Bonus }) {
         width: BONUS_SIZE,
         height: BONUS_SIZE,
       }}
-      title={typeDef.label}
+      title={labels.label}
     >
       <Icon name={BONUS_ICON[bonus.type]} size={14} className="al-scene__bonus-icon" />
-      <span className="al-scene__bonus-chord">{bonus.chordName}</span>
-      <span className="al-scene__bonus-short">{typeDef.short}</span>
+      <span className="al-scene__bonus-chord">
+        {chordName(bonus.chord.root, bonus.chord.quality)}
+      </span>
+      <span className="al-scene__bonus-short">{labels.short}</span>
     </div>
   );
 }
