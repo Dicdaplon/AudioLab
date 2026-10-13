@@ -2,6 +2,8 @@ import { memo } from "react";
 
 import { isNoiseFloorMethod } from "../analysis/noiseFloor";
 import { ONSET_LOWPASS_RANGE, type FftSettings } from "../config/settings";
+import { RangeField, SelectField, Switch } from "./Field";
+import { Panel } from "./Panel";
 
 interface FftSettingsPanelProps {
   settings: FftSettings;
@@ -16,67 +18,52 @@ export const FftSettingsPanel = memo(function FftSettingsPanel({
   onChange,
 }: FftSettingsPanelProps) {
   return (
-    <section className="fft-settings-panel">
-      <h3>FFT Settings</h3>
-      <div className="settings-group">
-        <label>
-          Noise Floor Method:
-          <select
-            value={settings.noiseMethod}
-            onChange={(e) => {
-              if (isNoiseFloorMethod(e.target.value)) {
-                onChange({ ...settings, noiseMethod: e.target.value });
-              }
-            }}
-          >
-            <option value="median">Median (robust)</option>
-            <option value="mean">Mean (average)</option>
-            <option value="p80">P80 (80th percentile)</option>
-          </select>
-        </label>
-      </div>
+    <Panel title="Settings" className="panel--settings" as="section">
+      <SelectField
+        id="noise-method"
+        label="Noise floor"
+        value={settings.noiseMethod}
+        onChange={(v) => {
+          if (isNoiseFloorMethod(v)) onChange({ ...settings, noiseMethod: v });
+        }}
+      >
+        <option value="median">Median (robust)</option>
+        <option value="mean">Mean (average)</option>
+        <option value="p80">P80 (80th percentile)</option>
+      </SelectField>
 
-      <div className="settings-group">
-        <label>
-          Onset envelope lowpass (Hz): <strong>{settings.onsetLowpassHz.toFixed(1)}</strong>
-          <input
-            type="range"
-            min={ONSET_LOWPASS_RANGE.min}
-            max={ONSET_LOWPASS_RANGE.max}
-            step={ONSET_LOWPASS_RANGE.step}
-            value={settings.onsetLowpassHz}
-            onChange={(e) =>
-              onChange({
-                ...settings,
-                onsetLowpassHz: parseFloat(e.target.value),
-              })
-            }
-          />
-        </label>
-        <small>Smooths the onset strength before the tempo analysis (Section 2)</small>
-      </div>
+      <RangeField
+        id="onset-lowpass"
+        label="Onset lowpass"
+        min={ONSET_LOWPASS_RANGE.min}
+        max={ONSET_LOWPASS_RANGE.max}
+        step={ONSET_LOWPASS_RANGE.step}
+        value={settings.onsetLowpassHz}
+        onChange={(v) => onChange({ ...settings, onsetLowpassHz: v })}
+        format={(v) => v.toFixed(1)}
+        unit="Hz"
+      />
 
-      <div className="settings-group">
-        <label>
-          <input
-            type="checkbox"
-            checked={settings.showSlope}
-            onChange={(e) => onChange({ ...settings, showSlope: e.target.checked })}
-          />
-          Show spectrum slope (dB/Hz)
-        </label>
-      </div>
+      <Switch
+        id="show-slope"
+        checked={settings.showSlope}
+        onChange={(checked) => onChange({ ...settings, showSlope: checked })}
+      >
+        Show spectrum slope (dB/Hz)
+      </Switch>
 
-      <div className="settings-group">
-        <label>
-          <input
-            type="checkbox"
-            checked={settings.showScaleNotes}
-            onChange={(e) => onChange({ ...settings, showScaleNotes: e.target.checked })}
-          />
-          Show A minor pentatonic notes (A, C, D, E, G)
-        </label>
-      </div>
-    </section>
+      <Switch
+        id="show-scale-notes"
+        checked={settings.showScaleNotes}
+        onChange={(checked) => onChange({ ...settings, showScaleNotes: checked })}
+      >
+        Show A minor pentatonic notes (A, C, D, E, G)
+      </Switch>
+
+      <p className="hint">
+        The lowpass smooths the onset-strength envelope before the tempo analysis; lower values
+        attenuate fast beat rates.
+      </p>
+    </Panel>
   );
 });

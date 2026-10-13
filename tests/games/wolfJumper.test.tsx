@@ -46,7 +46,7 @@ describe("WolfJumper", () => {
   it("shows full health and the mic prompt while stopped", () => {
     const view = renderGame(false);
     expect(view.container.querySelectorAll(".heart.full")).toHaveLength(MAX_HP);
-    expect(view.container.querySelector(".game-mic-prompt")).not.toBeNull();
+    expect(view.container.querySelector(".notice--mic")).not.toBeNull();
     expect(view.container.querySelector(".jumper-enemy")).toBeNull();
     expect(frameCallbacks.size).toBe(0);
   });

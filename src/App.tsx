@@ -6,6 +6,7 @@ import { ChordGame } from "./features/games/chord-game/ChordGame";
 import { ChordView } from "./components/ChordView";
 import { ChromaView } from "./components/ChromaView";
 import { KeyProbabilities } from "./components/KeyProbabilities";
+import { MicNotice } from "./components/MicNotice";
 import { MicTransport, type MicState } from "./components/MicTransport";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { TabBar, type TabDef } from "./components/TabBar";
@@ -88,9 +89,11 @@ export default function App() {
         <h1 className="visually-hidden">loup(e) — audio lab</h1>
 
         {micError && (
-          <p className="error" role="alert">
-            {micError}
-          </p>
+          <MicNotice
+            message={micError}
+            kind={unsupported ? "unsupported" : "error"}
+            onRetry={microphone.start}
+          />
         )}
 
         <section

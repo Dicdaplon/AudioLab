@@ -1,5 +1,6 @@
 /* =========================================================================
-   Controls: buttons and badges.
+   Controls: buttons, badges, field rows, sliders, selects, switches,
+   notices, chips, stat tiles and segments.
    ========================================================================= */
 
 /* --- Buttons ------------------------------------------------------------- */
@@ -160,4 +161,383 @@
   .badge--live[data-state="live"]::before {
     animation: none;
   }
+}
+
+/* --- Field rows ---------------------------------------------------------- */
+
+/* label | control | value. Under 720 px the control drops to a second line. */
+.field {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "label value"
+    "control control";
+  column-gap: var(--sp-3);
+  row-gap: var(--sp-1);
+  align-items: center;
+  min-height: var(--control-h);
+}
+
+@media (min-width: 720px) {
+  .field {
+    grid-template-columns: minmax(8rem, 11rem) 1fr 4.5rem;
+    grid-template-areas: "label control value";
+  }
+}
+
+.field__label {
+  grid-area: label;
+  font-size: var(--step--1);
+  color: var(--color-ink-muted);
+}
+
+.field__value {
+  grid-area: value;
+  font-size: var(--step--1);
+  text-align: right;
+  color: var(--color-ink);
+  white-space: nowrap;
+}
+
+.field__unit {
+  margin-left: 0.25em;
+  color: var(--color-ink-muted);
+}
+
+.field .slider,
+.field .select {
+  grid-area: control;
+}
+
+.field--select {
+  grid-template-areas:
+    "label label"
+    "control control";
+}
+
+@media (min-width: 720px) {
+  .field--select {
+    grid-template-areas: "label control control";
+  }
+}
+
+/* --- Slider -------------------------------------------------------------- */
+
+.slider {
+  --fill: 0%;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 24px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: var(--r-1);
+  background: linear-gradient(
+    to right,
+    var(--color-accent) var(--fill),
+    var(--color-line-strong) var(--fill)
+  );
+}
+
+/* The fader cap: a vertical bar, not a knob. */
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 8px;
+  height: 18px;
+  margin-top: -7px;
+  border: 2px solid var(--color-ink-muted);
+  border-radius: var(--r-1);
+  background: var(--color-surface);
+  transition: border-color var(--dur-1) var(--ease-out);
+}
+
+.slider::-moz-range-track {
+  height: 4px;
+  border-radius: var(--r-1);
+  background: var(--color-line-strong);
+}
+
+.slider::-moz-range-progress {
+  height: 4px;
+  border-radius: var(--r-1);
+  background: var(--color-accent);
+}
+
+.slider::-moz-range-thumb {
+  width: 4px;
+  height: 14px;
+  border: 2px solid var(--color-ink-muted);
+  border-radius: var(--r-1);
+  background: var(--color-surface);
+}
+
+.slider:hover::-webkit-slider-thumb {
+  border-color: var(--color-ink);
+}
+
+.slider:hover::-moz-range-thumb {
+  border-color: var(--color-ink);
+}
+
+.slider:focus-visible {
+  outline: none;
+}
+
+.slider:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.slider:focus-visible::-moz-range-thumb {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* --- Select -------------------------------------------------------------- */
+
+.select {
+  appearance: none;
+  -webkit-appearance: none;
+  height: var(--control-h);
+  padding: 0 2rem 0 var(--sp-3);
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--r-2);
+  background: var(--color-surface) var(--select-chevron) no-repeat right var(--sp-2) center;
+  color: var(--color-ink);
+  font-size: var(--step--1);
+  max-width: 100%;
+}
+
+.select:hover {
+  border-color: var(--color-ink-muted);
+}
+
+/* --- Switch -------------------------------------------------------------- */
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: var(--control-h);
+  cursor: pointer;
+  font-size: var(--step--1);
+  color: var(--color-ink);
+}
+
+.switch__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+}
+
+/* A rocker, not a pill: the squared register of the rest of the system. */
+.switch__track {
+  position: relative;
+  flex: none;
+  width: 32px;
+  height: 18px;
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--r-2);
+  background: var(--color-sunken);
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out);
+}
+
+.switch__track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: var(--r-1);
+  background: var(--color-ink-muted);
+  transition:
+    transform var(--dur-1) var(--ease-out),
+    background-color var(--dur-1) var(--ease-out);
+}
+
+.switch__input:checked + .switch__track {
+  background: var(--color-accent-subtle);
+  border-color: var(--color-accent);
+}
+
+.switch__input:checked + .switch__track::after {
+  background: var(--color-accent);
+  transform: translateX(14px);
+}
+
+.switch__input:focus-visible + .switch__track {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* --- Notices ------------------------------------------------------------- */
+
+.notice {
+  --notice-tint: var(--color-ink-muted);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5) var(--sp-4) var(--sp-4);
+  border-left: 3px solid var(--notice-tint);
+  border-radius: var(--r-2);
+  background: var(--color-sunken);
+  font-size: var(--step--1);
+  line-height: 1.5;
+}
+
+.notice--danger {
+  --notice-tint: var(--color-danger);
+}
+
+.notice--accent {
+  --notice-tint: var(--color-accent);
+}
+
+.notice__icon {
+  margin-top: 0.2em;
+  color: var(--notice-tint);
+}
+
+.notice__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.notice__text {
+  color: var(--color-ink);
+}
+
+.notice__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.notice__details summary {
+  cursor: pointer;
+  color: var(--color-ink-muted);
+}
+
+.notice__details summary:hover {
+  color: var(--color-ink);
+}
+
+.notice__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin-top: var(--sp-2);
+  padding-left: var(--sp-4);
+  list-style: disc;
+  color: var(--color-ink-muted);
+}
+
+.notice__list strong {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+/* --- Chips --------------------------------------------------------------- */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 22px;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-1);
+  background: var(--color-sunken);
+  color: var(--color-ink);
+  font-weight: 500;
+}
+
+.chip--match {
+  background: var(--color-success-subtle);
+  color: var(--color-success);
+}
+
+/* --- Stat tiles ---------------------------------------------------------- */
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+
+@media (min-width: 480px) {
+  .stat-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .stat-grid--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--color-line);
+  border-radius: var(--r-2);
+}
+
+.stat__label {
+  font-size: var(--step--2);
+  font-weight: 500;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+.stat__value {
+  font-family: var(--font-mono);
+  font-size: var(--step-2);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  color: var(--color-ink);
+}
+
+.stat--alert .stat__value {
+  color: var(--color-danger);
+}
+
+/* --- Segments ------------------------------------------------------------ */
+
+/* Discrete progress: filled left to right, like an ink-density badge. */
+.segments {
+  --segments-fill: var(--color-accent);
+  display: inline-flex;
+  gap: 3px;
+}
+
+.segments__seg {
+  width: 24px;
+  height: 8px;
+  border-radius: var(--r-1);
+  background: var(--color-line-strong);
+}
+
+.segments__seg[data-filled] {
+  background: var(--segments-fill);
+}
+
+.segments--small .segments__seg {
+  width: 6px;
+  height: 12px;
 }

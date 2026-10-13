@@ -144,7 +144,7 @@ describe("ChordGame", () => {
   it("shows the mic prompt and calls onStart while stopped", () => {
     const onStart = vi.fn();
     const view = render(<ChordGame chords={[]} running={false} onStart={onStart} />);
-    const prompt = view.container.querySelector(".game-mic-prompt");
+    const prompt = view.container.querySelector(".notice--mic");
     expect(prompt).not.toBeNull();
     fireEvent.click(prompt!.querySelector("button")!);
     expect(onStart).toHaveBeenCalledTimes(1);

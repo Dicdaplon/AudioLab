@@ -2,6 +2,8 @@ import { memo } from "react";
 
 import { HIGH_WATER_MARK_MEMORY_MAX, HIGH_WATER_MARK_MEMORY_MIN } from "../analysis/highWaterMark";
 import type { DetectorSettings } from "../config/settings";
+import { RangeField, SelectField } from "./Field";
+import { Panel } from "./Panel";
 
 interface SettingsPanelProps {
   settings: DetectorSettings;
@@ -23,84 +25,73 @@ export const SettingsPanel = memo(function SettingsPanel({
   };
 
   return (
-    <div className="settings-panel">
-      <h3>ToneBaseTonality — réglages</h3>
+    <Panel title="Settings" className="panel--settings" as="section">
+      <RangeField
+        id="live-sec"
+        label="Live window"
+        min={1}
+        max={30}
+        step={1}
+        value={settings.liveAcquisitionSeconds}
+        onChange={(v) => update({ liveAcquisitionSeconds: v })}
+        unit="s"
+      />
+      <RangeField
+        id="ton-sec"
+        label="Tonality window"
+        min={5}
+        max={120}
+        step={1}
+        value={settings.tonalityAcquisitionSeconds}
+        onChange={(v) => update({ tonalityAcquisitionSeconds: v })}
+        unit="s"
+      />
+      <RangeField
+        id="tol"
+        label="Peak tolerance"
+        min={0}
+        max={1}
+        step={0.05}
+        value={settings.maxFilterTolerancy}
+        onChange={(v) => update({ maxFilterTolerancy: v })}
+        format={(v) => (v * 100).toFixed(0)}
+        unit="%"
+      />
+      <RangeField
+        id="mem"
+        label="Peak memory"
+        min={HIGH_WATER_MARK_MEMORY_MIN}
+        max={HIGH_WATER_MARK_MEMORY_MAX}
+        step={1}
+        value={settings.maxFilterMemory}
+        onChange={(v) => update({ maxFilterMemory: v })}
+      />
+      <SelectField
+        id="mode"
+        label="Peak aggregator"
+        value={settings.maxFilterMode}
+        onChange={(v) => update({ maxFilterMode: v === "median" ? "median" : "mean" })}
+      >
+        <option value="mean">Mean (default)</option>
+        <option value="median">Median (more robust)</option>
+      </SelectField>
 
-      <div className="settings-row">
-        <label htmlFor="live-sec">Live acquisition (s)</label>
-        <input
-          id="live-sec"
-          type="range"
-          min={1}
-          max={30}
-          step={1}
-          value={settings.liveAcquisitionSeconds}
-          onChange={(e) => update({ liveAcquisitionSeconds: Number(e.target.value) })}
-        />
-        <span className="value">{settings.liveAcquisitionSeconds} s</span>
-      </div>
+      <dl className="stat-grid stat-grid--2">
+        <div className="stat">
+          <dt className="stat__label">Current threshold</dt>
+          <dd className="stat__value">{currentThreshold.toFixed(4)}</dd>
+        </div>
+        <div className="stat">
+          <dt className="stat__label">Last peak</dt>
+          <dd className="stat__value">{lastPeak.toFixed(4)}</dd>
+        </div>
+      </dl>
 
-      <div className="settings-row">
-        <label htmlFor="ton-sec">Tonality acquisition (s)</label>
-        <input
-          id="ton-sec"
-          type="range"
-          min={5}
-          max={120}
-          step={1}
-          value={settings.tonalityAcquisitionSeconds}
-          onChange={(e) => update({ tonalityAcquisitionSeconds: Number(e.target.value) })}
-        />
-        <span className="value">{settings.tonalityAcquisitionSeconds} s</span>
-      </div>
-
-      <div className="settings-row">
-        <label htmlFor="tol">Max filter tolerancy</label>
-        <input
-          id="tol"
-          type="range"
-          min={0}
-          max={1}
-          step={0.05}
-          value={settings.maxFilterTolerancy}
-          onChange={(e) => update({ maxFilterTolerancy: Number(e.target.value) })}
-        />
-        <span className="value">{(settings.maxFilterTolerancy * 100).toFixed(0)} %</span>
-      </div>
-
-      <div className="settings-row">
-        <label htmlFor="mem">Max memory</label>
-        <input
-          id="mem"
-          type="range"
-          min={HIGH_WATER_MARK_MEMORY_MIN}
-          max={HIGH_WATER_MARK_MEMORY_MAX}
-          step={1}
-          value={settings.maxFilterMemory}
-          onChange={(e) => update({ maxFilterMemory: Number(e.target.value) })}
-        />
-        <span className="value">{settings.maxFilterMemory}</span>
-      </div>
-
-      <div className="settings-row">
-        <label htmlFor="mode">Peak aggregator</label>
-        <select
-          id="mode"
-          value={settings.maxFilterMode}
-          onChange={(e) =>
-            update({ maxFilterMode: e.target.value === "median" ? "median" : "mean" })
-          }
-        >
-          <option value="mean">Mean (default)</option>
-          <option value="median">Median (more robust)</option>
-        </select>
-        <span className="value">&nbsp;</span>
-      </div>
-
-      <div className="settings-info">
-        <span>seuil actuel : {currentThreshold.toFixed(4)}</span>
-        <span>dernier pic : {lastPeak.toFixed(4)}</span>
-      </div>
-    </div>
+      <p className="hint">
+        The presence filter keeps only the chroma bins above a fraction (the tolerance) of the
+        recent peaks; the memory sets how many peaks are averaged. The threshold follows how
+        concentrated the chroma is, not how loud the signal is.
+      </p>
+    </Panel>
   );
 });
