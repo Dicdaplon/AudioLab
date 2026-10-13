@@ -1,6 +1,21 @@
 import { useEffect, useRef } from "react";
 
+import {
+  drawAxes,
+  drawBed,
+  drawEmpty,
+  drawHorizontalGrid,
+  drawVerticalGrid,
+  labelX,
+  labelY,
+  plotFrame,
+  prepareCanvas,
+  setTickFont,
+} from "../ui/canvasPlot";
+import { usePlotWidth } from "../ui/usePlotWidth";
+import { useVizTheme } from "../ui/vizTheme";
 import { axisTicks, decimateMinMax, signalRange, valueToPixel } from "../utils/plotMath";
+import { PlotFigure } from "./Plot";
 
 interface TimeSignalPlotProps {
   /** Samples in chronological order. */
@@ -9,7 +24,7 @@ interface TimeSignalPlotProps {
   sampleRate: number;
   title?: string;
   height?: number;
-  /** Label of the vertical axis. Default "Amplitude". */
+  /** Title of the vertical axis. Default "Amplitude". */
   yLabel?: string;
 }
 
@@ -22,90 +37,60 @@ interface TimeSignalPlotProps {
 export function TimeSignalPlot({
   signal,
   sampleRate,
-  title,
-  height = 200,
+  title = "Time signal",
+  height = 160,
   yLabel = "Amplitude",
 }: TimeSignalPlotProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [frameRef, width] = usePlotWidth();
+  const t = useVizTheme();
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
-    const dpr = window.devicePixelRatio || 1;
-    const width = canvas.parentElement?.clientWidth || 600;
-
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
-
-    const ctx = canvas.getContext("2d");
+    const ctx = prepareCanvas(canvas, width, height);
     if (!ctx) return;
-
-    ctx.scale(dpr, dpr);
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, width, height);
+    const frame = plotFrame(width, height, t);
 
     if (signal.length === 0 || !(sampleRate > 0)) {
-      ctx.fillStyle = "gray";
-      ctx.font = "14px sans-serif";
-      ctx.fillText("No data", 10, height / 2);
+      drawEmpty(ctx, frame, t);
       return;
     }
 
-    const padding = 40;
-    const plotWidth = Math.max(1, width - 2 * padding);
-    const plotHeight = Math.max(1, height - 2 * padding);
-    const bottom = height - padding;
+    drawBed(ctx, frame, t);
+
     const range = signalRange(signal);
-    const yOf = (v: number) => bottom - valueToPixel(v, range, 0, plotHeight);
+    const yOf = (v: number) => frame.bottom - valueToPixel(v, range, 0, frame.plotHeight);
 
-    // Axes.
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(padding, padding);
-    ctx.lineTo(padding, bottom);
-    ctx.lineTo(width - padding, bottom);
-    ctx.stroke();
+    // Amplitude grid (integer counter: never loops on a zero range) and the zero line.
+    const ticks = axisTicks(range, 5);
+    drawHorizontalGrid(ctx, frame, ticks.filter((v) => v !== 0).map(yOf), t.grid);
+    drawHorizontalGrid(ctx, frame, [yOf(0)], t.gridStrong);
 
-    // Zero line.
-    const zeroY = yOf(0);
-    ctx.strokeStyle = "#ddd";
-    ctx.lineWidth = 0.5;
-    ctx.beginPath();
-    ctx.moveTo(padding, zeroY);
-    ctx.lineTo(width - padding, zeroY);
-    ctx.stroke();
-
-    // Time ticks.
-    ctx.fillStyle = "black";
-    ctx.font = "12px sans-serif";
-    ctx.textAlign = "center";
+    // Time grid.
     const durationSeconds = signal.length / sampleRate;
     const timeStep = durationSeconds > 5 ? 1 : 0.5;
     const timeTickCount = Math.floor(durationSeconds / timeStep);
-    for (let i = 0; i <= timeTickCount; i++) {
-      const t = i * timeStep;
-      const x = padding + (t / durationSeconds) * plotWidth;
-      ctx.fillText(`${t.toFixed(1)}s`, x, bottom + 20);
-    }
+    const timeTicks: number[] = [];
+    for (let i = 0; i <= timeTickCount; i++) timeTicks.push(i * timeStep);
+    const xOfTime = (s: number) => frame.left + (s / durationSeconds) * frame.plotWidth;
+    drawVerticalGrid(ctx, frame, timeTicks.slice(1).map(xOfTime), t.grid);
 
-    // Amplitude ticks (integer counter: never loops on a zero range).
-    ctx.textAlign = "right";
-    for (const v of axisTicks(range, 5)) {
-      ctx.fillText(v.toFixed(2), padding - 10, yOf(v) + 4);
-    }
+    drawAxes(ctx, frame, t);
+
+    setTickFont(ctx, t);
+    for (const v of ticks) labelY(ctx, frame, yOf(v), v.toFixed(2));
+    for (const s of timeTicks) labelX(ctx, frame, xOfTime(s), `${s.toFixed(1)}s`);
 
     // Signal: one min/max pair per pixel column.
-    const columns = Math.min(signal.length, Math.floor(plotWidth));
+    const columns = Math.min(signal.length, Math.floor(frame.plotWidth));
     const { min, max } = decimateMinMax(signal, columns);
-    ctx.strokeStyle = "rgb(70, 130, 180)";
+    ctx.strokeStyle = t.signal;
     ctx.lineWidth = 1;
+    ctx.lineJoin = "round";
     ctx.beginPath();
     for (let c = 0; c < columns; c++) {
-      const x = padding + (columns > 1 ? (c / (columns - 1)) * plotWidth : 0);
+      const x = frame.left + (columns > 1 ? (c / (columns - 1)) * frame.plotWidth : 0);
       const yMax = yOf(max[c]);
       const yMin = yOf(min[c]);
       if (c === 0) ctx.moveTo(x, yMax);
@@ -113,29 +98,11 @@ export function TimeSignalPlot({
       if (yMin !== yMax) ctx.lineTo(x, yMin);
     }
     ctx.stroke();
-
-    if (title) {
-      ctx.fillStyle = "black";
-      ctx.font = "bold 12px sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText(title, width / 2, padding - 10);
-    }
-
-    ctx.fillStyle = "black";
-    ctx.font = "bold 12px sans-serif";
-    ctx.textAlign = "left";
-    ctx.fillText("Time (s) →", width / 2, height - 5);
-    ctx.save();
-    ctx.translate(10, height / 2);
-    ctx.rotate(-Math.PI / 2);
-    ctx.textAlign = "center";
-    ctx.fillText(`${yLabel} →`, 0, 0);
-    ctx.restore();
-  }, [signal, sampleRate, height, title, yLabel]);
+  }, [signal, sampleRate, width, height, t]);
 
   return (
-    <div className="time-signal-plot">
-      <canvas ref={canvasRef} role="img" aria-label={title ?? "Time signal plot"} />
-    </div>
+    <PlotFigure title={title} xLabel="Time (s)" yLabel={yLabel} frameRef={frameRef}>
+      <canvas ref={canvasRef} role="img" aria-label={title} />
+    </PlotFigure>
   );
 }

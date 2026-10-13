@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, it, expect } from "vitest";
-import { cleanup, render } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 
 import { SpectrumPlot } from "../../src/components/SpectrumPlot";
+import { EMPTY_TEXT } from "../../src/ui/canvasPlot";
+import { DEFAULT_VIZ_THEME } from "../../src/ui/vizTheme";
 import { A_MINOR_PENTATONIC_PITCH_CLASSES, pitchClassFrequencies } from "../../src/utils/notes";
 import { installCanvasStub, type CanvasRecorder, type CanvasCall } from "../helpers/canvasStub";
 
@@ -20,11 +22,14 @@ function paths(calls: CanvasCall[]): CanvasCall[][] {
   return out;
 }
 
+const WIDTH = 600;
+const { left, right } = DEFAULT_VIZ_THEME.pad;
+
 describe("SpectrumPlot", () => {
   let canvas: CanvasRecorder;
 
   beforeEach(() => {
-    canvas = installCanvasStub(600);
+    canvas = installCanvasStub(WIDTH);
   });
 
   afterEach(() => {
@@ -32,11 +37,31 @@ describe("SpectrumPlot", () => {
     canvas.restore();
   });
 
-  it("draws 'No data' for an empty spectrum or a zero bin width", () => {
+  it("draws the waiting state for an empty spectrum or a zero bin width", () => {
     render(<SpectrumPlot spectrumDb={new Float32Array(0)} binHz={2.93} noiseFloorDb={-80} />);
     render(<SpectrumPlot spectrumDb={new Float32Array(10)} binHz={0} noiseFloorDb={-80} />);
-    const texts = canvas.of("fillText").filter((c) => c.args[0] === "No data");
+    const texts = canvas.of("fillText").filter((c) => c.args[0] === EMPTY_TEXT);
     expect(texts).toHaveLength(2);
+  });
+
+  it("exposes title, legend and axis titles in the DOM, not on the canvas", () => {
+    render(
+      <SpectrumPlot
+        spectrumDb={new Float32Array(100).fill(-50)}
+        binHz={10}
+        noiseFloorDb={-70}
+        title="Spectrum"
+        showSlope
+      />,
+    );
+    expect(screen.getByRole("img", { name: "Spectrum" })).toBeTruthy();
+    expect(screen.getByText("Frequency (Hz)")).toBeTruthy();
+    expect(screen.getByText("Magnitude (dB)")).toBeTruthy();
+    expect(screen.getByText("noise floor")).toBeTruthy();
+    expect(screen.getByText("slope")).toBeTruthy();
+    const drawn = canvas.of("fillText").map((c) => String(c.args[0]));
+    expect(drawn).not.toContain("Spectrum");
+    expect(drawn.some((s) => s.startsWith("floor "))).toBe(true);
   });
 
   it("draws the slope overlay on the same x range as the spectrum", () => {
@@ -55,20 +80,18 @@ describe("SpectrumPlot", () => {
       />,
     );
     const maxBin = Math.floor(4000 / binHz);
-    // The two longest paths are the spectrum and the slope overlay.
-    const longPaths = paths(canvas.calls)
-      .filter((p) => p.length >= maxBin)
-      .sort((a, b) => b.length - a.length);
+    // The trace and the slope overlay have exactly one point per displayed
+    // bin (the area fill under the trace has two more).
+    const longPaths = paths(canvas.calls).filter((p) => p.length === maxBin + 1);
     expect(longPaths).toHaveLength(2);
     const [a, b] = longPaths;
-    expect(a).toHaveLength(b.length);
     const firstX = (p: CanvasCall[]) => p[0].args[0] as number;
     const lastX = (p: CanvasCall[]) => p[p.length - 1].args[0] as number;
     expect(firstX(a)).toBeCloseTo(firstX(b), 6);
     expect(lastX(a)).toBeCloseTo(lastX(b), 6);
-    // The overlay spans the whole plot width (padding 40 on a 600 px canvas).
-    expect(firstX(a)).toBeCloseTo(40, 6);
-    expect(lastX(a)).toBeCloseTo(560, 6);
+    // The overlay spans the whole plot width, between the padding tokens.
+    expect(firstX(a)).toBeCloseTo(left, 6);
+    expect(lastX(a)).toBeCloseTo(WIDTH - right, 6);
   });
 
   it("draws one reference line per pentatonic note inside the displayed band", () => {

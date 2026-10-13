@@ -1,7 +1,26 @@
 import { useEffect, useRef } from "react";
 
 import { spectrumSlopeDbPerHz } from "../analysis/spectrumSlope";
+import {
+  crisp,
+  drawAxes,
+  drawBed,
+  drawEmpty,
+  drawHorizontalGrid,
+  drawVerticalGrid,
+  formatHz,
+  formatSigned,
+  haloText,
+  labelX,
+  labelY,
+  plotFrame,
+  prepareCanvas,
+  setTickFont,
+} from "../ui/canvasPlot";
+import { usePlotWidth } from "../ui/usePlotWidth";
+import { useVizTheme } from "../ui/vizTheme";
 import { A_MINOR_PENTATONIC_PITCH_CLASSES, pitchClassFrequencies } from "../utils/notes";
+import { PlotFigure, type LegendItem } from "./Plot";
 
 interface SpectrumPlotProps {
   spectrumDb: Float32Array;
@@ -18,6 +37,13 @@ interface SpectrumPlotProps {
   maxFreqHz?: number;
 }
 
+const LEGEND: Record<"signal" | "floor" | "slope" | "notes", LegendItem> = {
+  signal: { label: "magnitude", kind: "line", colour: "var(--viz-signal)" },
+  floor: { label: "noise floor", kind: "dash", colour: "var(--viz-noise-floor)" },
+  slope: { label: "slope", kind: "line", colour: "var(--viz-trace-2)" },
+  notes: { label: "A minor pentatonic", kind: "line", colour: "var(--viz-marker)" },
+};
+
 /**
  * Canvas plot of a dB spectrum over [minFreqHz, maxFreqHz], with a noise
  * floor line and optional slope / reference-note overlays. Every overlay
@@ -27,45 +53,30 @@ export function SpectrumPlot({
   spectrumDb,
   binHz,
   noiseFloorDb,
-  title,
-  height = 300,
+  title = "Magnitude spectrum",
+  height = 280,
   showSlope = false,
   showScaleNotes = false,
   minFreqHz = 0,
   maxFreqHz = Infinity,
 }: SpectrumPlotProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [frameRef, width] = usePlotWidth();
+  const t = useVizTheme();
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
-    const dpr = window.devicePixelRatio || 1;
-    const width = canvas.parentElement?.clientWidth || 600;
-
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
-
-    const ctx = canvas.getContext("2d");
+    const ctx = prepareCanvas(canvas, width, height);
     if (!ctx) return;
-
-    ctx.scale(dpr, dpr);
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, width, height);
+    const frame = plotFrame(width, height, t);
 
     if (spectrumDb.length === 0 || !(binHz > 0)) {
-      ctx.fillStyle = "gray";
-      ctx.font = "14px sans-serif";
-      ctx.fillText("No data", 10, height / 2);
+      drawEmpty(ctx, frame, t);
       return;
     }
 
-    const padding = 40;
-    const plotWidth = Math.max(1, width - 2 * padding);
-    const plotHeight = Math.max(1, height - 2 * padding);
-    const bottom = height - padding;
+    drawBed(ctx, frame, t);
 
     // Displayed bin range (shared by every curve and overlay).
     const maxFreq = (spectrumDb.length - 1) * binHz;
@@ -73,7 +84,8 @@ export function SpectrumPlot({
     const minBinIdx = Math.max(0, Math.floor(minFreqHz / binHz));
     const maxBinIdx = Math.min(spectrumDb.length - 1, Math.floor(displayMaxFreq / binHz));
     const numBinsDisplay = Math.max(1, maxBinIdx - minBinIdx);
-    const xOfBin = (bin: number) => padding + ((bin - minBinIdx) / numBinsDisplay) * plotWidth;
+    const xOfBin = (bin: number) =>
+      frame.left + ((bin - minBinIdx) / numBinsDisplay) * frame.plotWidth;
 
     // dB range over the displayed bins.
     let minDb = -100;
@@ -86,34 +98,16 @@ export function SpectrumPlot({
       }
     }
     if (maxDb <= minDb) maxDb = minDb + 20;
-    const yOfDb = (db: number) => bottom - ((db - minDb) / (maxDb - minDb)) * plotHeight;
+    const yOfDb = (db: number) =>
+      frame.bottom - ((db - minDb) / (maxDb - minDb)) * frame.plotHeight;
 
-    // Axes.
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(padding, padding);
-    ctx.lineTo(padding, bottom);
-    ctx.lineTo(width - padding, bottom);
-    ctx.stroke();
+    // dB grid: minor lines every 10 dB, the 0 dB line stronger.
+    const dbTicks: number[] = [];
+    for (let db = Math.ceil(minDb / 10) * 10; db <= maxDb; db += 10) dbTicks.push(db);
+    drawHorizontalGrid(ctx, frame, dbTicks.filter((db) => db !== 0).map(yOfDb), t.grid);
+    if (dbTicks.includes(0)) drawHorizontalGrid(ctx, frame, [yOfDb(0)], t.gridStrong);
 
-    // dB grid.
-    ctx.fillStyle = "black";
-    ctx.font = "12px sans-serif";
-    ctx.textAlign = "right";
-    for (let db = Math.ceil(minDb / 10) * 10; db <= maxDb; db += 10) {
-      const y = yOfDb(db);
-      ctx.strokeStyle = db === 0 ? "black" : "#ddd";
-      ctx.lineWidth = db === 0 ? 1 : 0.5;
-      ctx.beginPath();
-      ctx.moveTo(padding - 5, y);
-      ctx.lineTo(width - padding, y);
-      ctx.stroke();
-      ctx.fillText(`${db}`, padding - 10, y + 4);
-    }
-
-    // Frequency labels.
-    ctx.textAlign = "center";
+    // Frequency grid.
     const freqSpan = displayMaxFreq - minFreqHz;
     const freqStep =
       freqSpan > 10000
@@ -125,20 +119,35 @@ export function SpectrumPlot({
             : freqSpan > 100
               ? 25
               : 10;
-    const formatFreq = (f: number) => (displayMaxFreq >= 1000 ? `${f / 1000}k` : `${f}`);
+    const freqTicks: number[] = [];
     for (
       let freq = Math.ceil(minFreqHz / freqStep) * freqStep;
       freq <= displayMaxFreq;
       freq += freqStep
     ) {
       const bin = freq / binHz;
-      if (bin < minBinIdx || bin > maxBinIdx) continue;
-      ctx.fillText(formatFreq(freq), xOfBin(bin), bottom + 20);
+      if (bin >= minBinIdx && bin <= maxBinIdx) freqTicks.push(freq);
     }
+    // Label every tick, but keep the grid sparse enough to read.
+    const labelEvery = Math.max(1, Math.ceil(freqTicks.length / 10));
+    drawVerticalGrid(
+      ctx,
+      frame,
+      freqTicks.filter((_, i) => i % labelEvery === 0).map((f) => xOfBin(f / binHz)),
+      t.grid,
+    );
 
-    // Reference notes (A minor pentatonic).
+    drawAxes(ctx, frame, t);
+
+    setTickFont(ctx, t);
+    for (const db of dbTicks) labelY(ctx, frame, yOfDb(db), formatSigned(db));
+    freqTicks.forEach((f, i) => {
+      if (i % labelEvery === 0) labelX(ctx, frame, xOfBin(f / binHz), formatHz(f));
+    });
+
+    // Reference notes (A minor pentatonic), behind the trace.
     if (showScaleNotes) {
-      ctx.strokeStyle = "rgba(100, 200, 100, 0.4)";
+      ctx.strokeStyle = t.marker;
       ctx.lineWidth = 1;
       for (const freq of pitchClassFrequencies(
         A_MINOR_PENTATONIC_PITCH_CLASSES,
@@ -147,21 +156,33 @@ export function SpectrumPlot({
       )) {
         const bin = freq / binHz;
         if (bin < minBinIdx || bin > maxBinIdx) continue;
-        const x = xOfBin(bin);
+        const x = crisp(xOfBin(bin));
         ctx.beginPath();
-        ctx.moveTo(x, padding);
-        ctx.lineTo(x, bottom);
+        ctx.moveTo(x, frame.top);
+        ctx.lineTo(x, frame.bottom);
         ctx.stroke();
       }
     }
 
-    // Spectrum.
-    ctx.strokeStyle = "rgb(70, 130, 180)";
-    ctx.lineWidth = 1;
+    // Area under the spectrum, then the trace.
+    const yOfBinSafe = (k: number) => {
+      const db = spectrumDb[k];
+      return Number.isFinite(db) ? yOfDb(db) : frame.bottom;
+    };
+    ctx.fillStyle = t.signalFill;
+    ctx.beginPath();
+    ctx.moveTo(xOfBin(minBinIdx), frame.bottom);
+    for (let k = minBinIdx; k <= maxBinIdx; k++) ctx.lineTo(xOfBin(k), yOfBinSafe(k));
+    ctx.lineTo(xOfBin(maxBinIdx), frame.bottom);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = t.signal;
+    ctx.lineWidth = 1.5;
+    ctx.lineJoin = "round";
     ctx.beginPath();
     for (let k = minBinIdx; k <= maxBinIdx; k++) {
-      const db = spectrumDb[k];
-      const y = Number.isFinite(db) ? yOfDb(db) : bottom;
+      const y = yOfBinSafe(k);
       if (k === minBinIdx) ctx.moveTo(xOfBin(k), y);
       else ctx.lineTo(xOfBin(k), y);
     }
@@ -174,10 +195,12 @@ export function SpectrumPlot({
       for (let k = minBinIdx; k <= maxBinIdx; k++) {
         slopeMax = Math.max(slopeMax, Math.abs(slope[k]));
       }
-      const scale = slopeMax > 0 ? plotHeight / (2 * slopeMax) : 0;
-      const midY = bottom - plotHeight / 2;
+      const scale = slopeMax > 0 ? frame.plotHeight / (2 * slopeMax) : 0;
+      const midY = frame.bottom - frame.plotHeight / 2;
 
-      ctx.strokeStyle = "rgba(200, 100, 100, 0.7)";
+      ctx.save();
+      ctx.globalAlpha = 0.85;
+      ctx.strokeStyle = t.trace2;
       ctx.lineWidth = 1;
       ctx.beginPath();
       for (let k = minBinIdx; k <= maxBinIdx; k++) {
@@ -186,53 +209,61 @@ export function SpectrumPlot({
         else ctx.lineTo(xOfBin(k), y);
       }
       ctx.stroke();
+      ctx.restore();
     }
 
-    // Noise floor.
+    // Noise floor: dashed, labelled at its right end.
     if (Number.isFinite(noiseFloorDb)) {
-      const y = yOfDb(noiseFloorDb);
-      ctx.strokeStyle = "red";
-      ctx.setLineDash([5, 5]);
-      ctx.lineWidth = 2;
+      const y = crisp(yOfDb(noiseFloorDb));
+      ctx.strokeStyle = t.noiseFloor;
+      ctx.setLineDash([4, 4]);
+      ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(padding, y);
-      ctx.lineTo(width - padding, y);
+      ctx.moveTo(frame.left, y);
+      ctx.lineTo(frame.right, y);
       ctx.stroke();
       ctx.setLineDash([]);
-    }
 
-    if (title) {
-      ctx.fillStyle = "black";
-      ctx.font = "bold 12px sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText(title, width / 2, padding - 10);
+      setTickFont(ctx, t);
+      ctx.textAlign = "right";
+      ctx.textBaseline = "bottom";
+      haloText(
+        ctx,
+        t,
+        `floor ${formatSigned(noiseFloorDb, 1)} dB`,
+        frame.right - 4,
+        y - 3,
+        t.axisLabel,
+      );
     }
-
-    ctx.fillStyle = "black";
-    ctx.font = "bold 12px sans-serif";
-    ctx.textAlign = "left";
-    ctx.fillText("Frequency (Hz) →", width / 2, height - 5);
-    ctx.save();
-    ctx.translate(10, height / 2);
-    ctx.rotate(-Math.PI / 2);
-    ctx.textAlign = "center";
-    ctx.fillText("Magnitude (dB) →", 0, 0);
-    ctx.restore();
   }, [
     spectrumDb,
     binHz,
     noiseFloorDb,
+    width,
     height,
-    title,
     showSlope,
     showScaleNotes,
     minFreqHz,
     maxFreqHz,
+    t,
   ]);
 
+  const legend = [LEGEND.signal, LEGEND.floor];
+  if (showSlope) legend.push(LEGEND.slope);
+  if (showScaleNotes) legend.push(LEGEND.notes);
+  const maxShown = Number.isFinite(maxFreqHz) ? maxFreqHz : (spectrumDb.length - 1) * binHz;
+
   return (
-    <div className="spectrum-plot">
-      <canvas ref={canvasRef} role="img" aria-label={title ?? "Spectrum plot"} />
-    </div>
+    <PlotFigure
+      title={title}
+      meta={`${formatHz(minFreqHz)}–${formatHz(maxShown)} Hz`}
+      legend={legend}
+      xLabel="Frequency (Hz)"
+      yLabel="Magnitude (dB)"
+      frameRef={frameRef}
+    >
+      <canvas ref={canvasRef} role="img" aria-label={title} />
+    </PlotFigure>
   );
 }

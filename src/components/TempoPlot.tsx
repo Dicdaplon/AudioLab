@@ -1,6 +1,22 @@
 import { memo, useEffect, useRef } from "react";
 
 import type { TempoEstimate } from "../analysis/engine/tempoAnalyzer";
+import {
+  crisp,
+  drawAxes,
+  drawBed,
+  drawEmpty,
+  drawVerticalGrid,
+  haloText,
+  labelX,
+  labelY,
+  plotFrame,
+  prepareCanvas,
+  setTickFont,
+} from "../ui/canvasPlot";
+import { usePlotWidth } from "../ui/usePlotWidth";
+import { useVizTheme } from "../ui/vizTheme";
+import { PlotFigure, type LegendItem } from "./Plot";
 
 interface TempoPlotProps {
   /** Envelope spectrum magnitude, one value per `bpmAxis` entry. */
@@ -13,6 +29,11 @@ interface TempoPlotProps {
   height?: number;
 }
 
+const LEGEND: LegendItem[] = [
+  { label: "envelope spectrum", kind: "line", colour: "var(--viz-signal)" },
+  { label: "estimate", kind: "dash", colour: "var(--viz-threshold)" },
+];
+
 /**
  * Canvas plot of the onset-envelope spectrum on a BPM axis, normalised to
  * its maximum, with the estimated tempo marked by a vertical line.
@@ -21,75 +42,62 @@ export const TempoPlot = memo(function TempoPlot({
   spectrum,
   bpmAxis,
   estimate,
-  title,
-  height = 220,
+  title = "Beat spectrum",
+  height = 180,
 }: TempoPlotProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [frameRef, width] = usePlotWidth();
+  const t = useVizTheme();
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
-    const dpr = window.devicePixelRatio || 1;
-    const width = canvas.parentElement?.clientWidth || 600;
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
-
-    const ctx = canvas.getContext("2d");
+    const ctx = prepareCanvas(canvas, width, height);
     if (!ctx) return;
-    ctx.scale(dpr, dpr);
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, width, height);
+    const frame = plotFrame(width, height, t);
 
     if (spectrum.length < 2 || bpmAxis.length !== spectrum.length) {
-      ctx.fillStyle = "gray";
-      ctx.font = "14px sans-serif";
-      ctx.fillText("No data", 10, height / 2);
+      drawEmpty(ctx, frame, t);
       return;
     }
 
-    const padding = 40;
-    const plotWidth = Math.max(1, width - 2 * padding);
-    const plotHeight = Math.max(1, height - 2 * padding);
-    const bottom = height - padding;
+    drawBed(ctx, frame, t);
+
     const minBpm = bpmAxis[0];
     const maxBpm = bpmAxis[bpmAxis.length - 1];
-    const xOfBpm = (bpm: number) => padding + ((bpm - minBpm) / (maxBpm - minBpm)) * plotWidth;
+    const xOfBpm = (bpm: number) =>
+      frame.left + ((bpm - minBpm) / (maxBpm - minBpm)) * frame.plotWidth;
 
     let peak = 0;
     for (let i = 0; i < spectrum.length; i++) peak = Math.max(peak, spectrum[i]);
-    const yOf = (v: number) => bottom - (peak > 0 ? v / peak : 0) * plotHeight;
+    const yOf = (v: number) => frame.bottom - (peak > 0 ? v / peak : 0) * frame.plotHeight;
 
-    // Axes.
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(padding, padding);
-    ctx.lineTo(padding, bottom);
-    ctx.lineTo(width - padding, bottom);
-    ctx.stroke();
-
-    // BPM ticks every 20 BPM.
-    ctx.fillStyle = "black";
-    ctx.font = "12px sans-serif";
-    ctx.textAlign = "center";
+    // BPM grid every 20 BPM.
     const tickStep = 20;
+    const bpmTicks: number[] = [];
     for (let bpm = Math.ceil(minBpm / tickStep) * tickStep; bpm <= maxBpm; bpm += tickStep) {
-      const x = xOfBpm(bpm);
-      ctx.strokeStyle = "#ddd";
-      ctx.lineWidth = 0.5;
-      ctx.beginPath();
-      ctx.moveTo(x, padding);
-      ctx.lineTo(x, bottom);
-      ctx.stroke();
-      ctx.fillText(`${bpm}`, x, bottom + 20);
+      bpmTicks.push(bpm);
     }
+    drawVerticalGrid(ctx, frame, bpmTicks.map(xOfBpm), t.grid);
 
-    // Spectrum.
-    ctx.strokeStyle = "rgb(70, 130, 180)";
+    drawAxes(ctx, frame, t);
+
+    setTickFont(ctx, t);
+    for (const bpm of bpmTicks) labelX(ctx, frame, xOfBpm(bpm), `${bpm}`);
+    for (const v of [0, 0.5, 1]) labelY(ctx, frame, yOf(v * peak), v.toFixed(1));
+
+    // Area, then the trace.
+    ctx.fillStyle = t.signalFill;
+    ctx.beginPath();
+    ctx.moveTo(xOfBpm(bpmAxis[0]), frame.bottom);
+    for (let i = 0; i < spectrum.length; i++) ctx.lineTo(xOfBpm(bpmAxis[i]), yOf(spectrum[i]));
+    ctx.lineTo(xOfBpm(bpmAxis[spectrum.length - 1]), frame.bottom);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = t.signal;
     ctx.lineWidth = 1.5;
+    ctx.lineJoin = "round";
     ctx.beginPath();
     for (let i = 0; i < spectrum.length; i++) {
       const x = xOfBpm(bpmAxis[i]);
@@ -99,45 +107,42 @@ export const TempoPlot = memo(function TempoPlot({
     }
     ctx.stroke();
 
-    // Estimate marker.
+    // Estimate marker: what we concluded, in the accent.
     if (estimate && estimate.bpm >= minBpm && estimate.bpm <= maxBpm) {
-      const x = xOfBpm(estimate.bpm);
-      ctx.strokeStyle = "rgba(220, 60, 60, 0.9)";
-      ctx.setLineDash([6, 4]);
-      ctx.lineWidth = 2;
+      const x = crisp(xOfBpm(estimate.bpm));
+      ctx.strokeStyle = t.threshold;
+      ctx.setLineDash([6, 3]);
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(x, padding);
-      ctx.lineTo(x, bottom);
+      ctx.moveTo(x, frame.top);
+      ctx.lineTo(x, frame.bottom);
       ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle = "rgb(220, 60, 60)";
-      ctx.font = "bold 12px sans-serif";
-      ctx.textAlign = x > width / 2 ? "right" : "left";
-      ctx.fillText(`${estimate.bpm.toFixed(1)} BPM`, x + (x > width / 2 ? -6 : 6), padding + 14);
-    }
 
-    if (title) {
-      ctx.fillStyle = "black";
-      ctx.font = "bold 12px sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText(title, width / 2, padding - 10);
+      setTickFont(ctx, t);
+      const onRight = x > frame.width / 2;
+      ctx.textAlign = onRight ? "right" : "left";
+      ctx.textBaseline = "top";
+      haloText(
+        ctx,
+        t,
+        `${estimate.bpm.toFixed(1)} BPM`,
+        x + (onRight ? -6 : 6),
+        frame.top + 4,
+        t.threshold,
+      );
     }
-
-    ctx.fillStyle = "black";
-    ctx.font = "bold 12px sans-serif";
-    ctx.textAlign = "left";
-    ctx.fillText("Beat rate (BPM) →", width / 2, height - 5);
-    ctx.save();
-    ctx.translate(10, height / 2);
-    ctx.rotate(-Math.PI / 2);
-    ctx.textAlign = "center";
-    ctx.fillText("Relative magnitude →", 0, 0);
-    ctx.restore();
-  }, [spectrum, bpmAxis, estimate, title, height]);
+  }, [spectrum, bpmAxis, estimate, width, height, t]);
 
   return (
-    <div className="tempo-plot">
-      <canvas ref={canvasRef} role="img" aria-label={title ?? "Beat spectrum plot"} />
-    </div>
+    <PlotFigure
+      title={title}
+      legend={LEGEND}
+      xLabel="Beat rate (BPM)"
+      yLabel="Relative magnitude"
+      frameRef={frameRef}
+    >
+      <canvas ref={canvasRef} role="img" aria-label={title} />
+    </PlotFigure>
   );
 });
