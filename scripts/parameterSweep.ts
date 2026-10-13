@@ -32,11 +32,8 @@ import {
   runPresenceTonality,
   slidingChordHistogram,
 } from "../tests/helpers/offlinePipeline";
+import type { KeyScore } from "../src/analysis/keyDetection";
 import { NOTE_NAMES } from "../src/utils/notes";
-import {
-  keyShortName,
-  type KeyScore,
-} from "../src/analysis/keyDetection";
 import type { HighWaterMarkMode } from "../src/analysis/highWaterMark";
 
 // -----------------------------------------------------------------------------
@@ -45,8 +42,6 @@ import type { HighWaterMarkMode } from "../src/analysis/highWaterMark";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
-const SAMPLES_DIR = path.join(PROJECT_ROOT, "tests", "Sample");
-const FL_DIR = path.join(SAMPLES_DIR, "FLStudio");
 
 // -----------------------------------------------------------------------------
 // Chord grid parsing
