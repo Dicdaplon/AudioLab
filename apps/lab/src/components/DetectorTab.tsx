@@ -1,6 +1,9 @@
-import type { ChordScore } from "../analysis/chordDetection";
-import type { KeyScore } from "../analysis/keyDetection";
-import { ANALYSIS_DEFAULTS, type DetectorSettings } from "../config/settings";
+import {
+  ANALYSIS_DEFAULTS,
+  type ChordScore,
+  type DetectorSettings,
+  type KeyScore,
+} from "@audiolab/core";
 import { splitKeyName } from "../ui/rankRows";
 import { ChordView } from "./ChordView";
 import { ChromaView } from "./ChromaView";

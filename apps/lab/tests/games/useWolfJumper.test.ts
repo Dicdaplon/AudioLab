@@ -2,7 +2,7 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { ChordScore } from "../../src/analysis/chordDetection";
+import type { ChordScore } from "@audiolab/core";
 import { MAX_HP } from "../../src/features/games/wolf-jumper/constants";
 import { dominantNote, pushChromaFrame } from "../../src/features/games/wolf-jumper/noteDetection";
 import {

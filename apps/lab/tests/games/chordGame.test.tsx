@@ -1,7 +1,7 @@
 import { act, cleanup, fireEvent, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { ChordScore } from "../../src/analysis/chordDetection";
+import type { ChordScore } from "@audiolab/core";
 import { ChordGame } from "../../src/features/games/chord-game/ChordGame";
 import { CHORD_POOLS, pickChord } from "../../src/features/games/chord-game/pools";
 import { INITIAL_STATS, chordGameReducer } from "../../src/features/games/chord-game/scoring";

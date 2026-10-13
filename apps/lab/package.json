@@ -8,12 +8,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.json && vite build",
-    "preview": "vite preview",
-    "sweep": "tsx scripts/parameterSweep.ts",
-    "extract:backing": "tsx scripts/extractBackingExtracts.ts",
-    "analyze:backing": "tsx scripts/analyzeBacking.ts"
+    "preview": "vite preview"
   },
   "dependencies": {
+    "@audiolab/core": "^0.1.0",
     "@fontsource/ibm-plex-mono": "^5.3.0",
     "@fontsource/ibm-plex-sans": "^5.3.0",
     "@fontsource/source-serif-4": "^5.3.1",

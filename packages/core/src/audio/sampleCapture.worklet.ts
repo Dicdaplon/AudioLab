@@ -4,8 +4,10 @@
  * silence so it can be connected to the destination (which keeps it
  * rendering) without being audible.
  *
- * Loaded by `sampleCapture.ts` through Vite's `?worker&url` import, so it
- * is bundled as its own script in `vite build`.
+ * `scripts/buildWorklet.ts` bundles this file (with its imports) into the
+ * string exported by `sampleCaptureWorklet.source.ts`; `sampleCapture.ts`
+ * loads that string through a Blob URL, so the processor needs no separate
+ * asset whatever bundler the consumer uses.
  */
 
 import { SampleBatcher } from "./sampleBatcher";

@@ -1,16 +1,24 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import { act, renderHook, waitFor } from "@testing-library/react";
 
-import type { SampleCapture, SampleListener } from "../../src/audio/sampleCapture";
-import { openMicrophone, type MicSource } from "../../src/audio/micStream";
+import {
+  type MicSource,
+  openMicrophone,
+  type SampleCapture,
+  type SampleListener,
+} from "@audiolab/core";
 import { useTempoAnalysis } from "../../src/hooks/useTempoAnalysis";
-import { installWebAudioFakes, type InstalledFakes } from "../helpers/fakeWebAudio";
+import {
+  installWebAudioFakes,
+  type InstalledFakes,
+} from "../../../../packages/core/tests/helpers/fakeWebAudio";
 
 // Capture is mocked: tests feed samples straight into the listener.
 const captures: { listener: SampleListener; stop: ReturnType<typeof vi.fn> }[] = [];
 /** When set, the next capture start waits on this promise (or its rejection). */
 let gate: Promise<void> | null = null;
-vi.mock("../../src/audio/sampleCapture", () => ({
+vi.mock("@audiolab/core", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@audiolab/core")>()),
   startSampleCapture: vi.fn(
     async (_ctx: unknown, _src: unknown, listener: SampleListener): Promise<SampleCapture> => {
       const stop = vi.fn();

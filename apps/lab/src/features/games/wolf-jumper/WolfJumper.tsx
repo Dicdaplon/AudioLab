@@ -20,7 +20,7 @@
 
 import { useState } from "react";
 
-import type { ChordScore } from "../../../analysis/chordDetection";
+import type { ChordScore } from "@audiolab/core";
 import { Icon } from "../../../ui/Icon";
 import { useMediaQuery } from "../../../ui/useMediaQuery";
 import { MicPrompt } from "../MicPrompt";

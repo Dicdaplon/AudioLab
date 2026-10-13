@@ -8,8 +8,6 @@ import {
   type InstalledWorkletNode,
 } from "../helpers/fakeWebAudio";
 
-vi.mock("../../src/audio/sampleCaptureWorkletUrl", () => ({ default: "mock-worklet-url.js" }));
-
 import { startSampleCapture } from "../../src/audio/sampleCapture";
 
 describe("SampleBatcher", () => {
@@ -122,7 +120,7 @@ describe("startSampleCapture", () => {
     const capture = await startSampleCapture(ctx, source, onSamples);
 
     expect(capture.method).toBe("worklet");
-    expect(ctx.audioWorklet.addModule).toHaveBeenCalledWith("mock-worklet-url.js");
+    expect(ctx.audioWorklet.addModule).toHaveBeenCalledWith(expect.stringMatching(/^blob:/));
     expect(nodes).toHaveLength(1);
     expect(nodes[0].name).toBe("sample-capture");
     expect(source.connect).toHaveBeenCalledWith(nodes[0]);

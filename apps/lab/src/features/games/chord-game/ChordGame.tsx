@@ -12,7 +12,7 @@
 
 import { useCallback, useEffect, useReducer, useState } from "react";
 
-import type { ChordScore } from "../../../analysis/chordDetection";
+import type { ChordScore } from "@audiolab/core";
 import { SelectField } from "../../../components/Field";
 import { Panel } from "../../../components/Panel";
 import { Segments } from "../../../components/Segments";

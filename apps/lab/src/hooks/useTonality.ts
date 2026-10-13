@@ -11,26 +11,23 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { createAnalyser, readSpectrumDb } from "../audio/analyser";
-import type { MicSource } from "../audio/micStream";
-import {
-  TonalityEngine,
-  emptyTonalityFrame,
-  type TonalityEngineConfig,
-  type TonalityFrame,
-} from "../analysis/engine/tonalityEngine";
-import type { HighWaterMarkMode } from "../analysis/highWaterMark";
-import {
-  NOISE_FLOOR_SILENCE_DB,
-  estimateNoiseFloor,
-  type NoiseFloorMethod,
-} from "../analysis/noiseFloor";
 import {
   ANALYSIS_DEFAULTS,
+  createAnalyser,
   DEFAULT_DETECTOR_SETTINGS,
   DEFAULT_FFT_SETTINGS,
+  emptyTonalityFrame,
+  estimateNoiseFloor,
   FFT_DISPLAY_MAX_HZ,
-} from "../config/settings";
+  type HighWaterMarkMode,
+  type MicSource,
+  NOISE_FLOOR_SILENCE_DB,
+  type NoiseFloorMethod,
+  readSpectrumDb,
+  TonalityEngine,
+  type TonalityEngineConfig,
+  type TonalityFrame,
+} from "@audiolab/core";
 
 export interface UseTonalityOptions {
   /** Live acquisition window length (seconds). */

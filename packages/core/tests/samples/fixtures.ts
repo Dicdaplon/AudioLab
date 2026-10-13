@@ -13,8 +13,8 @@ import {
   runPresenceTonality,
   slidingChordHistogram,
   type SlidingChordHistogram,
-} from "../../src/analysis/offline/offlinePipeline";
-import { decodeAudioFile } from "../../src/analysis/offline/decodeAudio";
+} from "../../src/offline/offlinePipeline";
+import { decodeAudioFile } from "../../src/offline/decodeAudio";
 import type { KeyScore } from "../../src/analysis/keyDetection";
 
 export const SAMPLES_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "Sample");

@@ -1,6 +1,13 @@
 import { useMemo, useState } from "react";
+import {
+  ANALYSIS_DEFAULTS,
+  DEFAULT_DETECTOR_SETTINGS,
+  DEFAULT_FFT_SETTINGS,
+  checkMicrophoneSupport,
+  type DetectorSettings,
+  type FftSettings,
+} from "@audiolab/core";
 
-import { checkMicrophoneSupport } from "./audio/errors";
 import { Brand } from "./components/Brand";
 import { ChordGame } from "./features/games/chord-game/ChordGame";
 import { DetectorTab } from "./components/DetectorTab";
@@ -10,13 +17,6 @@ import { TabBar, type TabDef } from "./components/TabBar";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { WolfJumper } from "./features/games/wolf-jumper/WolfJumper";
 import { FftTab } from "./components/FftTab";
-import {
-  ANALYSIS_DEFAULTS,
-  DEFAULT_DETECTOR_SETTINGS,
-  DEFAULT_FFT_SETTINGS,
-  type DetectorSettings,
-  type FftSettings,
-} from "./config/settings";
 import { useMicrophone } from "./hooks/useMicrophone";
 import { useTonality } from "./hooks/useTonality";
 import { panelId, tabId } from "./ui/tabIds";

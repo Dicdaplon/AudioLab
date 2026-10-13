@@ -1,7 +1,10 @@
 import { memo } from "react";
 
-import { HIGH_WATER_MARK_MEMORY_MAX, HIGH_WATER_MARK_MEMORY_MIN } from "../analysis/highWaterMark";
-import type { DetectorSettings } from "../config/settings";
+import {
+  type DetectorSettings,
+  HIGH_WATER_MARK_MEMORY_MAX,
+  HIGH_WATER_MARK_MEMORY_MIN,
+} from "@audiolab/core";
 import { RangeField, SelectField, Switch } from "./Field";
 import { Panel } from "./Panel";
 

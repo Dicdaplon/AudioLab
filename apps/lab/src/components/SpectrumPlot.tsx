@@ -1,6 +1,10 @@
 import { useEffect, useRef } from "react";
 
-import { spectrumSlopeDbPerHz } from "../analysis/spectrumSlope";
+import {
+  A_MINOR_PENTATONIC_PITCH_CLASSES,
+  pitchClassFrequencies,
+  spectrumSlopeDbPerHz,
+} from "@audiolab/core";
 import {
   crisp,
   drawAxes,
@@ -19,7 +23,6 @@ import {
 } from "../ui/canvasPlot";
 import { usePlotWidth } from "../ui/usePlotWidth";
 import { useVizTheme } from "../ui/vizTheme";
-import { A_MINOR_PENTATONIC_PITCH_CLASSES, pitchClassFrequencies } from "../utils/notes";
 import { PlotFigure, type LegendItem } from "./Plot";
 
 interface SpectrumPlotProps {

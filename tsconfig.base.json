@@ -4,6 +4,9 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "bundler",
+    // Resolve the workspace packages to their TypeScript sources (see the
+    // `exports` maps in packages/*/package.json) instead of their dist.
+    "customConditions": ["audiolab-source"],
     "moduleDetection": "force",
     "jsx": "react-jsx",
     "useDefineForClassFields": true,

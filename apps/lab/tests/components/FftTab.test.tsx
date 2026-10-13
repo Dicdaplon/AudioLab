@@ -1,9 +1,7 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 
-import type { TempoFrame } from "../../src/analysis/engine/tempoAnalyzer";
-import type { MicSource } from "../../src/audio/micStream";
-import { DEFAULT_FFT_SETTINGS } from "../../src/config/settings";
+import { DEFAULT_FFT_SETTINGS, type MicSource, type TempoFrame } from "@audiolab/core";
 import type { TempoAnalysisState } from "../../src/hooks/useTempoAnalysis";
 import { installCanvasStub, type CanvasRecorder } from "../helpers/canvasStub";
 

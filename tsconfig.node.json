@@ -5,10 +5,5 @@
     "lib": ["ES2023", "DOM"],
     "types": ["node"]
   },
-  "include": [
-    "vitest.config.ts",
-    "vitest.workspace.ts",
-    "apps/lab/vite.config.ts",
-    "apps/lab/scripts"
-  ]
+  "include": ["vitest.config.ts", "vitest.workspace.ts", "apps/lab/vite.config.ts"]
 }

@@ -1,6 +1,6 @@
 /** Pure helpers turning recent chroma frames into a note candidate. */
 
-import { CHROMA_SIZE } from "../../../analysis/chroma";
+import { CHROMA_SIZE } from "@audiolab/core";
 
 export interface DominantNote {
   /** Pitch class 0..11. */

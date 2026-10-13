@@ -12,7 +12,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import type { ChordScore } from "../../../analysis/chordDetection";
+import type { ChordScore } from "@audiolab/core";
 import { useConfirmedDetection } from "../useConfirmedDetection";
 import {
   CHORD_CONFIRMATIONS,

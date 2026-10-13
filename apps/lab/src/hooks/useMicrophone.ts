@@ -13,8 +13,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { toMicError } from "../audio/errors";
-import { openMicrophone, type MicSource } from "../audio/micStream";
+import { type MicSource, openMicrophone, toMicError } from "@audiolab/core";
 
 export interface MicrophoneSession {
   /** Open source, or null when stopped. */

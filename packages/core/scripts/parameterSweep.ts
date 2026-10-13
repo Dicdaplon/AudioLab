@@ -30,8 +30,8 @@ import {
   computeChromaSequence,
   runPresenceTonality,
   slidingChordHistogram,
-} from "../src/analysis/offline/offlinePipeline";
-import { decodeAudioFile } from "../src/analysis/offline/decodeAudio";
+} from "../src/offline/offlinePipeline";
+import { decodeAudioFile } from "../src/offline/decodeAudio";
 import type { KeyScore } from "../src/analysis/keyDetection";
 import { NOTE_NAMES } from "../src/utils/notes";
 import type { HighWaterMarkMode } from "../src/analysis/highWaterMark";

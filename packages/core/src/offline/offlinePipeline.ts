@@ -10,12 +10,12 @@
  * frame rate and the dB round-trip of the AnalyserNode path.
  */
 
-import { CHROMA_SIZE, spectrumToChroma } from "../chroma";
-import { detectChord, type ChordScore } from "../chordDetection";
-import { detectKey, type KeyScore } from "../keyDetection";
-import { applyHannWindow, fftMagnitude } from "../fft";
-import type { HighWaterMarkOptions } from "../highWaterMark";
-import { TonalityEngine, type TonalityFrame } from "../engine/tonalityEngine";
+import { CHROMA_SIZE, spectrumToChroma } from "../analysis/chroma";
+import { detectChord, type ChordScore } from "../analysis/chordDetection";
+import { detectKey, type KeyScore } from "../analysis/keyDetection";
+import { applyHannWindow, fftMagnitude } from "../analysis/fft";
+import type { HighWaterMarkOptions } from "../analysis/highWaterMark";
+import { TonalityEngine, type TonalityFrame } from "../analysis/engine/tonalityEngine";
 import type { DecodedAudio } from "./decodeAudio";
 
 export interface FrameOptions {

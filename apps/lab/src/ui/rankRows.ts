@@ -1,7 +1,6 @@
 /** Adapters from analysis scores to what the readouts and ranked lists show. */
 
-import type { ChordScore } from "../analysis/chordDetection";
-import type { KeyScore } from "../analysis/keyDetection";
+import { type ChordScore, type KeyScore } from "@audiolab/core";
 import type { RankRow } from "../components/RankList";
 
 export function chordRows(chords: ChordScore[], topN: number): RankRow[] {

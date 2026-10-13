@@ -1,4 +1,4 @@
-import { CHORD_TEMPLATES } from "../../../analysis/chordDetection";
+import { CHORD_TEMPLATES } from "@audiolab/core";
 
 export type PoolKey = "open-major" | "open-minor" | "open-mix" | "all-major" | "all-minor" | "all";
 

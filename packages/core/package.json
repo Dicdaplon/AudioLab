@@ -1,0 +1,70 @@
+{
+  "name": "@audiolab/core",
+  "version": "0.1.0",
+  "description": "Framework-free audio analysis for the browser: key, chord and tempo detection on the Web Audio API, with hand-written DSP.",
+  "keywords": [
+    "audio",
+    "web-audio",
+    "dsp",
+    "chroma",
+    "key-detection",
+    "chord-detection",
+    "tempo",
+    "music"
+  ],
+  "license": "MIT",
+  "author": "dicdaplon",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Dicdaplon/AudioLab.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/Dicdaplon/AudioLab/tree/main/packages/core#readme",
+  "bugs": "https://github.com/Dicdaplon/AudioLab/issues",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "audiolab-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./offline": {
+      "audiolab-source": "./src/offline/index.ts",
+      "types": "./dist/offline/index.d.ts",
+      "default": "./dist/offline/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsup",
+    "build:worklet": "tsx scripts/buildWorklet.ts",
+    "sweep": "tsx scripts/parameterSweep.ts",
+    "extract:backing": "tsx scripts/extractBackingExtracts.ts",
+    "analyze:backing": "tsx scripts/analyzeBacking.ts"
+  },
+  "peerDependencies": {
+    "audio-decode": "^2.2.2"
+  },
+  "peerDependenciesMeta": {
+    "audio-decode": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "audio-decode": "^2.2.2",
+    "esbuild": "^0.27.0",
+    "tsup": "^8.3.5"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

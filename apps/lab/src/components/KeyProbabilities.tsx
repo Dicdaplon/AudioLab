@@ -1,4 +1,4 @@
-import type { KeyScore } from "../analysis/keyDetection";
+import type { KeyScore } from "@audiolab/core";
 import { keyRows } from "../ui/rankRows";
 import { Panel } from "./Panel";
 import { RankList } from "./RankList";

@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 
-import { NOTE_NAMES } from "../utils/notes";
+import { NOTE_NAMES } from "@audiolab/core";
 
 interface ChromaBarsProps {
   /** Twelve values, one per pitch class (C first). */

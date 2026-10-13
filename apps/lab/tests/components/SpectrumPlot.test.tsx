@@ -4,7 +4,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { SpectrumPlot } from "../../src/components/SpectrumPlot";
 import { EMPTY_TEXT } from "../../src/ui/canvasPlot";
 import { DEFAULT_VIZ_THEME } from "../../src/ui/vizTheme";
-import { A_MINOR_PENTATONIC_PITCH_CLASSES, pitchClassFrequencies } from "../../src/utils/notes";
+import { A_MINOR_PENTATONIC_PITCH_CLASSES, pitchClassFrequencies } from "@audiolab/core";
 import { installCanvasStub, type CanvasRecorder, type CanvasCall } from "../helpers/canvasStub";
 
 /** Split the recorded calls into paths: each beginPath starts a new group. */

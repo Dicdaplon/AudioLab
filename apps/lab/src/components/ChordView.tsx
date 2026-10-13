@@ -1,4 +1,4 @@
-import type { ChordScore } from "../analysis/chordDetection";
+import type { ChordScore } from "@audiolab/core";
 import { chordRows } from "../ui/rankRows";
 import { Panel } from "./Panel";
 import { RankList } from "./RankList";

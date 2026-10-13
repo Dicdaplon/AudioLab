@@ -2,7 +2,11 @@ import { afterEach, describe, it, expect, vi } from "vitest";
 import { act, renderHook, waitFor } from "@testing-library/react";
 
 import { useMicrophone } from "../../src/hooks/useMicrophone";
-import { installWebAudioFakes, makeFakeStream, type InstalledFakes } from "../helpers/fakeWebAudio";
+import {
+  installWebAudioFakes,
+  makeFakeStream,
+  type InstalledFakes,
+} from "../../../../packages/core/tests/helpers/fakeWebAudio";
 
 /** A getUserMedia that resolves only when the test says so (permission prompt). */
 function deferredGetUserMedia() {

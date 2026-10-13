@@ -9,14 +9,14 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { CHROMA_SIZE } from "../../src/analysis/chroma";
 import { TonalityEngine } from "../../src/analysis/engine/tonalityEngine";
-import { decodeAudioFile } from "../../src/analysis/offline/decodeAudio";
+import { decodeAudioFile } from "../../src/offline/decodeAudio";
 import {
   aggregateChromas,
   analyzeOverall,
   computeChromaSequence,
   runPresenceTonality,
   slidingChordHistogram,
-} from "../../src/analysis/offline/offlinePipeline";
+} from "../../src/offline/offlinePipeline";
 import { concat, notes } from "../helpers/synth";
 
 const SR = 11_025;

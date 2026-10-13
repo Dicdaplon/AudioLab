@@ -1,15 +1,15 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import { act, renderHook } from "@testing-library/react";
 
-import * as noiseFloor from "../../src/analysis/noiseFloor";
-import { openMicrophone, type MicSource } from "../../src/audio/micStream";
+import * as core from "@audiolab/core";
+import type { MicSource } from "@audiolab/core";
 import { useTonality } from "../../src/hooks/useTonality";
 import {
   dbSpectrumForNotes,
   installWebAudioFakes,
   type FakeAudioContextInstance,
   type InstalledFakes,
-} from "../helpers/fakeWebAudio";
+} from "../../../../packages/core/tests/helpers/fakeWebAudio";
 
 const C_MAJOR = dbSpectrumForNotes([60, 64, 67]); // C4 E4 G4 at 48 kHz, 16384-point FFT
 
@@ -23,7 +23,7 @@ describe("useTonality", () => {
     fakes = installWebAudioFakes({
       spectrumSource: (buf) => buf.set(C_MAJOR.subarray(0, buf.length)),
     });
-    mic = await openMicrophone();
+    mic = await core.openMicrophone();
     context = fakes.instances[0];
   });
 
@@ -66,7 +66,7 @@ describe("useTonality", () => {
   });
 
   it("does not copy the spectrum nor estimate the noise floor unless fftEnabled", () => {
-    const spy = vi.spyOn(noiseFloor, "estimateNoiseFloor");
+    const spy = vi.spyOn(core, "estimateNoiseFloor");
     const { result, rerender } = renderHook(
       ({ enabled }) => useTonality(mic, { framesPerSecond: 10, fftEnabled: enabled }),
       { initialProps: { enabled: false } },

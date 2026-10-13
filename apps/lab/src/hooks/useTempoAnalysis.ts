@@ -9,10 +9,15 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { TempoAnalyzer, type TempoFrame } from "../analysis/engine/tempoAnalyzer";
-import type { MicSource } from "../audio/micStream";
-import { startSampleCapture, type CaptureMethod, type SampleCapture } from "../audio/sampleCapture";
-import { DEFAULT_FFT_SETTINGS } from "../config/settings";
+import {
+  type CaptureMethod,
+  DEFAULT_FFT_SETTINGS,
+  type MicSource,
+  type SampleCapture,
+  startSampleCapture,
+  TempoAnalyzer,
+  type TempoFrame,
+} from "@audiolab/core";
 
 export interface UseTempoAnalysisOptions {
   /** Run the capture and analysis. Default true. */

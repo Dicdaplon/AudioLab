@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef } from "react";
 
-import type { TempoEstimate } from "../analysis/engine/tempoAnalyzer";
+import type { TempoEstimate } from "@audiolab/core";
 import {
   crisp,
   drawAxes,

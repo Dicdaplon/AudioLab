@@ -18,8 +18,8 @@ vi.mock("../../src/hooks/useMicrophone", () => ({ useMicrophone: () => session }
 vi.mock("../../src/hooks/useTempoAnalysis", () => ({
   useTempoAnalysis: () => ({ frame: null, captureMethod: null }),
 }));
-vi.mock("../../src/audio/errors", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../src/audio/errors")>()),
+vi.mock("@audiolab/core", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@audiolab/core")>()),
   checkMicrophoneSupport: () => support,
 }));
 

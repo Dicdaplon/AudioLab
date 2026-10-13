@@ -14,8 +14,8 @@ import {
   computeChromaSequence,
   runPresenceTonality,
   slidingChordHistogram,
-} from "../src/analysis/offline/offlinePipeline";
-import { decodeAudioFile } from "../src/analysis/offline/decodeAudio";
+} from "../src/offline/offlinePipeline";
+import { decodeAudioFile } from "../src/offline/decodeAudio";
 import { HIGH_WATER_MARK_DEFAULTS } from "../src/analysis/highWaterMark";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

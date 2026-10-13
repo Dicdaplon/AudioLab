@@ -6,7 +6,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, renderHook } from "@testing-library/react";
 
-import { openMicrophone, type MicSource } from "../../src/audio/micStream";
+import { openMicrophone, type MicSource } from "@audiolab/core";
 import { useTempoAnalysis } from "../../src/hooks/useTempoAnalysis";
 import {
   installFakeAudioWorkletNode,
@@ -14,9 +14,7 @@ import {
   type FakeAudioContextInstance,
   type InstalledFakes,
   type InstalledWorkletNode,
-} from "../helpers/fakeWebAudio";
-
-vi.mock("../../src/audio/sampleCaptureWorkletUrl", () => ({ default: "mock-worklet-url.js" }));
+} from "../../../../packages/core/tests/helpers/fakeWebAudio";
 
 const SR = 48_000;
 

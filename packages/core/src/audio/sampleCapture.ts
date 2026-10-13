@@ -1,10 +1,11 @@
 /**
  * Continuous time-domain capture of an audio source.
  *
- * Preferred path: an AudioWorklet (`sampleCapture.worklet.ts`) that runs on
- * the audio thread and posts every sample exactly once, in 2048-sample
- * batches. This is gapless by construction and unaffected by main-thread
- * timer jitter or background-tab throttling.
+ * Preferred path: an AudioWorklet (`sampleCapture.worklet.ts`, shipped as a
+ * bundled string and loaded from a Blob URL) that runs on the audio thread
+ * and posts every sample exactly once, in 2048-sample batches. This is
+ * gapless by construction and unaffected by main-thread timer jitter or
+ * background-tab throttling.
  *
  * Fallback (no AudioWorklet, or the module failed to load): poll an
  * AnalyserNode's time-domain window. The number of new samples per poll is
@@ -16,7 +17,8 @@
  * timeline keeps its length instead of compressing.
  */
 
-import workletUrl from "./sampleCaptureWorkletUrl";
+import { SAMPLE_CAPTURE_WORKLET_SOURCE } from "./sampleCaptureWorklet.source";
+import { createWorkletModuleUrl, revokeWorkletModuleUrl } from "./workletModuleUrl";
 
 /** Must match the name registered by the worklet. */
 const PROCESSOR_NAME = "sample-capture";
@@ -62,7 +64,12 @@ async function startWorkletCapture(
   source: AudioNode,
   onSamples: SampleListener,
 ): Promise<SampleCapture> {
-  await context.audioWorklet.addModule(workletUrl);
+  const moduleUrl = createWorkletModuleUrl(SAMPLE_CAPTURE_WORKLET_SOURCE);
+  try {
+    await context.audioWorklet.addModule(moduleUrl);
+  } finally {
+    revokeWorkletModuleUrl(moduleUrl);
+  }
   const node = new AudioWorkletNode(context, PROCESSOR_NAME, {
     numberOfInputs: 1,
     numberOfOutputs: 1,

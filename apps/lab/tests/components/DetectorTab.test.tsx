@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 import { DetectorTab, type DetectorData } from "../../src/components/DetectorTab";
-import { DEFAULT_DETECTOR_SETTINGS } from "../../src/config/settings";
+import { DEFAULT_DETECTOR_SETTINGS } from "@audiolab/core";
 
 const chroma = () => new Float32Array(12);
 

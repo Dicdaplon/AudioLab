@@ -1,7 +1,6 @@
 import { memo } from "react";
 
-import { isNoiseFloorMethod } from "../analysis/noiseFloor";
-import { ONSET_LOWPASS_RANGE, type FftSettings } from "../config/settings";
+import { type FftSettings, isNoiseFloorMethod, ONSET_LOWPASS_RANGE } from "@audiolab/core";
 import { RangeField, SelectField, Switch } from "./Field";
 import { Panel } from "./Panel";
 
