@@ -8,7 +8,7 @@
   "author": "dicdaplon",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Dicdaplon/AudioLab.git"
+    "url": "git+https://github.com/Dicdaplon/AudioLab.git"
   },
   "engines": {
     "node": ">=20"
@@ -21,6 +21,7 @@
     "dev": "npm run dev -w apps/lab",
     "build": "npm run build:packages && npm run build -w apps/lab",
     "build:packages": "npm run build -w packages/core -w packages/react",
+    "check:packages": "publint packages/core && publint packages/react && attw --pack packages/core --profile esm-only && attw --pack packages/react --profile esm-only --exclude-entrypoints ./styles.css ./fonts.css",
     "preview": "npm run preview -w apps/lab",
     "test": "vitest run --project unit --project dom",
     "test:samples": "vitest run --project samples",
@@ -36,6 +37,7 @@
     "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
     "@eslint/js": "^9.39.5",
     "@testing-library/react": "^16.0.1",
     "@types/node": "^25.9.1",
@@ -51,6 +53,7 @@
     "globals": "^15.15.0",
     "jsdom": "^25.0.1",
     "prettier": "^3.9.10",
+    "publint": "^0.3.25",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "tsx": "^4.19.2",

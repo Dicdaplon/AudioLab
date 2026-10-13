@@ -31,5 +31,25 @@ export default tseslint.config(
     files: ["**/scripts/**/*.ts", "**/tests/**/*.ts", "**/*.config.ts", "vitest.workspace.ts"],
     languageOptions: { globals: { ...globals.node } },
   },
+  {
+    // @audiolab/core is framework-free: no React, and no Node built-ins
+    // outside the `offline` subpath (browser bundles must stay clean).
+    files: ["packages/core/src/**/*.ts"],
+    ignores: ["packages/core/src/offline/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["react", "react-dom", "react/*", "react-dom/*"],
+              message: "core is React-free",
+            },
+            { group: ["node:*"], message: "Node built-ins belong to the offline subpath" },
+          ],
+        },
+      ],
+    },
+  },
   prettier,
 );

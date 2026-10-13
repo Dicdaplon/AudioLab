@@ -30,7 +30,11 @@ jobs:
           name: coverage
           path: coverage/
           retention-days: 14
+      # Library builds (tsup) then the lab app against their dist.
       - run: npm run build
+      # Package hygiene of the publishable packages: exports map, files,
+      # types resolution (publint + arethetypeswrong on the packed tarballs).
+      - run: npm run check:packages
 
   samples:
     # Regression suite on the real audio fixtures in tests/Sample.
