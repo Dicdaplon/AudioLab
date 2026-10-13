@@ -1,0 +1,392 @@
+/* =========================================================================
+   Loupe — design tokens.
+
+   Two layers: primitives (--p-*, the raw palette) and semantic tokens
+   (--color-*, --viz-*, type, space, motion) that components use. Dark is
+   the default: a spectrum on a dark bed reads as a signal, on paper it
+   reads as a print. Light is an explicit choice or the OS preference.
+
+   Theme contract: <html data-theme="dark|light"> wins; without it the OS
+   preference applies. The choice is stored in localStorage("theme").
+
+   Every contrast ratio quoted below was computed (WCAG 2.1) on the exact
+   pair it annotates. --color-ink-faint is for strokes and disabled states
+   only, never for text.
+   ========================================================================= */
+
+:root {
+  /* --- Primitives: the palette, named by what they are, not what they do --- */
+  --p-night-0: #090c0b;
+  --p-night-1: #0d110f;
+  --p-night-2: #101412;
+  --p-night-3: #141917;
+  --p-night-4: #1b211e;
+  --p-night-line: #232a26;
+  --p-night-line-strong: #344039;
+  --p-paper-0: #fffdf8;
+  --p-paper-1: #f4f1ea;
+  --p-paper-2: #ebe6dc;
+  --p-paper-3: #fcfbf7;
+  --p-paper-4: #ffffff;
+  --p-paper-line: #e0d9cb;
+  --p-paper-line-strong: #c9c0ad;
+  --p-chalk: #e4e0d6;
+  --p-chalk-muted: #a8a297;
+  --p-chalk-faint: #717a73;
+  --p-ink: #1b1a17;
+  --p-ink-muted: #595349;
+  --p-ink-faint: #8a8376;
+  --p-ember-light: #e8a75c;
+  --p-ember-dark: #9a4a10;
+  --p-moss-light: #7fd3b8;
+  --p-moss-lighter: #a9ead3;
+  --p-moss-deep: #2a7a66;
+  --p-moss-dark: #0f5c4e;
+  --p-moss-darker: #0a3f36;
+  --p-moss-soft: #6aab97;
+  --p-violet-light: #bfa8e8;
+  --p-violet-dark: #5e3e86;
+  --p-sky-light: #8fb6ff;
+  --p-sky-dark: #1c5cd6;
+  --p-coral-light: #f08e80;
+  --p-coral-dark: #a32a1e;
+  --p-leaf-light: #74c88f;
+  --p-leaf-dark: #1f6b3a;
+
+  /* --- Typography: three families, three jobs --- */
+  --font-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, "SF Mono", monospace;
+  --font-voice: "Source Serif 4", Georgia, "Times New Roman", serif;
+
+  /* Fluid between 360 and 1280 px, root 16 px (px min → max). */
+  --step--3: clamp(0.656rem, 0.644rem + 0.054vw, 0.6875rem); /* 10.5 → 11   axis ticks */
+  --step--2: clamp(0.719rem, 0.694rem + 0.109vw, 0.781rem); /* 11.5 → 12.5 labels */
+  --step--1: clamp(0.8125rem, 0.788rem + 0.109vw, 0.875rem); /* 13 → 14     hints, cells */
+  --step-0: clamp(0.906rem, 0.882rem + 0.109vw, 0.969rem); /* 14.5 → 15.5 body */
+  --step-1: clamp(1.0625rem, 1.014rem + 0.217vw, 1.1875rem); /* 17 → 19     titles, values */
+  --step-2: clamp(1.3125rem, 1.239rem + 0.326vw, 1.5rem); /* 21 → 24     compact readout */
+  --step-3: clamp(1.6875rem, 1.565rem + 0.543vw, 2rem); /* 27 → 32     page title */
+  --step-4: clamp(2.5rem, 1.913rem + 2.609vw, 4rem); /* 40 → 64     hero readout */
+  --step-5: clamp(3.5rem, 2.522rem + 4.348vw, 6rem); /* 56 → 96     game target */
+
+  --leading-ui: 1.45;
+  --leading-tight: 1.1;
+  --leading-snug: 1.3;
+  --tracking-caps: 0.08em;
+  --tracking-display: -0.02em;
+
+  /* --- Spacing, base 4 px --- */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+  --sp-8: 4rem;
+  --sp-9: 6rem;
+  --sp-10: 8rem;
+
+  /* --- Radii: machined, not upholstered. The pill is reserved for the LED. --- */
+  --r-1: 2px;
+  --r-2: 4px;
+  --r-3: 8px;
+  --r-pill: 999px;
+
+  /* --- Layout --- */
+  --container: 1440px;
+  --gutter: 16px;
+  --header-h: 48px;
+  --rail: 288px;
+  --panel-pad: var(--sp-4);
+  --control-h: 36px;
+  --control-h-touch: 44px;
+
+  /* --- Plot geometry, read by the canvas code (plain numbers = px) --- */
+  --plot-pad-top: 10;
+  --plot-pad-right: 12;
+  --plot-pad-bottom: 28;
+  --plot-pad-left: 44;
+  --plot-font-size: 11;
+
+  /* --- Motion: hover/focus ease; live values move linearly or not at all --- */
+  --dur-1: 120ms;
+  --dur-2: 180ms;
+  --dur-3: 260ms;
+  --dur-live: 80ms;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+
+  /* =======================================================================
+     Semantic tokens — DARK (default)
+     ======================================================================= */
+  color-scheme: dark;
+
+  /* Surfaces: four levels, no shadows. bed < canvas < surface < raised */
+  --color-bed: var(--p-night-0); /* where traces live: a window below the canvas */
+  --color-canvas: var(--p-night-1);
+  --color-sunken: var(--p-night-2); /* tracks, bar backgrounds, insets */
+  --color-surface: var(--p-night-3); /* panels */
+  --color-raised: var(--p-night-4); /* popovers, overlays */
+
+  --color-ink: var(--p-chalk); /* 14.43:1 canvas · 13.49 surface — AAA */
+  --color-ink-muted: var(--p-chalk-muted); /* 7.50:1 canvas · 7.01 surface — AAA */
+  --color-ink-faint: var(--p-chalk-faint); /* 4.29:1 canvas — UI ONLY */
+
+  --color-line: var(--p-night-line);
+  --color-line-strong: var(--p-night-line-strong);
+  --color-border-input: #6f7872; /* 4.17:1 canvas · 3.90 surface */
+
+  /* The accent: actions, thresholds, the major mode. */
+  --color-accent: var(--p-ember-light); /* 9.16:1 canvas — AAA */
+  --color-accent-on: var(--p-ink); /* 8.38:1 on accent */
+  --color-accent-subtle: #2b2117; /* ink 11.96:1 · accent 7.59:1 */
+
+  /* The signal: the forest green, now a trace. */
+  --color-signal: var(--p-moss-light); /* 10.79:1 canvas */
+  --color-signal-strong: var(--p-moss-lighter);
+  --color-signal-dim: var(--p-moss-deep); /* fills only, never text */
+  --color-trace-2: var(--p-violet-light); /* 9.04:1 — derivative, minor mode */
+  --color-link: var(--color-signal);
+
+  --color-focus: var(--p-sky-light); /* 9.33:1 */
+  --color-danger: var(--p-coral-light); /* 8.05:1 canvas · 7.52 surface */
+  --color-danger-subtle: #2e1a17;
+  --color-success: var(--p-leaf-light); /* 9.42:1 canvas */
+  --color-success-subtle: #16281c;
+  --color-live: var(--color-success);
+  --color-selection: #3a3020;
+  --color-scrim: rgba(9, 12, 11, 0.78);
+
+  --shadow-1: 0 0 0 1px var(--color-line-strong);
+  --shadow-2: 0 0 0 1px var(--color-line-strong);
+
+  /* Chevron of the native select (one per theme: currentColor cannot be used in a data URI). */
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23a8a297' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+
+  /* =======================================================================
+     Data-viz tokens. LITERAL COLOURS ONLY in this block: the canvas code
+     reads them with getComputedStyle().getPropertyValue() and cannot
+     resolve var() or color-mix().
+     ======================================================================= */
+  --viz-bed: #090c0b;
+  --viz-grid: #1e2522; /* minor grid, decorative */
+  --viz-grid-strong: #344039; /* zero line, major grid */
+  --viz-axis: #717a73; /* axis strokes (4.43:1 on bed) */
+  --viz-axis-label: #a8a297; /* tick labels (7.75:1) */
+  --viz-title: #e4e0d6;
+  --viz-empty-text: #a8a297;
+
+  --viz-signal: #7fd3b8; /* primary trace */
+  --viz-signal-strong: #a9ead3;
+  --viz-signal-fill: rgba(127, 211, 184, 0.14); /* area under a trace */
+  --viz-trace-2: #bfa8e8; /* derivative */
+  --viz-noise-floor: #8a9189; /* dashed 4/4 (6.07:1) */
+  --viz-threshold: #e8a75c; /* dashed 6/3: what the user set, what we concluded */
+  --viz-marker: rgba(127, 211, 184, 0.28); /* scale-note verticals, decorative */
+  --viz-peak: #e4e0d6;
+  --viz-danger: #f08e80;
+
+  /* major vs minor: warm vs cool, always doubled by the word */
+  --viz-mode-major: #e8a75c; /* 9.46:1 on bed */
+  --viz-mode-minor: #bfa8e8; /* 9.34:1 on bed */
+
+  /* level meter: low → mid → high, plus the gate */
+  --viz-meter-low: #7fd3b8;
+  --viz-meter-mid: #e8a75c;
+  --viz-meter-high: #f08e80;
+  --viz-gate-open: #74c88f;
+  --viz-gate-closed: #f08e80;
+
+  /* 12 pitch classes. Hue follows the circle of fifths (C 0°, G 30°, D 60°…)
+     with lightness alternating by fifths-parity, so chromatic neighbours
+     differ in hue AND lightness. CVD worst pair G/F# (deutan) is only
+     distinguishable with the note name on the mark: pitch-class colour is
+     never the only identity channel. */
+  --viz-pc-0: #c24976; /* C  */
+  --viz-pc-1: #199db0; /* C# */
+  --viz-pc-2: #b16411; /* D  */
+  --viz-pc-3: #6783ec; /* D# */
+  --viz-pc-4: #708502; /* E  */
+  --viz-pc-5: #c063ba; /* F  */
+  --viz-pc-6: #158d7d; /* F# */
+  --viz-pc-7: #dc5f4e; /* G  */
+  --viz-pc-8: #0b82bf; /* G# */
+  --viz-pc-9: #ab8702; /* A  */
+  --viz-pc-10: #8a5fc9; /* A# */
+  --viz-pc-11: #2aa654; /* B  */
+  --viz-pc-on: #0d110f; /* label ink on a pitch-class fill (≥ 4.08:1 on all 12) */
+}
+
+/* =========================================================================
+   Semantic tokens — LIGHT. Applied when chosen explicitly, or when the OS
+   prefers light and nothing was chosen. The two blocks must stay identical;
+   a var() indirection would break the "literal colours in --viz-*" contract.
+   ========================================================================= */
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --color-bed: var(--p-paper-0); /* the plot is the whitest thing on the page */
+  --color-canvas: var(--p-paper-1); /* 15.43:1 with ink */
+  --color-sunken: var(--p-paper-2);
+  --color-surface: var(--p-paper-3);
+  --color-raised: var(--p-paper-4);
+
+  --color-ink: var(--p-ink); /* 15.43:1 canvas · 16.81 surface */
+  --color-ink-muted: var(--p-ink-muted); /* 6.75:1 canvas · 7.35 surface */
+  --color-ink-faint: var(--p-ink-faint); /* 3.33:1 — UI ONLY */
+
+  --color-line: var(--p-paper-line);
+  --color-line-strong: var(--p-paper-line-strong);
+  --color-border-input: #79715f; /* 4.29:1 canvas · 4.67 surface */
+
+  --color-accent: var(--p-ember-dark); /* 5.54:1 canvas · 6.03 surface */
+  --color-accent-on: #fbf8f3; /* 5.90:1 on accent */
+  --color-accent-subtle: #f5e5cf; /* ink 14.08:1 · accent 5.06:1 */
+
+  --color-signal: var(--p-moss-dark); /* 7.00:1 canvas */
+  --color-signal-strong: var(--p-moss-darker);
+  --color-signal-dim: var(--p-moss-soft);
+  --color-trace-2: var(--p-violet-dark); /* 7.42:1 canvas */
+
+  --color-focus: var(--p-sky-dark); /* 5.24:1 */
+  --color-danger: var(--p-coral-dark); /* 6.40:1 canvas · 6.98 surface */
+  --color-danger-subtle: #f8e1dd;
+  --color-success: var(--p-leaf-dark); /* 5.78:1 canvas */
+  --color-success-subtle: #dff0e3;
+  --color-selection: #fce3b8;
+  --color-scrim: rgba(244, 241, 234, 0.82);
+
+  --shadow-1: 0 1px 2px rgba(27, 26, 23, 0.05), 0 2px 8px rgba(27, 26, 23, 0.05);
+  --shadow-2: 0 4px 12px rgba(27, 26, 23, 0.08), 0 12px 32px rgba(27, 26, 23, 0.1);
+
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23595349' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+
+  --viz-bed: #fffdf8;
+  --viz-grid: #e8e2d6;
+  --viz-grid-strong: #c9c0ad;
+  --viz-axis: #8a8376;
+  --viz-axis-label: #595349;
+  --viz-title: #1b1a17;
+  --viz-empty-text: #595349;
+
+  --viz-signal: #0f5c4e;
+  --viz-signal-strong: #0a3f36;
+  --viz-signal-fill: rgba(15, 92, 78, 0.12);
+  --viz-trace-2: #5e3e86;
+  --viz-noise-floor: #7a7366;
+  --viz-threshold: #9a4a10;
+  --viz-marker: rgba(15, 92, 78, 0.22);
+  --viz-peak: #1b1a17;
+  --viz-danger: #a32a1e;
+
+  --viz-mode-major: #9a4a10;
+  --viz-mode-minor: #5e3e86;
+
+  --viz-meter-low: #0f5c4e;
+  --viz-meter-mid: #9a4a10;
+  --viz-meter-high: #a32a1e;
+  --viz-gate-open: #1f6b3a;
+  --viz-gate-closed: #a32a1e;
+
+  /* Same fifths mapping, uniform lightness (paper cannot hold the parity trick).
+     CVD worst pair F#/F (deutan) sits below the comfortable floor: in light
+     mode pitch-class colour only appears on marks that carry their note name. */
+  --viz-pc-0: #c45b80;
+  --viz-pc-1: #1093a5;
+  --viz-pc-2: #be6b0b;
+  --viz-pc-3: #637cd7;
+  --viz-pc-4: #798e11;
+  --viz-pc-5: #b161ab;
+  --viz-pc-6: #0e9886;
+  --viz-pc-7: #c95e4e;
+  --viz-pc-8: #008cce;
+  --viz-pc-9: #9f7f12;
+  --viz-pc-10: #916dca;
+  --viz-pc-11: #359a54;
+  --viz-pc-on: #0d110f;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+
+    --color-bed: var(--p-paper-0);
+    --color-canvas: var(--p-paper-1);
+    --color-sunken: var(--p-paper-2);
+    --color-surface: var(--p-paper-3);
+    --color-raised: var(--p-paper-4);
+
+    --color-ink: var(--p-ink);
+    --color-ink-muted: var(--p-ink-muted);
+    --color-ink-faint: var(--p-ink-faint);
+
+    --color-line: var(--p-paper-line);
+    --color-line-strong: var(--p-paper-line-strong);
+    --color-border-input: #79715f;
+
+    --color-accent: var(--p-ember-dark);
+    --color-accent-on: #fbf8f3;
+    --color-accent-subtle: #f5e5cf;
+
+    --color-signal: var(--p-moss-dark);
+    --color-signal-strong: var(--p-moss-darker);
+    --color-signal-dim: var(--p-moss-soft);
+    --color-trace-2: var(--p-violet-dark);
+
+    --color-focus: var(--p-sky-dark);
+    --color-danger: var(--p-coral-dark);
+    --color-danger-subtle: #f8e1dd;
+    --color-success: var(--p-leaf-dark);
+    --color-success-subtle: #dff0e3;
+    --color-selection: #fce3b8;
+    --color-scrim: rgba(244, 241, 234, 0.82);
+
+    --shadow-1: 0 1px 2px rgba(27, 26, 23, 0.05), 0 2px 8px rgba(27, 26, 23, 0.05);
+    --shadow-2: 0 4px 12px rgba(27, 26, 23, 0.08), 0 12px 32px rgba(27, 26, 23, 0.1);
+
+    --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23595349' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+
+    --viz-bed: #fffdf8;
+    --viz-grid: #e8e2d6;
+    --viz-grid-strong: #c9c0ad;
+    --viz-axis: #8a8376;
+    --viz-axis-label: #595349;
+    --viz-title: #1b1a17;
+    --viz-empty-text: #595349;
+
+    --viz-signal: #0f5c4e;
+    --viz-signal-strong: #0a3f36;
+    --viz-signal-fill: rgba(15, 92, 78, 0.12);
+    --viz-trace-2: #5e3e86;
+    --viz-noise-floor: #7a7366;
+    --viz-threshold: #9a4a10;
+    --viz-marker: rgba(15, 92, 78, 0.22);
+    --viz-peak: #1b1a17;
+    --viz-danger: #a32a1e;
+
+    --viz-mode-major: #9a4a10;
+    --viz-mode-minor: #5e3e86;
+
+    --viz-meter-low: #0f5c4e;
+    --viz-meter-mid: #9a4a10;
+    --viz-meter-high: #a32a1e;
+    --viz-gate-open: #1f6b3a;
+    --viz-gate-closed: #a32a1e;
+
+    --viz-pc-0: #c45b80;
+    --viz-pc-1: #1093a5;
+    --viz-pc-2: #be6b0b;
+    --viz-pc-3: #637cd7;
+    --viz-pc-4: #798e11;
+    --viz-pc-5: #b161ab;
+    --viz-pc-6: #0e9886;
+    --viz-pc-7: #c95e4e;
+    --viz-pc-8: #008cce;
+    --viz-pc-9: #9f7f12;
+    --viz-pc-10: #916dca;
+    --viz-pc-11: #359a54;
+    --viz-pc-on: #0d110f;
+  }
+}

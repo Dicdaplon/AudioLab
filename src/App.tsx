@@ -6,6 +6,7 @@ import { ChromaView } from "./components/ChromaView";
 import { KeyProbabilities } from "./components/KeyProbabilities";
 import { MicCapture } from "./components/MicCapture";
 import { SettingsPanel } from "./components/SettingsPanel";
+import { ThemeToggle } from "./components/ThemeToggle";
 import { ToneBaseTonalityView } from "./components/ToneBaseTonalityView";
 import { WolfJumper } from "./features/games/wolf-jumper/WolfJumper";
 import { FftTab } from "./components/FftTab";
@@ -76,6 +77,7 @@ export default function App() {
     <div className="app">
       <header>
         <h1>Tonality Detector</h1>
+        <ThemeToggle />
         <p className="subtitle">
           3 fenêtres en parallèle · accord (template matching) · tonalité (Krumhansl-Schmuckler
           maj+min) · ToneBaseTonality (présence)

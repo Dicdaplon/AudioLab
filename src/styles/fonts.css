@@ -1,0 +1,13 @@
+/* Self-hosted fonts (no runtime request to a font CDN, works offline on
+   GitHub Pages). Latin subset only; each file already declares
+   font-display: swap. Three families, three jobs:
+     IBM Plex Sans   — what is operated (UI)
+     IBM Plex Mono   — what is measured (every number)
+     Source Serif 4  — what is said (the hero readouts and the wordmark) */
+@import "@fontsource/ibm-plex-sans/latin-400.css";
+@import "@fontsource/ibm-plex-sans/latin-500.css";
+@import "@fontsource/ibm-plex-sans/latin-600.css";
+@import "@fontsource/ibm-plex-mono/latin-400.css";
+@import "@fontsource/ibm-plex-mono/latin-500.css";
+@import "@fontsource/source-serif-4/latin-600.css";
+@import "@fontsource/source-serif-4/latin-600-italic.css";

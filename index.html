@@ -3,11 +3,27 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AudioLab</title>
+    <title>loup(e) — audio lab</title>
     <meta
       name="description"
       content="Browser-based audio analysis lab: live key and chord detection, spectrum analysis and ear-training games."
     />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#0d110f" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Theme before paint: an explicit choice (localStorage "theme") wins over
+         the OS preference, so the page never flashes the wrong theme. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("theme");
+          if (t === "dark" || t === "light") document.documentElement.dataset.theme = t;
+        } catch (e) {
+          /* storage blocked: the stylesheet follows the OS preference */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
