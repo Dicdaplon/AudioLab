@@ -34,10 +34,14 @@
     "analyze:backing": "npm run analyze:backing -w packages/core",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "changeset": "changeset",
+    "version-packages": "changeset version && npm install --package-lock-only",
+    "release": "npm run build:packages && npm run check:packages && changeset publish"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
+    "@changesets/cli": "^3.0.3",
     "@eslint/js": "^9.39.5",
     "@testing-library/react": "^16.0.1",
     "@types/node": "^25.9.1",
