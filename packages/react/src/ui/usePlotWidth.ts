@@ -7,7 +7,7 @@ import { useLayoutEffect, useRef, useState, type RefObject } from "react";
  * resize (or the settings rail appearing) redraws the plot. Falls back to
  * `fallback` before the first measurement or where clientWidth is 0.
  */
-export function usePlotWidth(fallback = 600): [RefObject<HTMLDivElement>, number] {
+export function usePlotWidth(fallback = 600): [RefObject<HTMLDivElement | null>, number] {
   const ref = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
 

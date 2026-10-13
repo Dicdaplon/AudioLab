@@ -18,7 +18,7 @@ interface PlotFigureProps {
   xLabel: string;
   yLabel: string;
   /** The frame the canvas is measured against. */
-  frameRef: RefObject<HTMLDivElement>;
+  frameRef: RefObject<HTMLDivElement | null>;
   children: ReactNode;
 }
 
