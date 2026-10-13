@@ -25,15 +25,17 @@ import {
   type TabDef,
 } from "@audiolab/react";
 
+import { About } from "./components/About";
 import { Brand } from "./components/Brand";
 
-type Tab = "detector" | "game" | "jumper" | "fft";
+type Tab = "detector" | "game" | "jumper" | "fft" | "about";
 
 const TABS: ReadonlyArray<TabDef<Tab>> = [
   { id: "detector", label: "Detector" },
   { id: "game", label: "Chord game" },
   { id: "jumper", label: "Wolf Jumper" },
   { id: "fft", label: "FFT" },
+  { id: "about", label: "About" },
 ];
 
 export default function App() {
@@ -141,6 +143,8 @@ export default function App() {
               onSettingsChange={setFftSettings}
             />
           )}
+
+          {tab === "about" && <About />}
         </section>
       </main>
     </LoupeRoot>

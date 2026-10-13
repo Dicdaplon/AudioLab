@@ -95,4 +95,12 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /stop/i }));
     expect(session.stop).toHaveBeenCalledTimes(1);
   });
+
+  it("shows the about page with a link to l’école du loup(é)", () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole("tab", { name: "About" }));
+    expect(screen.getByRole("heading", { name: /research library/i })).toBeTruthy();
+    const link = screen.getByRole("link", { name: "ecoleduloup.fr" });
+    expect(link.getAttribute("href")).toBe("https://ecoleduloup.fr");
+  });
 });

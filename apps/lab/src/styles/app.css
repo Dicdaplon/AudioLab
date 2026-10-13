@@ -168,3 +168,63 @@ body {
 .tabpanel:focus {
   outline: none;
 }
+
+/* --- About --------------------------------------------------------------- */
+
+.about {
+  max-width: 46rem;
+  gap: var(--al-sp-5);
+}
+
+.about__kicker {
+  margin: 0 0 var(--al-sp-2);
+  font-size: var(--al-step--2);
+  letter-spacing: var(--al-tracking-caps);
+  text-transform: uppercase;
+  color: var(--al-color-ink-muted);
+}
+
+.about__title {
+  margin: 0;
+  font-family: var(--al-font-voice);
+  font-size: var(--al-step-3);
+  font-weight: 500;
+  line-height: var(--al-leading-snug);
+  letter-spacing: var(--al-tracking-display);
+}
+
+.about__subtitle {
+  margin: var(--al-sp-5) 0 var(--al-sp-2);
+  font-family: var(--al-font-voice);
+  font-size: var(--al-step-2);
+  font-weight: 500;
+}
+
+.about__body {
+  max-width: 68ch;
+  font-size: var(--al-step-0);
+  line-height: 1.65;
+}
+
+.about__body p,
+.about__body ul {
+  margin: 0 0 var(--al-sp-4);
+}
+
+.about__body ul {
+  padding-left: var(--al-sp-5);
+  list-style: disc;
+}
+
+.about__body strong {
+  font-weight: 600;
+}
+
+.about__body a {
+  color: var(--al-color-accent);
+  text-underline-offset: 0.2em;
+}
+
+.about__note {
+  color: var(--al-color-ink-muted);
+}
