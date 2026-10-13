@@ -15,7 +15,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { type MicSource, openMicrophone, toMicError } from "@audiolab/core";
+import {
+  checkMicrophoneSupport,
+  openMicrophone,
+  toMicError,
+  type MicErrorInfo,
+  type MicSource,
+} from "@audiolab/core";
 
 export interface MicrophoneSession {
   /** Open source, or null when stopped. */
@@ -26,12 +32,22 @@ export interface MicrophoneSession {
   starting: boolean;
   /** User-facing message of the last failure, cleared by the next start. */
   error: string | null;
+  /**
+   * Why this environment cannot capture at all (insecure context, no
+   * getUserMedia or AudioContext), or null when it can. Checked after mount,
+   * so server-rendered markup and the first client render agree.
+   */
+  unsupported: MicErrorInfo | null;
 }
 
-const IDLE: MicrophoneSession = { mic: null, running: false, starting: false, error: null };
+/** The part of the session that start/stop drive. */
+type SessionState = Omit<MicrophoneSession, "unsupported">;
+
+const IDLE: SessionState = { mic: null, running: false, starting: false, error: null };
 
 export function useMicrophone() {
-  const [session, setSession] = useState<MicrophoneSession>(IDLE);
+  const [session, setSession] = useState<SessionState>(IDLE);
+  const [unsupported, setUnsupported] = useState<MicErrorInfo | null>(null);
   const micRef = useRef<MicSource | null>(null);
   const startingRef = useRef(false);
   const tokenRef = useRef(0);
@@ -68,10 +84,11 @@ export function useMicrophone() {
   }, []);
 
   useEffect(() => {
+    setUnsupported(checkMicrophoneSupport());
     return () => {
       void stop();
     };
   }, [stop]);
 
-  return { ...session, start, stop };
+  return { ...session, unsupported, start, stop };
 }

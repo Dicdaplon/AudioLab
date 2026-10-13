@@ -1,9 +1,8 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   ANALYSIS_DEFAULTS,
   DEFAULT_DETECTOR_SETTINGS,
   DEFAULT_FFT_SETTINGS,
-  checkMicrophoneSupport,
   type DetectorSettings,
   type FftSettings,
 } from "@audiolab/core";
@@ -43,9 +42,9 @@ export default function App() {
   const [fftSettings, setFftSettings] = useState<FftSettings>(DEFAULT_FFT_SETTINGS);
   const [colourByPitch, setColourByPitch] = useState(false);
 
-  // Environment check (secure context, getUserMedia, AudioContext): once.
-  const unsupported = useMemo(() => checkMicrophoneSupport(), []);
+  // Environment check (secure context, getUserMedia, AudioContext), after mount.
   const microphone = useMicrophone();
+  const unsupported = microphone.unsupported;
   const tonality = useTonality(microphone.mic, {
     liveAcquisitionSeconds: settings.liveAcquisitionSeconds,
     tonalityAcquisitionSeconds: settings.tonalityAcquisitionSeconds,

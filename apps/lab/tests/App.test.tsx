@@ -12,20 +12,16 @@ const session: MicrophoneSession & { start: () => void; stop: () => void } = {
   running: false,
   starting: false,
   error: null,
+  unsupported: null,
   start: vi.fn(),
   stop: vi.fn(),
 };
-let support: { code: string; message: string } | null = null;
 
-// The microphone session and the environment check are the only parts of the
+// The microphone session (with its environment check) is the only part of the
 // SDK the shell test replaces; everything else renders for real (idle).
 vi.mock("@audiolab/react", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@audiolab/react")>()),
   useMicrophone: () => session,
-}));
-vi.mock("@audiolab/core", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@audiolab/core")>()),
-  checkMicrophoneSupport: () => support,
 }));
 
 import App from "../src/App";
@@ -38,7 +34,7 @@ describe("App", () => {
     session.running = false;
     session.starting = false;
     session.error = null;
-    support = null;
+    session.unsupported = null;
     localStorage.clear();
     delete document.documentElement.dataset.theme;
   });
@@ -85,7 +81,7 @@ describe("App", () => {
   });
 
   it("flags an unsupported environment and disables the transport", () => {
-    support = { code: "insecure-context", message: "Needs HTTPS." };
+    session.unsupported = { code: "insecure-context", message: "Needs HTTPS." };
     render(<App />);
     expect(screen.getByRole("alert").textContent).toContain("Needs HTTPS.");
     expect(screen.getByRole("button", { name: /start mic/i })).toHaveProperty("disabled", true);

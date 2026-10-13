@@ -1,24 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
-/** True while `query` matches; false where matchMedia is unavailable. */
+const supported = () => typeof window !== "undefined" && typeof window.matchMedia === "function";
+
+/**
+ * True while `query` matches; false where matchMedia is unavailable and on
+ * the server. During hydration the server value (false) is used first, so
+ * a server-rendered page never mismatches; a plain client render reads the
+ * real value immediately.
+ */
 export function useMediaQuery(query: string): boolean {
-  const supported = typeof window !== "undefined" && typeof window.matchMedia === "function";
-  const [matches, setMatches] = useState(() =>
-    supported ? window.matchMedia(query).matches : false,
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      if (!supported()) return () => {};
+      const media = window.matchMedia(query);
+      media.addEventListener("change", onChange);
+      return () => media.removeEventListener("change", onChange);
+    },
+    [query],
   );
-
-  useEffect(() => {
-    if (!supported) return;
-    const media = window.matchMedia(query);
-    const update = () => setMatches(media.matches);
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, [query, supported]);
-
-  return matches;
+  return useSyncExternalStore(
+    subscribe,
+    () => supported() && window.matchMedia(query).matches,
+    () => false,
+  );
 }
 
 /** Breakpoints shared with the stylesheets (min-width, mobile first). */

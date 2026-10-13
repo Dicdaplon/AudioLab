@@ -41,7 +41,12 @@ export function ChordGame({ chords, running, onStart }: ChordGameProps) {
   const [poolKey, setPoolKey] = useState<PoolKey>(DEFAULT_POOL);
   const pool = CHORD_POOLS[poolKey].chords;
 
-  const [target, setTarget] = useState(() => pickChord(pool));
+  // The first target is drawn after mount: a random draw during render would
+  // differ between the server and the client and break hydration.
+  const [target, setTarget] = useState("");
+  useEffect(() => {
+    if (!target) setTarget(pickChord(pool));
+  }, [pool, target]);
   const [stats, dispatch] = useReducer(chordGameReducer, INITIAL_STATS);
   const [justHit, setJustHit] = useState(false);
 
@@ -120,7 +125,7 @@ export function ChordGame({ chords, running, onStart }: ChordGameProps) {
           aria-label="Target chord"
         >
           <span className="al-surtitre">Play</span>
-          <strong className="al-readout__value">{target}</strong>
+          <strong className="al-readout__value">{target || "—"}</strong>
         </div>
 
         <div className="al-game__progress">
