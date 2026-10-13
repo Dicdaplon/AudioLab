@@ -1,50 +1,80 @@
 // @vitest-environment node
 import { describe, it, expect } from "vitest";
 
-import { estimateNoiseFloor } from "../src/analysis/noiseFloor";
+import {
+  NOISE_FLOOR_SILENCE_DB,
+  estimateNoiseFloor,
+  isNoiseFloorMethod,
+} from "../src/analysis/noiseFloor";
 
 describe("estimateNoiseFloor", () => {
-  it("computes median of a spectrum", () => {
-    const spectrum = new Float32Array([-80, -70, -60, -50, -40]);
+  const spectrum = new Float32Array([-80, -70, -60, -50, -40]);
+
+  it("computes the median of a spectrum", () => {
     const result = estimateNoiseFloor(spectrum, "median");
-    expect(result.noiseFloorDb).toBe(-60); // Middle value.
+    expect(result.noiseFloorDb).toBe(-60);
     expect(result.method).toBe("median");
   });
 
-  it("computes mean of a spectrum", () => {
-    const spectrum = new Float32Array([-80, -70, -60, -50, -40]);
+  it("averages the two middle values for an even-length median", () => {
+    expect(estimateNoiseFloor([-80, -60], "median").noiseFloorDb).toBe(-70);
+  });
+
+  it("computes the mean of a spectrum", () => {
     const result = estimateNoiseFloor(spectrum, "mean");
-    const expected = (-80 - 70 - 60 - 50 - 40) / 5;
-    expect(result.noiseFloorDb).toBeCloseTo(expected, 5);
+    expect(result.noiseFloorDb).toBeCloseTo(-60, 5);
     expect(result.method).toBe("mean");
   });
 
-  it("computes 80th percentile", () => {
-    // [0, 10, 20, 30, 40, 50, 60, 70, 80, 90] → 80th percentile ≈ 72
-    const spectrum = new Float32Array(Array.from({ length: 10 }, (_, i) => i * 10));
-    const result = estimateNoiseFloor(spectrum, "p80");
-    expect(result.noiseFloorDb).toBeGreaterThanOrEqual(70);
-    expect(result.noiseFloorDb).toBeLessThanOrEqual(80);
+  it("computes the 80th percentile", () => {
+    const ramp = new Float32Array(Array.from({ length: 10 }, (_, i) => i * 10));
+    const result = estimateNoiseFloor(ramp, "p80");
+    expect(result.noiseFloorDb).toBe(70); // floor(0.8 * 9) = index 7
     expect(result.method).toBe("p80");
   });
 
   it("defaults to median", () => {
-    const spectrum = new Float32Array([-80, -70, -60, -50, -40]);
-    const result = estimateNoiseFloor(spectrum);
-    expect(result.method).toBe("median");
-    expect(result.noiseFloorDb).toBe(-60);
+    expect(estimateNoiseFloor(spectrum).method).toBe("median");
   });
 
-  it("handles non-finite values gracefully", () => {
-    const spectrum = new Float32Array([-80, -70, -Infinity, -50, -40]);
-    const result = estimateNoiseFloor(spectrum, "mean");
-    // Mean should skip -Infinity.
-    expect(result.noiseFloorDb).toBeCloseTo((-80 - 70 - 50 - 40) / 4, 5);
+  it("ignores -Infinity and NaN bins for every method", () => {
+    // Finite values: [-60, -50, -40, -30] → median -45, mean -45,
+    // p80 = index floor(0.8 * 3) = 2 → -40. With -Infinity kept, the
+    // median would have collapsed to -55 and the clamp to -100.
+    const mixed = [-Infinity, -Infinity, -60, NaN, -50, -40, -30];
+    expect(estimateNoiseFloor(mixed, "median").noiseFloorDb).toBe(-45);
+    expect(estimateNoiseFloor(mixed, "mean").noiseFloorDb).toBeCloseTo(-45, 5);
+    expect(estimateNoiseFloor(mixed, "p80").noiseFloorDb).toBe(-40);
   });
 
-  it("clamps result to -100 dB if all values are non-finite", () => {
-    const spectrum = new Float32Array([-Infinity, -Infinity, -Infinity]);
-    const result = estimateNoiseFloor(spectrum, "median");
-    expect(result.noiseFloorDb).toBe(-100);
+  it("returns the silence level when no bin is finite", () => {
+    const silent = [-Infinity, -Infinity, -Infinity];
+    for (const method of ["median", "mean", "p80"] as const) {
+      expect(estimateNoiseFloor(silent, method).noiseFloorDb).toBe(NOISE_FLOOR_SILENCE_DB);
+    }
+    expect(estimateNoiseFloor([], "median").noiseFloorDb).toBe(NOISE_FLOOR_SILENCE_DB);
+  });
+
+  it("restricts the estimate to a bin range", () => {
+    const values = [-10, -10, -90, -90, -90, -10, -10];
+    expect(estimateNoiseFloor(values, "median", { fromBin: 2, toBin: 5 }).noiseFloorDb).toBe(-90);
+    expect(estimateNoiseFloor(values, "median", { fromBin: 0, toBin: 2 }).noiseFloorDb).toBe(-10);
+    // Out-of-range bounds are clamped.
+    expect(estimateNoiseFloor(values, "median", { fromBin: -5, toBin: 100 }).noiseFloorDb).toBe(
+      -10,
+    );
+  });
+
+  it("does not mutate the input spectrum", () => {
+    const input = new Float32Array([-40, -80, -60]);
+    estimateNoiseFloor(input, "median");
+    estimateNoiseFloor(input, "p80");
+    expect(Array.from(input)).toEqual([-40, -80, -60]);
+  });
+
+  it("recognises the supported method names", () => {
+    expect(isNoiseFloorMethod("median")).toBe(true);
+    expect(isNoiseFloorMethod("p80")).toBe(true);
+    expect(isNoiseFloorMethod("p50")).toBe(false);
   });
 });

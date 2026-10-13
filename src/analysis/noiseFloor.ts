@@ -1,15 +1,16 @@
 /**
- * Noise floor estimation: analyze a dB spectrum to estimate the background
- * noise level using various statistical methods.
- *
- * Used to mask low-energy bins in the FFT visualization and to gate the
- * tempo analysis (Section 2) to avoid detecting noise fluctuations.
+ * Noise floor estimation: summarise a dB spectrum with a robust statistic
+ * so the FFT view can draw a reference line for the background level.
  */
 
-/**
- * Supported noise floor estimation methods.
- */
+/** Supported noise floor estimation methods. */
 export type NoiseFloorMethod = "median" | "mean" | "p80";
+
+export const NOISE_FLOOR_METHODS: readonly NoiseFloorMethod[] = ["median", "mean", "p80"];
+
+export function isNoiseFloorMethod(value: string): value is NoiseFloorMethod {
+  return (NOISE_FLOOR_METHODS as readonly string[]).includes(value);
+}
 
 export interface NoiseFloorResult {
   /** Estimated noise floor in dB. */
@@ -18,77 +19,71 @@ export interface NoiseFloorResult {
   method: NoiseFloorMethod;
 }
 
-/**
- * Compute the median of an array in dB scale.
- * @internal
- */
-function median(values: number[]): number {
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = sorted.length >> 1;
-  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) * 0.5 : sorted[mid];
+export interface NoiseFloorOptions {
+  /** First bin (inclusive) of the band to analyse. Default 0. */
+  fromBin?: number;
+  /** Last bin (exclusive) of the band to analyse. Default spectrum length. */
+  toBin?: number;
 }
 
-/**
- * Compute the mean of an array, skipping non-finite values.
- * @internal
- */
-function mean(values: number[]): number {
-  let sum = 0;
-  let count = 0;
-  for (const v of values) {
-    if (Number.isFinite(v)) {
-      sum += v;
-      count++;
-    }
-  }
-  return count > 0 ? sum / count : -Infinity;
-}
+/** Value returned when no finite bin is available (digital silence). */
+export const NOISE_FLOOR_SILENCE_DB = -100;
 
 /**
- * Compute the 80th percentile of an array.
- * @internal
- */
-function percentile80(values: number[]): number {
-  const finite = values.filter((v) => Number.isFinite(v));
-  if (finite.length === 0) return -Infinity;
-  const sorted = finite.sort((a, b) => a - b);
-  const idx = Math.floor(0.8 * (sorted.length - 1));
-  return sorted[idx];
-}
-
-/**
- * Estimate the noise floor of a dB spectrum using the specified method.
+ * Estimate the noise floor of a dB spectrum.
  *
- * @param spectrumDb A dB-scale magnitude spectrum (typically from computeFftDb).
- * @param method     "median" (robust), "mean" (average), or "p80" (80th percentile).
- * @returns Object containing the estimated noise floor and method used.
+ * Non-finite bins (`-Infinity` for zero magnitude, NaN) are discarded
+ * before any statistic is computed, so silent bins never drag the estimate
+ * down. If no finite bin remains, `NOISE_FLOOR_SILENCE_DB` is returned.
  *
- * **median**: Robust to spikes; represents the typical bin level.
- * **mean**: Average across all bins; influenced by peaks.
- * **p80**: 80th percentile; between median and mean.
+ * - **median**: robust to peaks; the level of the typical bin.
+ * - **mean**: arithmetic mean in dB; pulled up by strong peaks.
+ * - **p80**: 80th percentile; always ≥ the median, sits closer to the
+ *   upper edge of the noise band and therefore masks more of the noise.
+ *
+ * @param spectrumDb dB-scale magnitude spectrum.
+ * @param method Statistic to use (default "median").
+ * @param options Optional bin range so the estimate matches a displayed band.
  */
 export function estimateNoiseFloor(
   spectrumDb: ArrayLike<number>,
   method: NoiseFloorMethod = "median",
+  options: NoiseFloorOptions = {},
 ): NoiseFloorResult {
-  const values = Array.from(spectrumDb);
+  const from = Math.max(0, Math.floor(options.fromBin ?? 0));
+  const to = Math.min(spectrumDb.length, Math.ceil(options.toBin ?? spectrumDb.length));
 
+  // Compact the finite values into a typed array (numeric sort, no boxing).
+  const finite = new Float32Array(Math.max(0, to - from));
+  let count = 0;
+  for (let k = from; k < to; k++) {
+    const v = spectrumDb[k];
+    if (Number.isFinite(v)) finite[count++] = v;
+  }
+  if (count === 0) return { noiseFloorDb: NOISE_FLOOR_SILENCE_DB, method };
+
+  const values = finite.subarray(0, count);
   let noiseFloorDb: number;
   switch (method) {
-    case "mean":
-      noiseFloorDb = mean(values);
+    case "mean": {
+      let sum = 0;
+      for (let i = 0; i < count; i++) sum += values[i];
+      noiseFloorDb = sum / count;
       break;
-    case "p80":
-      noiseFloorDb = percentile80(values);
+    }
+    case "p80": {
+      values.sort();
+      noiseFloorDb = values[Math.floor(0.8 * (count - 1))];
       break;
+    }
     case "median":
-    default:
-      noiseFloorDb = median(values);
+    default: {
+      values.sort();
+      const mid = count >> 1;
+      noiseFloorDb = count % 2 === 0 ? (values[mid - 1] + values[mid]) * 0.5 : values[mid];
       break;
+    }
   }
-
-  // Clamp to reasonable range.
-  if (!Number.isFinite(noiseFloorDb)) noiseFloorDb = -100;
 
   return { noiseFloorDb, method };
 }
