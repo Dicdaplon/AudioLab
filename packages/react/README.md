@@ -5,6 +5,9 @@ React hooks, components, canvas plots and ear-training games on top of
 [AudioLab](https://github.com/Dicdaplon/AudioLab) — see it live at
 <https://dicdaplon.github.io/AudioLab/>.
 
+> Not published on npm yet. Until the first release, install from local tarballs or
+> `file:` paths: see [docs/INTEGRATION.md](../../docs/INTEGRATION.md#6-developing-across-the-two-repositories).
+
 ```bash
 npm install @audiolab/react @audiolab/core
 # optional, for the self-hosted fonts (fonts.css):

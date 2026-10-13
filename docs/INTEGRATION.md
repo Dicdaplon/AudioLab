@@ -6,6 +6,9 @@ on both repositories at once, and ship a release.
 
 ## 1. Install
 
+> Not published on npm yet. Until the first release, install from local tarballs or
+> `file:` paths: see [section 6](#6-developing-across-the-two-repositories).
+
 ```bash
 npm install @audiolab/react @audiolab/core
 # optional self-hosted fonts, only if you import @audiolab/react/fonts.css:

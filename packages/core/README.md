@@ -4,6 +4,9 @@ Framework-free audio analysis for the browser: live key, chord and tempo detecti
 the Web Audio API, with hand-written, unit-tested DSP. No React, no runtime
 dependencies. Part of [AudioLab](https://github.com/Dicdaplon/AudioLab).
 
+> Not published on npm yet. Until the first release, install from local tarballs or
+> `file:` paths: see [docs/INTEGRATION.md](../../docs/INTEGRATION.md#6-developing-across-the-two-repositories).
+
 ```bash
 npm install @audiolab/core
 ```

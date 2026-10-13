@@ -33,10 +33,15 @@ Alongside this, I give music lessons and run a collective of musicians. That is 
 improvisation and listening: [ecoleduloup.fr](https://ecoleduloup.fr) (in French).
 These packages are meant to power its interactive exercises.
 
+_Naming: **AudioLab** is the repository and its packages; **loup(e)** (“magnifier”) is the
+name of the lab and of its design system, Loupe, after l’école du loup(é)._
+
 ## Packages
 
-This repository is an npm workspace. The analysis and the UI are published as two
-packages; the demo app only composes them.
+This repository is an npm workspace. The analysis and the UI are split into two
+packages; the demo app only composes them. They are **not published on npm yet**: until
+the first release, install them from local tarballs or `file:` paths (see
+[docs/INTEGRATION.md](docs/INTEGRATION.md#6-developing-across-the-two-repositories)).
 
 | Package                                       | Path             | Contents                                                                                                                                                                                    |
 | --------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -47,6 +52,7 @@ packages; the demo app only composes them.
 ### Quick start for consumers
 
 ```bash
+# after the first npm release; until then, see docs/INTEGRATION.md
 npm install @audiolab/react @audiolab/core
 ```
 
@@ -88,6 +94,24 @@ tokens (`--al-*`) and classes (`al-*`) cannot leak into the host page, and the t
 follows the host's `<html data-theme="dark" | "light">` (or the OS preference). For a
 Next.js App Router setup, theming, CSS scoping, microphone permissions, two-repository
 development and releases, read [docs/INTEGRATION.md](docs/INTEGRATION.md).
+
+## Results
+
+Measured by the test suites (`npm test`, `npm run test:samples`), which pin these values.
+For key detection, a minor key and its relative major share the same notes, so either is
+accepted.
+
+| Task                             | Data                                                                  | Result                                                                  |
+| -------------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Chord recognition                | Synthetic triads, all 24, across octaves and ±30 cents of detuning    | 24 / 24 top-1, probability > 0.8                                        |
+| Key detection                    | Synthetic cadences, all 24 keys                                       | 24 / 24 top-1 on the three key paths                                    |
+| Key detection, presence pipeline | 15 real recordings (guitar, FL Studio, backing tracks)                | 12 / 15 top-1, 15 / 15 top-2                                            |
+| Key detection, energy pipeline   | Same 15 recordings                                                    | 10 / 15 top-1, 13 / 15 top-2                                            |
+| Chord progressions               | 8 recordings, 1 s sliding windows                                     | the grid’s chords are the top winners in every file; 79–98 % of windows |
+| Tempo                            | Click tracks at 90, 120, 150, 180 BPM (48 kHz) and 100 BPM (44.1 kHz) | within 3 BPM; 60 BPM reads as 120 (octave error, see limitations)       |
+
+The recordings are a small, personal set: these numbers are regression baselines, not a
+benchmark.
 
 ## Features
 
