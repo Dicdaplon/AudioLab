@@ -90,11 +90,11 @@ export function TunerTab({ mic, running, onStart }: TunerTabProps) {
             {[-50, -25, 0, 25, 50].map((tick) => (
               <span
                 key={tick}
-                className="tuner__tick al-num"
+                className="tuner__tick"
                 data-zero={tick === 0 ? "" : undefined}
                 style={{ left: `${50 + tick}%` }}
               >
-                {tick > 0 ? `+${tick}` : tick}
+                <span className="tuner__tick-label al-num">{tick > 0 ? `+${tick}` : tick}</span>
               </span>
             ))}
             <span className="tuner__zone" />

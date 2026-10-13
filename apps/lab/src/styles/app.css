@@ -266,26 +266,36 @@ body {
   border-bottom: 1px solid var(--al-color-line-strong);
 }
 
+/* A tick is a full-height column: its label sits at the top, its mark at the
+   axis; the needle stops below the labels so it never hides them. */
 .tuner__tick {
   position: absolute;
+  top: 0;
   bottom: 0;
+  width: 1px;
   transform: translateX(-50%);
-  padding-bottom: var(--al-sp-2);
-  font-size: var(--al-step--2);
-  color: var(--al-color-ink-muted);
 }
 
 .tuner__tick::after {
   content: "";
   position: absolute;
-  left: 50%;
+  left: 0;
   bottom: 0;
   width: 1px;
   height: var(--al-sp-2);
   background: var(--al-color-line-strong);
 }
 
-.tuner__tick[data-zero] {
+.tuner__tick-label {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: var(--al-step--2);
+  color: var(--al-color-ink-muted);
+}
+
+.tuner__tick[data-zero] .tuner__tick-label {
   color: var(--al-color-ink);
 }
 
@@ -304,7 +314,7 @@ body {
   bottom: 0;
   left: calc(50% + var(--cents, 0) * 1%);
   width: 2px;
-  height: 100%;
+  height: calc(100% - 1.6rem);
   background: var(--al-color-ink-muted);
   transform: translateX(-50%);
   opacity: 0;
@@ -339,5 +349,11 @@ body {
 @media (min-width: 720px) {
   .scales__bars {
     grid-template-columns: 1fr 1fr;
+  }
+
+  /* Scale names ("C major pentatonic") and their stat ("missing F# B") are
+     longer than key names: give the list wider end columns. */
+  .scales .al-ranklist__row {
+    grid-template-columns: minmax(9rem, 12rem) 1fr 4.5rem minmax(8rem, 14rem);
   }
 }
