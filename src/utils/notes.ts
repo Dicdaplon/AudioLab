@@ -44,3 +44,27 @@ export function pitchClassName(pc: number): string {
   const safe = ((pc % 12) + 12) % 12;
   return NOTE_NAMES[safe];
 }
+
+/**
+ * A minor (= C major) pentatonic: A, C, D, E, G. Five notes, not a scale
+ * of seven — the FFT view overlays these as reference lines.
+ */
+export const A_MINOR_PENTATONIC_PITCH_CLASSES: readonly number[] = [9, 0, 2, 4, 7];
+
+/**
+ * Frequencies (ascending) of every note of the given pitch classes that
+ * falls inside [minFreq, maxFreq], across MIDI 0..127.
+ */
+export function pitchClassFrequencies(
+  pitchClasses: readonly number[],
+  minFreq: number,
+  maxFreq: number,
+): number[] {
+  const freqs: number[] = [];
+  for (let midi = 0; midi < 128; midi++) {
+    if (!pitchClasses.includes(midi % 12)) continue;
+    const f = midiToFreq(midi);
+    if (f >= minFreq && f <= maxFreq) freqs.push(f);
+  }
+  return freqs;
+}

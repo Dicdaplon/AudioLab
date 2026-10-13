@@ -5,6 +5,8 @@ import {
   midiToFreq,
   freqToPitchClass,
   pitchClassName,
+  pitchClassFrequencies,
+  A_MINOR_PENTATONIC_PITCH_CLASSES,
   NOTE_NAMES,
   A4_FREQ,
   A4_MIDI,
@@ -43,5 +45,22 @@ describe("notes conversions", () => {
   it("NOTE_NAMES covers exactly 12 distinct entries", () => {
     expect(NOTE_NAMES).toHaveLength(12);
     expect(new Set(NOTE_NAMES).size).toBe(12);
+  });
+});
+
+describe("pitchClassFrequencies", () => {
+  it("lists the A minor pentatonic notes in ascending order within a band", () => {
+    const freqs = pitchClassFrequencies(A_MINOR_PENTATONIC_PITCH_CLASSES, 100, 500);
+    // A2 110, C3 130.8, D3 146.8, E3 164.8, G3 196, A3 220, C4 261.6, D4 293.7,
+    // E4 329.6, G4 392, A4 440 → 11 notes.
+    expect(freqs).toHaveLength(11);
+    expect(freqs[0]).toBeCloseTo(110, 1);
+    expect(freqs[freqs.length - 1]).toBeCloseTo(440, 1);
+    for (let i = 1; i < freqs.length; i++) expect(freqs[i]).toBeGreaterThan(freqs[i - 1]);
+  });
+
+  it("is a five-note set (pentatonic), not a seven-note major scale", () => {
+    expect(A_MINOR_PENTATONIC_PITCH_CLASSES).toHaveLength(5);
+    expect([...A_MINOR_PENTATONIC_PITCH_CLASSES].sort((a, b) => a - b)).toEqual([0, 2, 4, 7, 9]);
   });
 });

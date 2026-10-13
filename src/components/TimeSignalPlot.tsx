@@ -1,13 +1,31 @@
 import { useEffect, useRef } from "react";
 
+import { axisTicks, decimateMinMax, signalRange, valueToPixel } from "../utils/plotMath";
+
 interface TimeSignalPlotProps {
+  /** Samples in chronological order. */
   signal: Float32Array;
+  /** Rate of `signal` in Hz (used for the time axis). */
   sampleRate: number;
   title?: string;
   height?: number;
+  /** Label of the vertical axis. Default "Amplitude". */
+  yLabel?: string;
 }
 
-export function TimeSignalPlot({ signal, sampleRate, title, height = 200 }: TimeSignalPlotProps) {
+/**
+ * Canvas plot of a time signal. Long signals are reduced to one min/max
+ * pair per pixel column, so the drawing cost is bounded by the canvas
+ * width rather than the signal length. Non-negative signals (envelopes)
+ * are drawn from zero upwards; bipolar signals get a symmetric axis.
+ */
+export function TimeSignalPlot({
+  signal,
+  sampleRate,
+  title,
+  height = 200,
+  yLabel = "Amplitude",
+}: TimeSignalPlotProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -15,7 +33,7 @@ export function TimeSignalPlot({ signal, sampleRate, title, height = 200 }: Time
     if (!canvas) return;
 
     const dpr = window.devicePixelRatio || 1;
-    const width = canvas.parentElement?.clientWidth ?? 600;
+    const width = canvas.parentElement?.clientWidth || 600;
 
     canvas.width = width * dpr;
     canvas.height = height * dpr;
@@ -29,7 +47,7 @@ export function TimeSignalPlot({ signal, sampleRate, title, height = 200 }: Time
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, width, height);
 
-    if (signal.length === 0) {
+    if (signal.length === 0 || !(sampleRate > 0)) {
       ctx.fillStyle = "gray";
       ctx.font = "14px sans-serif";
       ctx.fillText("No data", 10, height / 2);
@@ -37,30 +55,23 @@ export function TimeSignalPlot({ signal, sampleRate, title, height = 200 }: Time
     }
 
     const padding = 40;
-    const plotWidth = width - 2 * padding;
-    const plotHeight = height - 2 * padding;
+    const plotWidth = Math.max(1, width - 2 * padding);
+    const plotHeight = Math.max(1, height - 2 * padding);
+    const bottom = height - padding;
+    const range = signalRange(signal);
+    const yOf = (v: number) => bottom - valueToPixel(v, range, 0, plotHeight);
 
-    let minAmp = 0,
-      maxAmp = 0;
-    for (let i = 0; i < signal.length; i++) {
-      if (Number.isFinite(signal[i])) {
-        minAmp = Math.min(minAmp, signal[i]);
-        maxAmp = Math.max(maxAmp, signal[i]);
-      }
-    }
-    const ampRange = Math.max(Math.abs(minAmp), Math.abs(maxAmp));
-    const scaledMin = -ampRange;
-    const scaledMax = ampRange;
-
+    // Axes.
     ctx.strokeStyle = "black";
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(padding, padding);
-    ctx.lineTo(padding, height - padding);
-    ctx.lineTo(width - padding, height - padding);
+    ctx.lineTo(padding, bottom);
+    ctx.lineTo(width - padding, bottom);
     ctx.stroke();
 
-    const zeroY = height - padding - ((0 - scaledMin) / (scaledMax - scaledMin)) * plotHeight;
+    // Zero line.
+    const zeroY = yOf(0);
     ctx.strokeStyle = "#ddd";
     ctx.lineWidth = 0.5;
     ctx.beginPath();
@@ -68,34 +79,38 @@ export function TimeSignalPlot({ signal, sampleRate, title, height = 200 }: Time
     ctx.lineTo(width - padding, zeroY);
     ctx.stroke();
 
+    // Time ticks.
     ctx.fillStyle = "black";
     ctx.font = "12px sans-serif";
     ctx.textAlign = "center";
     const durationSeconds = signal.length / sampleRate;
     const timeStep = durationSeconds > 5 ? 1 : 0.5;
-    for (let t = 0; t <= durationSeconds; t += timeStep) {
-      const idx = Math.round((t / durationSeconds) * signal.length);
-      const x = padding + (idx / signal.length) * plotWidth;
-      ctx.fillText(`${t.toFixed(1)}s`, x, height - padding + 20);
+    const timeTickCount = Math.floor(durationSeconds / timeStep);
+    for (let i = 0; i <= timeTickCount; i++) {
+      const t = i * timeStep;
+      const x = padding + (t / durationSeconds) * plotWidth;
+      ctx.fillText(`${t.toFixed(1)}s`, x, bottom + 20);
     }
 
+    // Amplitude ticks (integer counter: never loops on a zero range).
     ctx.textAlign = "right";
-    for (let amp = -ampRange; amp <= ampRange; amp += ampRange / 2) {
-      const y = height - padding - ((amp - scaledMin) / (scaledMax - scaledMin)) * plotHeight;
-      ctx.fillText(amp.toFixed(2), padding - 10, y + 4);
+    for (const v of axisTicks(range, 5)) {
+      ctx.fillText(v.toFixed(2), padding - 10, yOf(v) + 4);
     }
 
+    // Signal: one min/max pair per pixel column.
+    const columns = Math.min(signal.length, Math.floor(plotWidth));
+    const { min, max } = decimateMinMax(signal, columns);
     ctx.strokeStyle = "rgb(70, 130, 180)";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    for (let i = 0; i < signal.length; i++) {
-      const ampNorm = Number.isFinite(signal[i])
-        ? (signal[i] - scaledMin) / (scaledMax - scaledMin)
-        : 0.5;
-      const x = padding + (i / signal.length) * plotWidth;
-      const y = height - padding - ampNorm * plotHeight;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
+    for (let c = 0; c < columns; c++) {
+      const x = padding + (columns > 1 ? (c / (columns - 1)) * plotWidth : 0);
+      const yMax = yOf(max[c]);
+      const yMin = yOf(min[c]);
+      if (c === 0) ctx.moveTo(x, yMax);
+      else ctx.lineTo(x, yMax);
+      if (yMin !== yMax) ctx.lineTo(x, yMin);
     }
     ctx.stroke();
 
@@ -114,13 +129,13 @@ export function TimeSignalPlot({ signal, sampleRate, title, height = 200 }: Time
     ctx.translate(10, height / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.textAlign = "center";
-    ctx.fillText("Amplitude →", 0, 0);
+    ctx.fillText(`${yLabel} →`, 0, 0);
     ctx.restore();
-  }, [signal, sampleRate, height]);
+  }, [signal, sampleRate, height, title, yLabel]);
 
   return (
     <div className="time-signal-plot">
-      <canvas ref={canvasRef} />
+      <canvas ref={canvasRef} role="img" aria-label={title ?? "Time signal plot"} />
     </div>
   );
 }

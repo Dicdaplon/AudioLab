@@ -27,7 +27,7 @@ const DEFAULT_SETTINGS: ToneBaseSettings = {
 const DEFAULT_FFT_SETTINGS: FftSettings = {
   noiseMethod: "median",
   lowpassCutoffHz: 2,
-  showDerivative: false,
+  showSlope: false,
   showScaleNotes: true,
 };
 

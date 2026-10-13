@@ -49,7 +49,7 @@ export function FftTab({
           noiseFloorDb={noiseFloorDb}
           title="FFT Magnitude (dB)"
           height={300}
-          showDerivative={settings.showDerivative}
+          showSlope={settings.showSlope}
           showScaleNotes={settings.showScaleNotes}
           minFreqHz={0}
           maxFreqHz={4000}
@@ -80,7 +80,7 @@ export function FftTab({
           noiseFloorDb={-100}
           title="FFT of Filtered Signal (dB)"
           height={200}
-          showDerivative={false}
+          showSlope={false}
           showScaleNotes={false}
           minFreqHz={0}
           maxFreqHz={50}

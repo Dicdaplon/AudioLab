@@ -1,9 +1,11 @@
-import { NoiseFloorMethod } from "../analysis/noiseFloor";
+import { isNoiseFloorMethod, type NoiseFloorMethod } from "../analysis/noiseFloor";
 
 export interface FftSettings {
   noiseMethod: NoiseFloorMethod;
   lowpassCutoffHz: number;
-  showDerivative: boolean;
+  /** Overlay the frequency slope (dB/Hz) of the spectrum. */
+  showSlope: boolean;
+  /** Overlay the A minor pentatonic reference notes. */
   showScaleNotes: boolean;
 }
 
@@ -13,7 +15,7 @@ interface FftSettingsPanelProps {
 }
 
 /**
- * Settings panel for FFT visualization (Section 1 + Section 2).
+ * Settings panel for the FFT tab (spectrum view + tempo analysis).
  */
 export function FftSettingsPanel({ settings, onChange }: FftSettingsPanelProps) {
   return (
@@ -24,12 +26,11 @@ export function FftSettingsPanel({ settings, onChange }: FftSettingsPanelProps) 
           Noise Floor Method:
           <select
             value={settings.noiseMethod}
-            onChange={(e) =>
-              onChange({
-                ...settings,
-                noiseMethod: e.target.value as NoiseFloorMethod,
-              })
-            }
+            onChange={(e) => {
+              if (isNoiseFloorMethod(e.target.value)) {
+                onChange({ ...settings, noiseMethod: e.target.value });
+              }
+            }}
           >
             <option value="median">Median (robust)</option>
             <option value="mean">Mean (average)</option>
@@ -55,22 +56,17 @@ export function FftSettingsPanel({ settings, onChange }: FftSettingsPanelProps) 
             }
           />
         </label>
-        <small>Controls tempo envelope analysis (Section 2)</small>
+        <small>Controls the tempo analysis (Section 2)</small>
       </div>
 
       <div className="settings-group">
         <label>
           <input
             type="checkbox"
-            checked={settings.showDerivative}
-            onChange={(e) =>
-              onChange({
-                ...settings,
-                showDerivative: e.target.checked,
-              })
-            }
+            checked={settings.showSlope}
+            onChange={(e) => onChange({ ...settings, showSlope: e.target.checked })}
           />
-          Show FFT Derivative (dB/Hz)
+          Show spectrum slope (dB/Hz)
         </label>
       </div>
 
@@ -79,14 +75,9 @@ export function FftSettingsPanel({ settings, onChange }: FftSettingsPanelProps) 
           <input
             type="checkbox"
             checked={settings.showScaleNotes}
-            onChange={(e) =>
-              onChange({
-                ...settings,
-                showScaleNotes: e.target.checked,
-              })
-            }
+            onChange={(e) => onChange({ ...settings, showScaleNotes: e.target.checked })}
           />
-          Show Major Scale Notes (A, C, D, E, G)
+          Show A minor pentatonic notes (A, C, D, E, G)
         </label>
       </div>
     </section>
