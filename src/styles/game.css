@@ -205,20 +205,31 @@
   border-top: 1px dashed var(--color-line-strong);
 }
 
-/* The runner: the sign, twice the size, running. */
+/* The runner: the wolf, galloping in the theme ink with an ember eye. */
 .scene__runner {
   position: absolute;
-  width: 36px;
-  height: 50px;
   display: flex;
   align-items: flex-end;
-  justify-content: center;
   color: var(--color-ink);
-  animation: runner-run 0.3s steps(2) infinite;
+  transform-origin: 30% 100%;
+  animation: runner-gallop 0.42s ease-in-out infinite;
 }
 
-.scene__runner .mark {
-  animation: none;
+.wolf {
+  display: block;
+  overflow: visible;
+}
+
+.wolf__ink {
+  fill: currentColor;
+}
+
+.wolf__fill {
+  fill: var(--color-bed);
+}
+
+.wolf__eye {
+  fill: var(--color-accent);
 }
 
 .scene__runner[data-shield]::before {
@@ -229,12 +240,16 @@
   border-radius: var(--r-3);
 }
 
-@keyframes runner-run {
-  from {
-    transform: translateY(0);
+@keyframes runner-gallop {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
   }
-  to {
-    transform: translateY(-2px);
+  35% {
+    transform: translateY(-5px) rotate(-3deg);
+  }
+  70% {
+    transform: translateY(-1px) rotate(2deg);
   }
 }
 

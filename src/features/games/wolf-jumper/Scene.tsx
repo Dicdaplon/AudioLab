@@ -8,7 +8,8 @@
 
 import type { CSSProperties } from "react";
 
-import { Mark } from "../../../components/Brand";
+import { WOLF_ASPECT } from "./wolfArt";
+import { WolfSprite } from "./WolfSprite";
 import { Icon, type IconName } from "../../../ui/Icon";
 import { usePlotWidth } from "../../../ui/usePlotWidth";
 import {
@@ -50,6 +51,10 @@ const BONUS_ICON: Record<BonusType, IconName> = {
 
 const MAX_SCALE = 1.6;
 
+/** Rendered size of the wolf; its muzzle sits just past WOLF_X. */
+const WOLF_SPRITE_WIDTH = 96;
+const WOLF_SPRITE_HEIGHT = Math.round(WOLF_SPRITE_WIDTH * WOLF_ASPECT);
+
 /** Horizontal centre of an entity: right edge at progress 0, the wolf at 1. */
 function entityX(progress: number): number {
   return SCENE_WIDTH - progress * (SCENE_WIDTH - WOLF_X);
@@ -90,11 +95,11 @@ export function Scene({ store, onRestart }: SceneProps) {
         <div
           className="scene__runner"
           data-shield={shieldOn ? "" : undefined}
-          style={{ left: WOLF_X, top: GROUND_Y - 50 }}
+          style={{ left: WOLF_X - WOLF_SPRITE_WIDTH * 0.66, top: GROUND_Y - WOLF_SPRITE_HEIGHT }}
           role="img"
           aria-label={shieldOn ? "the wolf, shielded" : "the wolf"}
         >
-          <Mark size={36} />
+          <WolfSprite width={WOLF_SPRITE_WIDTH} />
         </div>
 
         {enemies.map((e) => (
