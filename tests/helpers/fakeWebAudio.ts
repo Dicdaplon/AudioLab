@@ -1,6 +1,7 @@
 /**
- * Hand-written Web Audio / getUserMedia fakes for jsdom tests. Small and
- * explicit on purpose: tests assert on these spies directly.
+ * Hand-written Web Audio / getUserMedia fakes (AudioContext, AnalyserNode,
+ * MediaStream, AudioWorkletNode) for jsdom tests. Small and explicit on
+ * purpose: tests assert on these spies directly.
  */
 import { vi } from "vitest";
 
@@ -169,4 +170,57 @@ export function dbSpectrumForNotes(
     }
   }
   return db;
+}
+
+/** Main-thread side of a fake AudioWorkletNode. */
+export interface FakeWorkletNode {
+  readonly name: string;
+  readonly options?: AudioWorkletNodeOptions;
+  port: { onmessage: ((e: MessageEvent) => void) | null; postMessage: ReturnType<typeof vi.fn> };
+  connect: ReturnType<typeof vi.fn>;
+  disconnect: ReturnType<typeof vi.fn>;
+  /** Deliver a message as if the processor had posted it. */
+  emit(data: unknown): void;
+}
+
+export interface InstalledWorkletNode {
+  /** Every node constructed since installation, in order. */
+  nodes: FakeWorkletNode[];
+  restore(): void;
+}
+
+/**
+ * Install a global `AudioWorkletNode` constructor. Combined with a fake
+ * context whose `audioWorklet.addModule` resolves (the default), this
+ * exercises the worklet capture path of `startSampleCapture`.
+ */
+export function installFakeAudioWorkletNode(): InstalledWorkletNode {
+  const g = globalThis as unknown as Record<string, unknown>;
+  const hadPrevious = "AudioWorkletNode" in g;
+  const previous = g.AudioWorkletNode;
+  const nodes: FakeWorkletNode[] = [];
+
+  g.AudioWorkletNode = class implements FakeWorkletNode {
+    port: FakeWorkletNode["port"] = { onmessage: null, postMessage: vi.fn() };
+    connect = vi.fn();
+    disconnect = vi.fn();
+    constructor(
+      _context: unknown,
+      readonly name: string,
+      readonly options?: AudioWorkletNodeOptions,
+    ) {
+      nodes.push(this);
+    }
+    emit(data: unknown) {
+      this.port.onmessage?.({ data } as MessageEvent);
+    }
+  };
+
+  return {
+    nodes,
+    restore() {
+      if (hadPrevious) g.AudioWorkletNode = previous;
+      else delete g.AudioWorkletNode;
+    },
+  };
 }

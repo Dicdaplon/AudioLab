@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 
 import { SampleBatcher } from "../../src/audio/sampleBatcher";
-import { makeFakeAudioContextClass } from "../helpers/fakeWebAudio";
+import {
+  installFakeAudioWorkletNode,
+  makeFakeAudioContextClass,
+  type FakeWorkletNode,
+  type InstalledWorkletNode,
+} from "../helpers/fakeWebAudio";
 
 vi.mock("../../src/audio/sampleCaptureWorkletUrl", () => ({ default: "mock-worklet-url.js" }));
 
@@ -94,35 +99,18 @@ describe("sample capture worklet processor", () => {
 });
 
 describe("startSampleCapture", () => {
-  const g = globalThis as unknown as Record<string, unknown>;
   const source = { connect: vi.fn(), disconnect: vi.fn() } as unknown as AudioNode;
-
-  interface FakeNode {
-    port: { onmessage: ((e: MessageEvent) => void) | null };
-    connect: ReturnType<typeof vi.fn>;
-    disconnect: ReturnType<typeof vi.fn>;
-    name: string;
-  }
-  let nodes: FakeNode[] = [];
+  let worklet: InstalledWorkletNode;
+  let nodes: FakeWorkletNode[];
 
   beforeEach(() => {
-    nodes = [];
-    g.AudioWorkletNode = class {
-      port = { onmessage: null };
-      connect = vi.fn();
-      disconnect = vi.fn();
-      constructor(
-        _ctx: unknown,
-        public name: string,
-      ) {
-        nodes.push(this as unknown as FakeNode);
-      }
-    };
+    worklet = installFakeAudioWorkletNode();
+    nodes = worklet.nodes;
     vi.useFakeTimers();
   });
 
   afterEach(() => {
-    delete g.AudioWorkletNode;
+    worklet.restore();
     vi.useRealTimers();
     vi.clearAllMocks();
   });
@@ -140,16 +128,47 @@ describe("startSampleCapture", () => {
     expect(source.connect).toHaveBeenCalledWith(nodes[0]);
     expect(nodes[0].connect).toHaveBeenCalledWith(ctx.destination);
 
+    expect(nodes[0].options).toMatchObject({ channelCount: 1, channelCountMode: "explicit" });
+
     const batch = new Float32Array([1, 2, 3]);
-    nodes[0].port.onmessage!({ data: batch } as MessageEvent);
-    nodes[0].port.onmessage!({ data: "not samples" } as MessageEvent);
+    nodes[0].emit(batch);
+    nodes[0].emit("not samples");
     expect(onSamples).toHaveBeenCalledTimes(1);
     expect(onSamples).toHaveBeenCalledWith(batch);
 
     capture.stop();
     capture.stop();
     expect(source.disconnect).toHaveBeenCalledTimes(1);
+    expect(nodes[0].disconnect).toHaveBeenCalledTimes(1);
     expect(nodes[0].port.onmessage).toBeNull();
+    nodes[0].emit(batch);
+    expect(onSamples).toHaveBeenCalledTimes(1);
+  });
+
+  it("stop() tolerates a graph that is already torn down (closed context)", async () => {
+    const { FakeAudioContext } = makeFakeAudioContextClass();
+    const throwing = {
+      connect: vi.fn(),
+      disconnect: vi.fn(() => {
+        throw new Error("InvalidAccessError");
+      }),
+    } as unknown as AudioNode;
+    const viaWorklet = await startSampleCapture(
+      new FakeAudioContext() as unknown as AudioContext,
+      throwing,
+      vi.fn(),
+    );
+    expect(() => viaWorklet.stop()).not.toThrow();
+
+    const viaAnalyser = await startSampleCapture(
+      new FakeAudioContext() as unknown as AudioContext,
+      throwing,
+      vi.fn(),
+      { preferWorklet: false },
+    );
+    expect(viaAnalyser.method).toBe("analyser");
+    expect(() => viaAnalyser.stop()).not.toThrow();
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it("falls back to the analyser when the worklet module fails to load", async () => {
