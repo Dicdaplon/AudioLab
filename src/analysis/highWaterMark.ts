@@ -7,8 +7,10 @@
  *     threshold = tolerancy × mean(last N peaks)
  *
  * Any chroma bin below the threshold is set to 0 in the output. This zeroes
- * out the "noise floor" of the chroma while keeping the actually-played notes,
- * adapting automatically to the overall signal level over time.
+ * out the weak bins of the chroma while keeping the dominant pitch classes.
+ * Note that the live chroma fed to this filter is L1-normalised (it sums to
+ * 1), so the "peak" tracks how concentrated the chroma is, not the signal
+ * level: the threshold adapts to chroma flatness, not to loudness.
  *
  * Configuration:
  *   - `tolerancy` ∈ [0, 1]   default 0.5
@@ -20,6 +22,8 @@
  *       How the peaks are aggregated. Median is more robust to occasional
  *       transients (a single big strum doesn't blow the threshold up).
  */
+
+import { clamp, mean, median } from "./math";
 
 export type HighWaterMarkMode = "mean" | "median";
 
@@ -42,24 +46,8 @@ export interface HighWaterMarkOptions {
   mode?: HighWaterMarkMode;
 }
 
-function clamp(x: number, lo: number, hi: number): number {
-  return x < lo ? lo : x > hi ? hi : x;
-}
-
 function clampMemory(n: number): number {
   return Math.round(clamp(n, HIGH_WATER_MARK_MEMORY_MIN, HIGH_WATER_MARK_MEMORY_MAX));
-}
-
-function median(values: number[]): number {
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = sorted.length >> 1;
-  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) * 0.5 : sorted[mid];
-}
-
-function mean(values: number[]): number {
-  let sum = 0;
-  for (const v of values) sum += v;
-  return values.length > 0 ? sum / values.length : 0;
 }
 
 export class HighWaterMarkFilter {

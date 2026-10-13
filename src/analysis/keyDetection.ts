@@ -13,6 +13,7 @@
  */
 
 import { CHROMA_SIZE } from "./chroma";
+import { softmax } from "./math";
 import { NOTE_NAMES } from "../utils/notes";
 
 export type KeyMode = "maj" | "min";
@@ -43,7 +44,10 @@ export interface KeyScore {
   shortName: string;
   /** Raw Pearson correlation with the rotated profile, in [-1, 1]. */
   correlation: number;
-  /** Probability assigned to this key after softmax over the 24 correlations. */
+  /**
+   * Softmax (τ = 0.1 by default) of the 24 correlations. A ranking score
+   * that sums to 1 across the candidates, not a calibrated probability.
+   */
   probability: number;
 }
 
@@ -152,13 +156,4 @@ export function relativeMajorTonic(minorTonic: number): number {
   return (minorTonic + 3) % CHROMA_SIZE;
 }
 
-/** Numerically stable softmax with temperature. */
-export function softmax(values: number[], temperature: number): number[] {
-  const t = temperature > 0 ? temperature : 1;
-  const scaled = values.map((v) => v / t);
-  const max = Math.max(...scaled);
-  const exps = scaled.map((v) => Math.exp(v - max));
-  const sum = exps.reduce((a, b) => a + b, 0);
-  if (sum === 0) return values.map(() => 1 / values.length);
-  return exps.map((e) => e / sum);
-}
+export { softmax };

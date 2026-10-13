@@ -11,8 +11,8 @@
  */
 
 import { CHROMA_SIZE } from "./chroma";
+import { softmax } from "./math";
 import { NOTE_NAMES } from "../utils/notes";
-import { softmax } from "./keyDetection";
 
 export type ChordQuality = "maj" | "min";
 
@@ -31,9 +31,9 @@ export interface ChordScore {
   root: number;
   quality: ChordQuality;
   name: string;
-  /** Cosine similarity in [-1, 1] (≥ 0 in practice for binary templates). */
+  /** Cosine similarity, in [0, 1] for a non-negative chroma and binary templates. */
   similarity: number;
-  /** Softmax probability across all 24 templates. */
+  /** Softmax (τ = 0.1) of the 24 similarities: a ranking score summing to 1. */
   probability: number;
 }
 

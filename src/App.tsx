@@ -5,45 +5,33 @@ import { ChordView } from "./components/ChordView";
 import { ChromaView } from "./components/ChromaView";
 import { KeyProbabilities } from "./components/KeyProbabilities";
 import { MicCapture } from "./components/MicCapture";
-import { SettingsPanel, type ToneBaseSettings } from "./components/SettingsPanel";
+import { SettingsPanel } from "./components/SettingsPanel";
 import { ToneBaseTonalityView } from "./components/ToneBaseTonalityView";
 import { WolfJumper } from "./features/games/wolf-jumper/WolfJumper";
 import { FftTab } from "./components/FftTab";
-import { type FftSettings } from "./components/FftSettingsPanel";
+import {
+  ANALYSIS_DEFAULTS,
+  DEFAULT_DETECTOR_SETTINGS,
+  DEFAULT_FFT_SETTINGS,
+  type DetectorSettings,
+  type FftSettings,
+} from "./config/settings";
 import { useTonality } from "./hooks/useTonality";
 import "./App.css";
-
-/**
- * Defaults tuned by `npm run sweep` against the project's samples.
- */
-const DEFAULT_SETTINGS: ToneBaseSettings = {
-  liveAcquisitionSeconds: 8,
-  tonalityAcquisitionSeconds: 30,
-  maxFilterTolerancy: 0.35,
-  maxFilterMemory: 3,
-  maxFilterMode: "mean",
-};
-
-const DEFAULT_FFT_SETTINGS: FftSettings = {
-  noiseMethod: "median",
-  lowpassCutoffHz: 2,
-  showSlope: false,
-  showScaleNotes: true,
-};
 
 type Tab = "detector" | "game" | "jumper" | "fft";
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("detector");
-  const [settings, setSettings] = useState<ToneBaseSettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<DetectorSettings>(DEFAULT_DETECTOR_SETTINGS);
   const [fftSettings, setFftSettings] = useState<FftSettings>(DEFAULT_FFT_SETTINGS);
 
   const tonality = useTonality({
     liveAcquisitionSeconds: settings.liveAcquisitionSeconds,
     tonalityAcquisitionSeconds: settings.tonalityAcquisitionSeconds,
-    chordWindowSeconds: 1,
-    framesPerSecond: 10,
-    fftSize: 16384,
+    chordWindowSeconds: ANALYSIS_DEFAULTS.chordWindowSeconds,
+    framesPerSecond: ANALYSIS_DEFAULTS.framesPerSecond,
+    fftSize: ANALYSIS_DEFAULTS.fftSize,
     maxFilterTolerancy: settings.maxFilterTolerancy,
     maxFilterMemory: settings.maxFilterMemory,
     maxFilterMode: settings.maxFilterMode,

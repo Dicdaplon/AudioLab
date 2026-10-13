@@ -1,20 +1,9 @@
-import {
-  HIGH_WATER_MARK_MEMORY_MAX,
-  HIGH_WATER_MARK_MEMORY_MIN,
-  type HighWaterMarkMode,
-} from "../analysis/highWaterMark";
-
-export interface ToneBaseSettings {
-  liveAcquisitionSeconds: number;
-  tonalityAcquisitionSeconds: number;
-  maxFilterTolerancy: number;
-  maxFilterMemory: number;
-  maxFilterMode: HighWaterMarkMode;
-}
+import { HIGH_WATER_MARK_MEMORY_MAX, HIGH_WATER_MARK_MEMORY_MIN } from "../analysis/highWaterMark";
+import type { DetectorSettings } from "../config/settings";
 
 interface SettingsPanelProps {
-  settings: ToneBaseSettings;
-  onChange: (next: ToneBaseSettings) => void;
+  settings: DetectorSettings;
+  onChange: (next: DetectorSettings) => void;
   /** Current threshold value (informational). */
   currentThreshold?: number;
   /** Last observed peak value (informational). */
@@ -27,7 +16,7 @@ export function SettingsPanel({
   currentThreshold = 0,
   lastPeak = 0,
 }: SettingsPanelProps) {
-  const update = (patch: Partial<ToneBaseSettings>): void => {
+  const update = (patch: Partial<DetectorSettings>): void => {
     onChange({ ...settings, ...patch });
   };
 
@@ -96,7 +85,9 @@ export function SettingsPanel({
         <select
           id="mode"
           value={settings.maxFilterMode}
-          onChange={(e) => update({ maxFilterMode: e.target.value as HighWaterMarkMode })}
+          onChange={(e) =>
+            update({ maxFilterMode: e.target.value === "median" ? "median" : "mean" })
+          }
         >
           <option value="mean">Mean (default)</option>
           <option value="median">Median (more robust)</option>

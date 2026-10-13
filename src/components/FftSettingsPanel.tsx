@@ -1,13 +1,5 @@
-import { isNoiseFloorMethod, type NoiseFloorMethod } from "../analysis/noiseFloor";
-
-export interface FftSettings {
-  noiseMethod: NoiseFloorMethod;
-  lowpassCutoffHz: number;
-  /** Overlay the frequency slope (dB/Hz) of the spectrum. */
-  showSlope: boolean;
-  /** Overlay the A minor pentatonic reference notes. */
-  showScaleNotes: boolean;
-}
+import { isNoiseFloorMethod } from "../analysis/noiseFloor";
+import { LOWPASS_CUTOFF_RANGE, type FftSettings } from "../config/settings";
 
 interface FftSettingsPanelProps {
   settings: FftSettings;
@@ -44,9 +36,9 @@ export function FftSettingsPanel({ settings, onChange }: FftSettingsPanelProps) 
           Lowpass Cutoff (Hz): <strong>{settings.lowpassCutoffHz.toFixed(2)}</strong>
           <input
             type="range"
-            min="0.5"
-            max="10"
-            step="0.1"
+            min={LOWPASS_CUTOFF_RANGE.min}
+            max={LOWPASS_CUTOFF_RANGE.max}
+            step={LOWPASS_CUTOFF_RANGE.step}
             value={settings.lowpassCutoffHz}
             onChange={(e) =>
               onChange({

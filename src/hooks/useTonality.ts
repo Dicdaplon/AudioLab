@@ -31,12 +31,18 @@ import { detectChord, type ChordScore } from "../analysis/chordDetection";
 import { detectKeyFromPresence } from "../analysis/presenceTonality";
 import {
   HighWaterMarkFilter,
-  HIGH_WATER_MARK_DEFAULTS,
   HIGH_WATER_MARK_MEMORY_MAX,
   HIGH_WATER_MARK_MEMORY_MIN,
   type HighWaterMarkMode,
 } from "../analysis/highWaterMark";
+import { clamp } from "../analysis/math";
 import { estimateNoiseFloor, type NoiseFloorMethod } from "../analysis/noiseFloor";
+import {
+  ANALYSIS_DEFAULTS,
+  DEFAULT_DETECTOR_SETTINGS,
+  DEFAULT_FFT_SETTINGS,
+  LOWPASS_CUTOFF_RANGE,
+} from "../config/settings";
 import { LowpassFilter } from "../analysis/lowpass";
 import { TimeRingBuffer } from "../analysis/timeBuffer";
 import { computeFftDb } from "../analysis/timeFft";
@@ -134,24 +140,12 @@ export interface TonalityState {
 }
 
 const DEFAULTS = {
-  liveAcquisitionSeconds: 8,
-  tonalityAcquisitionSeconds: 30,
-  chordWindowSeconds: 1,
-  framesPerSecond: 10,
-  fftSize: 16384,
-  minFreq: 55,
-  maxFreq: 5000,
-  maxFilterTolerancy: HIGH_WATER_MARK_DEFAULTS.tolerancy,
-  maxFilterMemory: HIGH_WATER_MARK_DEFAULTS.memory,
-  maxFilterMode: HIGH_WATER_MARK_DEFAULTS.mode,
+  ...DEFAULT_DETECTOR_SETTINGS,
+  ...ANALYSIS_DEFAULTS,
   fftEnabled: false,
-  noiseMethod: "median" as NoiseFloorMethod,
-  lowpassCutoffHz: 2,
+  noiseMethod: DEFAULT_FFT_SETTINGS.noiseMethod,
+  lowpassCutoffHz: DEFAULT_FFT_SETTINGS.lowpassCutoffHz,
 };
-
-function clamp(x: number, lo: number, hi: number): number {
-  return x < lo ? lo : x > hi ? hi : x;
-}
 
 function emptyVector(): Float32Array {
   return new Float32Array(CHROMA_SIZE);
@@ -178,9 +172,10 @@ export function useTonality(options: UseTonalityOptions = {}) {
     maxFilterMode: options.maxFilterMode ?? DEFAULTS.maxFilterMode,
     fftEnabled: options.fftEnabled ?? DEFAULTS.fftEnabled,
     noiseMethod: options.noiseMethod ?? DEFAULTS.noiseMethod,
-    lowpassCutoffHz: Math.max(
-      0.5,
-      Math.min(options.lowpassCutoffHz ?? DEFAULTS.lowpassCutoffHz, 10),
+    lowpassCutoffHz: clamp(
+      options.lowpassCutoffHz ?? DEFAULTS.lowpassCutoffHz,
+      LOWPASS_CUTOFF_RANGE.min,
+      LOWPASS_CUTOFF_RANGE.max,
     ),
   };
 

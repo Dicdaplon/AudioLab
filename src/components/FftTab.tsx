@@ -1,6 +1,7 @@
 import { SpectrumPlot } from "./SpectrumPlot";
 import { TimeSignalPlot } from "./TimeSignalPlot";
-import { FftSettingsPanel, type FftSettings } from "./FftSettingsPanel";
+import { FftSettingsPanel } from "./FftSettingsPanel";
+import type { FftSettings } from "../config/settings";
 
 interface FftTabProps {
   spectrumDb: Float32Array;
