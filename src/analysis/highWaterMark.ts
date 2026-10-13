@@ -13,10 +13,10 @@
  * level: the threshold adapts to chroma flatness, not to loudness.
  *
  * Configuration:
- *   - `tolerancy` ∈ [0, 1]   default 0.5
+ *   - `tolerancy` ∈ [0, 1]   default 0.35
  *       Fraction of the recent peak average used as threshold. 0 disables the
  *       filter (passes everything through); 1 only keeps bins ≥ current peak.
- *   - `memory`    ∈ [2, 15]  default 5
+ *   - `memory`    ∈ [2, 15]  default 3
  *       Number of recent peaks averaged.
  *   - `mode`      "mean" | "median"  default "mean"
  *       How the peaks are aggregated. Median is more robust to occasional
