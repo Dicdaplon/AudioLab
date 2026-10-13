@@ -38,6 +38,7 @@ Ouvre ensuite `http://127.0.0.1:5173` et autorise l'accès au microphone.
 | `npm test`             | Tests rapides (projets Vitest `unit` + `dom`)             |
 | `npm run test:samples` | Régression sur les fichiers audio de `tests/Sample`       |
 | `npm run test:all`     | Toute la suite (unit + dom + samples)                     |
+| `npm run coverage`     | Tests rapides avec couverture (seuils dans vite.config)   |
 | `npm run test:watch`   | Vitest en mode watch                                      |
 | `npm run typecheck`    | Vérification TypeScript sans émission                     |
 | `npm run sweep`        | Sweep paramétrique sur tous les samples (voir ci-dessous) |
