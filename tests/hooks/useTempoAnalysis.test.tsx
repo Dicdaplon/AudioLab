@@ -8,15 +8,28 @@ import { installWebAudioFakes, type InstalledFakes } from "../helpers/fakeWebAud
 
 // Capture is mocked: tests feed samples straight into the listener.
 const captures: { listener: SampleListener; stop: ReturnType<typeof vi.fn> }[] = [];
+/** When set, the next capture start waits on this promise (or its rejection). */
+let gate: Promise<void> | null = null;
 vi.mock("../../src/audio/sampleCapture", () => ({
   startSampleCapture: vi.fn(
     async (_ctx: unknown, _src: unknown, listener: SampleListener): Promise<SampleCapture> => {
       const stop = vi.fn();
       captures.push({ listener, stop });
+      if (gate) await gate;
       return { method: "worklet", stop };
     },
   ),
 }));
+
+function deferred() {
+  let resolve!: () => void;
+  let reject!: (e: Error) => void;
+  const promise = new Promise<void>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
 
 /** 10 s click track at `bpm`, 48 kHz. */
 function clickTrack(bpm: number, seconds = 10, sampleRate = 48000): Float32Array {
@@ -36,6 +49,7 @@ describe("useTempoAnalysis", () => {
 
   beforeEach(async () => {
     captures.length = 0;
+    gate = null;
     fakes = installWebAudioFakes();
     mic = await openMicrophone();
   });
@@ -91,5 +105,71 @@ describe("useTempoAnalysis", () => {
     rerender({ fc: 3 });
     expect(captures).toHaveLength(1);
     expect(captures[0].stop).not.toHaveBeenCalled();
+  });
+
+  it("stops a capture that finishes starting after the hook unmounted", async () => {
+    const pending = deferred();
+    gate = pending.promise;
+    const { result, unmount } = renderHook(() => useTempoAnalysis(mic));
+    expect(captures).toHaveLength(1);
+    unmount();
+    expect(captures[0].stop).not.toHaveBeenCalled();
+    await act(async () => pending.resolve());
+    expect(captures[0].stop).toHaveBeenCalledTimes(1);
+    expect(result.current.frame).toBeNull();
+  });
+
+  it("stays idle when the capture cannot start", async () => {
+    const pending = deferred();
+    gate = pending.promise;
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useTempoAnalysis(mic, { updatesPerSecond: 10 }));
+    await act(async () => pending.reject(new Error("context closed")));
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(result.current).toEqual({ frame: null, captureMethod: null });
+  });
+
+  it("publishes a frame at updatesPerSecond, only once the capture runs", async () => {
+    const pending = deferred();
+    gate = pending.promise;
+    vi.useFakeTimers();
+    const frames = new Set<unknown>();
+    const { result, rerender } = renderHook(
+      ({ ups }) => {
+        const state = useTempoAnalysis(mic, { updatesPerSecond: ups });
+        if (state.frame) frames.add(state.frame);
+        return state;
+      },
+      { initialProps: { ups: 4 } },
+    );
+    // One act() per 10 ms step so React does not batch successive ticks.
+    const runFor = (ms: number) => {
+      for (let t = 0; t < ms; t += 10) {
+        act(() => {
+          vi.advanceTimersByTime(10);
+        });
+      }
+    };
+    runFor(1000);
+    expect(frames.size).toBe(0); // capture still starting: no ticks published
+
+    await act(async () => pending.resolve());
+    expect(frames.size).toBe(1); // first frame as soon as the capture starts
+    runFor(1000);
+    expect(frames.size).toBe(5); // + 4 ticks in one second
+    expect(result.current.captureMethod).toBe("worklet");
+
+    // A new rate restarts the capture with its own interval.
+    gate = null;
+    rerender({ ups: 10 });
+    expect(captures[0].stop).toHaveBeenCalledTimes(1);
+    await act(async () => {});
+    expect(captures).toHaveLength(2);
+    frames.clear();
+    runFor(1000);
+    expect(frames.size).toBe(10);
+    expect(vi.getTimerCount()).toBe(1);
   });
 });
