@@ -1,5 +1,9 @@
 /** Signal meter with an adjustable noise-gate threshold. */
 
+import type { CSSProperties } from "react";
+
+import { RangeField } from "../../../components/Field";
+
 const METER_MIN_DB = -90;
 const METER_RANGE_DB = 80;
 const GATE_MIN_DB = -90;
@@ -24,32 +28,46 @@ export function NoiseGate({
   gateOpen,
   onThresholdChange,
 }: NoiseGateProps) {
+  const level = Math.round(signalLevelDb);
   return (
-    <div className="jumper-noisegate">
-      <div className="jumper-noisegate-header">
-        <label htmlFor="gate">Noise gate</label>
-        <span className="jumper-noisegate-value">{thresholdDb.toFixed(0)} dB</span>
+    <div className="gate">
+      <div className="gate__head">
+        <span className="surtitre">Noise gate</span>
+        <span className="gate__value num">{thresholdDb.toFixed(0)} dB</span>
       </div>
-      <div className="jumper-noisegate-meter">
-        <div
-          className="jumper-noisegate-bar"
-          style={{ width: percent(meterFraction(signalLevelDb)) }}
-        />
-        <div
-          className={`jumper-noisegate-threshold ${gateOpen ? "open" : "closed"}`}
-          style={{ left: percent(meterFraction(thresholdDb)) }}
-          title="Noise gate threshold"
-        />
-        <span className="jumper-noisegate-current">{signalLevelDb.toFixed(0)} dB</span>
+      <div
+        className="meter"
+        role="meter"
+        aria-valuemin={METER_MIN_DB}
+        aria-valuemax={METER_MIN_DB + METER_RANGE_DB}
+        aria-valuenow={Math.max(METER_MIN_DB, Math.min(METER_MIN_DB + METER_RANGE_DB, level))}
+        aria-valuetext={`${level} dB`}
+        aria-label="signal level"
+      >
+        <div className="meter__track">
+          <div
+            className="meter__fill"
+            style={{ "--level": percent(meterFraction(signalLevelDb)) } as CSSProperties}
+          />
+          <div
+            className="meter__gate"
+            data-open={gateOpen ? "" : undefined}
+            style={{ "--gate": percent(meterFraction(thresholdDb)) } as CSSProperties}
+            title="Noise gate threshold"
+          />
+        </div>
+        <span className="meter__value num">{level} dB</span>
       </div>
-      <input
+      <RangeField
         id="gate"
-        type="range"
+        label="Threshold"
         min={GATE_MIN_DB}
         max={GATE_MAX_DB}
         step={1}
         value={thresholdDb}
-        onChange={(e) => onThresholdChange(Number(e.target.value))}
+        onChange={onThresholdChange}
+        format={(v) => v.toFixed(0)}
+        unit="dB"
       />
     </div>
   );

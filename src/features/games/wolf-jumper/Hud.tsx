@@ -5,6 +5,10 @@
  * re-renders at most ten times per second instead of on every frame.
  */
 
+import type { CSSProperties } from "react";
+
+import { Segments } from "../../../components/Segments";
+import { Icon } from "../../../ui/Icon";
 import { MAX_HP, findNoteDef } from "./constants";
 import { computeTravelMs, shieldRemainingMs, slowRemainingMs, type GameState } from "./engine";
 import { shallowEqual, useStoreSelector, type ReadableStore } from "./store";
@@ -22,7 +26,7 @@ const selectHud = (s: GameState) => ({
   sameNoteRemaining: s.effects.sameNoteRemaining,
 });
 
-const formatTenths = (tenths: number) => `${(tenths / 10).toFixed(1)}s`;
+const formatTenths = (tenths: number) => `${(tenths / 10).toFixed(1)} s`;
 
 export function Hud({ store }: { store: ReadableStore<GameState> }) {
   const hud = useStoreSelector(store, selectHud, shallowEqual);
@@ -30,65 +34,70 @@ export function Hud({ store }: { store: ReadableStore<GameState> }) {
   const sameNote = hud.sameNotePc !== null ? findNoteDef(hud.sameNotePc) : undefined;
   const shieldOn = hud.shieldTenths > 0;
   const slowOn = hud.slowTenths > 0;
+  const noEffect = !shieldOn && !slowOn && hud.sameNoteRemaining === 0;
 
   return (
-    <>
-      <div className="jumper-topbar">
-        <div className="jumper-stats">
-          <div>
-            <span className="jumper-stat-label">Score</span>
-            <span className="jumper-stat-value">{hud.score}</span>
-          </div>
-          <div>
-            <span className="jumper-stat-label">Streak</span>
-            <span className="jumper-stat-value">{hud.streak}</span>
-          </div>
-          <div>
-            <span className="jumper-stat-label">Best</span>
-            <span className="jumper-stat-value">{hud.bestStreak}</span>
-          </div>
-          <div>
-            <span className="jumper-stat-label">Speed</span>
-            <span className="jumper-stat-value">{(travelMs / 1000).toFixed(1)}s</span>
-          </div>
+    <div className="hud">
+      <dl className="stat-grid hud__stats">
+        <div className="stat">
+          <dt className="stat__label">Score</dt>
+          <dd className="stat__value">{hud.score}</dd>
+        </div>
+        <div className="stat">
+          <dt className="stat__label">Streak</dt>
+          <dd className="stat__value">{hud.streak}</dd>
+        </div>
+        <div className="stat">
+          <dt className="stat__label">Best</dt>
+          <dd className="stat__value">{hud.bestStreak}</dd>
+        </div>
+        <div className="stat">
+          <dt className="stat__label">Speed</dt>
+          <dd className="stat__value">{(travelMs / 1000).toFixed(1)} s</dd>
+        </div>
+      </dl>
+
+      <div className="hud__row">
+        <div className="hud__hp">
+          <span className="surtitre">HP</span>
+          <Segments
+            className="segments--hp"
+            count={MAX_HP}
+            filled={hud.hp}
+            label={`HP ${hud.hp} of ${MAX_HP}`}
+          />
+          <span className="num hud__hp-text">
+            {hud.hp} / {MAX_HP}
+          </span>
         </div>
 
-        <div className="jumper-hp">
-          <span className="jumper-hp-label">HP</span>
-          <div className="jumper-hp-hearts">
-            {Array.from({ length: MAX_HP }, (_, i) => (
-              <span key={i} className={i < hud.hp ? "heart full" : "heart empty"}>
-                {i < hud.hp ? "❤" : "♡"}
-              </span>
-            ))}
-          </div>
-        </div>
+        <ul className="hud__effects" aria-label="Active effects">
+          {shieldOn && (
+            <li className="badge badge--effect" data-type="shield">
+              <Icon name="shield" size={14} />
+              Shield <span className="num">{formatTenths(hud.shieldTenths)}</span>
+            </li>
+          )}
+          {slowOn && (
+            <li className="badge badge--effect" data-type="slow">
+              <Icon name="slow" size={14} />
+              Slow <span className="num">{formatTenths(hud.slowTenths)}</span>
+            </li>
+          )}
+          {hud.sameNoteRemaining > 0 && sameNote && (
+            <li
+              className="badge badge--effect"
+              data-type="samenote"
+              style={{ "--pc": `var(--viz-pc-${sameNote.pc})` } as CSSProperties}
+            >
+              <Icon name="target" size={14} />
+              Same note {sameNote.name} <span className="num">×{hud.sameNoteRemaining}</span>
+            </li>
+          )}
+          {noEffect && <li className="hud__placeholder">no active effect</li>}
+        </ul>
       </div>
-
-      <div className="jumper-effects">
-        {shieldOn && (
-          <div className="jumper-effect shield">
-            🛡 <span>{formatTenths(hud.shieldTenths)}</span>
-          </div>
-        )}
-        {slowOn && (
-          <div className="jumper-effect slow">
-            🐢 <span>{formatTenths(hud.slowTenths)}</span>
-          </div>
-        )}
-        {hud.sameNoteRemaining > 0 && sameNote && (
-          <div className="jumper-effect samenote" style={{ borderColor: sameNote.color }}>
-            🎯{" "}
-            <span>
-              {sameNote.name} ×{hud.sameNoteRemaining}
-            </span>
-          </div>
-        )}
-        {!shieldOn && !slowOn && hud.sameNoteRemaining === 0 && (
-          <div className="jumper-effect placeholder">no active effect</div>
-        )}
-      </div>
-    </>
+    </div>
   );
 }
 
@@ -109,16 +118,17 @@ export function DetectionStatus({
   chordProbability,
 }: DetectionStatusProps) {
   return (
-    <div className="jumper-status">
-      <div className="jumper-status-row">
-        <span className="jumper-status-label">Detected note:</span>
-        <span className="jumper-status-detected">{gateOpen ? noteName : "—"}</span>
-        <span className="jumper-status-energy">({(noteEnergy * 100).toFixed(0)}%)</span>
-        <span className="jumper-status-label">| Chord:</span>
-        <span className="jumper-status-detected">{gateOpen ? chordName : "—"}</span>
-        <span className="jumper-status-energy">({(chordProbability * 100).toFixed(0)}%)</span>
-        {!gateOpen && <span className="jumper-status-gated">[gate closed]</span>}
-      </div>
-    </div>
+    <p className="status">
+      <span className="status__label">Note</span>
+      <span className="chip">{gateOpen ? noteName : "—"}</span>
+      <span className="num">({(noteEnergy * 100).toFixed(0)} %)</span>
+      <span className="status__sep" aria-hidden="true">
+        ·
+      </span>
+      <span className="status__label">Chord</span>
+      <span className="chip">{gateOpen ? chordName : "—"}</span>
+      <span className="num">({(chordProbability * 100).toFixed(0)} %)</span>
+      {!gateOpen && <span className="badge badge--gated">Gate closed</span>}
+    </p>
   );
 }

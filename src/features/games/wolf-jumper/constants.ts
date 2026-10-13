@@ -45,7 +45,7 @@ export const SAME_NOTE_COUNT = 5;
 export const HP_BONUS_AMOUNT = 2;
 export const MAX_HP = 5;
 
-// ---- Scene geometry (px) ----
+// ---- Scene geometry (px, in stage coordinates; the stage scales to fit) ----
 
 export const SCENE_WIDTH = 880;
 export const SCENE_HEIGHT = 260;
@@ -63,17 +63,17 @@ export const BONUS_LANES = [-15, 15] as const;
 export interface NoteDef {
   pc: number;
   name: string;
-  color: string;
 }
 
+/** Colour comes from the --viz-pc-N tokens; the name is always shown with it. */
 export const NOTE_POOL: readonly NoteDef[] = [
-  { pc: 0, name: "C", color: "#e63946" },
-  { pc: 2, name: "D", color: "#f4a261" },
-  { pc: 4, name: "E", color: "#e9c46a" },
-  { pc: 5, name: "F", color: "#3da26e" },
-  { pc: 7, name: "G", color: "#4cc9f0" },
-  { pc: 9, name: "A", color: "#8338ec" },
-  { pc: 11, name: "B", color: "#ff6fb5" },
+  { pc: 0, name: "C" },
+  { pc: 2, name: "D" },
+  { pc: 4, name: "E" },
+  { pc: 5, name: "F" },
+  { pc: 7, name: "G" },
+  { pc: 9, name: "A" },
+  { pc: 11, name: "B" },
 ];
 
 export function findNoteDef(pc: number): NoteDef | undefined {
@@ -86,17 +86,16 @@ export type BonusType = "hp" | "shield" | "slow" | "samenote";
 
 export interface BonusTypeDef {
   id: BonusType;
-  icon: string;
+  /** Short effect text shown on the bonus box. */
   short: string;
-  color: string;
   label: string;
 }
 
 export const BONUS_TYPES: readonly BonusTypeDef[] = [
-  { id: "hp", icon: "❤", short: "+2", color: "#ff5050", label: "+2 HP" },
-  { id: "shield", icon: "🛡", short: "7s", color: "#4cc9f0", label: "Shield 7 s" },
-  { id: "slow", icon: "🐢", short: "7s", color: "#8338ec", label: "Slow 7 s" },
-  { id: "samenote", icon: "🎯", short: "×5", color: "#ffd60a", label: "Same note ×5" },
+  { id: "hp", short: "+2 HP", label: "+2 HP" },
+  { id: "shield", short: "7 s", label: "Shield 7 s" },
+  { id: "slow", short: "7 s", label: "Slow 7 s" },
+  { id: "samenote", short: "×5", label: "Same note ×5" },
 ];
 
 export function findBonusTypeDef(type: BonusType): BonusTypeDef {

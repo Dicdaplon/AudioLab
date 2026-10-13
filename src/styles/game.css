@@ -73,3 +73,383 @@
 .readout--target[data-hit] .readout__value {
   color: var(--color-success);
 }
+
+/* =========================================================================
+   Wolf Jumper
+   ========================================================================= */
+
+.game__controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+  padding: var(--panel-pad);
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--r-3);
+}
+
+@media (min-width: 720px) {
+  .game__controls {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+  }
+}
+
+/* --- HUD ----------------------------------------------------------------- */
+
+.hud {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.hud__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3) var(--sp-5);
+}
+
+.hud__hp {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.segments--hp {
+  --segments-fill: var(--color-danger);
+}
+
+.hud__hp-text {
+  font-size: var(--step--1);
+  color: var(--color-ink-muted);
+}
+
+.hud__effects {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 22px;
+}
+
+.hud__placeholder {
+  font-size: var(--step--1);
+  font-style: italic;
+  color: var(--color-ink-muted);
+}
+
+.badge--effect {
+  gap: var(--sp-1);
+  color: var(--color-ink);
+}
+
+.badge--effect .icon {
+  color: var(--badge-tint);
+}
+
+.badge--effect[data-type="shield"] {
+  --badge-tint: var(--color-signal);
+}
+
+.badge--effect[data-type="slow"] {
+  --badge-tint: var(--color-trace-2);
+}
+
+.badge--effect[data-type="samenote"] {
+  --badge-tint: var(--pc);
+}
+
+.badge--effect[data-type="hp"] {
+  --badge-tint: var(--color-success);
+}
+
+/* --- Scene --------------------------------------------------------------- */
+
+/* The viewport is as wide as the panel; the 880 × 260 stage scales to it. */
+.scene-viewport {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+  border-radius: var(--r-3);
+  background: var(--color-bed);
+}
+
+.scene {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+  overflow: hidden;
+  background: var(--color-bed);
+}
+
+/* Slow effect: a cool wash over the stage. */
+.scene[data-slow]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--color-trace-2) 10%, transparent);
+  pointer-events: none;
+}
+
+/* The ground: a dashed rail, like a 0 dB line. */
+.scene__ground {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-sunken);
+  border-top: 1px dashed var(--color-line-strong);
+}
+
+/* The runner: the sign, twice the size, running. */
+.scene__runner {
+  position: absolute;
+  width: 36px;
+  height: 50px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  color: var(--color-ink);
+  animation: runner-run 0.3s steps(2) infinite;
+}
+
+.scene__runner .mark {
+  animation: none;
+}
+
+.scene__runner[data-shield]::before {
+  content: "";
+  position: absolute;
+  inset: -8px -10px;
+  border: 2px solid var(--color-signal);
+  border-radius: var(--r-3);
+}
+
+@keyframes runner-run {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-2px);
+  }
+}
+
+/* Notes: a disc in the pitch-class colour, the letter on it. */
+.scene__note {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--pc);
+  box-shadow: 0 0 0 2px var(--color-bed);
+  color: var(--viz-pc-on);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 600;
+  transition:
+    opacity 350ms var(--ease-out),
+    transform 350ms var(--ease-out),
+    filter 350ms var(--ease-out);
+}
+
+.scene__note[data-state="killed"] {
+  opacity: 0;
+  transform: scale(0.4);
+}
+
+.scene__note[data-state="reached"] {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+
+/* Bonuses: a raised box with an accent border, the chord in the voice. */
+.scene__bonus {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border: 2px solid var(--color-accent);
+  border-radius: var(--r-2);
+  background: var(--color-raised);
+  color: var(--color-ink);
+  transition:
+    opacity 350ms var(--ease-out),
+    transform 350ms var(--ease-out);
+}
+
+.scene__bonus-icon {
+  color: var(--color-accent);
+}
+
+.scene__bonus-chord {
+  font-family: var(--font-voice);
+  font-size: var(--step-1);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.scene__bonus-short {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+.scene__bonus[data-state="collected"] {
+  opacity: 0;
+  transform: scale(1.2);
+}
+
+.scene__bonus[data-state="expired"] {
+  opacity: 0;
+}
+
+/* --- Overlay ------------------------------------------------------------- */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-scrim);
+}
+
+.overlay__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-5) var(--sp-6);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--r-3);
+  background: var(--color-raised);
+  text-align: center;
+}
+
+.overlay__title {
+  font-family: var(--font-voice);
+  font-size: var(--step-2);
+  font-weight: 600;
+}
+
+.overlay__scores {
+  color: var(--color-ink-muted);
+}
+
+.overlay__scores strong {
+  color: var(--color-ink);
+}
+
+/* --- Noise gate and meter ------------------------------------------------ */
+
+.gate {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.gate__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.gate__value {
+  font-size: var(--step--1);
+  color: var(--color-ink);
+}
+
+.meter {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.meter__track {
+  position: relative;
+  height: 12px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--r-1);
+  background: var(--color-bed);
+  overflow: visible;
+}
+
+/* Full-width gradient clipped to the level, so the colour is a position on
+   the scale (low → mid → high), not a stretch of the fill. */
+.meter__fill {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-1);
+  background: linear-gradient(
+    to right,
+    var(--viz-meter-low),
+    var(--viz-meter-mid) 70%,
+    var(--viz-meter-high) 90%
+  );
+  clip-path: inset(0 calc(100% - var(--level, 0%)) 0 0);
+  transition: clip-path var(--dur-live) linear;
+}
+
+/* The gate marker overhangs the track; its colour says open/closed, the
+   badge next to the status line says it in words. */
+.meter__gate {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  left: var(--gate, 0%);
+  width: 2px;
+  margin-left: -1px;
+  background: var(--viz-gate-closed);
+}
+
+.meter__gate[data-open] {
+  background: var(--viz-gate-open);
+}
+
+.meter__value {
+  min-width: 5.5ch;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-1);
+  background: var(--color-sunken);
+  font-size: var(--step--1);
+  text-align: right;
+}
+
+/* --- Status line --------------------------------------------------------- */
+
+.status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--step--1);
+  color: var(--color-ink-muted);
+}
+
+.status__label {
+  font-weight: 500;
+}
+
+.status__sep {
+  padding-inline: var(--sp-1);
+}
+
+/* --- Reduced motion ------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  .scene__runner {
+    animation: none;
+  }
+}

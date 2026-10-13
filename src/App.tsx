@@ -20,7 +20,6 @@ import {
 import { useMicrophone } from "./hooks/useMicrophone";
 import { useTonality } from "./hooks/useTonality";
 import { panelId, tabId } from "./ui/tabIds";
-import "./App.css";
 
 type Tab = "detector" | "game" | "jumper" | "fft";
 
