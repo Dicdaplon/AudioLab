@@ -24,16 +24,19 @@ export default defineConfig({
       ],
       reporter: ["text-summary", "text", "html", "lcov"],
       // Enforced on `npm run coverage` (unit + dom projects). Set just below
-      // the measured values; raise them when coverage improves.
+      // the measured values; raise them when coverage improves. The global
+      // figures include src/components and App.tsx (UI, partly untested);
+      // the per-area ones guard the DSP, audio and hook layers.
       thresholds: {
-        lines: 83,
-        statements: 83,
-        functions: 92,
-        branches: 91,
-        "src/analysis/*.ts": { lines: 98, functions: 100, branches: 96 },
-        "src/analysis/engine/**": { lines: 98, functions: 95, branches: 95 },
-        "src/audio/**": { lines: 98, functions: 100, branches: 90 },
-        "src/hooks/**": { lines: 97, functions: 100, branches: 94 },
+        lines: 86,
+        statements: 86,
+        functions: 93,
+        branches: 92,
+        "src/analysis/*.ts": { lines: 99, functions: 100, branches: 97 },
+        "src/analysis/engine/**": { lines: 99, functions: 100, branches: 96 },
+        "src/analysis/offline/**": { lines: 99, functions: 100, branches: 93 },
+        "src/audio/**": { lines: 99, functions: 100, branches: 92 },
+        "src/hooks/**": { lines: 99, functions: 100, branches: 98 },
       },
     },
   },
