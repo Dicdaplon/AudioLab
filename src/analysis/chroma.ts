@@ -4,6 +4,16 @@
  * For each FFT bin within [minFreq, maxFreq], we map its center frequency to
  * the nearest pitch class and accumulate its energy. The resulting vector is
  * L1-normalized so it sums to 1 (or stays zero if the input is silent).
+ *
+ * Because of that normalisation every non-silent frame carries the same
+ * total weight downstream: the sliding-window averages are level-invariant
+ * (a loud frame does not dominate a quiet one), not energy-weighted.
+ *
+ * Resolution caveat: bins are assigned by rounding their centre frequency
+ * to the nearest semitone. With the AnalyserNode's Blackman window the
+ * main lobe spans about ±3 bins (±9 Hz at 48 kHz / 16384), which is ±2.7
+ * semitones at 55 Hz and ±0.7 semitone at 220 Hz, so a low bass note leaks
+ * part of its energy into the neighbouring pitch classes.
  */
 
 import { freqToPitchClass } from "../utils/notes";

@@ -10,18 +10,20 @@
  * Krumhansl-Schmuckler detector.
  *
  * Why bother?
- *   - More robust to dynamics (loud vs quiet passages). A note played softly
- *     but consistently shows up in the histogram just as much as one played
- *     loudly.
- *   - Less sensitive to harmonics. The filter zeroes out the noise floor
- *     where most upper-harmonic leakage lives.
+ *   - Within a frame, the strong pitch classes count fully and the weak
+ *     ones not at all: the ranking depends on which notes are present, not
+ *     on how much louder one note is than another. (Across frames the
+ *     chroma is already level-normalised, so loud and quiet passages weigh
+ *     the same in both paths.)
+ *   - Less sensitive to harmonics and noise: the threshold zeroes the weak
+ *     bins where most upper-harmonic leakage and hiss end up.
  *   - Closer to how musicians describe a key: "the notes you hear in the
  *     piece" rather than "the energy distribution".
  *
- * Pipeline (per frame, run by `useTonality`):
+ * Pipeline (per frame, run by `TonalityEngine`):
  *
  *   liveChromaWindow.aggregate()                       # 8s averaged chroma
- *      → highWaterMarkFilter.filterToIndicator(...)    # binary 12-D vector
+ *      → highWaterMarkFilter.filter(...) > 0           # binary 12-D indicator
  *      → presenceWindow.push(indicator)                # 30s accumulator
  *      → presenceWindow.aggregateRaw()                 # mean presence ∈ [0,1]^12
  *      → detectKeyFromPresence(...)                    # KK on presence

@@ -7,7 +7,13 @@
  * into `spectrumToChroma`.
  */
 
-/** Hann window applied in-place to a real frame. */
+/**
+ * Symmetric Hann window (denominator N − 1) applied in-place to a real
+ * frame. Used by the offline pipeline; the browser's AnalyserNode applies a
+ * Blackman window instead (−58 dB sidelobes, wider main lobe), and
+ * `timeFft.ts` uses the periodic Hann form for spectral measurements. At
+ * N = 16384 the symmetric/periodic difference is negligible.
+ */
 export function applyHannWindow(frame: Float32Array): void {
   const N = frame.length;
   const denom = N - 1;
