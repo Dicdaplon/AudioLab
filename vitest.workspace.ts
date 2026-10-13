@@ -26,6 +26,7 @@ export default defineWorkspace([
       name: "dom",
       environment: "jsdom",
       include: ["tests/**/*.test.tsx"],
+      setupFiles: ["tests/setup/dom.ts"],
     },
   },
   {
