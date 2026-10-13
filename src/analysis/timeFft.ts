@@ -19,6 +19,12 @@ export type FftWindow = "hann" | "rectangular";
 export interface FftDbOptions {
   /** Analysis window. Default "hann" (periodic form, -31.5 dB sidelobes). */
   window?: FftWindow;
+  /**
+   * FFT length (power of two ≥ signal length). Defaults to the next power
+   * of two; a larger value zero-pads further, which interpolates the
+   * spectrum (finer bin spacing) without improving the true resolution.
+   */
+  fftSize?: number;
 }
 
 /** Smallest power of two ≥ n. */
@@ -75,7 +81,11 @@ export function computeFftDb(
   const n = signal.length;
   if (n === 0) throw new Error("computeFftDb: signal must not be empty");
   const window = options.window ?? "hann";
-  const fftSize = Math.max(2, nextPow2(n));
+  const minSize = Math.max(2, nextPow2(n));
+  const fftSize = options.fftSize ?? minSize;
+  if (fftSize < minSize || (fftSize & (fftSize - 1)) !== 0) {
+    throw new Error(`fftSize must be a power of two ≥ ${minSize}, got ${fftSize}`);
+  }
 
   const padded = new Float32Array(fftSize);
   let windowSum = 0;
