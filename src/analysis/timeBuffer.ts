@@ -1,121 +1,111 @@
 /**
- * Circular time-domain audio buffer: capture and extract fixed-length time windows
- * from a continuous audio stream.
+ * Circular buffer holding the last N samples of a continuous stream.
  *
- * Used in Section 2 to maintain a rolling 8-second window of audio samples,
- * from which we extract spectral envelopes for temporal analysis.
- */
-
-/**
- * Circular ring buffer that holds the last N audio samples.
- * Provides efficient O(1) append and O(N) snapshot extraction.
+ * Used by the tempo analyser to keep a rolling window (e.g. 8 s) of the
+ * onset-strength envelope. Appends are O(1) per sample; snapshots are O(N).
  */
 export class TimeRingBuffer {
   private buffer: Float32Array;
   private writeIndex = 0;
   private filled = false;
 
-  /**
-   * @param capacitySamples Maximum number of samples to hold.
-   */
+  /** @param capacitySamples Maximum number of samples to hold. */
   constructor(capacitySamples: number) {
-    if (capacitySamples <= 0) {
+    if (!(capacitySamples > 0)) {
       throw new Error("capacitySamples must be > 0");
     }
-    this.buffer = new Float32Array(capacitySamples);
+    this.buffer = new Float32Array(Math.floor(capacitySamples));
   }
 
   get capacity(): number {
     return this.buffer.length;
   }
 
-  /**
-   * Total number of samples currently stored.
-   * Once filled, this equals capacity.
-   */
+  /** Number of samples currently stored (equals capacity once wrapped). */
   get size(): number {
     return this.filled ? this.buffer.length : this.writeIndex;
   }
 
-  /**
-   * Check if the buffer has cycled at least once (fully filled).
-   */
+  /** True once the buffer has wrapped at least once. */
   get isFull(): boolean {
     return this.filled;
   }
 
   /**
-   * Append a new sample (or array of samples).
-   * If the buffer is full, the oldest sample(s) are overwritten.
+   * Append one sample or an array of samples, overwriting the oldest ones
+   * when full. Pushing more than `capacity` samples at once keeps only the
+   * newest `capacity` of them (the rest would be overwritten immediately).
    */
   push(sample: number): void;
   push(samples: ArrayLike<number>): void;
   push(samples: number | ArrayLike<number>): void {
     if (typeof samples === "number") {
-      this.buffer[this.writeIndex] = samples;
-      this.writeIndex += 1;
-      if (this.writeIndex >= this.buffer.length) {
-        this.writeIndex = 0;
-        this.filled = true;
-      }
-    } else {
-      for (let i = 0; i < samples.length; i++) {
-        this.buffer[this.writeIndex] = samples[i];
-        this.writeIndex += 1;
-        if (this.writeIndex >= this.buffer.length) {
-          this.writeIndex = 0;
-          this.filled = true;
-        }
-      }
+      this.writeOne(samples);
+      return;
+    }
+    const cap = this.buffer.length;
+    const start = samples.length > cap ? samples.length - cap : 0;
+    for (let i = start; i < samples.length; i++) this.writeOne(samples[i]);
+  }
+
+  private writeOne(v: number): void {
+    this.buffer[this.writeIndex] = v;
+    this.writeIndex += 1;
+    if (this.writeIndex >= this.buffer.length) {
+      this.writeIndex = 0;
+      this.filled = true;
     }
   }
 
   /**
-   * Extract the last N samples (most recent first).
-   * @param count Number of samples to extract. If greater than size, pad with zeros.
-   * @return Array of samples, newest first.
+   * The last `count` samples, newest first. Positions beyond the number of
+   * stored samples are zero (the buffer never re-reads newer samples as
+   * older ones, even when `count` exceeds `capacity`).
    */
   lastSamples(count: number): Float32Array {
-    const out = new Float32Array(count);
-    const n = this.size;
-
-    if (n === 0) {
-      // Empty buffer: return zeros.
-      return out;
-    }
-
-    // Read backwards from writeIndex (which points to the next write position).
-    for (let i = 0; i < count; i++) {
+    const out = new Float32Array(Math.max(0, Math.floor(count)));
+    const n = Math.min(out.length, this.size);
+    const len = this.buffer.length;
+    for (let i = 0; i < n; i++) {
       let idx = this.writeIndex - 1 - i;
-      if (idx < 0) idx += this.buffer.length;
+      if (idx < 0) idx += len;
       out[i] = this.buffer[idx];
     }
-
     return out;
   }
 
   /**
-   * Extract the last N seconds of audio (in chronological order).
-   * @param durationSeconds Duration to extract.
-   * @param sampleRate Sample rate in Hz.
-   * @return Samples in chronological order (oldest first).
+   * The last `count` samples in chronological order (oldest first). The
+   * output is left-padded with zeros when fewer samples are stored.
    */
-  lastSeconds(durationSeconds: number, sampleRate: number): Float32Array {
-    const count = Math.round(durationSeconds * sampleRate);
-    const samples = this.lastSamples(count);
-
-    // Reverse to get chronological order (oldest first).
-    const reversed = new Float32Array(samples.length);
-    for (let i = 0; i < samples.length; i++) {
-      reversed[i] = samples[samples.length - 1 - i];
+  lastSamplesChronological(count: number): Float32Array {
+    const outLen = Math.max(0, Math.floor(count));
+    const out = new Float32Array(outLen);
+    const n = Math.min(outLen, this.size);
+    if (n === 0) return out;
+    const len = this.buffer.length;
+    const dest = outLen - n; // leading zeros when n < outLen
+    // Oldest requested sample sits n positions before the write index.
+    let src = this.writeIndex - n;
+    if (src < 0) src += len;
+    const firstChunk = Math.min(n, len - src);
+    out.set(this.buffer.subarray(src, src + firstChunk), dest);
+    if (firstChunk < n) {
+      out.set(this.buffer.subarray(0, n - firstChunk), dest + firstChunk);
     }
-
-    return reversed;
+    return out;
   }
 
   /**
-   * Clear the buffer.
+   * The last `durationSeconds` of signal in chronological order.
+   * @param durationSeconds Duration to extract.
+   * @param sampleRate Rate of the stored signal, in Hz.
    */
+  lastSeconds(durationSeconds: number, sampleRate: number): Float32Array {
+    return this.lastSamplesChronological(Math.round(durationSeconds * sampleRate));
+  }
+
+  /** Clear the buffer. */
   reset(): void {
     this.buffer.fill(0);
     this.writeIndex = 0;
