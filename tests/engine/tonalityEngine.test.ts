@@ -86,6 +86,17 @@ describe("TonalityEngine", () => {
     expect(Array.from(frame.instantaneousChroma)).toEqual(new Array(12).fill(0));
   });
 
+  it("never reports a quiet signal below the silence level", () => {
+    // Mean in-band magnitude of a sparse, quiet spectrum is far below
+    // 1e-5 (−100 dB); it must not read quieter than digital silence.
+    const engine = new TonalityEngine();
+    const quiet = engine.processDbSpectrum(dbSpectrumFor([57, 60, 64], { levelDb: -80 }), 48000);
+    expect(quiet.chords[0].name).toBe("Am");
+    expect(quiet.signalLevelDb).toBe(SILENCE_LEVEL_DB);
+    const louder = engine.processDbSpectrum(dbSpectrumFor([57, 60, 64], { levelDb: -20 }), 48000);
+    expect(louder.signalLevelDb).toBeGreaterThan(SILENCE_LEVEL_DB);
+  });
+
   it("finds the key of a scale through the energy and presence paths", () => {
     const engine = new TonalityEngine({
       framesPerSecond: 10,

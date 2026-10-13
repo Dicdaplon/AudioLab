@@ -237,7 +237,8 @@ export class TonalityEngine {
       }
     }
     const avg = count > 0 ? sum / count : 0;
-    return avg > 0 ? 20 * Math.log10(avg) : SILENCE_LEVEL_DB;
+    // Floor at the silence level so a quiet signal never reads below silence.
+    return avg > 0 ? Math.max(SILENCE_LEVEL_DB, 20 * Math.log10(avg)) : SILENCE_LEVEL_DB;
   }
 
   /** Push an AnalyserNode-style dB spectrum (getFloatFrequencyData output). */
