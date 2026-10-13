@@ -103,6 +103,8 @@
   --al-header-h: 48px;
   --al-rail: 288px;
   --al-panel-pad: var(--al-sp-4);
+  --al-grid-gap: var(--al-sp-4); /* between panels of one group */
+  --al-stack-gap: var(--al-sp-5); /* between groups and the settings rail */
   --al-control-h: 36px;
   --al-control-h-touch: 44px;
 
@@ -401,5 +403,14 @@
     --al-viz-pc-10: #916dca;
     --al-viz-pc-11: #359a54;
     --al-viz-pc-on: #0d110f;
+  }
+}
+
+/* Wider screens breathe a little more; phones keep the compact rhythm. */
+@media (min-width: 720px) {
+  .loupe {
+    --al-panel-pad: var(--al-sp-5);
+    --al-grid-gap: var(--al-sp-5);
+    --al-stack-gap: var(--al-sp-6);
   }
 }

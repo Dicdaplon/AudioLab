@@ -149,7 +149,7 @@ body {
   width: 100%;
   max-width: var(--al-container);
   margin-inline: auto;
-  padding: var(--al-sp-5) var(--al-gutter) var(--al-sp-8);
+  padding: var(--al-sp-6) var(--al-gutter) var(--al-sp-8);
   overflow-x: clip;
 }
 

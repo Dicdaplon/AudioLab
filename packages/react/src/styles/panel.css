@@ -6,7 +6,7 @@
 .al-panel {
   display: flex;
   flex-direction: column;
-  gap: var(--al-sp-3);
+  gap: var(--al-sp-4);
   min-width: 0;
   padding: var(--al-panel-pad);
   background: var(--al-color-surface);
