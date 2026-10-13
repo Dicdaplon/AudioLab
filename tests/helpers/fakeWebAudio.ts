@@ -32,6 +32,10 @@ export interface FakeAudioContextOptions {
   failSource?: boolean;
   /** Spectrum delivered by every analyser of every context (default: silence). */
   spectrumSource?: SpectrumSource;
+  /** Time-domain window delivered by every analyser (default: zeros). */
+  timeDomainSource?: SpectrumSource;
+  /** Omit `audioWorklet` from the context (older browsers). */
+  withoutWorklet?: boolean;
 }
 
 export interface FakeAnalyser {
@@ -56,7 +60,9 @@ export function makeFakeAudioContextClass(opts: FakeAudioContextOptions = {}) {
     currentTime = 0;
     /** Replace to change what analysers created by this context return. */
     spectrumSource: SpectrumSource = opts.spectrumSource ?? ((buf) => buf.fill(-Infinity));
+    timeDomainSource: SpectrumSource = opts.timeDomainSource ?? ((buf) => buf.fill(0));
     analysers: FakeAnalyser[] = [];
+    destination = { connect: vi.fn(), disconnect: vi.fn() };
     resume = vi.fn(async () => {
       this.state = "running";
     });
@@ -79,12 +85,14 @@ export function makeFakeAudioContextClass(opts: FakeAudioContextOptions = {}) {
         connect: vi.fn(),
         disconnect: vi.fn(),
         getFloatFrequencyData: vi.fn((buf: Float32Array) => this.spectrumSource(buf)),
-        getFloatTimeDomainData: vi.fn((buf: Float32Array) => buf.fill(0)),
+        getFloatTimeDomainData: vi.fn((buf: Float32Array) => this.timeDomainSource(buf)),
       };
       this.analysers.push(analyser);
       return analyser;
     });
-    audioWorklet = { addModule: vi.fn(async () => undefined) };
+    audioWorklet: { addModule: ReturnType<typeof vi.fn> } | undefined = opts.withoutWorklet
+      ? undefined
+      : { addModule: vi.fn(async () => undefined) };
     constructor() {
       instances.push(this);
     }
