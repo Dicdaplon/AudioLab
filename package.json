@@ -1,9 +1,18 @@
 {
-  "name": "tonality-detector",
+  "name": "audiolab",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Live key (tonality) detector using microphone input, FFT spectrum analysis on 8s sliding windows, and Krumhansl-Schmuckler key correlation.",
+  "description": "Browser-based audio analysis lab: live key and chord detection, spectrum and noise-floor analysis, and ear-training games built on the Web Audio API.",
+  "license": "MIT",
+  "author": "dicdaplon",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Dicdaplon/AudioLab.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
