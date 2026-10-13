@@ -14,7 +14,11 @@ export { LOUPE_ROOT_CLASS, LoupeRoot, useLoupeRoot, type LoupeRootProps } from "
 
 // --- Hooks ------------------------------------------------------------------
 
-export { useMicrophone, type MicrophoneSession } from "./hooks/useMicrophone";
+export {
+  useMicrophone,
+  type MicrophoneSession,
+  type UseMicrophoneOptions,
+} from "./hooks/useMicrophone";
 export { useTonality, type SpectrumState, type UseTonalityOptions } from "./hooks/useTonality";
 export {
   useTempoAnalysis,

@@ -11,6 +11,9 @@
  *   changes, so when `openMicrophone()` resolves the source is disposed
  *   immediately instead of being installed on a dead session (this also
  *   covers StrictMode's mount/unmount/mount in development).
+ *
+ * A host that owns an AudioContext (Tone.js) or a MediaStream passes them
+ * through `options`; the SDK then neither creates nor closes a context.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -21,7 +24,10 @@ import {
   toMicError,
   type MicErrorInfo,
   type MicSource,
+  type OpenMicrophoneOptions,
 } from "@audiolab/core";
+
+export type UseMicrophoneOptions = Pick<OpenMicrophoneOptions, "context" | "stream">;
 
 export interface MicrophoneSession {
   /** Open source, or null when stopped. */
@@ -45,8 +51,11 @@ type SessionState = Omit<MicrophoneSession, "unsupported">;
 
 const IDLE: SessionState = { mic: null, running: false, starting: false, error: null };
 
-export function useMicrophone() {
+export function useMicrophone(options: UseMicrophoneOptions = {}) {
   const [session, setSession] = useState<SessionState>(IDLE);
+  // Read at start() time, so a context created after mount is still honoured.
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
   const [unsupported, setUnsupported] = useState<MicErrorInfo | null>(null);
   const micRef = useRef<MicSource | null>(null);
   const startingRef = useRef(false);
@@ -66,7 +75,8 @@ export function useMicrophone() {
     const token = ++tokenRef.current;
     setSession({ mic: null, running: false, starting: true, error: null });
     try {
-      const mic = await openMicrophone();
+      const { context, stream } = optionsRef.current;
+      const mic = await openMicrophone({ context, stream });
       if (token !== tokenRef.current) {
         // stop() or unmount happened during the prompt.
         await mic.dispose();

@@ -3,7 +3,16 @@ import { afterEach, describe, it, expect, vi } from "vitest";
 
 import { MicrophoneError } from "../../src/audio/errors";
 import { MIC_CONSTRAINTS, openMicrophone } from "../../src/audio/micStream";
-import { installWebAudioFakes, makeFakeStream, type InstalledFakes } from "../helpers/fakeWebAudio";
+import {
+  installWebAudioFakes,
+  makeFakeAudioContextClass,
+  makeFakeStream,
+  type InstalledFakes,
+} from "../helpers/fakeWebAudio";
+
+function trackOf(stream: MediaStream): { stop: ReturnType<typeof vi.fn> } {
+  return stream.getTracks()[0] as unknown as { stop: ReturnType<typeof vi.fn> };
+}
 
 function domError(name: string): Error {
   const e = new Error(name);
@@ -87,6 +96,14 @@ describe("openMicrophone", () => {
     expect(fakes.instances[0].close).toHaveBeenCalledTimes(1);
   });
 
+  it("passes custom constraints through to getUserMedia", async () => {
+    fakes = installWebAudioFakes();
+    const constraints: MediaStreamConstraints = { audio: { deviceId: "abc" }, video: false };
+    const mic = await openMicrophone({ constraints });
+    expect(fakes.getUserMedia.mock.calls[0][0]).toBe(constraints);
+    await mic.dispose();
+  });
+
   it("fails with 'unsupported' when getUserMedia is missing", async () => {
     fakes = installWebAudioFakes();
     Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: undefined });
@@ -100,5 +117,99 @@ describe("openMicrophone", () => {
     const err = await openMicrophone().catch((e: unknown) => e);
     expect((err as MicrophoneError).code).toBe("insecure-context");
     expect(fakes.getUserMedia).not.toHaveBeenCalled();
+  });
+});
+
+describe("openMicrophone with a host-owned context or stream", () => {
+  let fakes: InstalledFakes | null = null;
+
+  afterEach(() => {
+    fakes?.restore();
+    fakes = null;
+  });
+
+  it("uses the injected context, resumes it and leaves it running after dispose()", async () => {
+    fakes = installWebAudioFakes();
+    const { FakeAudioContext } = makeFakeAudioContextClass({ initialState: "suspended" });
+    const context = new FakeAudioContext() as unknown as AudioContext;
+
+    const mic = await openMicrophone({ context });
+    expect(mic.context).toBe(context);
+    expect(mic.ownsContext).toBe(false);
+    expect(mic.ownsStream).toBe(true);
+    expect(context.state).toBe("running");
+    expect(fakes.instances).toHaveLength(0); // the SDK created no context of its own
+
+    await mic.dispose();
+    expect(context.state).toBe("running");
+    expect(
+      (context as unknown as { close: ReturnType<typeof vi.fn> }).close,
+    ).not.toHaveBeenCalled();
+    expect(
+      (mic.source as unknown as { disconnect: ReturnType<typeof vi.fn> }).disconnect,
+    ).toHaveBeenCalledTimes(1);
+    expect(trackOf(mic.stream).stop).toHaveBeenCalledTimes(1); // the SDK acquired the stream
+  });
+
+  it("closes the context it created itself", async () => {
+    fakes = installWebAudioFakes();
+    const mic = await openMicrophone();
+    expect(mic.ownsContext).toBe(true);
+    await mic.dispose();
+    expect(mic.context.state).toBe("closed");
+  });
+
+  it("does not stop the tracks of a caller-provided stream", async () => {
+    fakes = installWebAudioFakes();
+    const stream = makeFakeStream({ sampleRate: 48000 });
+    const mic = await openMicrophone({ stream });
+    expect(fakes.getUserMedia).not.toHaveBeenCalled();
+    expect(mic.stream).toBe(stream);
+    expect(mic.ownsStream).toBe(false);
+    expect(mic.trackSettings.sampleRate).toBe(48000);
+    await mic.dispose();
+    expect(trackOf(stream).stop).not.toHaveBeenCalled();
+    expect(mic.context.state).toBe("closed"); // the context was the SDK's
+  });
+
+  it("needs neither getUserMedia nor a global AudioContext when both are provided", async () => {
+    fakes = installWebAudioFakes();
+    Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: undefined });
+    const { FakeAudioContext } = makeFakeAudioContextClass({ initialState: "running" });
+    const context = new FakeAudioContext() as unknown as AudioContext;
+    const stream = makeFakeStream();
+    const mic = await openMicrophone({ context, stream });
+    expect(mic.ownsContext).toBe(false);
+    expect(mic.ownsStream).toBe(false);
+    await mic.dispose();
+    expect(context.state).toBe("running");
+    expect(trackOf(stream).stop).not.toHaveBeenCalled();
+  });
+
+  it("leaves a host-owned context and stream alone when setup fails", async () => {
+    fakes = installWebAudioFakes();
+    const { FakeAudioContext } = makeFakeAudioContextClass({
+      initialState: "running",
+      failSource: true,
+    });
+    const context = new FakeAudioContext() as unknown as AudioContext;
+    const stream = makeFakeStream();
+    const err = await openMicrophone({ context, stream }).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(MicrophoneError);
+    expect(context.state).toBe("running");
+    expect(trackOf(stream).stop).not.toHaveBeenCalled();
+  });
+
+  it("dispose() survives a source already disconnected by the host", async () => {
+    fakes = installWebAudioFakes();
+    const { FakeAudioContext } = makeFakeAudioContextClass({ initialState: "running" });
+    const context = new FakeAudioContext() as unknown as AudioContext;
+    const mic = await openMicrophone({ context });
+    (
+      mic.source as unknown as { disconnect: ReturnType<typeof vi.fn> }
+    ).disconnect.mockImplementation(() => {
+      throw new Error("InvalidStateError");
+    });
+    await expect(mic.dispose()).resolves.toBeUndefined();
   });
 });

@@ -96,7 +96,12 @@ export {
 
 // --- Web Audio adapters ----------------------------------------------------
 
-export { MIC_CONSTRAINTS, openMicrophone, type MicSource } from "./audio/micStream";
+export {
+  MIC_CONSTRAINTS,
+  openMicrophone,
+  type MicSource,
+  type OpenMicrophoneOptions,
+} from "./audio/micStream";
 export {
   MicrophoneError,
   checkMicrophoneSupport,

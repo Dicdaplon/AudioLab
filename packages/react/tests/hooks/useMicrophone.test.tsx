@@ -4,6 +4,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { useMicrophone } from "../../src/hooks/useMicrophone";
 import {
   installWebAudioFakes,
+  makeFakeAudioContextClass,
   makeFakeStream,
   type InstalledFakes,
 } from "../../../core/tests/helpers/fakeWebAudio";
@@ -144,6 +145,27 @@ describe("useMicrophone", () => {
     await act(() => result.current.start());
     expect(result.current.error).toBeNull();
     expect(result.current.running).toBe(true);
+  });
+
+  it("forwards a host-owned context and stream and never closes or stops them", async () => {
+    fakes = installWebAudioFakes();
+    const { FakeAudioContext } = makeFakeAudioContextClass({ initialState: "running" });
+    const context = new FakeAudioContext() as unknown as AudioContext;
+    const stream = makeFakeStream();
+    const { result, unmount } = renderHook(() => useMicrophone({ context, stream }));
+
+    await act(() => result.current.start());
+    expect(result.current.mic?.context).toBe(context);
+    expect(result.current.mic?.stream).toBe(stream);
+    expect(result.current.mic?.ownsContext).toBe(false);
+    expect(fakes.getUserMedia).not.toHaveBeenCalled();
+    expect(fakes.instances).toHaveLength(0);
+
+    await act(() => result.current.stop());
+    unmount();
+    expect(context.state).toBe("running");
+    const track = stream.getTracks()[0] as unknown as { stop: ReturnType<typeof vi.fn> };
+    expect(track.stop).not.toHaveBeenCalled();
   });
 
   it("can start again after stop()", async () => {
