@@ -1,0 +1,163 @@
+/* =========================================================================
+   Controls: buttons and badges.
+   ========================================================================= */
+
+/* --- Buttons ------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: var(--control-h);
+  padding: var(--sp-1) var(--sp-4);
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--r-2);
+  background: transparent;
+  color: var(--color-ink);
+  font-size: var(--step--1);
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out);
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--color-sunken);
+  border-color: var(--color-ink-muted);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+}
+
+.btn .icon {
+  flex: none;
+}
+
+.btn--accent {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-accent-on);
+}
+
+.btn--accent:hover:not(:disabled) {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  filter: brightness(1.08);
+}
+
+.btn--danger {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: var(--color-danger-subtle);
+  border-color: var(--color-danger);
+}
+
+.btn--quiet {
+  border-color: transparent;
+  color: var(--color-ink-muted);
+}
+
+.btn--quiet:hover:not(:disabled) {
+  border-color: transparent;
+  color: var(--color-ink);
+}
+
+/* Anything operated with an instrument in hand gets a 44 px target. */
+.btn--touch {
+  min-height: var(--control-h-touch);
+}
+
+/* --- Badges -------------------------------------------------------------- */
+
+/* Uppercase label with a coloured tick before it. The colour is always
+   doubled by the word. */
+.badge {
+  --badge-tint: var(--color-line-strong);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--step--2);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+  white-space: nowrap;
+}
+
+.badge::before {
+  content: "";
+  flex: none;
+  width: 3px;
+  height: 0.9em;
+  border-radius: var(--r-1);
+  background: var(--badge-tint);
+}
+
+.badge--gated {
+  --badge-tint: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.badge--mode[data-mode="maj"] {
+  --badge-tint: var(--viz-mode-major);
+}
+
+.badge--mode[data-mode="min"] {
+  --badge-tint: var(--viz-mode-minor);
+}
+
+/* The live LED: the only pill in the system. */
+.badge--live::before {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--color-ink-faint);
+}
+
+.badge--live[data-state="live"] {
+  color: var(--color-ink);
+}
+
+.badge--live[data-state="live"]::before {
+  background: var(--color-live);
+  animation: led-pulse 1s ease-in-out infinite;
+}
+
+.badge--live[data-state="starting"]::before {
+  background: var(--color-accent);
+}
+
+.badge--live[data-state="error"],
+.badge--live[data-state="unsupported"] {
+  color: var(--color-danger);
+}
+
+.badge--live[data-state="error"]::before,
+.badge--live[data-state="unsupported"]::before {
+  background: var(--color-danger);
+}
+
+@keyframes led-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge--live[data-state="live"]::before {
+    animation: none;
+  }
+}

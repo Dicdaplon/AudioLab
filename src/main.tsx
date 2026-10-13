@@ -4,6 +4,8 @@ import App from "./App";
 import "./styles/fonts.css";
 import "./styles/tokens.css";
 import "./styles/base.css";
+import "./styles/shell.css";
+import "./styles/controls.css";
 
 const rootEl = document.getElementById("root");
 if (!rootEl) throw new Error("missing #root element");

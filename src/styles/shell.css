@@ -1,0 +1,197 @@
+/* =========================================================================
+   App shell: top bar (brand · tabs · transport), main container, tab panels.
+   ========================================================================= */
+
+.shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Top bar ------------------------------------------------------------- */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-canvas);
+  border-bottom: 1px solid var(--color-line-strong);
+}
+
+.topbar__inner {
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "brand transport"
+    "tabs tabs";
+  align-items: center;
+  column-gap: var(--sp-4);
+}
+
+.topbar__brand {
+  grid-area: brand;
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+}
+
+.topbar__tabs {
+  grid-area: tabs;
+  min-width: 0;
+}
+
+.topbar__transport {
+  grid-area: transport;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-block: var(--sp-1);
+}
+
+@media (min-width: 720px) {
+  .topbar__inner {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: "brand tabs transport";
+    column-gap: var(--sp-5);
+  }
+
+  .topbar__transport {
+    padding-block: 0;
+  }
+}
+
+/* --- Brand --------------------------------------------------------------- */
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--color-ink);
+  text-decoration: none;
+  font-family: var(--font-voice);
+  font-size: var(--step-1);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  border-radius: var(--r-1);
+}
+
+.brand:visited {
+  color: var(--color-ink);
+}
+
+.brand__e {
+  color: var(--color-accent);
+}
+
+.mark {
+  flex: none;
+}
+
+.mark__accent {
+  fill: var(--color-accent);
+}
+
+/* --- Tabs ---------------------------------------------------------------- */
+
+.tabs {
+  display: flex;
+  align-items: stretch;
+  gap: var(--sp-1);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  /* Right fade mask tells the reader there is more to scroll. */
+  mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 720px) {
+  .tabs {
+    mask-image: none;
+    overflow: visible;
+  }
+}
+
+.tab {
+  flex: none;
+  height: var(--header-h);
+  padding: 0 var(--sp-3);
+  border: 0;
+  background: transparent;
+  color: var(--color-ink-muted);
+  font-size: var(--step--1);
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    color var(--dur-1) var(--ease-out),
+    background-color var(--dur-1) var(--ease-out);
+}
+
+.tab:hover {
+  color: var(--color-ink);
+  background: var(--color-sunken);
+}
+
+.tab[aria-selected="true"] {
+  color: var(--color-ink);
+  box-shadow: inset 0 -2px 0 var(--color-accent);
+}
+
+.tab:focus-visible {
+  outline-offset: -2px;
+}
+
+/* --- Transport ----------------------------------------------------------- */
+
+.transport {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* The theme toggle keeps its glyph and word; it is the quietest control. */
+.theme-toggle {
+  white-space: nowrap;
+}
+
+@media (max-width: 479px) {
+  /* Three controls do not fit a 360 px bar with the brand: hide the words. */
+  .transport .btn--quiet {
+    padding-inline: var(--sp-2);
+  }
+}
+
+/* --- Main ---------------------------------------------------------------- */
+
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--container);
+  margin-inline: auto;
+  padding: var(--sp-5) var(--gutter) var(--sp-8);
+  overflow-x: clip;
+}
+
+@media (min-width: 720px) {
+  .main {
+    padding-inline: var(--sp-5);
+  }
+}
+
+.tabpanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.tabpanel:focus {
+  outline: none;
+}
