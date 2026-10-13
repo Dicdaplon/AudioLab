@@ -29,7 +29,7 @@ export default defineWorkspace([
       name: "dom",
       environment: "jsdom",
       include: TESTS.map((dir) => `${dir}/**/*.test.tsx`),
-      setupFiles: ["apps/lab/tests/setup/dom.ts"],
+      setupFiles: ["packages/react/tests/setup/dom.ts"],
     },
   },
   {

@@ -1,0 +1,12 @@
+/* @audiolab/react/styles.css — Loupe tokens and component styles.
+   Fonts are opt-in: import @audiolab/react/fonts.css as well to self-host
+   IBM Plex Sans / Mono and Source Serif 4. */
+@import "./tokens.css";
+@import "./base.css";
+@import "./controls.css";
+@import "./panel.css";
+@import "./readouts.css";
+@import "./layout.css";
+@import "./plot.css";
+@import "./tabs.css";
+@import "./game.css";

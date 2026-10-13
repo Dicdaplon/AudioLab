@@ -1,16 +1,9 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import "@audiolab/react/fonts.css";
+import "@audiolab/react/styles.css";
+import "./styles/app.css";
 import App from "./App";
-import "./styles/fonts.css";
-import "./styles/tokens.css";
-import "./styles/base.css";
-import "./styles/shell.css";
-import "./styles/controls.css";
-import "./styles/panel.css";
-import "./styles/readouts.css";
-import "./styles/layout.css";
-import "./styles/plot.css";
-import "./styles/game.css";
 
 const rootEl = document.getElementById("root");
 if (!rootEl) throw new Error("missing #root element");

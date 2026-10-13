@@ -20,7 +20,7 @@
   "scripts": {
     "dev": "npm run dev -w apps/lab",
     "build": "npm run build:packages && npm run build -w apps/lab",
-    "build:packages": "npm run build -w packages/core",
+    "build:packages": "npm run build -w packages/core -w packages/react",
     "preview": "npm run preview -w apps/lab",
     "test": "vitest run --project unit --project dom",
     "test:samples": "vitest run --project samples",

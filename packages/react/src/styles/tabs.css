@@ -1,0 +1,69 @@
+/* =========================================================================
+   Tab strip, microphone transport and theme toggle.
+   ========================================================================= */
+
+/* --- Tabs ---------------------------------------------------------------- */
+
+.tabs {
+  display: flex;
+  align-items: stretch;
+  gap: var(--sp-1);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  /* Right fade mask tells the reader there is more to scroll. */
+  mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 720px) {
+  .tabs {
+    mask-image: none;
+    overflow: visible;
+  }
+}
+
+.tab {
+  flex: none;
+  height: var(--header-h);
+  padding: 0 var(--sp-3);
+  border: 0;
+  background: transparent;
+  color: var(--color-ink-muted);
+  font-size: var(--step--1);
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    color var(--dur-1) var(--ease-out),
+    background-color var(--dur-1) var(--ease-out);
+}
+
+.tab:hover {
+  color: var(--color-ink);
+  background: var(--color-sunken);
+}
+
+.tab[aria-selected="true"] {
+  color: var(--color-ink);
+  box-shadow: inset 0 -2px 0 var(--color-accent);
+}
+
+.tab:focus-visible {
+  outline-offset: -2px;
+}
+
+/* --- Transport ----------------------------------------------------------- */
+
+.transport {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* The theme toggle keeps its glyph and word; it is the quietest control. */
+.theme-toggle {
+  white-space: nowrap;
+}

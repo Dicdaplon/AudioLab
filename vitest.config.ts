@@ -39,7 +39,7 @@ export default defineConfig({
         "packages/core/src/analysis/engine/**": { lines: 99, functions: 100, branches: 96 },
         "packages/core/src/offline/**": { lines: 99, functions: 100, branches: 93 },
         "packages/core/src/audio/**": { lines: 99, functions: 100, branches: 92 },
-        "apps/lab/src/hooks/**": { lines: 99, functions: 100, branches: 98 },
+        "packages/react/src/hooks/**": { lines: 99, functions: 100, branches: 98 },
       },
     },
   },

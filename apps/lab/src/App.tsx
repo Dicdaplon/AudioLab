@@ -8,18 +8,24 @@ import {
   type FftSettings,
 } from "@audiolab/core";
 
+import {
+  ChordGame,
+  DetectorTab,
+  FftTab,
+  MicNotice,
+  MicTransport,
+  TabBar,
+  ThemeToggle,
+  WolfJumper,
+  panelId,
+  tabId,
+  useMicrophone,
+  useTonality,
+  type MicState,
+  type TabDef,
+} from "@audiolab/react";
+
 import { Brand } from "./components/Brand";
-import { ChordGame } from "./features/games/chord-game/ChordGame";
-import { DetectorTab } from "./components/DetectorTab";
-import { MicNotice } from "./components/MicNotice";
-import { MicTransport, type MicState } from "./components/MicTransport";
-import { TabBar, type TabDef } from "./components/TabBar";
-import { ThemeToggle } from "./components/ThemeToggle";
-import { WolfJumper } from "./features/games/wolf-jumper/WolfJumper";
-import { FftTab } from "./components/FftTab";
-import { useMicrophone } from "./hooks/useMicrophone";
-import { useTonality } from "./hooks/useTonality";
-import { panelId, tabId } from "./ui/tabIds";
 
 type Tab = "detector" | "game" | "jumper" | "fft";
 
