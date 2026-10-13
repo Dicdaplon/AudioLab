@@ -73,6 +73,16 @@ export {
   type NoiseFloorResult,
 } from "./analysis/noiseFloor";
 export { spectrumSlopeDbPerHz } from "./analysis/spectrumSlope";
+export {
+  PITCH_DEFAULTS,
+  PitchTracker,
+  detectPitch,
+  frequencyToPitch,
+  normalizedSquareDifference,
+  type PitchEstimate,
+  type PitchOptions,
+  type PitchTrackerOptions,
+} from "./analysis/pitch";
 export { TimeRingBuffer } from "./analysis/timeBuffer";
 export { argmax, clamp, mean, median, softmax } from "./analysis/math";
 

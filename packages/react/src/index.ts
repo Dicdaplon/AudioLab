@@ -25,6 +25,7 @@ export {
   type TempoAnalysisState,
   type UseTempoAnalysisOptions,
 } from "./hooks/useTempoAnalysis";
+export { usePitch, type PitchState, type UsePitchOptions } from "./hooks/usePitch";
 export {
   stepConfirmation,
   useConfirmedDetection,

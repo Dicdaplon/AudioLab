@@ -119,3 +119,48 @@ export function analyserFrames(
   }
   return frames;
 }
+
+export interface PluckOptions {
+  sampleRate: number;
+  seconds: number;
+  /** Number of partials. Default 12. */
+  harmonics?: number;
+  /** Amplitude of partial k relative to the fundamental. Default 1 / k. */
+  amplitude?: (k: number) => number;
+  /** Decay time constant of the fundamental in seconds; partial k decays k times faster. Default 1.5. */
+  decaySeconds?: number;
+  /** String stiffness coefficient B: partial k sits at k·f0·√(1 + B·k²). Default 0. */
+  inharmonicity?: number;
+  /** Seed for the partials' starting phases. */
+  seed?: number;
+}
+
+/**
+ * A plucked-string-like tone: partials with 1/k amplitudes, each decaying
+ * exponentially (the higher the faster), random phases and an optional
+ * stiffness term that stretches the partials.
+ */
+export function pluckedTone(f0: number, opts: PluckOptions): Float32Array {
+  const {
+    sampleRate,
+    seconds,
+    harmonics = 12,
+    amplitude = (k) => 1 / k,
+    decaySeconds = 1.5,
+    inharmonicity = 0,
+    seed = 7,
+  } = opts;
+  const rand = mulberry32(seed);
+  const n = Math.round(seconds * sampleRate);
+  const out = new Float32Array(n);
+  for (let k = 1; k <= harmonics; k++) {
+    const f = k * f0 * Math.sqrt(1 + inharmonicity * k * k);
+    if (f >= sampleRate / 2) break;
+    const w = (2 * Math.PI * f) / sampleRate;
+    const a = amplitude(k);
+    const rate = k / (decaySeconds * sampleRate);
+    const phase = rand() * 2 * Math.PI;
+    for (let i = 0; i < n; i++) out[i] += a * Math.exp(-rate * i) * Math.sin(w * i + phase);
+  }
+  return out;
+}
