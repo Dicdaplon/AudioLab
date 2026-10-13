@@ -32,9 +32,7 @@ export function spectralDerivative(
   const floor = -100;
 
   for (let k = 0; k < n; k++) {
-    const curr = Number.isFinite(currentSpectrum[k])
-      ? currentSpectrum[k]
-      : floor;
+    const curr = Number.isFinite(currentSpectrum[k]) ? currentSpectrum[k] : floor;
     const prev = Number.isFinite(prevSpectrum[k]) ? prevSpectrum[k] : floor;
 
     derivative[k] = (curr - prev) / dtSeconds;

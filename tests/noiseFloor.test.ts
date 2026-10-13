@@ -21,9 +21,7 @@ describe("estimateNoiseFloor", () => {
 
   it("computes 80th percentile", () => {
     // [0, 10, 20, 30, 40, 50, 60, 70, 80, 90] → 80th percentile ≈ 72
-    const spectrum = new Float32Array(
-      Array.from({ length: 10 }, (_, i) => i * 10),
-    );
+    const spectrum = new Float32Array(Array.from({ length: 10 }, (_, i) => i * 10));
     const result = estimateNoiseFloor(spectrum, "p80");
     expect(result.noiseFloorDb).toBeGreaterThanOrEqual(70);
     expect(result.noiseFloorDb).toBeLessThanOrEqual(80);
@@ -38,9 +36,7 @@ describe("estimateNoiseFloor", () => {
   });
 
   it("handles non-finite values gracefully", () => {
-    const spectrum = new Float32Array([
-      -80, -70, -Infinity, -50, -40,
-    ]);
+    const spectrum = new Float32Array([-80, -70, -Infinity, -50, -40]);
     const result = estimateNoiseFloor(spectrum, "mean");
     // Mean should skip -Infinity.
     expect(result.noiseFloorDb).toBeCloseTo((-80 - 70 - 50 - 40) / 4, 5);

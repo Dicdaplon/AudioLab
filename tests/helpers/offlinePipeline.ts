@@ -15,10 +15,7 @@ import { detectChord, type ChordScore } from "../../src/analysis/chordDetection"
 import { detectKey, type KeyScore } from "../../src/analysis/keyDetection";
 import { applyHannWindow, fftMagnitude } from "../../src/analysis/fft";
 import { ChromaWindow } from "../../src/analysis/windowing";
-import {
-  HighWaterMarkFilter,
-  type HighWaterMarkOptions,
-} from "../../src/analysis/highWaterMark";
+import { HighWaterMarkFilter, type HighWaterMarkOptions } from "../../src/analysis/highWaterMark";
 import { detectKeyFromPresence } from "../../src/analysis/presenceTonality";
 
 export interface DecodedAudio {
@@ -72,10 +69,7 @@ function frameChroma(
  * Slide a hop-sized window across the signal and return one chroma vector
  * per frame.
  */
-export function computeChromaSequence(
-  audio: DecodedAudio,
-  opts: FrameOptions,
-): Float32Array[] {
+export function computeChromaSequence(audio: DecodedAudio, opts: FrameOptions): Float32Array[] {
   const { fftSize, hopSize, minFreq = 55, maxFreq = 5000 } = opts;
   const chromas: Float32Array[] = [];
   const { samples, sampleRate } = audio;
@@ -118,10 +112,7 @@ export interface SegmentScores {
 }
 
 /** Aggregate the whole sequence (with optional head/tail trimming). */
-export function analyzeOverall(
-  chromas: Float32Array[],
-  trimRatio = 0.1,
-): SegmentScores {
+export function analyzeOverall(chromas: Float32Array[], trimRatio = 0.1): SegmentScores {
   const total = chromas.length;
   const from = Math.floor(total * trimRatio);
   const to = Math.ceil(total * (1 - trimRatio));

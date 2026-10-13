@@ -53,9 +53,7 @@ function clampMemory(n: number): number {
 function median(values: number[]): number {
   const sorted = [...values].sort((a, b) => a - b);
   const mid = sorted.length >> 1;
-  return sorted.length % 2 === 0
-    ? (sorted[mid - 1] + sorted[mid]) * 0.5
-    : sorted[mid];
+  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) * 0.5 : sorted[mid];
 }
 
 function mean(values: number[]): number {
@@ -135,8 +133,7 @@ export class HighWaterMarkFilter {
     this.peakHistory.push(peak);
     if (this.peakHistory.length > this.memory) this.peakHistory.shift();
 
-    const agg =
-      this.mode === "median" ? median(this.peakHistory) : mean(this.peakHistory);
+    const agg = this.mode === "median" ? median(this.peakHistory) : mean(this.peakHistory);
     const threshold = this.tolerancy * agg;
 
     const out = new Float32Array(input.length);

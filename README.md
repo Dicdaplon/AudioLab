@@ -4,12 +4,12 @@ Détecteur **live** (entrée micro) de tonalité et d'accord, basé sur l'analys
 spectrale fenêtrée. Trois fenêtres glissantes tournent en parallèle à partir
 du même flux de chromas instantanés :
 
-| Fenêtre                   | Durée par défaut | Sortie                                       | Méthode                                |
-| ------------------------- | ---------------- | -------------------------------------------- | -------------------------------------- |
-| Accord (chord window)     | **1 s**          | 24 probabilités d'accord (12 maj + 12 min)   | template matching (cosinus)            |
-| Live acquisition          | **8 s**          | 24 probabilités de tonalité (12 maj + 12 min)| Krumhansl-Schmuckler maj + min (Pearson)|
-| Tonality acquisition      | **30 s**         | 24 probabilités de tonalité (12 maj + 12 min)| Krumhansl-Schmuckler maj + min (Pearson)|
-| **ToneBaseTonality**      | 8 s → 30 s       | 24 probabilités (présence)                   | High-water-mark filter + presence histogram + KK |
+| Fenêtre               | Durée par défaut | Sortie                                        | Méthode                                          |
+| --------------------- | ---------------- | --------------------------------------------- | ------------------------------------------------ |
+| Accord (chord window) | **1 s**          | 24 probabilités d'accord (12 maj + 12 min)    | template matching (cosinus)                      |
+| Live acquisition      | **8 s**          | 24 probabilités de tonalité (12 maj + 12 min) | Krumhansl-Schmuckler maj + min (Pearson)         |
+| Tonality acquisition  | **30 s**         | 24 probabilités de tonalité (12 maj + 12 min) | Krumhansl-Schmuckler maj + min (Pearson)         |
+| **ToneBaseTonality**  | 8 s → 30 s       | 24 probabilités (présence)                    | High-water-mark filter + presence histogram + KK |
 
 > Stack : Vite + React + TypeScript · Tests : Vitest · Audio : Web Audio API
 > native (`getUserMedia` + `AnalyserNode`, FFT 16384).
@@ -30,15 +30,15 @@ Ouvre ensuite `http://127.0.0.1:5173` et autorise l'accès au microphone.
 
 ## Scripts
 
-| Commande              | Effet                                                  |
-| --------------------- | ------------------------------------------------------ |
-| `npm run dev`         | Lance le serveur de développement Vite                 |
-| `npm run build`       | Type-check (`tsc -b`) puis bundle de production        |
-| `npm run preview`     | Sert le build de prod en local                         |
-| `npm test`            | Lance toute la suite Vitest une fois                   |
-| `npm run test:watch`  | Vitest en mode watch                                   |
-| `npm run typecheck`   | Vérification TypeScript sans émission                  |
-| `npm run sweep`       | Sweep paramétrique sur tous les samples (voir ci-dessous) |
+| Commande             | Effet                                                     |
+| -------------------- | --------------------------------------------------------- |
+| `npm run dev`        | Lance le serveur de développement Vite                    |
+| `npm run build`      | Type-check (`tsc -b`) puis bundle de production           |
+| `npm run preview`    | Sert le build de prod en local                            |
+| `npm test`           | Lance toute la suite Vitest une fois                      |
+| `npm run test:watch` | Vitest en mode watch                                      |
+| `npm run typecheck`  | Vérification TypeScript sans émission                     |
+| `npm run sweep`      | Sweep paramétrique sur tous les samples (voir ci-dessous) |
 
 ---
 
@@ -148,18 +148,18 @@ parallèle avec $T \in \{1, 8, 30\}$ s, soit respectivement $N \in
 
 ## Fenêtre 1 s — Détection d'accord
 
-**Méthode** : *template matching* (Fujishima, 1999).
+**Méthode** : _template matching_ (Fujishima, 1999).
 
 On définit pour chaque accord candidat $C$ un **template binaire** $t_C
 \in \{0, 1\}^{12}$ qui vaut 1 sur les notes de l'accord et 0 ailleurs. On
 considère 24 accords : **12 triades majeures** (`{0, 4, 7}` rotées) et
 **12 triades mineures** (`{0, 3, 7}` rotées). Par exemple :
 
-| Accord  | Notes      | Template (C, C#, D, …, B)               |
-| ------- | ---------- | --------------------------------------- |
-| C major | C, E, G    | `[1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0]`  |
-| A minor | A, C, E    | `[1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0]`  |
-| F# maj  | F#, A#, C# | `[0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0]`  |
+| Accord  | Notes      | Template (C, C#, D, …, B)              |
+| ------- | ---------- | -------------------------------------- |
+| C major | C, E, G    | `[1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0]` |
+| A minor | A, C, E    | `[1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0]` |
+| F# maj  | F#, A#, C# | `[0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0]` |
 
 Le score d'un accord est la **similarité cosinus** entre le chroma 1 s
 $\bar c$ et son template :
@@ -260,10 +260,10 @@ deux, les deux sont musicalement corrects.
 Les deux fenêtres utilisent **exactement le même estimateur**. Elles
 fournissent deux compromis temporels :
 
-| Fenêtre | Avantage                                          | Inconvénient                                       |
-| ------- | ------------------------------------------------- | -------------------------------------------------- |
-| 8 s     | Suit les **modulations** rapides du morceau       | Plus de variance, parfois confuse aux transitions  |
-| 30 s    | Très stable, donne la **tonalité globale**        | Met du temps à réagir à un changement de tonalité  |
+| Fenêtre | Avantage                                    | Inconvénient                                      |
+| ------- | ------------------------------------------- | ------------------------------------------------- |
+| 8 s     | Suit les **modulations** rapides du morceau | Plus de variance, parfois confuse aux transitions |
+| 30 s    | Très stable, donne la **tonalité globale**  | Met du temps à réagir à un changement de tonalité |
 
 Lire les deux en parallèle est utile : si la fenêtre 8 s s'éloigne de la
 fenêtre 30 s, c'est typiquement le signe d'une modulation ou d'un emprunt.
@@ -347,20 +347,20 @@ probabilités.
 
 ### Réglages exposés (Settings panel)
 
-| Paramètre              | Range        | Effet                                                            |
-| ---------------------- | ------------ | ---------------------------------------------------------------- |
-| Live acquisition       | 1–30 s       | Taille de la fenêtre du chroma agrégé qui sert d'entrée          |
-| Tonality acquisition   | 5–120 s      | Taille de l'histogramme de présence                              |
-| Max filter tolerancy   | 0–100 %      | $\alpha$ : seuil = $\alpha$ × agrégat des pics                   |
-| Max memory             | 2–15         | $M$ : nombre de pics conservés                                   |
-| Peak aggregator        | mean/median  | Comment combiner les $M$ pics                                    |
+| Paramètre            | Range       | Effet                                                   |
+| -------------------- | ----------- | ------------------------------------------------------- |
+| Live acquisition     | 1–30 s      | Taille de la fenêtre du chroma agrégé qui sert d'entrée |
+| Tonality acquisition | 5–120 s     | Taille de l'histogramme de présence                     |
+| Max filter tolerancy | 0–100 %     | $\alpha$ : seuil = $\alpha$ × agrégat des pics          |
+| Max memory           | 2–15        | $M$ : nombre de pics conservés                          |
+| Peak aggregator      | mean/median | Comment combiner les $M$ pics                           |
 
 ### Pourquoi cette approche ?
 
-| Approche               | Force                                                       | Faiblesse                                                |
-| ---------------------- | ----------------------------------------------------------- | -------------------------------------------------------- |
-| Énergie (live/tonality)| Réagit aux dynamiques : un coup fort domine la détection    | Une note jouée fort une seule fois pollue la statistique |
-| **Présence**           | **Une note jouée doucement mais souvent compte autant qu'une note jouée fort** | Le seuil doit être bien réglé (pas trop bas ⇒ tout passe, pas trop haut ⇒ tout zéro) |
+| Approche                | Force                                                                          | Faiblesse                                                                            |
+| ----------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| Énergie (live/tonality) | Réagit aux dynamiques : un coup fort domine la détection                       | Une note jouée fort une seule fois pollue la statistique                             |
+| **Présence**            | **Une note jouée doucement mais souvent compte autant qu'une note jouée fort** | Le seuil doit être bien réglé (pas trop bas ⇒ tout passe, pas trop haut ⇒ tout zéro) |
 
 Lire les **trois sorties en parallèle** est utile : si elles convergent,
 forte confiance ; si elles divergent, le morceau est ambigu (modulation,
@@ -493,7 +493,7 @@ Les tests couvrent :
 - Détection orientée musique tonale occidentale.
 - **Ambiguïté minor ↔ relatif majeur** : intrinsèque à KK quand le morceau ne
   privilégie aucun tonique. Voir la section "Détection de tonalité" §
-  *Ambiguïté relative ↔ majeur*.
+  _Ambiguïté relative ↔ majeur_.
 
 ## Roadmap
 

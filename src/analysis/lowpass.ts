@@ -41,9 +41,7 @@ export interface BiquadState {
  */
 function designButterworthBiquad(normalizedFreq: number): BiquadCoeffs {
   if (normalizedFreq <= 0 || normalizedFreq >= 1) {
-    throw new Error(
-      `normalizedFreq must be in (0, 1), got ${normalizedFreq}`,
-    );
+    throw new Error(`normalizedFreq must be in (0, 1), got ${normalizedFreq}`);
   }
 
   // Butterworth poles in s-plane: one pair at -sin(θ) ± j·cos(θ),
@@ -59,10 +57,10 @@ function designButterworthBiquad(normalizedFreq: number): BiquadCoeffs {
   // Bilinear-transformed denominator and numerator coefficients.
   const scale = 1 / (1 + 2 * sn * tanHalf + tanHalf * tanHalf);
 
-  const b0 = (tanHalf * tanHalf) * scale;
+  const b0 = tanHalf * tanHalf * scale;
   const b1 = 2 * (tanHalf * tanHalf) * scale;
-  const b2 = (tanHalf * tanHalf) * scale;
-  const a1 = (2 * (tanHalf * tanHalf - 1)) * scale;
+  const b2 = tanHalf * tanHalf * scale;
+  const a1 = 2 * (tanHalf * tanHalf - 1) * scale;
   const a2 = (1 - 2 * sn * tanHalf + tanHalf * tanHalf) * scale;
 
   return { b0, b1, b2, a1, a2 };
@@ -75,14 +73,13 @@ function designButterworthBiquad(normalizedFreq: number): BiquadCoeffs {
  * @param state Biquad state (updated in-place).
  * @return Filtered output sample.
  */
-function processBiquad(
-  x: number,
-  coeffs: BiquadCoeffs,
-  state: BiquadState,
-): number {
-  const y = coeffs.b0 * x + coeffs.b1 * state.x1 + coeffs.b2 * state.x2
-    - coeffs.a1 * state.y1
-    - coeffs.a2 * state.y2;
+function processBiquad(x: number, coeffs: BiquadCoeffs, state: BiquadState): number {
+  const y =
+    coeffs.b0 * x +
+    coeffs.b1 * state.x1 +
+    coeffs.b2 * state.x2 -
+    coeffs.a1 * state.y1 -
+    coeffs.a2 * state.y2;
 
   state.x2 = state.x1;
   state.x1 = x;
@@ -110,14 +107,10 @@ export class LowpassFilter {
    */
   constructor(cutoffHz: number, sampleRate: number) {
     if (cutoffHz <= 0 || sampleRate <= 0) {
-      throw new Error(
-        `cutoffHz and sampleRate must be > 0 (got ${cutoffHz}, ${sampleRate})`,
-      );
+      throw new Error(`cutoffHz and sampleRate must be > 0 (got ${cutoffHz}, ${sampleRate})`);
     }
     if (cutoffHz >= sampleRate / 2) {
-      throw new Error(
-        `cutoffHz (${cutoffHz}) must be < Nyquist (${sampleRate / 2})`,
-      );
+      throw new Error(`cutoffHz (${cutoffHz}) must be < Nyquist (${sampleRate / 2})`);
     }
 
     const normalizedFreq = cutoffHz / (sampleRate / 2);
@@ -140,14 +133,10 @@ export class LowpassFilter {
    */
   setCutoff(cutoffHz: number, sampleRate: number): void {
     if (cutoffHz <= 0 || sampleRate <= 0) {
-      throw new Error(
-        `cutoffHz and sampleRate must be > 0 (got ${cutoffHz}, ${sampleRate})`,
-      );
+      throw new Error(`cutoffHz and sampleRate must be > 0 (got ${cutoffHz}, ${sampleRate})`);
     }
     if (cutoffHz >= sampleRate / 2) {
-      throw new Error(
-        `cutoffHz (${cutoffHz}) must be < Nyquist (${sampleRate / 2})`,
-      );
+      throw new Error(`cutoffHz (${cutoffHz}) must be < Nyquist (${sampleRate / 2})`);
     }
     const normalizedFreq = cutoffHz / (sampleRate / 2);
     this.coeffs1 = designButterworthBiquad(normalizedFreq);

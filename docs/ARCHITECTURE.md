@@ -4,11 +4,11 @@
 
 Le projet sépare strictement trois couches :
 
-| Couche       | Dossier            | Dépendances navigateur ? | Testable en Vitest pur |
-| ------------ | ------------------ | ------------------------ | ---------------------- |
-| Analyse DSP  | `src/analysis/`    | Non                      | Oui                    |
-| Capture audio| `src/audio/`       | Oui (Web Audio API)      | Indirectement          |
-| UI React     | `src/components/`  | Oui                      | jsdom                  |
+| Couche        | Dossier           | Dépendances navigateur ? | Testable en Vitest pur |
+| ------------- | ----------------- | ------------------------ | ---------------------- |
+| Analyse DSP   | `src/analysis/`   | Non                      | Oui                    |
+| Capture audio | `src/audio/`      | Oui (Web Audio API)      | Indirectement          |
+| UI React      | `src/components/` | Oui                      | jsdom                  |
 
 L'orchestration vit dans le hook
 [`src/hooks/useTonality.ts`](../src/hooks/useTonality.ts), qui colle les trois
@@ -35,7 +35,7 @@ du navigateur, typiquement 44 100 ou 48 000 Hz).
 - `smoothingTimeConstant = 0` → pas de lissage interne ; on fait nos propres
   moyennes plus tard.
 - Sortie : `getFloatFrequencyData(buf)` → spectre **en dB** dans `[minDecibels,
-  maxDecibels]` (par défaut `[-100, -10]`).
+maxDecibels]` (par défaut `[-100, -10]`).
 
 ### 3. dB → magnitude linéaire (`analysis/chroma.ts`)
 
@@ -51,11 +51,11 @@ L1-normalisée. Bande par défaut `[55 Hz, 5 000 Hz]`.
 Le hook maintient **trois** `ChromaWindow` indépendantes. À chaque frame
 (10 Hz), le même chroma instantané est `push()`ed dans les trois buffers.
 
-| Fenêtre        | $T$  | $N = T \cdot 10$ | Estimateur               | Cadence visuelle utile |
-| -------------- | ---- | ---------------- | ------------------------ | ---------------------- |
-| chord          | 1 s  | 10 frames        | `detectChord()`          | ~1 Hz visible          |
-| shortKey (8 s) | 8 s  | 80 frames        | `detectMajorKey()`       | ~0.5 Hz visible        |
-| longKey (30 s) | 30 s | 300 frames       | `detectMajorKey()`       | très stable            |
+| Fenêtre        | $T$  | $N = T \cdot 10$ | Estimateur         | Cadence visuelle utile |
+| -------------- | ---- | ---------------- | ------------------ | ---------------------- |
+| chord          | 1 s  | 10 frames        | `detectChord()`    | ~1 Hz visible          |
+| shortKey (8 s) | 8 s  | 80 frames        | `detectMajorKey()` | ~0.5 Hz visible        |
+| longKey (30 s) | 30 s | 300 frames       | `detectMajorKey()` | très stable            |
 
 ### 6. Détection de tonalité (`analysis/keyDetection.ts`)
 
@@ -130,16 +130,16 @@ $\tau = 0.1$.
 
 ## Choix de paramètres
 
-| Paramètre              | Valeur   | Justification                                                    |
-| ---------------------- | -------- | ---------------------------------------------------------------- |
-| `fftSize`              | 16384    | ~2,9 Hz/bin à 48 kHz → résout les demi-tons dès le bas grave    |
-| `framesPerSecond`      | 10       | Compromis latence / charge CPU                                   |
-| `chordWindowSeconds`   | 1        | Granularité musicale typique d'un accord en pop/rock             |
-| `shortKeyWindow…`      | 8        | Fenêtre réactive aux modulations                                 |
-| `longKeyWindow…`       | 30       | Fenêtre stable, donne la tonalité globale                        |
-| `minFreq / maxFreq`    | 55 / 5000| Couvre A1–D♯8                                                    |
-| `temperature` (softmax)| 0.1      | Distribution piquée mais lisible                                 |
-| `smoothingTimeConstant`| 0        | Le lissage temporel est fait par `ChromaWindow`                  |
+| Paramètre               | Valeur    | Justification                                                |
+| ----------------------- | --------- | ------------------------------------------------------------ |
+| `fftSize`               | 16384     | ~2,9 Hz/bin à 48 kHz → résout les demi-tons dès le bas grave |
+| `framesPerSecond`       | 10        | Compromis latence / charge CPU                               |
+| `chordWindowSeconds`    | 1         | Granularité musicale typique d'un accord en pop/rock         |
+| `shortKeyWindow…`       | 8         | Fenêtre réactive aux modulations                             |
+| `longKeyWindow…`        | 30        | Fenêtre stable, donne la tonalité globale                    |
+| `minFreq / maxFreq`     | 55 / 5000 | Couvre A1–D♯8                                                |
+| `temperature` (softmax) | 0.1       | Distribution piquée mais lisible                             |
+| `smoothingTimeConstant` | 0         | Le lissage temporel est fait par `ChromaWindow`              |
 
 ## Coût marginal des fenêtres multiples
 

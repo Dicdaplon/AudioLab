@@ -92,9 +92,9 @@ interface BonusTypeDef {
 }
 
 const BONUS_TYPES: BonusTypeDef[] = [
-  { id: "hp",       icon: "❤", short: "+2", color: "#ff5050", label: "+2 HP" },
-  { id: "shield",   icon: "🛡", short: "7s", color: "#4cc9f0", label: "Bouclier 7 s" },
-  { id: "slow",     icon: "🐢", short: "7s", color: "#8338ec", label: "Slow 7 s" },
+  { id: "hp", icon: "❤", short: "+2", color: "#ff5050", label: "+2 HP" },
+  { id: "shield", icon: "🛡", short: "7s", color: "#4cc9f0", label: "Bouclier 7 s" },
+  { id: "slow", icon: "🐢", short: "7s", color: "#8338ec", label: "Slow 7 s" },
   { id: "samenote", icon: "🎯", short: "×5", color: "#ffd60a", label: "Même note ×5" },
 ];
 
@@ -105,12 +105,12 @@ interface Enemy {
   pc: number;
   name: string;
   color: string;
-  spawnAt: number;     // ms
-  progress: number;    // 0..1+ — 1 = at wolf
-  baseSpeed: number;   // progress per second (excluding slow factor)
-  laneY: number;       // visual y offset from ground
+  spawnAt: number; // ms
+  progress: number; // 0..1+ — 1 = at wolf
+  baseSpeed: number; // progress per second (excluding slow factor)
+  laneY: number; // visual y offset from ground
   state: "alive" | "killed" | "reached";
-  endedAt?: number;    // for fade animation
+  endedAt?: number; // for fade animation
 }
 
 interface Bonus {
@@ -216,9 +216,15 @@ export function WolfJumper({
   const effectsRef = useRef(effects);
   const lastTickRef = useRef(performance.now());
 
-  useEffect(() => { scoreRef.current = score; }, [score]);
-  useEffect(() => { gameOverRef.current = gameOver; }, [gameOver]);
-  useEffect(() => { effectsRef.current = effects; }, [effects]);
+  useEffect(() => {
+    scoreRef.current = score;
+  }, [score]);
+  useEffect(() => {
+    gameOverRef.current = gameOver;
+  }, [gameOver]);
+  useEffect(() => {
+    effectsRef.current = effects;
+  }, [effects]);
 
   // --- Smoothing buffer for snappy note detection ---
   const chromaBufferRef = useRef<Float32Array[]>([]);
@@ -379,15 +385,11 @@ export function WolfJumper({
         },
       ]);
       const next =
-        BONUS_INTERVAL_MIN_MS +
-        Math.random() * (BONUS_INTERVAL_MAX_MS - BONUS_INTERVAL_MIN_MS);
+        BONUS_INTERVAL_MIN_MS + Math.random() * (BONUS_INTERVAL_MAX_MS - BONUS_INTERVAL_MIN_MS);
       t = window.setTimeout(spawn, next);
     };
     // First bonus appears after a small delay (not at game start).
-    t = window.setTimeout(
-      spawn,
-      6000 + Math.random() * (BONUS_INTERVAL_MIN_MS - 6000),
-    );
+    t = window.setTimeout(spawn, 6000 + Math.random() * (BONUS_INTERVAL_MIN_MS - 6000));
     return () => clearTimeout(t);
   }, [running, gameOver]);
 
@@ -488,7 +490,7 @@ export function WolfJumper({
 
     if (chordConfRef.current >= CHORD_CONFIRMATIONS) {
       // Try to collect all alive bonuses matching this chord.
-      let collected: Bonus[] = [];
+      const collected: Bonus[] = [];
       setBonuses((prev) => {
         const now = performance.now();
         return prev.map((b) => {
@@ -506,7 +508,6 @@ export function WolfJumper({
       chordConfRef.current = 0;
       lastChordNameRef.current = "";
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chords, running, gameOver, gateOpen]);
 
   function applyBonusEffect(type: BonusType): void {
@@ -565,7 +566,7 @@ export function WolfJumper({
     // recompute on every chroma update
   }, [instantaneousChroma]);
   const detectedNoteName =
-    smoothedDisplay.idx >= 0 ? findNoteDef(smoothedDisplay.idx)?.name ?? "—" : "—";
+    smoothedDisplay.idx >= 0 ? (findNoteDef(smoothedDisplay.idx)?.name ?? "—") : "—";
   const topChord = chords[0]?.name ?? "—";
   const topChordProb = chords[0]?.probability ?? 0;
 
@@ -619,7 +620,8 @@ export function WolfJumper({
             className="jumper-effect samenote"
             style={{ borderColor: findNoteDef(effects.sameNotePc)?.color }}
           >
-            🎯 <span>
+            🎯{" "}
+            <span>
               {findNoteDef(effects.sameNotePc)?.name} ×{effects.sameNoteRemaining}
             </span>
           </div>
@@ -636,7 +638,10 @@ export function WolfJumper({
         <div className="jumper-sky" />
         <div className="jumper-ground" style={{ top: GROUND_Y }} />
 
-        <div className={`jumper-wolf-wrap ${shieldOn ? "shielded" : ""}`} style={{ left: WOLF_X, top: GROUND_Y - 50 }}>
+        <div
+          className={`jumper-wolf-wrap ${shieldOn ? "shielded" : ""}`}
+          style={{ left: WOLF_X, top: GROUND_Y - 50 }}
+        >
           {shieldOn && <div className="jumper-wolf-shield" />}
           <div className="jumper-wolf">🐺</div>
         </div>
@@ -697,8 +702,7 @@ export function WolfJumper({
             <div className="jumper-overlay-card">
               <h3>Game Over</h3>
               <p>
-                Score : <strong>{score}</strong> · Meilleur streak :{" "}
-                <strong>{bestStreak}</strong>
+                Score : <strong>{score}</strong> · Meilleur streak : <strong>{bestStreak}</strong>
               </p>
               <button type="button" className="mic-btn mic-start" onClick={resetGame}>
                 Rejouer
@@ -739,9 +743,7 @@ export function WolfJumper({
       <div className="jumper-status">
         <div className="jumper-status-row">
           <span className="jumper-status-label">Note détectée :</span>
-          <span className="jumper-status-detected">
-            {gateOpen ? detectedNoteName : "—"}
-          </span>
+          <span className="jumper-status-detected">{gateOpen ? detectedNoteName : "—"}</span>
           <span className="jumper-status-energy">
             ({(smoothedDisplay.value * 100).toFixed(0)}%)
           </span>
@@ -770,13 +772,13 @@ export function WolfJumper({
       </div>
 
       <p className="game-hint">
-        Joue la <strong>note</strong> sur l'obstacle pour le détruire (kill chain :
-        toutes les notes identiques sur l'écran tombent d'un coup). Les bonus
-        dorés sont des <strong>accords</strong> à jouer pour activer un effet :
-        ❤+2, 🛡 7 s, 🐢 7 s, 🎯 5 notes identiques. La vitesse augmente avec le
-        score ({(INITIAL_TRAVEL_MS / 1000).toFixed(1)} s → {(MIN_TRAVEL_MS / 1000).toFixed(1)} s).
-        Détection note ≈ 300 ms (smoothing 3 frames + 2 frames de confirmation).
-        Détection accord = top-1 sur la fenêtre 1 s + 3 frames de confirmation.
+        Joue la <strong>note</strong> sur l'obstacle pour le détruire (kill chain : toutes les notes
+        identiques sur l'écran tombent d'un coup). Les bonus dorés sont des <strong>accords</strong>{" "}
+        à jouer pour activer un effet : ❤+2, 🛡 7 s, 🐢 7 s, 🎯 5 notes identiques. La vitesse
+        augmente avec le score ({(INITIAL_TRAVEL_MS / 1000).toFixed(1)} s →{" "}
+        {(MIN_TRAVEL_MS / 1000).toFixed(1)} s). Détection note ≈ 300 ms (smoothing 3 frames + 2
+        frames de confirmation). Détection accord = top-1 sur la fenêtre 1 s + 3 frames de
+        confirmation.
       </p>
     </div>
   );

@@ -119,8 +119,7 @@ describe("detectKey (24 keys)", () => {
       const relMaj = (tonic + 3) % CHROMA_SIZE;
       const top = scores[0];
       const acceptable =
-        (top.mode === "min" && top.tonic === tonic) ||
-        (top.mode === "maj" && top.tonic === relMaj);
+        (top.mode === "min" && top.tonic === tonic) || (top.mode === "maj" && top.tonic === relMaj);
       expect(
         acceptable,
         `tonic ${tonic}: expected ${tonic}min or ${relMaj}maj, got ${top.name}`,

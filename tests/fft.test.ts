@@ -11,9 +11,7 @@ describe("fftInPlace", () => {
   });
 
   it("rejects mismatched lengths", () => {
-    expect(() =>
-      fftInPlace(new Float64Array(8), new Float64Array(16)),
-    ).toThrow();
+    expect(() => fftInPlace(new Float64Array(8), new Float64Array(16))).toThrow();
   });
 
   it("DFT of [1, 0, 0, 0, ...] is constant 1 across all bins", () => {

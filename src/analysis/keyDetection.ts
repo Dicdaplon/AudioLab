@@ -24,7 +24,7 @@ export const KRUMHANSL_MAJOR_PROFILE: readonly number[] = [
 
 /** Krumhansl & Kessler (1982) MINOR-key profile. Index 0 = tonic. */
 export const KRUMHANSL_MINOR_PROFILE: readonly number[] = [
-  6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17,
+  6.33, 2.68, 3.52, 5.38, 2.6, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17,
 ];
 
 export const KEY_PROFILES: Record<KeyMode, readonly number[]> = {
@@ -54,10 +54,7 @@ export interface KeyScore {
  * @param temperature  Softmax temperature. Lower = more peaked. Default 0.1.
  * @returns            Array of 24 KeyScore entries, sorted by descending probability.
  */
-export function detectKey(
-  chroma: ArrayLike<number>,
-  temperature = 0.1,
-): KeyScore[] {
+export function detectKey(chroma: ArrayLike<number>, temperature = 0.1): KeyScore[] {
   if (chroma.length !== CHROMA_SIZE) {
     throw new Error(`expected chroma of length ${CHROMA_SIZE}, got ${chroma.length}`);
   }
@@ -94,10 +91,7 @@ export function detectKey(
  * Score only the 12 major keys (kept for callers that don't care about minors).
  * Probabilities are re-normalized to sum to 1 over the 12 major candidates.
  */
-export function detectMajorKey(
-  chroma: ArrayLike<number>,
-  temperature = 0.1,
-): KeyScore[] {
+export function detectMajorKey(chroma: ArrayLike<number>, temperature = 0.1): KeyScore[] {
   const majors = detectKey(chroma, temperature).filter((k) => k.mode === "maj");
   const sum = majors.reduce((a, k) => a + k.probability, 0);
   if (sum > 0) {
@@ -131,7 +125,7 @@ export function pearsonAgainstRotatedProfile(
   let denX = 0;
   let denY = 0;
   for (let i = 0; i < n; i++) {
-    const profileIdx = ((i - tonic) % n + n) % n;
+    const profileIdx = (((i - tonic) % n) + n) % n;
     const dx = chroma[i] - meanX;
     const dy = profile[profileIdx] - meanY;
     num += dx * dy;

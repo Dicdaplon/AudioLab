@@ -23,9 +23,7 @@ export function ChordView({ chords, windowSeconds, topN = 6 }: ChordViewProps) {
       <h3>Accord (fenêtre {windowSeconds}s)</h3>
       <div className="chord-top">
         <span className="chord-top-name">{top.name}</span>
-        <span className="chord-top-prob">
-          {(top.probability * 100).toFixed(1)}%
-        </span>
+        <span className="chord-top-prob">{(top.probability * 100).toFixed(1)}%</span>
       </div>
       <ol className="chord-list">
         {rest.map((c) => (

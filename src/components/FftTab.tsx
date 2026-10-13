@@ -40,8 +40,8 @@ export function FftTab({
       <section className="fft-section-1">
         <h3>Section 1: FFT Magnitude Spectrum</h3>
         <p className="section-description">
-          Shows the magnitude spectrum (dB) of the audio.
-          Red dashed line: noise floor ({noiseMethod} method, {noiseFloorDb.toFixed(1)} dB).
+          Shows the magnitude spectrum (dB) of the audio. Red dashed line: noise floor (
+          {noiseMethod} method, {noiseFloorDb.toFixed(1)} dB).
         </p>
         <SpectrumPlot
           spectrumDb={spectrumDb}
@@ -59,14 +59,21 @@ export function FftTab({
       <section className="fft-section-2">
         <h3>Section 2: Tempo Analysis (Lowpass @ {lowpassCutoffHz.toFixed(2)} Hz)</h3>
         <p className="section-description">
-          The time-domain signal (8s) is lowpass-filtered, then its FFT is shown
-          over 0-50 Hz to reveal low-frequency modulation.
+          The time-domain signal (8s) is lowpass-filtered, then its FFT is shown over 0-50 Hz to
+          reveal low-frequency modulation.
         </p>
 
         <h4 style={{ marginTop: "1rem", marginBottom: "0.5rem" }}>Filtered Time Signal (8s)</h4>
-        <TimeSignalPlot signal={timeSignal} sampleRate={sampleRate} title="Filtered Signal" height={180} />
+        <TimeSignalPlot
+          signal={timeSignal}
+          sampleRate={sampleRate}
+          title="Filtered Signal"
+          height={180}
+        />
 
-        <h4 style={{ marginTop: "1rem", marginBottom: "0.5rem" }}>Filtered Signal Spectrum (0-50 Hz)</h4>
+        <h4 style={{ marginTop: "1rem", marginBottom: "0.5rem" }}>
+          Filtered Signal Spectrum (0-50 Hz)
+        </h4>
         <SpectrumPlot
           spectrumDb={tempoEnvelopeDb}
           binHz={binHz}

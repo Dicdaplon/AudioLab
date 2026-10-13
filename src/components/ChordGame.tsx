@@ -17,13 +17,7 @@ import { CHORD_TEMPLATES, type ChordScore } from "../analysis/chordDetection";
 const CONFIRMATIONS_NEEDED = 3; // ~300 ms at 10 Hz on top of the 1 s chord window
 const MIN_PROBABILITY = 0.18;
 
-type PoolKey =
-  | "open-major"
-  | "open-minor"
-  | "open-mix"
-  | "all-major"
-  | "all-minor"
-  | "all";
+type PoolKey = "open-major" | "open-minor" | "open-mix" | "all-major" | "all-minor" | "all";
 
 interface Pool {
   label: string;
@@ -131,8 +125,7 @@ export function ChordGame({ chords, running, onStart }: ChordGameProps) {
       return;
     }
     const top = chords[0];
-    const isMatch =
-      top.name === target && top.probability >= MIN_PROBABILITY;
+    const isMatch = top.name === target && top.probability >= MIN_PROBABILITY;
 
     if (isMatch) {
       confRef.current += 1;
@@ -185,11 +178,7 @@ export function ChordGame({ chords, running, onStart }: ChordGameProps) {
 
       <div className="game-pool">
         <label htmlFor="pool">Banque d'accords :</label>
-        <select
-          id="pool"
-          value={poolKey}
-          onChange={(e) => setPoolKey(e.target.value as PoolKey)}
-        >
+        <select id="pool" value={poolKey} onChange={(e) => setPoolKey(e.target.value as PoolKey)}>
           {poolEntries.map((p) => (
             <option key={p.key} value={p.key}>
               {p.label} ({p.size})
@@ -204,10 +193,7 @@ export function ChordGame({ chords, running, onStart }: ChordGameProps) {
       </div>
 
       <div className="game-progress">
-        <div
-          className="game-progress-fill"
-          style={{ width: `${(progress * 100).toFixed(0)}%` }}
-        />
+        <div className="game-progress-fill" style={{ width: `${(progress * 100).toFixed(0)}%` }} />
         <span className="game-progress-text">
           {confirmation}/{CONFIRMATIONS_NEEDED} frames consécutives
         </span>
@@ -216,16 +202,11 @@ export function ChordGame({ chords, running, onStart }: ChordGameProps) {
       <div className="game-detected">
         <span>Détecté : </span>
         <span
-          className={
-            "game-detected-name " +
-            (running && topName === target ? "match" : "no-match")
-          }
+          className={"game-detected-name " + (running && topName === target ? "match" : "no-match")}
         >
           {topName}
         </span>
-        <span className="game-detected-prob">
-          ({(topProb * 100).toFixed(0)}%)
-        </span>
+        <span className="game-detected-prob">({(topProb * 100).toFixed(0)}%)</span>
       </div>
 
       <div className="game-stats">
@@ -248,27 +229,18 @@ export function ChordGame({ chords, running, onStart }: ChordGameProps) {
       </div>
 
       <div className="game-actions">
-        <button
-          type="button"
-          className="mic-btn mic-reset"
-          onClick={() => advance("skip")}
-        >
+        <button type="button" className="mic-btn mic-reset" onClick={() => advance("skip")}>
           Passer
         </button>
-        <button
-          type="button"
-          className="mic-btn mic-reset"
-          onClick={resetScores}
-        >
+        <button type="button" className="mic-btn mic-reset" onClick={resetScores}>
           Reset score
         </button>
       </div>
 
       <p className="game-hint">
-        Validation : l'accord ciblé doit être détecté en top-1 pendant{" "}
-        {CONFIRMATIONS_NEEDED} frames consécutives avec une probabilité ≥{" "}
-        {(MIN_PROBABILITY * 100).toFixed(0)}%. Tiens l'accord ≈ 1 s pour que la
-        fenêtre d'analyse se stabilise.
+        Validation : l'accord ciblé doit être détecté en top-1 pendant {CONFIRMATIONS_NEEDED} frames
+        consécutives avec une probabilité ≥ {(MIN_PROBABILITY * 100).toFixed(0)}%. Tiens l'accord ≈
+        1 s pour que la fenêtre d'analyse se stabilise.
       </p>
     </div>
   );

@@ -7,12 +7,7 @@ interface TimeSignalPlotProps {
   height?: number;
 }
 
-export function TimeSignalPlot({
-  signal,
-  sampleRate,
-  title,
-  height = 200,
-}: TimeSignalPlotProps) {
+export function TimeSignalPlot({ signal, sampleRate, title, height = 200 }: TimeSignalPlotProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -123,5 +118,9 @@ export function TimeSignalPlot({
     ctx.restore();
   }, [signal, sampleRate, height]);
 
-  return <div className="time-signal-plot"><canvas ref={canvasRef} /></div>;
+  return (
+    <div className="time-signal-plot">
+      <canvas ref={canvasRef} />
+    </div>
+  );
 }

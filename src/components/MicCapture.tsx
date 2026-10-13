@@ -6,13 +6,7 @@ interface MicCaptureProps {
   onReset: () => void;
 }
 
-export function MicCapture({
-  running,
-  error,
-  onStart,
-  onStop,
-  onReset,
-}: MicCaptureProps) {
+export function MicCapture({ running, error, onStart, onStop, onReset }: MicCaptureProps) {
   return (
     <div className="mic-capture">
       {!running ? (

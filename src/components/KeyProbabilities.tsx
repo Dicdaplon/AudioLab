@@ -38,8 +38,8 @@ export function KeyProbabilities({
         <span className="key-top-prob">{(top.probability * 100).toFixed(1)}%</span>
       </div>
       <p className="key-list-hint">
-        Top {topN} sur 24 tonalités candidates (12 majeures + 12 mineures),
-        classées par probabilité (softmax sur la corrélation de Pearson <code>r</code>).
+        Top {topN} sur 24 tonalités candidates (12 majeures + 12 mineures), classées par probabilité
+        (softmax sur la corrélation de Pearson <code>r</code>).
       </p>
       <ol className="key-list">
         {rest.map((k) => (

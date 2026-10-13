@@ -21,17 +21,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import {
-  createAnalyser,
-  readSpectrumDb,
-  type AnalyserSetup,
-} from "../audio/analyser";
+import { createAnalyser, readSpectrumDb, type AnalyserSetup } from "../audio/analyser";
 import { openMicrophone, type MicSource } from "../audio/micStream";
-import {
-  CHROMA_SIZE,
-  dbSpectrumToMagnitude,
-  spectrumToChroma,
-} from "../analysis/chroma";
+import { CHROMA_SIZE, dbSpectrumToMagnitude, spectrumToChroma } from "../analysis/chroma";
 import { ChromaWindow } from "../analysis/windowing";
 import { detectKey, type KeyScore } from "../analysis/keyDetection";
 import { detectChord, type ChordScore } from "../analysis/chordDetection";
@@ -174,11 +166,7 @@ export function useTonality(options: UseTonalityOptions = {}) {
     fftSize: options.fftSize ?? DEFAULTS.fftSize,
     minFreq: options.minFreq ?? DEFAULTS.minFreq,
     maxFreq: options.maxFreq ?? DEFAULTS.maxFreq,
-    maxFilterTolerancy: clamp(
-      options.maxFilterTolerancy ?? DEFAULTS.maxFilterTolerancy,
-      0,
-      1,
-    ),
+    maxFilterTolerancy: clamp(options.maxFilterTolerancy ?? DEFAULTS.maxFilterTolerancy, 0, 1),
     maxFilterMemory: Math.round(
       clamp(
         options.maxFilterMemory ?? DEFAULTS.maxFilterMemory,
@@ -296,7 +284,6 @@ export function useTonality(options: UseTonalityOptions = {}) {
     f.setMemory(opts.maxFilterMemory);
     f.setMode(opts.maxFilterMode);
   }, [opts.maxFilterTolerancy, opts.maxFilterMemory, opts.maxFilterMode]);
-
 
   /**
    * Clear all sliding-window buffers + filter memory, without stopping the
@@ -509,15 +496,9 @@ export function useTonality(options: UseTonalityOptions = {}) {
 
         // (Re)build the time-domain lowpass filter if the cutoff changed.
         if (!lowpassTimeFilterRef.current) {
-          lowpassTimeFilterRef.current = new LowpassFilter(
-            curOpts.lowpassCutoffHz,
-            a.sampleRate,
-          );
+          lowpassTimeFilterRef.current = new LowpassFilter(curOpts.lowpassCutoffHz, a.sampleRate);
         } else {
-          lowpassTimeFilterRef.current.setCutoff(
-            curOpts.lowpassCutoffHz,
-            a.sampleRate,
-          );
+          lowpassTimeFilterRef.current.setCutoff(curOpts.lowpassCutoffHz, a.sampleRate);
         }
 
         // Filter the whole 8 s window from scratch each frame. We reset state
@@ -527,9 +508,7 @@ export function useTonality(options: UseTonalityOptions = {}) {
         const lp = lowpassTimeFilterRef.current;
         lp.reset();
         const filteredTimeSignal =
-          rawTimeSignal.length > 0
-            ? lp.processFrame(rawTimeSignal)
-            : new Float32Array(0);
+          rawTimeSignal.length > 0 ? lp.processFrame(rawTimeSignal) : new Float32Array(0);
 
         // FFT of the filtered time-domain signal for the Section 2 spectrum.
         //
@@ -544,9 +523,7 @@ export function useTonality(options: UseTonalityOptions = {}) {
           const FFT_MAX_SAMPLES = 1 << 16; // 65536
           const fftInput =
             filteredTimeSignal.length > FFT_MAX_SAMPLES
-              ? filteredTimeSignal.subarray(
-                  filteredTimeSignal.length - FFT_MAX_SAMPLES,
-                )
+              ? filteredTimeSignal.subarray(filteredTimeSignal.length - FFT_MAX_SAMPLES)
               : filteredTimeSignal;
           const fftResult = computeFftDb(fftInput, a.sampleRate);
           tempoEnvelopeDb = fftResult.spectrumDb;

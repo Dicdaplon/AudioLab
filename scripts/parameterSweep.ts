@@ -68,7 +68,7 @@ function transposeChord(chord: string, semitones: number): string {
   const base = isMinor ? chord.slice(0, -1) : chord;
   const idx = NOTE_NAMES.indexOf(base);
   if (idx < 0) throw new Error(`unknown chord root: ${base}`);
-  const newIdx = ((idx + semitones) % 12 + 12) % 12;
+  const newIdx = (((idx + semitones) % 12) + 12) % 12;
   return NOTE_NAMES[newIdx] + (isMinor ? "m" : "");
 }
 
@@ -149,9 +149,7 @@ const SAMPLES: SampleGroundTruth[] = (() => {
     const base = file.replace(/\.mp3$/, "");
     const [chordStr, tStr] = base.split("_");
     const semitones = parseInt(tStr, 10);
-    const chords = parseChordSequence(chordStr).map((c) =>
-      transposeChord(c, semitones),
-    );
+    const chords = parseChordSequence(chordStr).map((c) => transposeChord(c, semitones));
     const tonicKey = chordRootToKeyShort(chords[0]); // first chord = tonic
     out.push({
       file,
@@ -210,9 +208,7 @@ async function loadAllSamples(): Promise<LoadedSample[]> {
       sampleRate: audio.sampleRate,
       durationSeconds: audio.durationSeconds,
     });
-    process.stdout.write(
-      `${audio.durationSeconds.toFixed(1)}s, ${chromas.length} frames\n`,
-    );
+    process.stdout.write(`${audio.durationSeconds.toFixed(1)}s, ${chromas.length} frames\n`);
   }
   return loaded;
 }
@@ -384,9 +380,7 @@ function sweepTonality(samples: LoadedSample[]): TonalitySweepResult[] {
 // -----------------------------------------------------------------------------
 
 function printChordTop(results: ChordSweepResult[], topN: number): void {
-  console.log(
-    "  rank | score | window | stride | per-sample (score · top-N · file)",
-  );
+  console.log("  rank | score | window | stride | per-sample (score · top-N · file)");
   console.log("  ".padEnd(64, "-"));
   for (let i = 0; i < Math.min(topN, results.length); i++) {
     const r = results[i];
@@ -402,7 +396,9 @@ function printChordDetail(best: ChordSweepResult): void {
   );
   console.log(`  per-sample breakdown:`);
   for (const s of best.perSample) {
-    console.log(`    [${s.tag}] ${s.file}  score=${s.score.toFixed(2)}  top: [${s.top.join(", ")}]`);
+    console.log(
+      `    [${s.tag}] ${s.file}  score=${s.score.toFixed(2)}  top: [${s.top.join(", ")}]`,
+    );
   }
 }
 
@@ -410,9 +406,7 @@ function printTonalityTop(results: TonalitySweepResult[], topN: number): void {
   // Discover tags from the first row.
   const tags = Object.keys(results[0]?.perTagMean ?? {});
   const tagHeader = tags.map((t) => t.padEnd(15)).join(" ");
-  console.log(
-    `  rank | score | live | ton  | tol  | mem | mode    | ${tagHeader}`,
-  );
+  console.log(`  rank | score | live | ton  | tol  | mem | mode    | ${tagHeader}`);
   console.log("  ".padEnd(72 + tagHeader.length, "-"));
   for (let i = 0; i < Math.min(topN, results.length); i++) {
     const r = results[i];
@@ -450,7 +444,9 @@ function printTonalityDetail(best: TonalitySweepResult): void {
   );
   console.log(`  per-sample breakdown:`);
   for (const s of best.perSample) {
-    console.log(`    [${s.tag}] ${s.file}  score=${s.score.toFixed(2)}  top3: [${s.top.join(", ")}]`);
+    console.log(
+      `    [${s.tag}] ${s.file}  score=${s.score.toFixed(2)}  top3: [${s.top.join(", ")}]`,
+    );
   }
 }
 

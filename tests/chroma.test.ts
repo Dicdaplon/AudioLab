@@ -13,11 +13,7 @@ import {
  * to `targetFreq`. The spectrum mimics what AnalyserNode would deliver:
  * length N = fftSize / 2, frequencies f_k = k * sampleRate / (2N).
  */
-function singleToneSpectrum(
-  targetFreq: number,
-  sampleRate: number,
-  n = 8192,
-): Float32Array {
+function singleToneSpectrum(targetFreq: number, sampleRate: number, n = 8192): Float32Array {
   const binHz = sampleRate / (2 * n);
   const k = Math.max(1, Math.round(targetFreq / binHz));
   const spectrum = new Float32Array(n);

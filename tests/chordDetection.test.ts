@@ -1,10 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import {
-  detectChord,
-  cosineSimilarity,
-  CHORD_TEMPLATES,
-} from "../src/analysis/chordDetection";
+import { detectChord, cosineSimilarity, CHORD_TEMPLATES } from "../src/analysis/chordDetection";
 import { CHROMA_SIZE } from "../src/analysis/chroma";
 
 /** Build a chroma vector where the listed pitch classes are equally active. */
@@ -40,9 +36,7 @@ describe("cosineSimilarity", () => {
   });
 
   it("throws on length mismatch", () => {
-    expect(() =>
-      cosineSimilarity(new Float32Array(3), new Float32Array(4)),
-    ).toThrow();
+    expect(() => cosineSimilarity(new Float32Array(3), new Float32Array(4))).toThrow();
   });
 });
 
@@ -118,9 +112,7 @@ describe("detectChord", () => {
     const scores = detectChord(chordChroma([0, 4, 7]));
     expect(scores).toHaveLength(24);
     for (let i = 1; i < scores.length; i++) {
-      expect(scores[i - 1].probability).toBeGreaterThanOrEqual(
-        scores[i].probability,
-      );
+      expect(scores[i - 1].probability).toBeGreaterThanOrEqual(scores[i].probability);
     }
     const sum = scores.reduce((a, s) => a + s.probability, 0);
     expect(sum).toBeCloseTo(1, 6);

@@ -84,10 +84,7 @@ export function averageChromas(chromas: ArrayLike<ArrayLike<number>>): Float32Ar
  * [-100, 0]) into a linear magnitude spectrum. Values below `floorDb` are
  * clamped to 0 so the chroma is not polluted by the noise floor.
  */
-export function dbSpectrumToMagnitude(
-  dbSpectrum: ArrayLike<number>,
-  floorDb = -90,
-): Float32Array {
+export function dbSpectrumToMagnitude(dbSpectrum: ArrayLike<number>, floorDb = -90): Float32Array {
   const out = new Float32Array(dbSpectrum.length);
   for (let i = 0; i < dbSpectrum.length; i++) {
     const db = dbSpectrum[i];

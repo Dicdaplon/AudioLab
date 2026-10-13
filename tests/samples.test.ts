@@ -182,7 +182,7 @@ describe("FL Studio noisy samples — ToneBaseTonality", () => {
 
   for (const { file, tonicShort } of cases) {
     // Major key: relative minor is at -3 semitones (Am for C major, Bm for D major).
-    const minorRoot = (tonicShort === "C" ? "Am" : tonicShort === "D" ? "Bm" : "");
+    const minorRoot = tonicShort === "C" ? "Am" : tonicShort === "D" ? "Bm" : "";
     const accepted = [tonicShort, minorRoot];
 
     it(

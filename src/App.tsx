@@ -5,10 +5,7 @@ import { ChordView } from "./components/ChordView";
 import { ChromaView } from "./components/ChromaView";
 import { KeyProbabilities } from "./components/KeyProbabilities";
 import { MicCapture } from "./components/MicCapture";
-import {
-  SettingsPanel,
-  type ToneBaseSettings,
-} from "./components/SettingsPanel";
+import { SettingsPanel, type ToneBaseSettings } from "./components/SettingsPanel";
 import { ToneBaseTonalityView } from "./components/ToneBaseTonalityView";
 import { WolfJumper } from "./components/WolfJumper";
 import { FftTab } from "./components/FftTab";
@@ -60,8 +57,8 @@ export default function App() {
       <header>
         <h1>Tonality Detector</h1>
         <p className="subtitle">
-          3 fenêtres en parallèle · accord (template matching) · tonalité
-          (Krumhansl-Schmuckler maj+min) · ToneBaseTonality (présence)
+          3 fenêtres en parallèle · accord (template matching) · tonalité (Krumhansl-Schmuckler
+          maj+min) · ToneBaseTonality (présence)
         </p>
         <nav className="tabs">
           <button
@@ -113,10 +110,7 @@ export default function App() {
           />
 
           <section className="chroma-panels">
-            <ChromaView
-              title="Chroma instantané"
-              chroma={tonality.instantaneousChroma}
-            />
+            <ChromaView title="Chroma instantané" chroma={tonality.instantaneousChroma} />
             <ChromaView
               title={`Chord window (${tonality.config.chordWindowSeconds}s)`}
               chroma={tonality.chordChroma}
@@ -166,11 +160,7 @@ export default function App() {
       )}
 
       {tab === "game" && (
-        <ChordGame
-          chords={tonality.chords}
-          running={tonality.running}
-          onStart={tonality.start}
-        />
+        <ChordGame chords={tonality.chords} running={tonality.running} onStart={tonality.start} />
       )}
 
       {tab === "jumper" && (

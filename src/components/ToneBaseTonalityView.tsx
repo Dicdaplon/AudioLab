@@ -64,11 +64,7 @@ export function ToneBaseTonalityView({
 
       <div className="tone-base-bars">
         <PresenceBars title="Live chroma filtré" values={filteredLiveChroma} />
-        <PresenceBars
-          title="Indicateur courant (0/1)"
-          values={presenceIndicator}
-          max={1}
-        />
+        <PresenceBars title="Indicateur courant (0/1)" values={presenceIndicator} max={1} />
         <PresenceBars title={`Présence ${tonalitySeconds}s`} values={presence} max={1} />
       </div>
 
@@ -77,13 +73,11 @@ export function ToneBaseTonalityView({
           <div className="key-top">
             <span className="key-top-label">Tonalité (présence)</span>
             <span className="key-top-name">{top.name}</span>
-            <span className="key-top-prob">
-              {(top.probability * 100).toFixed(1)}%
-            </span>
+            <span className="key-top-prob">{(top.probability * 100).toFixed(1)}%</span>
           </div>
           <p className="key-list-hint">
-            Top {topN} sur 24 candidats — corrélation Krumhansl-Schmuckler sur
-            l'histogramme de présence (et non l'énergie).
+            Top {topN} sur 24 candidats — corrélation Krumhansl-Schmuckler sur l'histogramme de
+            présence (et non l'énergie).
           </p>
           <ol className="key-list">
             {rest.map((k) => (
@@ -95,9 +89,7 @@ export function ToneBaseTonalityView({
                     style={{ width: `${(k.probability * 100).toFixed(2)}%` }}
                   />
                 </div>
-                <span className="key-pct">
-                  {(k.probability * 100).toFixed(1)}%
-                </span>
+                <span className="key-pct">{(k.probability * 100).toFixed(1)}%</span>
                 <span className="key-corr">r={k.correlation.toFixed(2)}</span>
               </li>
             ))}

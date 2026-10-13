@@ -161,9 +161,12 @@ export function SpectrumPlot({
             : freqSpan > 100
               ? 25
               : 10;
-    const formatFreq = (f: number) =>
-      displayMaxFreq >= 1000 ? `${f / 1000}k` : `${f}`;
-    for (let freq = Math.ceil(minFreqHz / freqStep) * freqStep; freq <= displayMaxFreq; freq += freqStep) {
+    const formatFreq = (f: number) => (displayMaxFreq >= 1000 ? `${f / 1000}k` : `${f}`);
+    for (
+      let freq = Math.ceil(minFreqHz / freqStep) * freqStep;
+      freq <= displayMaxFreq;
+      freq += freqStep
+    ) {
       const binIdx = freq / binHz;
       if (binIdx < minBinIdx || binIdx > maxBinIdx) continue;
       const x = padding + ((binIdx - minBinIdx) / numBinsDisplay) * plotWidth;
@@ -192,9 +195,7 @@ export function SpectrumPlot({
     ctx.beginPath();
     for (let k = minBinIdx; k <= maxBinIdx && k < spectrumDb.length; k++) {
       const db = spectrumDb[k];
-      const dbNorm = Number.isFinite(db)
-        ? (db - minDb) / (maxDb - minDb)
-        : 0;
+      const dbNorm = Number.isFinite(db) ? (db - minDb) / (maxDb - minDb) : 0;
       const x = padding + ((k - minBinIdx) / numBinsDisplay) * plotWidth;
       const y = height - padding - dbNorm * plotHeight;
       if (k === minBinIdx) ctx.moveTo(x, y);
@@ -258,7 +259,16 @@ export function SpectrumPlot({
     ctx.textAlign = "center";
     ctx.fillText("Magnitude (dB) →", 0, 0);
     ctx.restore();
-  }, [spectrumDb, binHz, noiseFloorDb, height, showDerivative, showScaleNotes, minFreqHz, maxFreqHz]);
+  }, [
+    spectrumDb,
+    binHz,
+    noiseFloorDb,
+    height,
+    showDerivative,
+    showScaleNotes,
+    minFreqHz,
+    maxFreqHz,
+  ]);
 
   return (
     <div className="spectrum-plot">

@@ -14,7 +14,7 @@ export interface AnalyserSetup {
   /** Effective sample rate of the AudioContext. */
   sampleRate: number;
   /** Pre-allocated buffer to receive getFloatFrequencyData (dB) output. */
-  dbBuffer: any;
+  dbBuffer: Float32Array<ArrayBuffer>;
   /** Callback for time-domain audio blocks (if time capture is active). */
   audioBlockCallback?: AudioBlockCallback;
 }
@@ -79,9 +79,7 @@ export async function startTimeCapture(
 
   // Load and register the worklet code.
   try {
-    await context.audioWorklet.addModule(
-      new URL("./timeCapture.worklet.ts", import.meta.url),
-    );
+    await context.audioWorklet.addModule(new URL("./timeCapture.worklet.ts", import.meta.url));
   } catch (err) {
     throw new Error(
       `Failed to load time capture worklet: ${err instanceof Error ? err.message : String(err)}`,

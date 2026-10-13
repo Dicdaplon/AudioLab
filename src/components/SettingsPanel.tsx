@@ -58,9 +58,7 @@ export function SettingsPanel({
           max={120}
           step={1}
           value={settings.tonalityAcquisitionSeconds}
-          onChange={(e) =>
-            update({ tonalityAcquisitionSeconds: Number(e.target.value) })
-          }
+          onChange={(e) => update({ tonalityAcquisitionSeconds: Number(e.target.value) })}
         />
         <span className="value">{settings.tonalityAcquisitionSeconds} s</span>
       </div>
@@ -74,9 +72,7 @@ export function SettingsPanel({
           max={1}
           step={0.05}
           value={settings.maxFilterTolerancy}
-          onChange={(e) =>
-            update({ maxFilterTolerancy: Number(e.target.value) })
-          }
+          onChange={(e) => update({ maxFilterTolerancy: Number(e.target.value) })}
         />
         <span className="value">{(settings.maxFilterTolerancy * 100).toFixed(0)} %</span>
       </div>
@@ -100,9 +96,7 @@ export function SettingsPanel({
         <select
           id="mode"
           value={settings.maxFilterMode}
-          onChange={(e) =>
-            update({ maxFilterMode: e.target.value as HighWaterMarkMode })
-          }
+          onChange={(e) => update({ maxFilterMode: e.target.value as HighWaterMarkMode })}
         >
           <option value="mean">Mean (default)</option>
           <option value="median">Median (more robust)</option>

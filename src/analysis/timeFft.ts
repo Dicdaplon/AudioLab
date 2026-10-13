@@ -41,10 +41,7 @@ export interface FftDbResult {
  * The magnitude spectrum is one-sided (DC to Nyquist). Each bin k has
  * center frequency: f_k = k * binHz, where binHz = sampleRate / (2 * N).
  */
-export function computeFftDb(
-  signal: Float32Array,
-  sampleRate: number,
-): FftDbResult {
+export function computeFftDb(signal: Float32Array, sampleRate: number): FftDbResult {
   const fftSize = nextPow2(signal.length);
 
   // Pad input to FFT size if necessary.

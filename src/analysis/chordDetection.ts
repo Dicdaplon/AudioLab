@@ -96,17 +96,12 @@ export function cosineSimilarity(a: ArrayLike<number>, b: ArrayLike<number>): nu
  * @param temperature  Softmax temperature on similarities. Default 0.1.
  * @returns            Sorted (descending) array of ChordScore.
  */
-export function detectChord(
-  chroma: ArrayLike<number>,
-  temperature = 0.1,
-): ChordScore[] {
+export function detectChord(chroma: ArrayLike<number>, temperature = 0.1): ChordScore[] {
   if (chroma.length !== CHROMA_SIZE) {
     throw new Error(`expected chroma of length ${CHROMA_SIZE}, got ${chroma.length}`);
   }
 
-  const similarities = CHORD_TEMPLATES.map((c) =>
-    cosineSimilarity(chroma, c.template),
-  );
+  const similarities = CHORD_TEMPLATES.map((c) => cosineSimilarity(chroma, c.template));
   const probs = softmax(similarities, temperature);
 
   const results: ChordScore[] = CHORD_TEMPLATES.map((c, i) => ({
