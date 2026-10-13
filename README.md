@@ -14,6 +14,25 @@ recorded or uploaded, all processing happens locally in the page).
 
 ![AudioLab screenshot](docs/screenshot.png)
 
+## About
+
+I’m a developer and an engineer in signal and image processing.
+I also play music, and I teach it.
+
+Audio is where the two meet. A sound is a signal, a chord is a shape in a spectrum,
+a groove is a pattern in time.
+
+**This repository is my own research library, in a way.** Each tool started as a
+question (can a machine hear the key of a jam, live? where does the tempo hide in a
+waveform?). Some answers are solid, some are still rough; both are kept here, documented
+and tested, so I can build on them. AI is the next layer: classical signal processing
+first, learned models where they genuinely help.
+
+Alongside this, I give music lessons and run a collective of musicians. That is where
+**l’école du loup(é)** comes from, a space I created to talk about music theory,
+improvisation and listening: [ecoleduloup.fr](https://ecoleduloup.fr) (in French).
+These packages are meant to power its interactive exercises.
+
 ## Packages
 
 This repository is an npm workspace. The analysis and the UI are published as two
