@@ -79,6 +79,18 @@ describe("TonalityEngine", () => {
     expect(engine44.processDbSpectrum(db44, 44100).chords[0].name).toBe("C");
   });
 
+  it("processSpectrum (linear) matches processDbSpectrum (dB) above the gate", () => {
+    const db = dbSpectrumFor([57, 60, 64]);
+    const magnitude = db.map((d) => (Number.isFinite(d) ? Math.pow(10, d / 20) : 0));
+    const fromDb = new TonalityEngine().processDbSpectrum(db, 48000);
+    const fromLinear = new TonalityEngine().processSpectrum(magnitude, 48000);
+    expect(fromLinear.chords[0].name).toBe("Am");
+    for (let pc = 0; pc < CHROMA_SIZE; pc++) {
+      expect(fromLinear.instantaneousChroma[pc]).toBeCloseTo(fromDb.instantaneousChroma[pc], 6);
+    }
+    expect(fromLinear.signalLevelDb).toBeCloseTo(fromDb.signalLevelDb, 6);
+  });
+
   it("reports the silence level for an all-silent spectrum", () => {
     const engine = new TonalityEngine();
     const frame = engine.processDbSpectrum(new Float32Array(8192).fill(-Infinity), 48000);
