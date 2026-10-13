@@ -1,49 +1,22 @@
 /**
- * Offline analysis pipeline used by sample-based integration tests.
+ * Offline analysis pipeline used by the sample-based tests and the CLI
+ * scripts.
  *
- * Mirrors the live pipeline (mic → spectrum → chroma → window → detect),
- * but uses a Node-side mp3 decoder + pure-JS FFT instead of AnalyserNode.
- * The chroma / windowing / detection modules are imported as-is — so what
- * passes these tests passes the same code that runs in the browser.
+ * Decoded audio is framed with a pure-JS FFT (Hann window) instead of the
+ * browser's AnalyserNode (Blackman window, 1/N scaling); from the chroma
+ * onwards the frames drive the same `TonalityEngine` that the live hook
+ * uses, so what passes these tests exercises the browser's window, filter
+ * and detection code. The two front-ends still differ in window shape,
+ * frame rate and the dB round-trip of the AnalyserNode path.
  */
 
-import { readFile } from "node:fs/promises";
-import decode from "audio-decode";
-
-import { CHROMA_SIZE, spectrumToChroma } from "../../src/analysis/chroma";
-import { detectChord, type ChordScore } from "../../src/analysis/chordDetection";
-import { detectKey, type KeyScore } from "../../src/analysis/keyDetection";
-import { applyHannWindow, fftMagnitude } from "../../src/analysis/fft";
-import { ChromaWindow } from "../../src/analysis/windowing";
-import { HighWaterMarkFilter, type HighWaterMarkOptions } from "../../src/analysis/highWaterMark";
-import { detectKeyFromPresence } from "../../src/analysis/presenceTonality";
-
-export interface DecodedAudio {
-  /** Mono Float32 signal (channels averaged). */
-  samples: Float32Array;
-  sampleRate: number;
-  durationSeconds: number;
-}
-
-/** Decode an audio file (mp3/wav/flac/ogg) to mono Float32 samples. */
-export async function decodeAudioFile(path: string): Promise<DecodedAudio> {
-  const buf = await readFile(path);
-  // `audio-decode` accepts any ArrayBuffer view; pass a Uint8Array.
-  const u8 = new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
-  const audioBuffer = await decode(u8);
-  const length = audioBuffer.length;
-  const channels = audioBuffer.numberOfChannels;
-  const mono = new Float32Array(length);
-  for (let ch = 0; ch < channels; ch++) {
-    const data = audioBuffer.getChannelData(ch);
-    for (let i = 0; i < length; i++) mono[i] += data[i] / channels;
-  }
-  return {
-    samples: mono,
-    sampleRate: audioBuffer.sampleRate,
-    durationSeconds: length / audioBuffer.sampleRate,
-  };
-}
+import { CHROMA_SIZE, spectrumToChroma } from "../chroma";
+import { detectChord, type ChordScore } from "../chordDetection";
+import { detectKey, type KeyScore } from "../keyDetection";
+import { applyHannWindow, fftMagnitude } from "../fft";
+import type { HighWaterMarkOptions } from "../highWaterMark";
+import { TonalityEngine, type TonalityFrame } from "../engine/tonalityEngine";
+import type { DecodedAudio } from "./decodeAudio";
 
 export interface FrameOptions {
   fftSize: number;
@@ -198,33 +171,28 @@ export interface PresenceTonalityRunResult {
   presence: Float32Array;
   /** Tonality ranking derived from the presence histogram. */
   keys: KeyScore[];
+  /** Full engine frame after the last chroma. */
+  frame: TonalityFrame;
 }
 
 /**
- * Replays the ToneBaseTonality pipeline (live window → HWM filter → indicator
- * → tonality presence accumulator → detectKey) over a precomputed chroma
- * sequence, returning the final presence histogram and tonality ranking.
+ * Replay a chroma sequence through the `TonalityEngine` (the live pipeline:
+ * live window → high-water-mark filter → indicator → presence accumulator →
+ * detectKey) and return the final presence histogram and tonality ranking.
  */
 export function runPresenceTonality(
   chromas: Float32Array[],
   opts: PresenceTonalityRunOptions,
 ): PresenceTonalityRunResult {
-  const live = new ChromaWindow({
-    windowSeconds: opts.liveAcquisitionSeconds,
+  const engine = new TonalityEngine({
     framesPerSecond: opts.framesPerSecond,
+    liveAcquisitionSeconds: opts.liveAcquisitionSeconds,
+    tonalityAcquisitionSeconds: opts.tonalityAcquisitionSeconds,
+    ...(opts.filter?.tolerancy !== undefined && { filterTolerancy: opts.filter.tolerancy }),
+    ...(opts.filter?.memory !== undefined && { filterMemory: opts.filter.memory }),
+    ...(opts.filter?.mode !== undefined && { filterMode: opts.filter.mode }),
   });
-  const presence = new ChromaWindow({
-    windowSeconds: opts.tonalityAcquisitionSeconds,
-    framesPerSecond: opts.framesPerSecond,
-  });
-  const filter = new HighWaterMarkFilter(opts.filter);
-
-  for (const c of chromas) {
-    live.push(c);
-    const liveAgg = live.aggregate();
-    const indicator = filter.filterToIndicator(liveAgg);
-    presence.push(indicator);
-  }
-  const histogram = presence.aggregateRaw();
-  return { presence: histogram, keys: detectKeyFromPresence(histogram) };
+  for (const c of chromas) engine.pushChroma(c);
+  const frame = engine.snapshot();
+  return { presence: frame.presenceHistogram, keys: frame.presenceKeys, frame };
 }

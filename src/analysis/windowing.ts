@@ -5,8 +5,19 @@
  * analysis cadence (e.g. one every 100 ms → 80 frames for an 8 s window). The
  * aggregate is the element-wise mean, then L1-renormalized.
  *
+ * Because every instantaneous chroma is itself L1-normalised (it sums to 1),
+ * the mean gives each frame the same weight whatever its loudness: the
+ * window is level-invariant, not energy-weighted. A fortissimo frame and a
+ * frame of microphone hiss contribute equally; only exactly-silent frames
+ * (all-zero chroma) contribute nothing to the ranking.
+ *
  * The window length can be reconfigured at runtime via `resize()`, which is
  * useful when the UI exposes the window size as a slider.
+ *
+ * The element-wise sum is maintained incrementally (add the new frame,
+ * subtract the evicted one) so `aggregate()` is O(12) instead of O(N·12).
+ * It is recomputed from scratch each time the ring wraps, which bounds the
+ * floating-point drift of the running sum.
  */
 
 import { CHROMA_SIZE, l1Normalize } from "./chroma";
@@ -23,13 +34,17 @@ export class ChromaWindow {
   private buffer: Float32Array[] = [];
   private head = 0;
   private filled = 0;
+  private sum = new Float64Array(CHROMA_SIZE);
 
   constructor(options: ChromaWindowOptions) {
-    const { windowSeconds, framesPerSecond } = options;
-    if (windowSeconds <= 0 || framesPerSecond <= 0) {
+    this.capacity = ChromaWindow.capacityFor(options);
+  }
+
+  private static capacityFor({ windowSeconds, framesPerSecond }: ChromaWindowOptions): number {
+    if (!(windowSeconds > 0) || !(framesPerSecond > 0)) {
       throw new Error("windowSeconds and framesPerSecond must be > 0");
     }
-    this.capacity = Math.max(1, Math.round(windowSeconds * framesPerSecond));
+    return Math.max(1, Math.round(windowSeconds * framesPerSecond));
   }
 
   /** Number of frames currently held in the window. */
@@ -47,22 +62,14 @@ export class ChromaWindow {
    * (and dropping oldest if the new capacity is smaller).
    */
   resize(options: ChromaWindowOptions): void {
-    const { windowSeconds, framesPerSecond } = options;
-    if (windowSeconds <= 0 || framesPerSecond <= 0) {
-      throw new Error("windowSeconds and framesPerSecond must be > 0");
-    }
-    const newCapacity = Math.max(1, Math.round(windowSeconds * framesPerSecond));
+    const newCapacity = ChromaWindow.capacityFor(options);
     if (newCapacity === this.capacity) return;
 
-    // Reconstruct the linear order of currently held frames (oldest → newest).
     const ordered = this.snapshotOrdered();
-    const keepCount = Math.min(ordered.length, newCapacity);
-    const kept = ordered.slice(ordered.length - keepCount);
+    const kept = ordered.slice(Math.max(0, ordered.length - newCapacity));
 
     this.capacity = newCapacity;
-    this.buffer = [];
-    this.head = 0;
-    this.filled = 0;
+    this.reset();
     for (const frame of kept) this.push(frame);
   }
 
@@ -73,21 +80,22 @@ export class ChromaWindow {
     }
     const copy = new Float32Array(CHROMA_SIZE);
     for (let i = 0; i < CHROMA_SIZE; i++) copy[i] = chroma[i];
+
+    if (this.filled === this.capacity) {
+      const evicted = this.buffer[this.head];
+      for (let i = 0; i < CHROMA_SIZE; i++) this.sum[i] -= evicted[i];
+    } else {
+      this.filled++;
+    }
+    for (let i = 0; i < CHROMA_SIZE; i++) this.sum[i] += copy[i];
     this.buffer[this.head] = copy;
     this.head = (this.head + 1) % this.capacity;
-    if (this.filled < this.capacity) this.filled++;
+    if (this.head === 0) this.recomputeSum();
   }
 
   /** Element-wise mean of the held frames, L1-normalized. Zero vector if empty. */
   aggregate(): Float32Array {
-    const out = new Float32Array(CHROMA_SIZE);
-    if (this.filled === 0) return out;
-    for (let i = 0; i < this.filled; i++) {
-      const frame = this.buffer[i];
-      for (let j = 0; j < CHROMA_SIZE; j++) out[j] += frame[j];
-    }
-    for (let j = 0; j < CHROMA_SIZE; j++) out[j] /= this.filled;
-    return l1Normalize(out);
+    return l1Normalize(this.aggregateRaw());
   }
 
   /**
@@ -98,11 +106,7 @@ export class ChromaWindow {
   aggregateRaw(): Float32Array {
     const out = new Float32Array(CHROMA_SIZE);
     if (this.filled === 0) return out;
-    for (let i = 0; i < this.filled; i++) {
-      const frame = this.buffer[i];
-      for (let j = 0; j < CHROMA_SIZE; j++) out[j] += frame[j];
-    }
-    for (let j = 0; j < CHROMA_SIZE; j++) out[j] /= this.filled;
+    for (let j = 0; j < CHROMA_SIZE; j++) out[j] = this.sum[j] / this.filled;
     return out;
   }
 
@@ -111,6 +115,15 @@ export class ChromaWindow {
     this.buffer.length = 0;
     this.head = 0;
     this.filled = 0;
+    this.sum.fill(0);
+  }
+
+  private recomputeSum(): void {
+    this.sum.fill(0);
+    for (let i = 0; i < this.filled; i++) {
+      const frame = this.buffer[i];
+      for (let j = 0; j < CHROMA_SIZE; j++) this.sum[j] += frame[j];
+    }
   }
 
   /** Return frames in oldest → newest order. */
@@ -118,11 +131,9 @@ export class ChromaWindow {
     const out: Float32Array[] = [];
     if (this.filled === 0) return out;
     if (this.filled < this.capacity) {
-      // Buffer was filled from index 0 onwards, in order.
       for (let i = 0; i < this.filled; i++) out.push(this.buffer[i]);
       return out;
     }
-    // Buffer is full; oldest is at `head`, walk around.
     for (let i = 0; i < this.capacity; i++) {
       out.push(this.buffer[(this.head + i) % this.capacity]);
     }

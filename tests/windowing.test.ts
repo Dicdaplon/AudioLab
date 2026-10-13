@@ -126,4 +126,48 @@ describe("ChromaWindow", () => {
     expect(() => w.resize({ windowSeconds: 0, framesPerSecond: 3 })).toThrow();
     expect(() => w.resize({ windowSeconds: 1, framesPerSecond: 0 })).toThrow();
   });
+
+  it("keeps the mean of L1-normalised frames L1-normalised before renormalisation", () => {
+    const w = new ChromaWindow({ windowSeconds: 1, framesPerSecond: 5 });
+    for (let i = 0; i < 5; i++) {
+      const v = new Float32Array(12).fill(0);
+      v[i] = 0.5;
+      v[(i + 5) % 12] = 0.5; // each frame sums to 1
+      w.push(v);
+    }
+    const raw = w.aggregateRaw();
+    expect(raw.reduce((a, b) => a + b, 0)).toBeCloseTo(1, 6);
+  });
+
+  it("running sum matches a naive recomputation through wraps and resizes", () => {
+    const w = new ChromaWindow({ windowSeconds: 1, framesPerSecond: 7 });
+    // Model: the frames the window should hold (newest last).
+    let kept: Float32Array[] = [];
+    let seed = 99;
+    const rand = () => {
+      seed = (seed * 48271) % 2147483647;
+      return seed / 2147483647;
+    };
+    const check = () => {
+      const expected = new Array(12).fill(0);
+      for (const f of kept) for (let j = 0; j < 12; j++) expected[j] += f[j] / kept.length;
+      const raw = w.aggregateRaw();
+      expect(w.size).toBe(kept.length);
+      for (let j = 0; j < 12; j++) expect(raw[j]).toBeCloseTo(expected[j], 5);
+    };
+    const resize = (fps: number) => {
+      w.resize({ windowSeconds: 1, framesPerSecond: fps });
+      kept = kept.slice(-w.maxSize);
+      check();
+    };
+    for (let i = 0; i < 200; i++) {
+      const f = new Float32Array(12).map(() => rand());
+      w.push(f);
+      kept.push(f);
+      kept = kept.slice(-w.maxSize);
+      check();
+      if (i === 50) resize(3);
+      if (i === 120) resize(11);
+    }
+  });
 });

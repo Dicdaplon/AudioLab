@@ -12,10 +12,10 @@ import { fileURLToPath } from "node:url";
 import {
   analyzeOverall,
   computeChromaSequence,
-  decodeAudioFile,
   runPresenceTonality,
   slidingChordHistogram,
-} from "../tests/helpers/offlinePipeline";
+} from "../src/analysis/offline/offlinePipeline";
+import { decodeAudioFile } from "../src/analysis/offline/decodeAudio";
 import { HIGH_WATER_MARK_DEFAULTS } from "../src/analysis/highWaterMark";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

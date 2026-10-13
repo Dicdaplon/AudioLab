@@ -6,10 +6,10 @@ import { describe, it, expect } from "vitest";
 import {
   analyzeOverall,
   computeChromaSequence,
-  decodeAudioFile,
   runPresenceTonality,
   slidingChordHistogram,
-} from "./helpers/offlinePipeline";
+} from "../src/analysis/offline/offlinePipeline";
+import { decodeAudioFile } from "../src/analysis/offline/decodeAudio";
 import { keyShortName, relativeMajorTonic } from "../src/analysis/keyDetection";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

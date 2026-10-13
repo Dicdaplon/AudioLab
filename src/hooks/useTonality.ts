@@ -1,22 +1,10 @@
 /**
- * React hook that orchestrates the full live pipeline.
+ * React hook that orchestrates the live pipeline: microphone → AnalyserNode
+ * spectrum → `TonalityEngine` (chroma windows, high-water-mark filter,
+ * presence histogram, rankings) → React state, at `framesPerSecond`.
  *
- * Three sliding ChromaWindows + one HighWaterMark + one presence accumulator
- * run in parallel from a single FFT per frame:
- *
- *   chordWindow            (1 s default)         → 24 chord probabilities
- *   liveAcquisitionWindow  (8 s default)         → 24 key probabilities (energy)
- *   tonalityAcquisitionWin (30 s default)        → 24 key probabilities (energy)
- *
- *   ToneBaseTonality (presence-based, secondary path):
- *     liveAcquisitionWindow.aggregate()
- *      → HighWaterMarkFilter (configurable tolerancy + memory)
- *      → binary indicator
- *      → presenceWindow (over tonalityAcquisition seconds)
- *      → detectKeyFromPresence
- *
- * Window sizes and filter params are reactive: changing them rebuilds the
- * affected buffers / filter state on the fly.
+ * Window sizes and filter params are reactive: changing them reconfigures
+ * the engine on the fly.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -24,33 +12,33 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createAnalyser, readSpectrumDb, type AnalyserSetup } from "../audio/analyser";
 import { toMicError } from "../audio/errors";
 import { openMicrophone, type MicSource } from "../audio/micStream";
-import { CHROMA_SIZE, dbSpectrumToMagnitude, spectrumToChroma } from "../analysis/chroma";
-import { ChromaWindow } from "../analysis/windowing";
-import { detectKey, type KeyScore } from "../analysis/keyDetection";
-import { detectChord, type ChordScore } from "../analysis/chordDetection";
-import { detectKeyFromPresence } from "../analysis/presenceTonality";
+import { CHROMA_SIZE } from "../analysis/chroma";
 import {
-  HighWaterMarkFilter,
+  TonalityEngine,
+  emptyTonalityFrame,
+  type TonalityFrame,
+} from "../analysis/engine/tonalityEngine";
+import {
   HIGH_WATER_MARK_MEMORY_MAX,
   HIGH_WATER_MARK_MEMORY_MIN,
   type HighWaterMarkMode,
 } from "../analysis/highWaterMark";
 import { clamp } from "../analysis/math";
 import { estimateNoiseFloor, type NoiseFloorMethod } from "../analysis/noiseFloor";
+import { LowpassFilter } from "../analysis/lowpass";
+import { TimeRingBuffer } from "../analysis/timeBuffer";
+import { computeFftDb } from "../analysis/timeFft";
 import {
   ANALYSIS_DEFAULTS,
   DEFAULT_DETECTOR_SETTINGS,
   DEFAULT_FFT_SETTINGS,
   LOWPASS_CUTOFF_RANGE,
 } from "../config/settings";
-import { LowpassFilter } from "../analysis/lowpass";
-import { TimeRingBuffer } from "../analysis/timeBuffer";
-import { computeFftDb } from "../analysis/timeFft";
 
 export interface UseTonalityOptions {
-  /** Live acquisition window length (seconds). Was "short key window". */
+  /** Live acquisition window length (seconds). */
   liveAcquisitionSeconds?: number;
-  /** Tonality acquisition window length (seconds). Was "long key window". */
+  /** Tonality acquisition window length (seconds). */
   tonalityAcquisitionSeconds?: number;
   /** Chord detection window length (seconds). */
   chordWindowSeconds?: number;
@@ -72,43 +60,9 @@ export interface UseTonalityOptions {
   lowpassCutoffHz?: number;
 }
 
-export interface TonalityState {
+export interface TonalityState extends TonalityFrame {
   running: boolean;
   error: string | null;
-
-  /** Latest single-frame chroma (12-D). */
-  instantaneousChroma: Float32Array;
-
-  /** Chroma averaged over the chord window. */
-  chordChroma: Float32Array;
-  /** Chroma averaged over the live acquisition window. */
-  liveAcquisitionChroma: Float32Array;
-  /** Chroma averaged over the tonality acquisition window. */
-  tonalityAcquisitionChroma: Float32Array;
-
-  /** Live acquisition chroma AFTER the high-water-mark filter. */
-  filteredLiveChroma: Float32Array;
-  /** Binary 0/1 indicator derived from the filtered live chroma. */
-  presenceIndicator: Float32Array;
-  /** Mean presence over the tonality acquisition window (∈ [0, 1]). */
-  presenceHistogram: Float32Array;
-
-  /** Current threshold value used by the filter. */
-  filterThreshold: number;
-  /** Most recent peak observed by the filter. */
-  filterLastPeak: number;
-
-  /** Average dB of the last spectrum frame in the music band [minFreq, maxFreq]. */
-  signalLevelDb: number;
-
-  /** Ranked chord probabilities (chord window). */
-  chords: ChordScore[];
-  /** Ranked 24-key probabilities (energy, live window). */
-  liveKeys: KeyScore[];
-  /** Ranked 24-key probabilities (energy, tonality window). */
-  tonalityKeys: KeyScore[];
-  /** Ranked 24-key probabilities (presence-based, ToneBaseTonality). */
-  presenceKeys: KeyScore[];
 
   /** Effective configured durations + filter params, mirrored for the UI. */
   config: {
@@ -180,22 +134,9 @@ export function useTonality(options: UseTonalityOptions = {}) {
   };
 
   const [state, setState] = useState<TonalityState>(() => ({
+    ...emptyTonalityFrame(),
     running: false,
     error: null,
-    instantaneousChroma: emptyVector(),
-    chordChroma: emptyVector(),
-    liveAcquisitionChroma: emptyVector(),
-    tonalityAcquisitionChroma: emptyVector(),
-    filteredLiveChroma: emptyVector(),
-    presenceIndicator: emptyVector(),
-    presenceHistogram: emptyVector(),
-    filterThreshold: 0,
-    filterLastPeak: 0,
-    signalLevelDb: -100,
-    chords: [],
-    liveKeys: [],
-    tonalityKeys: [],
-    presenceKeys: [],
     config: {
       liveAcquisitionSeconds: opts.liveAcquisitionSeconds,
       tonalityAcquisitionSeconds: opts.tonalityAcquisitionSeconds,
@@ -222,11 +163,7 @@ export function useTonality(options: UseTonalityOptions = {}) {
 
   const micRef = useRef<MicSource | null>(null);
   const analyserRef = useRef<AnalyserSetup | null>(null);
-  const chordWindowRef = useRef<ChromaWindow | null>(null);
-  const liveWindowRef = useRef<ChromaWindow | null>(null);
-  const tonalityWindowRef = useRef<ChromaWindow | null>(null);
-  const presenceWindowRef = useRef<ChromaWindow | null>(null);
-  const filterRef = useRef<HighWaterMarkFilter | null>(null);
+  const engineRef = useRef<TonalityEngine | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Tempo analysis: a single lowpass filter applied to the time-domain signal
@@ -239,47 +176,30 @@ export function useTonality(options: UseTonalityOptions = {}) {
   const optsRef = useRef(opts);
   optsRef.current = opts;
 
-  // Resize windows when their seconds setting changes during a session.
+  // Reconfigure the engine when window sizes or filter params change.
   useEffect(() => {
-    if (chordWindowRef.current) {
-      chordWindowRef.current.resize({
-        windowSeconds: opts.chordWindowSeconds,
-        framesPerSecond: opts.framesPerSecond,
-      });
-    }
-    if (liveWindowRef.current) {
-      liveWindowRef.current.resize({
-        windowSeconds: opts.liveAcquisitionSeconds,
-        framesPerSecond: opts.framesPerSecond,
-      });
-    }
-    if (tonalityWindowRef.current) {
-      tonalityWindowRef.current.resize({
-        windowSeconds: opts.tonalityAcquisitionSeconds,
-        framesPerSecond: opts.framesPerSecond,
-      });
-    }
-    if (presenceWindowRef.current) {
-      presenceWindowRef.current.resize({
-        windowSeconds: opts.tonalityAcquisitionSeconds,
-        framesPerSecond: opts.framesPerSecond,
-      });
-    }
+    engineRef.current?.configure({
+      framesPerSecond: opts.framesPerSecond,
+      chordWindowSeconds: opts.chordWindowSeconds,
+      liveAcquisitionSeconds: opts.liveAcquisitionSeconds,
+      tonalityAcquisitionSeconds: opts.tonalityAcquisitionSeconds,
+      minFreq: opts.minFreq,
+      maxFreq: opts.maxFreq,
+      filterTolerancy: opts.maxFilterTolerancy,
+      filterMemory: opts.maxFilterMemory,
+      filterMode: opts.maxFilterMode,
+    });
   }, [
+    opts.framesPerSecond,
     opts.chordWindowSeconds,
     opts.liveAcquisitionSeconds,
     opts.tonalityAcquisitionSeconds,
-    opts.framesPerSecond,
+    opts.minFreq,
+    opts.maxFreq,
+    opts.maxFilterTolerancy,
+    opts.maxFilterMemory,
+    opts.maxFilterMode,
   ]);
-
-  // Update filter params live.
-  useEffect(() => {
-    const f = filterRef.current;
-    if (!f) return;
-    f.setTolerancy(opts.maxFilterTolerancy);
-    f.setMemory(opts.maxFilterMemory);
-    f.setMode(opts.maxFilterMode);
-  }, [opts.maxFilterTolerancy, opts.maxFilterMemory, opts.maxFilterMode]);
 
   /**
    * Clear all sliding-window buffers + filter memory, without stopping the
@@ -287,27 +207,10 @@ export function useTonality(options: UseTonalityOptions = {}) {
    * windows refill from scratch as new audio comes in.
    */
   const reset = useCallback(() => {
-    chordWindowRef.current?.reset();
-    liveWindowRef.current?.reset();
-    tonalityWindowRef.current?.reset();
-    presenceWindowRef.current?.reset();
-    filterRef.current?.reset();
+    engineRef.current?.reset();
     setState((s) => ({
       ...s,
-      instantaneousChroma: emptyVector(),
-      chordChroma: emptyVector(),
-      liveAcquisitionChroma: emptyVector(),
-      tonalityAcquisitionChroma: emptyVector(),
-      filteredLiveChroma: emptyVector(),
-      presenceIndicator: emptyVector(),
-      presenceHistogram: emptyVector(),
-      filterThreshold: 0,
-      filterLastPeak: 0,
-      signalLevelDb: -100,
-      chords: [],
-      liveKeys: [],
-      tonalityKeys: [],
-      presenceKeys: [],
+      ...emptyTonalityFrame(),
       fft: {
         spectrumDb: new Float32Array(0),
         binHz: 0,
@@ -334,11 +237,7 @@ export function useTonality(options: UseTonalityOptions = {}) {
       micRef.current = null;
     }
     analyserRef.current = null;
-    chordWindowRef.current = null;
-    liveWindowRef.current = null;
-    tonalityWindowRef.current = null;
-    presenceWindowRef.current = null;
-    filterRef.current = null;
+    engineRef.current = null;
     lowpassTimeFilterRef.current = null;
     timeBufferRef.current = null;
     setState((s) => ({ ...s, running: false }));
@@ -359,29 +258,18 @@ export function useTonality(options: UseTonalityOptions = {}) {
       // Initialize time-domain buffer for 8-second signal display.
       const timeBufferCapacity = Math.round(8 * analyser.sampleRate);
       timeBufferRef.current = new TimeRingBuffer(timeBufferCapacity);
-      chordWindowRef.current = new ChromaWindow({
-        windowSeconds: o.chordWindowSeconds,
+      engineRef.current = new TonalityEngine({
         framesPerSecond: o.framesPerSecond,
-      });
-      liveWindowRef.current = new ChromaWindow({
-        windowSeconds: o.liveAcquisitionSeconds,
-        framesPerSecond: o.framesPerSecond,
-      });
-      tonalityWindowRef.current = new ChromaWindow({
-        windowSeconds: o.tonalityAcquisitionSeconds,
-        framesPerSecond: o.framesPerSecond,
-      });
-      presenceWindowRef.current = new ChromaWindow({
-        windowSeconds: o.tonalityAcquisitionSeconds,
-        framesPerSecond: o.framesPerSecond,
-      });
-      filterRef.current = new HighWaterMarkFilter({
-        tolerancy: o.maxFilterTolerancy,
-        memory: o.maxFilterMemory,
-        mode: o.maxFilterMode,
+        chordWindowSeconds: o.chordWindowSeconds,
+        liveAcquisitionSeconds: o.liveAcquisitionSeconds,
+        tonalityAcquisitionSeconds: o.tonalityAcquisitionSeconds,
+        minFreq: o.minFreq,
+        maxFreq: o.maxFreq,
+        filterTolerancy: o.maxFilterTolerancy,
+        filterMemory: o.maxFilterMemory,
+        filterMode: o.maxFilterMode,
       });
 
-      // FFT analysis uses the spectrum dB from the AnalyserNode directly.
       // Section 2 lowpass filter operates on the time-domain signal at the
       // audio sample rate; (re)built lazily inside the frame loop so cutoff
       // changes take effect.
@@ -390,29 +278,15 @@ export function useTonality(options: UseTonalityOptions = {}) {
       const periodMs = 1000 / o.framesPerSecond;
       intervalRef.current = setInterval(() => {
         const a = analyserRef.current;
-        const wChord = chordWindowRef.current;
-        const wLive = liveWindowRef.current;
-        const wTon = tonalityWindowRef.current;
-        const wPres = presenceWindowRef.current;
-        const filt = filterRef.current;
+        const engine = engineRef.current;
         const curOpts = optsRef.current;
-        if (!a || !wChord || !wLive || !wTon || !wPres || !filt) return;
+        if (!a || !engine) return;
 
         const db = readSpectrumDb(a);
 
-        // Capture time-domain samples for display.
-        //
-        // getFloatTimeDomainData() returns the most recent `fftSize` samples
-        // every time it is called. Because we poll at framesPerSecond (e.g.
-        // 10 fps) while each window holds ~0.34 s of audio (16384 samples at
-        // 48 kHz), consecutive frames overlap heavily (~70%). Pushing the full
-        // window each frame makes a single transient (e.g. a clap) appear 3-4
-        // times in the ring buffer.
-        //
-        // To avoid duplication we only push the *new* tail of the window: the
-        // number of samples the stream advanced since the previous frame,
-        // which is approximately sampleRate / framesPerSecond. We clamp to the
-        // window length in case a frame is delayed.
+        // Capture time-domain samples for display: only the new tail of the
+        // analyser window (approximately sampleRate / framesPerSecond
+        // samples) so a transient is not duplicated across frames.
         const timeBuf = timeBufferRef.current;
         if (timeBuf && a.analyser) {
           const windowLen = a.analyser.fftSize;
@@ -423,96 +297,35 @@ export function useTonality(options: UseTonalityOptions = {}) {
             windowLen,
             Math.max(1, Math.round(a.sampleRate / curOpts.framesPerSecond)),
           );
-          // The newest `advance` samples are at the end of the window.
-          const newSamples = timeDomainData.subarray(windowLen - advance);
-          timeBuf.push(newSamples);
+          timeBuf.push(timeDomainData.subarray(windowLen - advance));
         }
 
-        const mag = dbSpectrumToMagnitude(db);
-        const inst = spectrumToChroma(mag, {
-          sampleRate: a.sampleRate,
-          minFreq: curOpts.minFreq,
-          maxFreq: curOpts.maxFreq,
-        });
-
-        // Average linear magnitude in the music band → dB. Useful as a
-        // "is something being played" indicator for the noise gate.
-        const nBins = mag.length;
-        const binHz = a.sampleRate / (2 * nBins);
-        let levelSum = 0;
-        let levelBins = 0;
-        for (let k = 1; k < nBins; k++) {
-          const freq = k * binHz;
-          if (freq < curOpts.minFreq || freq > curOpts.maxFreq) continue;
-          if (Number.isFinite(mag[k])) {
-            levelSum += mag[k];
-            levelBins += 1;
-          }
-        }
-        const avgLinear = levelBins > 0 ? levelSum / levelBins : 0;
-        const signalLevelDb = avgLinear > 0 ? 20 * Math.log10(avgLinear) : -100;
-
-        wChord.push(inst);
-        wLive.push(inst);
-        wTon.push(inst);
-
-        const chordChroma = wChord.aggregate();
-        const liveChroma = wLive.aggregate();
-        const tonChroma = wTon.aggregate();
-
-        const filteredLive = filt.filter(liveChroma);
-        const indicator = new Float32Array(CHROMA_SIZE);
-        for (let i = 0; i < CHROMA_SIZE; i++) {
-          indicator[i] = filteredLive[i] > 0 ? 1 : 0;
-        }
-        wPres.push(indicator);
-        const presence = wPres.aggregateRaw();
+        const frame = engine.processDbSpectrum(db, a.sampleRate);
 
         // FFT analysis: use the spectrum dB directly from the AnalyserNode.
         const fftSpectrumDb = new Float32Array(db);
-        const fftBinHz = binHz;
-        const noiseFloor = estimateNoiseFloor(fftSpectrumDb, curOpts.noiseMethod);
-        const fftNoiseFloorDb = noiseFloor.noiseFloorDb;
+        const fftBinHz = a.sampleRate / (2 * db.length);
+        const fftNoiseFloorDb = estimateNoiseFloor(fftSpectrumDb, curOpts.noiseMethod).noiseFloorDb;
 
-        // Section 2: Tempo / low-frequency modulation analysis.
-        //
-        // 1. Extract the 8-second time-domain signal.
-        // 2. Apply the lowpass filter to that *time-domain signal* (at the
-        //    audio sample rate). This isolates slow modulation (note onsets,
-        //    vibrato, tremolo).
-        // 3. Compute the FFT of the filtered signal and display its spectrum.
-        //
-        // The filtered time signal is also what we plot in the time-domain
-        // view, so the user sees the same data that feeds the spectrum.
+        // Section 2: lowpass the 8 s time-domain signal and FFT its most
+        // recent power-of-two chunk.
         let rawTimeSignal: Float32Array = new Float32Array(0);
         const timeBufDisplay = timeBufferRef.current;
         if (timeBufDisplay) {
           rawTimeSignal = timeBufDisplay.lastSeconds(8, a.sampleRate);
         }
 
-        // (Re)build the time-domain lowpass filter if the cutoff changed.
         if (!lowpassTimeFilterRef.current) {
           lowpassTimeFilterRef.current = new LowpassFilter(curOpts.lowpassCutoffHz, a.sampleRate);
         } else {
           lowpassTimeFilterRef.current.setCutoff(curOpts.lowpassCutoffHz, a.sampleRate);
         }
 
-        // Filter the whole 8 s window from scratch each frame. We reset state
-        // first so the result depends only on the current buffer contents
-        // (the buffer itself already advances over time), giving a stable,
-        // zero-phase-independent rendering.
         const lp = lowpassTimeFilterRef.current;
         lp.reset();
         const filteredTimeSignal =
           rawTimeSignal.length > 0 ? lp.processFrame(rawTimeSignal) : new Float32Array(0);
 
-        // FFT of the filtered time-domain signal for the Section 2 spectrum.
-        //
-        // The full 8 s window at audio rate (≈384k samples @ 48 kHz) would
-        // force a ~512k-point FFT every frame, which is far too expensive in
-        // pure JS. Since we only display 0–50 Hz, we run the FFT over the most
-        // recent power-of-two-sized chunk (≈1.4 s), giving sub-Hz resolution
-        // there while keeping the transform small enough to run at 10 fps.
         let tempoEnvelopeDb: Float32Array = new Float32Array(0);
         let tempoBinHz = 0;
         if (filteredTimeSignal.length > 1) {
@@ -526,26 +339,10 @@ export function useTonality(options: UseTonalityOptions = {}) {
           tempoBinHz = fftResult.binHz;
         }
 
-        // Display the filtered time-domain signal.
-        const timeSignalForDisplay = filteredTimeSignal;
-
         setState({
+          ...frame,
           running: true,
           error: null,
-          instantaneousChroma: inst,
-          chordChroma,
-          liveAcquisitionChroma: liveChroma,
-          tonalityAcquisitionChroma: tonChroma,
-          filteredLiveChroma: filteredLive,
-          presenceIndicator: indicator,
-          presenceHistogram: presence,
-          filterThreshold: filt.currentThreshold,
-          filterLastPeak: filt.lastPeak,
-          signalLevelDb,
-          chords: detectChord(chordChroma),
-          liveKeys: detectKey(liveChroma),
-          tonalityKeys: detectKey(tonChroma),
-          presenceKeys: detectKeyFromPresence(presence),
           config: {
             liveAcquisitionSeconds: curOpts.liveAcquisitionSeconds,
             tonalityAcquisitionSeconds: curOpts.tonalityAcquisitionSeconds,
@@ -565,7 +362,7 @@ export function useTonality(options: UseTonalityOptions = {}) {
             envelopeDb: tempoEnvelopeDb,
             binHz: tempoBinHz,
             lowpassCutoffHz: curOpts.lowpassCutoffHz,
-            timeSignal: timeSignalForDisplay,
+            timeSignal: filteredTimeSignal,
             sampleRate: a.sampleRate,
           },
         });
@@ -587,3 +384,5 @@ export function useTonality(options: UseTonalityOptions = {}) {
 
   return { ...state, start, stop, reset };
 }
+
+export { emptyVector as emptyChromaVector };
