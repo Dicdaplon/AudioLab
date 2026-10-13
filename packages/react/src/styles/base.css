@@ -1,17 +1,19 @@
 /* =========================================================================
    Base: the box model, text defaults and text primitives of the Loupe
    subtree. Everything is scoped to `.loupe` (rendered by <LoupeRoot>): the
-   host document's html/body are never touched.
+   host document's html/body are never touched. Descendant rules sit under
+   :where(.loupe) so they carry no extra specificity: a single class, from the
+   SDK or from the host, always overrides them.
    ========================================================================= */
 
 .loupe,
-.loupe *,
-.loupe *::before,
-.loupe *::after {
+:where(.loupe) *,
+:where(.loupe) *::before,
+:where(.loupe) *::after {
   box-sizing: border-box;
 }
 
-.loupe * {
+:where(.loupe) * {
   margin: 0;
 }
 
@@ -25,46 +27,46 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-.loupe :is(img, svg, canvas, video) {
+:where(.loupe) :is(img, svg, canvas, video) {
   display: block;
   max-width: 100%;
 }
 
-.loupe :is(input, button, select, textarea) {
+:where(.loupe) :is(input, button, select, textarea) {
   font: inherit;
   color: inherit;
 }
 
-.loupe button {
+:where(.loupe) button {
   cursor: pointer;
 }
 
-.loupe button:disabled {
+:where(.loupe) button:disabled {
   cursor: not-allowed;
 }
 
-.loupe :is(h1, h2, h3, h4) {
+:where(.loupe) :is(h1, h2, h3, h4) {
   font-size: inherit;
   font-weight: 600;
   line-height: var(--al-leading-snug);
 }
 
-.loupe p {
+:where(.loupe) p {
   overflow-wrap: anywhere;
 }
 
-.loupe :is(ol, ul) {
+:where(.loupe) :is(ol, ul) {
   padding: 0;
   list-style: none;
 }
 
-.loupe a {
+:where(.loupe) a {
   color: var(--al-color-link);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.15em;
 }
 
-.loupe code {
+:where(.loupe) code {
   font-family: var(--al-font-mono);
   font-size: 0.92em;
   padding: 0.05em 0.3em;
@@ -72,11 +74,11 @@
   border-radius: var(--al-r-1);
 }
 
-.loupe ::selection {
+:where(.loupe) ::selection {
   background: var(--al-color-selection);
 }
 
-.loupe :focus-visible {
+:where(.loupe) :focus-visible {
   outline: 2px solid var(--al-color-focus);
   outline-offset: 2px;
 }
@@ -156,9 +158,9 @@
    reduced motion even those collapse to an instant change. */
 @media (prefers-reduced-motion: reduce) {
   .loupe,
-  .loupe *,
-  .loupe *::before,
-  .loupe *::after {
+  :where(.loupe) *,
+  :where(.loupe) *::before,
+  :where(.loupe) *::after {
     animation-duration: 1ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
