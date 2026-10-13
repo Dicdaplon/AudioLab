@@ -22,6 +22,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { createAnalyser, readSpectrumDb, type AnalyserSetup } from "../audio/analyser";
+import { toMicError } from "../audio/errors";
 import { openMicrophone, type MicSource } from "../audio/micStream";
 import { CHROMA_SIZE, dbSpectrumToMagnitude, spectrumToChroma } from "../analysis/chroma";
 import { ChromaWindow } from "../analysis/windowing";
@@ -577,8 +578,8 @@ export function useTonality(options: UseTonalityOptions = {}) {
 
       setState((s) => ({ ...s, running: true, error: null }));
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setState((s) => ({ ...s, running: false, error: msg }));
+      const { message } = toMicError(err);
+      setState((s) => ({ ...s, running: false, error: message }));
       await stop();
     }
   }, [stop]);

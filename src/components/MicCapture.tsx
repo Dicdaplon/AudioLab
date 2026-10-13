@@ -26,7 +26,11 @@ export function MicCapture({ running, error, onStart, onStop, onReset }: MicCapt
       >
         Reset (vider buffers)
       </button>
-      {error && <p className="error">Erreur : {error}</p>}
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
