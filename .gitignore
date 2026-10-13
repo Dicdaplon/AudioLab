@@ -26,3 +26,6 @@ vite.config.d.ts
 
 # Local tooling configuration
 .claude/
+
+# Personal source recordings (used by scripts/extractBackingExtracts.ts)
+localSample/
