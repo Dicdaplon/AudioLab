@@ -170,14 +170,8 @@ export default function App() {
 
       {tab === "fft" && (
         <FftTab
-          spectrumDb={tonality.fft.spectrumDb}
-          binHz={tonality.fft.binHz}
-          noiseFloorDb={tonality.fft.noiseFloorDb}
-          noiseMethod={tonality.fft.noiseMethod}
-          tempoEnvelopeDb={new Float32Array(0)}
-          lowpassCutoffHz={fftSettings.lowpassCutoffHz}
-          timeSignal={new Float32Array(0)}
-          sampleRate={microphone.mic?.context.sampleRate ?? 0}
+          mic={microphone.mic}
+          spectrum={tonality.fft}
           settings={fftSettings}
           onSettingsChange={setFftSettings}
         />

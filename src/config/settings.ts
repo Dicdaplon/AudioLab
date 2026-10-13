@@ -46,8 +46,12 @@ export const ANALYSIS_DEFAULTS = {
 /** Settings of the FFT tab. */
 export interface FftSettings {
   noiseMethod: NoiseFloorMethod;
-  /** Lowpass cutoff (Hz) of the tempo analysis envelope. */
-  lowpassCutoffHz: number;
+  /**
+   * Cutoff (Hz) of the lowpass applied to the onset-strength envelope
+   * before the tempo analysis. Lower values smooth the envelope and
+   * attenuate fast beat rates (2 Hz = 120 BPM sits at −3 dB for fc = 2 Hz).
+   */
+  onsetLowpassHz: number;
   /** Overlay the frequency slope (dB/Hz) of the spectrum. */
   showSlope: boolean;
   /** Overlay the A minor pentatonic reference notes. */
@@ -56,13 +60,13 @@ export interface FftSettings {
 
 export const DEFAULT_FFT_SETTINGS: FftSettings = {
   noiseMethod: "median",
-  lowpassCutoffHz: 2,
+  onsetLowpassHz: 8,
   showSlope: false,
   showScaleNotes: true,
 };
 
-/** Slider bounds of the tempo lowpass cutoff, in Hz. */
-export const LOWPASS_CUTOFF_RANGE = { min: 0.5, max: 10, step: 0.1 } as const;
+/** Slider bounds of the onset-envelope lowpass cutoff, in Hz. */
+export const ONSET_LOWPASS_RANGE = { min: 1, max: 20, step: 0.5 } as const;
 
 /** Upper edge of the magnitude spectrum display, in Hz. */
 export const FFT_DISPLAY_MAX_HZ = 4000;

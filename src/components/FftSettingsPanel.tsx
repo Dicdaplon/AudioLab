@@ -1,7 +1,7 @@
 import { memo } from "react";
 
 import { isNoiseFloorMethod } from "../analysis/noiseFloor";
-import { LOWPASS_CUTOFF_RANGE, type FftSettings } from "../config/settings";
+import { ONSET_LOWPASS_RANGE, type FftSettings } from "../config/settings";
 
 interface FftSettingsPanelProps {
   settings: FftSettings;
@@ -38,22 +38,22 @@ export const FftSettingsPanel = memo(function FftSettingsPanel({
 
       <div className="settings-group">
         <label>
-          Lowpass Cutoff (Hz): <strong>{settings.lowpassCutoffHz.toFixed(2)}</strong>
+          Onset envelope lowpass (Hz): <strong>{settings.onsetLowpassHz.toFixed(1)}</strong>
           <input
             type="range"
-            min={LOWPASS_CUTOFF_RANGE.min}
-            max={LOWPASS_CUTOFF_RANGE.max}
-            step={LOWPASS_CUTOFF_RANGE.step}
-            value={settings.lowpassCutoffHz}
+            min={ONSET_LOWPASS_RANGE.min}
+            max={ONSET_LOWPASS_RANGE.max}
+            step={ONSET_LOWPASS_RANGE.step}
+            value={settings.onsetLowpassHz}
             onChange={(e) =>
               onChange({
                 ...settings,
-                lowpassCutoffHz: parseFloat(e.target.value),
+                onsetLowpassHz: parseFloat(e.target.value),
               })
             }
           />
         </label>
-        <small>Controls the tempo analysis (Section 2)</small>
+        <small>Smooths the onset strength before the tempo analysis (Section 2)</small>
       </div>
 
       <div className="settings-group">
