@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 import { HIGH_WATER_MARK_MEMORY_MAX, HIGH_WATER_MARK_MEMORY_MIN } from "../analysis/highWaterMark";
 import type { DetectorSettings } from "../config/settings";
 
@@ -10,7 +12,7 @@ interface SettingsPanelProps {
   lastPeak?: number;
 }
 
-export function SettingsPanel({
+export const SettingsPanel = memo(function SettingsPanel({
   settings,
   onChange,
   currentThreshold = 0,
@@ -101,4 +103,4 @@ export function SettingsPanel({
       </div>
     </div>
   );
-}
+});

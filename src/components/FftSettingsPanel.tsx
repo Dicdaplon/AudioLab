@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 import { isNoiseFloorMethod } from "../analysis/noiseFloor";
 import { LOWPASS_CUTOFF_RANGE, type FftSettings } from "../config/settings";
 
@@ -9,7 +11,10 @@ interface FftSettingsPanelProps {
 /**
  * Settings panel for the FFT tab (spectrum view + tempo analysis).
  */
-export function FftSettingsPanel({ settings, onChange }: FftSettingsPanelProps) {
+export const FftSettingsPanel = memo(function FftSettingsPanel({
+  settings,
+  onChange,
+}: FftSettingsPanelProps) {
   return (
     <section className="fft-settings-panel">
       <h3>FFT Settings</h3>
@@ -74,4 +79,4 @@ export function FftSettingsPanel({ settings, onChange }: FftSettingsPanelProps) 
       </div>
     </section>
   );
-}
+});

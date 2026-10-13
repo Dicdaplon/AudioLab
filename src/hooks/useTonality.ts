@@ -1,38 +1,35 @@
 /**
- * React hook that orchestrates the live pipeline: microphone → AnalyserNode
- * spectrum → `TonalityEngine` (chroma windows, high-water-mark filter,
- * presence histogram, rankings) → React state, at `framesPerSecond`.
+ * Live key / chord analysis: polls an AnalyserNode on the given microphone
+ * source at `framesPerSecond` and runs each spectrum through the
+ * `TonalityEngine`. The hook owns no microphone; pass it the `mic` from
+ * `useMicrophone()` (or null to stay idle).
  *
- * Window sizes and filter params are reactive: changing them reconfigures
- * the engine on the fly.
+ * The magnitude spectrum and noise floor for the FFT tab are only copied
+ * and estimated when `fftEnabled` is true, so the other tabs do not pay
+ * for them.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { createAnalyser, readSpectrumDb, type AnalyserSetup } from "../audio/analyser";
-import { toMicError } from "../audio/errors";
-import { openMicrophone, type MicSource } from "../audio/micStream";
-import { CHROMA_SIZE } from "../analysis/chroma";
+import { createAnalyser, readSpectrumDb } from "../audio/analyser";
+import type { MicSource } from "../audio/micStream";
 import {
   TonalityEngine,
   emptyTonalityFrame,
+  type TonalityEngineConfig,
   type TonalityFrame,
 } from "../analysis/engine/tonalityEngine";
+import type { HighWaterMarkMode } from "../analysis/highWaterMark";
 import {
-  HIGH_WATER_MARK_MEMORY_MAX,
-  HIGH_WATER_MARK_MEMORY_MIN,
-  type HighWaterMarkMode,
-} from "../analysis/highWaterMark";
-import { clamp } from "../analysis/math";
-import { estimateNoiseFloor, type NoiseFloorMethod } from "../analysis/noiseFloor";
-import { LowpassFilter } from "../analysis/lowpass";
-import { TimeRingBuffer } from "../analysis/timeBuffer";
-import { computeFftDb } from "../analysis/timeFft";
+  NOISE_FLOOR_SILENCE_DB,
+  estimateNoiseFloor,
+  type NoiseFloorMethod,
+} from "../analysis/noiseFloor";
 import {
   ANALYSIS_DEFAULTS,
   DEFAULT_DETECTOR_SETTINGS,
   DEFAULT_FFT_SETTINGS,
-  LOWPASS_CUTOFF_RANGE,
+  FFT_DISPLAY_MAX_HZ,
 } from "../config/settings";
 
 export interface UseTonalityOptions {
@@ -52,337 +49,121 @@ export interface UseTonalityOptions {
   maxFilterMemory?: number;
   /** Aggregation mode for the peak memory. */
   maxFilterMode?: HighWaterMarkMode;
-  /** FFT analysis enabled. */
+  /** Copy the spectrum and estimate the noise floor for the FFT tab. */
   fftEnabled?: boolean;
   /** Noise floor estimation method ("median", "mean", "p80"). */
   noiseMethod?: NoiseFloorMethod;
-  /** Lowpass filter cutoff for tempo analysis (Hz). */
-  lowpassCutoffHz?: number;
 }
 
-export interface TonalityState extends TonalityFrame {
-  running: boolean;
-  error: string | null;
-
-  /** Effective configured durations + filter params, mirrored for the UI. */
-  config: {
-    liveAcquisitionSeconds: number;
-    tonalityAcquisitionSeconds: number;
-    chordWindowSeconds: number;
-    framesPerSecond: number;
-    maxFilterTolerancy: number;
-    maxFilterMemory: number;
-    maxFilterMode: HighWaterMarkMode;
-  };
-
-  /** FFT analysis state (Section 1: magnitude spectrum + noise floor). */
-  fft: {
-    spectrumDb: Float32Array;
-    binHz: number;
-    noiseFloorDb: number;
-    noiseMethod: NoiseFloorMethod;
-  };
-
-  /** Tempo analysis state (Section 2: lowpass-filtered envelope + time signal). */
-  tempoAnalysis: {
-    envelopeDb: Float32Array;
-    binHz: number;
-    lowpassCutoffHz: number;
-    timeSignal: Float32Array;
-    sampleRate: number;
-  };
+/** Magnitude spectrum of the last frame (only updated while `fftEnabled`). */
+export interface SpectrumState {
+  /** AnalyserNode dB spectrum (one-sided, fftSize / 2 bins). Empty when idle. */
+  spectrumDb: Float32Array;
+  /** Bin spacing in Hz (sampleRate / fftSize). */
+  binHz: number;
+  /** Noise floor estimated over the displayed band [0, FFT_DISPLAY_MAX_HZ]. */
+  noiseFloorDb: number;
+  noiseMethod: NoiseFloorMethod;
 }
 
-const DEFAULTS = {
-  ...DEFAULT_DETECTOR_SETTINGS,
-  ...ANALYSIS_DEFAULTS,
-  fftEnabled: false,
+const EMPTY_SPECTRUM: SpectrumState = {
+  spectrumDb: new Float32Array(0),
+  binHz: 0,
+  noiseFloorDb: NOISE_FLOOR_SILENCE_DB,
   noiseMethod: DEFAULT_FFT_SETTINGS.noiseMethod,
-  lowpassCutoffHz: DEFAULT_FFT_SETTINGS.lowpassCutoffHz,
 };
 
-function emptyVector(): Float32Array {
-  return new Float32Array(CHROMA_SIZE);
-}
-
-export function useTonality(options: UseTonalityOptions = {}) {
-  const opts = {
-    liveAcquisitionSeconds: options.liveAcquisitionSeconds ?? DEFAULTS.liveAcquisitionSeconds,
+export function useTonality(mic: MicSource | null, options: UseTonalityOptions = {}) {
+  const fftSize = options.fftSize ?? ANALYSIS_DEFAULTS.fftSize;
+  const framesPerSecond = options.framesPerSecond ?? ANALYSIS_DEFAULTS.framesPerSecond;
+  const engineConfig: TonalityEngineConfig = {
+    framesPerSecond,
+    chordWindowSeconds: options.chordWindowSeconds ?? ANALYSIS_DEFAULTS.chordWindowSeconds,
+    liveAcquisitionSeconds:
+      options.liveAcquisitionSeconds ?? DEFAULT_DETECTOR_SETTINGS.liveAcquisitionSeconds,
     tonalityAcquisitionSeconds:
-      options.tonalityAcquisitionSeconds ?? DEFAULTS.tonalityAcquisitionSeconds,
-    chordWindowSeconds: options.chordWindowSeconds ?? DEFAULTS.chordWindowSeconds,
-    framesPerSecond: options.framesPerSecond ?? DEFAULTS.framesPerSecond,
-    fftSize: options.fftSize ?? DEFAULTS.fftSize,
-    minFreq: options.minFreq ?? DEFAULTS.minFreq,
-    maxFreq: options.maxFreq ?? DEFAULTS.maxFreq,
-    maxFilterTolerancy: clamp(options.maxFilterTolerancy ?? DEFAULTS.maxFilterTolerancy, 0, 1),
-    maxFilterMemory: Math.round(
-      clamp(
-        options.maxFilterMemory ?? DEFAULTS.maxFilterMemory,
-        HIGH_WATER_MARK_MEMORY_MIN,
-        HIGH_WATER_MARK_MEMORY_MAX,
-      ),
-    ),
-    maxFilterMode: options.maxFilterMode ?? DEFAULTS.maxFilterMode,
-    fftEnabled: options.fftEnabled ?? DEFAULTS.fftEnabled,
-    noiseMethod: options.noiseMethod ?? DEFAULTS.noiseMethod,
-    lowpassCutoffHz: clamp(
-      options.lowpassCutoffHz ?? DEFAULTS.lowpassCutoffHz,
-      LOWPASS_CUTOFF_RANGE.min,
-      LOWPASS_CUTOFF_RANGE.max,
-    ),
+      options.tonalityAcquisitionSeconds ?? DEFAULT_DETECTOR_SETTINGS.tonalityAcquisitionSeconds,
+    minFreq: options.minFreq ?? ANALYSIS_DEFAULTS.minFreq,
+    maxFreq: options.maxFreq ?? ANALYSIS_DEFAULTS.maxFreq,
+    filterTolerancy: options.maxFilterTolerancy ?? DEFAULT_DETECTOR_SETTINGS.maxFilterTolerancy,
+    filterMemory: options.maxFilterMemory ?? DEFAULT_DETECTOR_SETTINGS.maxFilterMemory,
+    filterMode: options.maxFilterMode ?? DEFAULT_DETECTOR_SETTINGS.maxFilterMode,
   };
+  const fftEnabled = options.fftEnabled ?? false;
+  const noiseMethod = options.noiseMethod ?? DEFAULT_FFT_SETTINGS.noiseMethod;
 
-  const [state, setState] = useState<TonalityState>(() => ({
-    ...emptyTonalityFrame(),
-    running: false,
-    error: null,
-    config: {
-      liveAcquisitionSeconds: opts.liveAcquisitionSeconds,
-      tonalityAcquisitionSeconds: opts.tonalityAcquisitionSeconds,
-      chordWindowSeconds: opts.chordWindowSeconds,
-      framesPerSecond: opts.framesPerSecond,
-      maxFilterTolerancy: opts.maxFilterTolerancy,
-      maxFilterMemory: opts.maxFilterMemory,
-      maxFilterMode: opts.maxFilterMode,
-    },
-    fft: {
-      spectrumDb: new Float32Array(0),
-      binHz: 0,
-      noiseFloorDb: -100,
-      noiseMethod: opts.noiseMethod,
-    },
-    tempoAnalysis: {
-      envelopeDb: new Float32Array(0),
-      binHz: 0,
-      lowpassCutoffHz: opts.lowpassCutoffHz,
-      timeSignal: new Float32Array(0),
-      sampleRate: 0,
-    },
-  }));
+  const [frame, setFrame] = useState<TonalityFrame>(emptyTonalityFrame);
+  const [spectrum, setSpectrum] = useState<SpectrumState>(EMPTY_SPECTRUM);
 
-  const micRef = useRef<MicSource | null>(null);
-  const analyserRef = useRef<AnalyserSetup | null>(null);
   const engineRef = useRef<TonalityEngine | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Latest per-frame options, read inside the interval without re-arming it.
+  const liveOptsRef = useRef({ fftEnabled, noiseMethod });
+  liveOptsRef.current = { fftEnabled, noiseMethod };
 
-  // Tempo analysis: a single lowpass filter applied to the time-domain signal
-  // (at the audio sample rate) before its FFT is computed for Section 2.
-  const lowpassTimeFilterRef = useRef<LowpassFilter | null>(null);
-  // Time-domain signal buffer (8 seconds) for display.
-  const timeBufferRef = useRef<TimeRingBuffer | null>(null);
+  const engineConfigRef = useRef(engineConfig);
+  engineConfigRef.current = engineConfig;
 
-  // Latest opts (always up-to-date inside the interval callback).
-  const optsRef = useRef(opts);
-  optsRef.current = opts;
-
-  // Reconfigure the engine when window sizes or filter params change.
+  // Reconfigure the engine on the fly when windows / filter params change
+  // (keyed on the primitive values: the config object is rebuilt each render).
   useEffect(() => {
-    engineRef.current?.configure({
-      framesPerSecond: opts.framesPerSecond,
-      chordWindowSeconds: opts.chordWindowSeconds,
-      liveAcquisitionSeconds: opts.liveAcquisitionSeconds,
-      tonalityAcquisitionSeconds: opts.tonalityAcquisitionSeconds,
-      minFreq: opts.minFreq,
-      maxFreq: opts.maxFreq,
-      filterTolerancy: opts.maxFilterTolerancy,
-      filterMemory: opts.maxFilterMemory,
-      filterMode: opts.maxFilterMode,
-    });
+    engineRef.current?.configure(engineConfigRef.current);
   }, [
-    opts.framesPerSecond,
-    opts.chordWindowSeconds,
-    opts.liveAcquisitionSeconds,
-    opts.tonalityAcquisitionSeconds,
-    opts.minFreq,
-    opts.maxFreq,
-    opts.maxFilterTolerancy,
-    opts.maxFilterMemory,
-    opts.maxFilterMode,
+    engineConfig.framesPerSecond,
+    engineConfig.chordWindowSeconds,
+    engineConfig.liveAcquisitionSeconds,
+    engineConfig.tonalityAcquisitionSeconds,
+    engineConfig.minFreq,
+    engineConfig.maxFreq,
+    engineConfig.filterTolerancy,
+    engineConfig.filterMemory,
+    engineConfig.filterMode,
   ]);
 
+  // Analysis loop, bound to the microphone session.
+  useEffect(() => {
+    if (!mic) {
+      engineRef.current = null;
+      setFrame(emptyTonalityFrame());
+      setSpectrum(EMPTY_SPECTRUM);
+      return;
+    }
+
+    const analyser = createAnalyser(mic.context, mic.source, { fftSize });
+    const engine = new TonalityEngine(engineConfigRef.current);
+    engineRef.current = engine;
+
+    const tick = () => {
+      const db = readSpectrumDb(analyser);
+      setFrame(engine.processDbSpectrum(db, analyser.sampleRate));
+
+      const { fftEnabled: wantSpectrum, noiseMethod: method } = liveOptsRef.current;
+      if (wantSpectrum) {
+        const binHz = analyser.sampleRate / (2 * db.length);
+        const spectrumDb = new Float32Array(db); // React must own its copy
+        const { noiseFloorDb } = estimateNoiseFloor(spectrumDb, method, {
+          toBin: Math.ceil(FFT_DISPLAY_MAX_HZ / binHz),
+        });
+        setSpectrum({ spectrumDb, binHz, noiseFloorDb, noiseMethod: method });
+      }
+    };
+
+    const id = setInterval(tick, 1000 / framesPerSecond);
+    return () => {
+      clearInterval(id);
+      analyser.analyser.disconnect();
+      if (engineRef.current === engine) engineRef.current = null;
+    };
+  }, [mic, fftSize, framesPerSecond]);
+
   /**
-   * Clear all sliding-window buffers + filter memory, without stopping the
-   * mic. Display state is also wiped to zero vectors. After a reset, the
-   * windows refill from scratch as new audio comes in.
+   * Clear the sliding windows and the filter memory without stopping the
+   * microphone; the windows refill as new audio comes in.
    */
   const reset = useCallback(() => {
     engineRef.current?.reset();
-    setState((s) => ({
-      ...s,
-      ...emptyTonalityFrame(),
-      fft: {
-        spectrumDb: new Float32Array(0),
-        binHz: 0,
-        noiseFloorDb: -100,
-        noiseMethod: s.fft.noiseMethod,
-      },
-      tempoAnalysis: {
-        envelopeDb: new Float32Array(0),
-        binHz: 0,
-        lowpassCutoffHz: s.tempoAnalysis.lowpassCutoffHz,
-        timeSignal: new Float32Array(0),
-        sampleRate: s.tempoAnalysis.sampleRate,
-      },
-    }));
+    setFrame(emptyTonalityFrame());
+    setSpectrum(EMPTY_SPECTRUM);
   }, []);
 
-  const stop = useCallback(async () => {
-    if (intervalRef.current !== null) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    if (micRef.current) {
-      await micRef.current.dispose();
-      micRef.current = null;
-    }
-    analyserRef.current = null;
-    engineRef.current = null;
-    lowpassTimeFilterRef.current = null;
-    timeBufferRef.current = null;
-    setState((s) => ({ ...s, running: false }));
-  }, []);
-
-  const start = useCallback(async () => {
-    try {
-      if (micRef.current) return;
-      const o = optsRef.current;
-      const mic = await openMicrophone();
-      const analyser = createAnalyser(mic.context, mic.source, {
-        fftSize: o.fftSize,
-      });
-
-      micRef.current = mic;
-      analyserRef.current = analyser;
-
-      // Initialize time-domain buffer for 8-second signal display.
-      const timeBufferCapacity = Math.round(8 * analyser.sampleRate);
-      timeBufferRef.current = new TimeRingBuffer(timeBufferCapacity);
-      engineRef.current = new TonalityEngine({
-        framesPerSecond: o.framesPerSecond,
-        chordWindowSeconds: o.chordWindowSeconds,
-        liveAcquisitionSeconds: o.liveAcquisitionSeconds,
-        tonalityAcquisitionSeconds: o.tonalityAcquisitionSeconds,
-        minFreq: o.minFreq,
-        maxFreq: o.maxFreq,
-        filterTolerancy: o.maxFilterTolerancy,
-        filterMemory: o.maxFilterMemory,
-        filterMode: o.maxFilterMode,
-      });
-
-      // Section 2 lowpass filter operates on the time-domain signal at the
-      // audio sample rate; (re)built lazily inside the frame loop so cutoff
-      // changes take effect.
-      lowpassTimeFilterRef.current = null;
-
-      const periodMs = 1000 / o.framesPerSecond;
-      intervalRef.current = setInterval(() => {
-        const a = analyserRef.current;
-        const engine = engineRef.current;
-        const curOpts = optsRef.current;
-        if (!a || !engine) return;
-
-        const db = readSpectrumDb(a);
-
-        // Capture time-domain samples for display: only the new tail of the
-        // analyser window (approximately sampleRate / framesPerSecond
-        // samples) so a transient is not duplicated across frames.
-        const timeBuf = timeBufferRef.current;
-        if (timeBuf && a.analyser) {
-          const windowLen = a.analyser.fftSize;
-          const timeDomainData = new Float32Array(windowLen);
-          a.analyser.getFloatTimeDomainData(timeDomainData);
-
-          const advance = Math.min(
-            windowLen,
-            Math.max(1, Math.round(a.sampleRate / curOpts.framesPerSecond)),
-          );
-          timeBuf.push(timeDomainData.subarray(windowLen - advance));
-        }
-
-        const frame = engine.processDbSpectrum(db, a.sampleRate);
-
-        // FFT analysis: use the spectrum dB directly from the AnalyserNode.
-        const fftSpectrumDb = new Float32Array(db);
-        const fftBinHz = a.sampleRate / (2 * db.length);
-        const fftNoiseFloorDb = estimateNoiseFloor(fftSpectrumDb, curOpts.noiseMethod).noiseFloorDb;
-
-        // Section 2: lowpass the 8 s time-domain signal and FFT its most
-        // recent power-of-two chunk.
-        let rawTimeSignal: Float32Array = new Float32Array(0);
-        const timeBufDisplay = timeBufferRef.current;
-        if (timeBufDisplay) {
-          rawTimeSignal = timeBufDisplay.lastSeconds(8, a.sampleRate);
-        }
-
-        if (!lowpassTimeFilterRef.current) {
-          lowpassTimeFilterRef.current = new LowpassFilter(curOpts.lowpassCutoffHz, a.sampleRate);
-        } else {
-          lowpassTimeFilterRef.current.setCutoff(curOpts.lowpassCutoffHz, a.sampleRate);
-        }
-
-        const lp = lowpassTimeFilterRef.current;
-        lp.reset();
-        const filteredTimeSignal =
-          rawTimeSignal.length > 0 ? lp.processFrame(rawTimeSignal) : new Float32Array(0);
-
-        let tempoEnvelopeDb: Float32Array = new Float32Array(0);
-        let tempoBinHz = 0;
-        if (filteredTimeSignal.length > 1) {
-          const FFT_MAX_SAMPLES = 1 << 16; // 65536
-          const fftInput =
-            filteredTimeSignal.length > FFT_MAX_SAMPLES
-              ? filteredTimeSignal.subarray(filteredTimeSignal.length - FFT_MAX_SAMPLES)
-              : filteredTimeSignal;
-          const fftResult = computeFftDb(fftInput, a.sampleRate);
-          tempoEnvelopeDb = fftResult.spectrumDb;
-          tempoBinHz = fftResult.binHz;
-        }
-
-        setState({
-          ...frame,
-          running: true,
-          error: null,
-          config: {
-            liveAcquisitionSeconds: curOpts.liveAcquisitionSeconds,
-            tonalityAcquisitionSeconds: curOpts.tonalityAcquisitionSeconds,
-            chordWindowSeconds: curOpts.chordWindowSeconds,
-            framesPerSecond: curOpts.framesPerSecond,
-            maxFilterTolerancy: curOpts.maxFilterTolerancy,
-            maxFilterMemory: curOpts.maxFilterMemory,
-            maxFilterMode: curOpts.maxFilterMode,
-          },
-          fft: {
-            spectrumDb: fftSpectrumDb,
-            binHz: fftBinHz,
-            noiseFloorDb: fftNoiseFloorDb,
-            noiseMethod: curOpts.noiseMethod,
-          },
-          tempoAnalysis: {
-            envelopeDb: tempoEnvelopeDb,
-            binHz: tempoBinHz,
-            lowpassCutoffHz: curOpts.lowpassCutoffHz,
-            timeSignal: filteredTimeSignal,
-            sampleRate: a.sampleRate,
-          },
-        });
-      }, periodMs);
-
-      setState((s) => ({ ...s, running: true, error: null }));
-    } catch (err) {
-      const { message } = toMicError(err);
-      setState((s) => ({ ...s, running: false, error: message }));
-      await stop();
-    }
-  }, [stop]);
-
-  useEffect(() => {
-    return () => {
-      void stop();
-    };
-  }, [stop]);
-
-  return { ...state, start, stop, reset };
+  return { ...frame, fft: spectrum, reset };
 }
-
-export { emptyVector as emptyChromaVector };

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 
 import { ChordGame } from "./features/games/chord-game/ChordGame";
 import { ChordView } from "./components/ChordView";
@@ -16,17 +16,50 @@ import {
   type DetectorSettings,
   type FftSettings,
 } from "./config/settings";
+import { useMicrophone } from "./hooks/useMicrophone";
 import { useTonality } from "./hooks/useTonality";
 import "./App.css";
 
 type Tab = "detector" | "game" | "jumper" | "fft";
+
+const TABS: ReadonlyArray<{ id: Tab; label: string }> = [
+  { id: "detector", label: "Détecteur" },
+  { id: "game", label: "🎮 Jeu d'accords" },
+  { id: "jumper", label: "🐺 Wolf Jumper" },
+  { id: "fft", label: "📊 FFT" },
+];
+
+/** Static tab strip; re-renders only when the active tab changes. */
+const TabBar = memo(function TabBar({
+  active,
+  onSelect,
+}: {
+  active: Tab;
+  onSelect: (tab: Tab) => void;
+}) {
+  return (
+    <nav className="tabs">
+      {TABS.map(({ id, label }) => (
+        <button
+          key={id}
+          type="button"
+          className={`tab-btn ${active === id ? "active" : ""}`}
+          onClick={() => onSelect(id)}
+        >
+          {label}
+        </button>
+      ))}
+    </nav>
+  );
+});
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("detector");
   const [settings, setSettings] = useState<DetectorSettings>(DEFAULT_DETECTOR_SETTINGS);
   const [fftSettings, setFftSettings] = useState<FftSettings>(DEFAULT_FFT_SETTINGS);
 
-  const tonality = useTonality({
+  const microphone = useMicrophone();
+  const tonality = useTonality(microphone.mic, {
     liveAcquisitionSeconds: settings.liveAcquisitionSeconds,
     tonalityAcquisitionSeconds: settings.tonalityAcquisitionSeconds,
     chordWindowSeconds: ANALYSIS_DEFAULTS.chordWindowSeconds,
@@ -37,7 +70,6 @@ export default function App() {
     maxFilterMode: settings.maxFilterMode,
     fftEnabled: tab === "fft",
     noiseMethod: fftSettings.noiseMethod,
-    lowpassCutoffHz: fftSettings.lowpassCutoffHz,
   });
 
   return (
@@ -48,43 +80,14 @@ export default function App() {
           3 fenêtres en parallèle · accord (template matching) · tonalité (Krumhansl-Schmuckler
           maj+min) · ToneBaseTonality (présence)
         </p>
-        <nav className="tabs">
-          <button
-            type="button"
-            className={`tab-btn ${tab === "detector" ? "active" : ""}`}
-            onClick={() => setTab("detector")}
-          >
-            Détecteur
-          </button>
-          <button
-            type="button"
-            className={`tab-btn ${tab === "game" ? "active" : ""}`}
-            onClick={() => setTab("game")}
-          >
-            🎮 Jeu d'accords
-          </button>
-          <button
-            type="button"
-            className={`tab-btn ${tab === "jumper" ? "active" : ""}`}
-            onClick={() => setTab("jumper")}
-          >
-            🐺 Wolf Jumper
-          </button>
-          <button
-            type="button"
-            className={`tab-btn ${tab === "fft" ? "active" : ""}`}
-            onClick={() => setTab("fft")}
-          >
-            📊 FFT
-          </button>
-        </nav>
+        <TabBar active={tab} onSelect={setTab} />
       </header>
 
       <MicCapture
-        running={tonality.running}
-        error={tonality.error}
-        onStart={tonality.start}
-        onStop={tonality.stop}
+        running={microphone.running}
+        error={microphone.error}
+        onStart={microphone.start}
+        onStop={microphone.stop}
         onReset={tonality.reset}
       />
 
@@ -100,15 +103,15 @@ export default function App() {
           <section className="chroma-panels">
             <ChromaView title="Chroma instantané" chroma={tonality.instantaneousChroma} />
             <ChromaView
-              title={`Chord window (${tonality.config.chordWindowSeconds}s)`}
+              title={`Chord window (${ANALYSIS_DEFAULTS.chordWindowSeconds}s)`}
               chroma={tonality.chordChroma}
             />
             <ChromaView
-              title={`Live acquisition (${tonality.config.liveAcquisitionSeconds}s)`}
+              title={`Live acquisition (${settings.liveAcquisitionSeconds}s)`}
               chroma={tonality.liveAcquisitionChroma}
             />
             <ChromaView
-              title={`Tonality acquisition (${tonality.config.tonalityAcquisitionSeconds}s)`}
+              title={`Tonality acquisition (${settings.tonalityAcquisitionSeconds}s)`}
               chroma={tonality.tonalityAcquisitionChroma}
             />
           </section>
@@ -116,19 +119,19 @@ export default function App() {
           <section className="result-panels">
             <ChordView
               chords={tonality.chords}
-              windowSeconds={tonality.config.chordWindowSeconds}
+              windowSeconds={ANALYSIS_DEFAULTS.chordWindowSeconds}
               topN={6}
             />
             <KeyProbabilities
               label="Live acquisition"
               keys={tonality.liveKeys}
-              windowSeconds={tonality.config.liveAcquisitionSeconds}
+              windowSeconds={settings.liveAcquisitionSeconds}
               topN={5}
             />
             <KeyProbabilities
               label="Tonality acquisition"
               keys={tonality.tonalityKeys}
-              windowSeconds={tonality.config.tonalityAcquisitionSeconds}
+              windowSeconds={settings.tonalityAcquisitionSeconds}
               topN={5}
             />
           </section>
@@ -139,8 +142,8 @@ export default function App() {
               filteredLiveChroma={tonality.filteredLiveChroma}
               presenceIndicator={tonality.presenceIndicator}
               keys={tonality.presenceKeys}
-              liveSeconds={tonality.config.liveAcquisitionSeconds}
-              tonalitySeconds={tonality.config.tonalityAcquisitionSeconds}
+              liveSeconds={settings.liveAcquisitionSeconds}
+              tonalitySeconds={settings.tonalityAcquisitionSeconds}
               topN={6}
             />
           </section>
@@ -148,16 +151,20 @@ export default function App() {
       )}
 
       {tab === "game" && (
-        <ChordGame chords={tonality.chords} running={tonality.running} onStart={tonality.start} />
+        <ChordGame
+          chords={tonality.chords}
+          running={microphone.running}
+          onStart={microphone.start}
+        />
       )}
 
       {tab === "jumper" && (
         <WolfJumper
           instantaneousChroma={tonality.instantaneousChroma}
           chords={tonality.chords}
-          running={tonality.running}
+          running={microphone.running}
           signalLevelDb={tonality.signalLevelDb}
-          onStart={tonality.start}
+          onStart={microphone.start}
         />
       )}
 
@@ -167,10 +174,10 @@ export default function App() {
           binHz={tonality.fft.binHz}
           noiseFloorDb={tonality.fft.noiseFloorDb}
           noiseMethod={tonality.fft.noiseMethod}
-          tempoEnvelopeDb={tonality.tempoAnalysis.envelopeDb}
-          lowpassCutoffHz={tonality.tempoAnalysis.lowpassCutoffHz}
-          timeSignal={tonality.tempoAnalysis.timeSignal}
-          sampleRate={tonality.tempoAnalysis.sampleRate}
+          tempoEnvelopeDb={new Float32Array(0)}
+          lowpassCutoffHz={fftSettings.lowpassCutoffHz}
+          timeSignal={new Float32Array(0)}
+          sampleRate={microphone.mic?.context.sampleRate ?? 0}
           settings={fftSettings}
           onSettingsChange={setFftSettings}
         />

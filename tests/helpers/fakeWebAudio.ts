@@ -22,11 +22,28 @@ export function makeFakeStream(settings: MediaTrackSettings = {}): MediaStream {
   } as unknown as MediaStream;
 }
 
+/** Programmable source for `getFloatFrequencyData`: fills `buf` in place. */
+export type SpectrumSource = (buf: Float32Array) => void;
+
 export interface FakeAudioContextOptions {
   sampleRate?: number;
   initialState?: AudioContextState;
   /** Make createMediaStreamSource throw (to test cleanup on failure). */
   failSource?: boolean;
+  /** Spectrum delivered by every analyser of every context (default: silence). */
+  spectrumSource?: SpectrumSource;
+}
+
+export interface FakeAnalyser {
+  fftSize: number;
+  readonly frequencyBinCount: number;
+  smoothingTimeConstant: number;
+  minDecibels: number;
+  maxDecibels: number;
+  connect: ReturnType<typeof vi.fn>;
+  disconnect: ReturnType<typeof vi.fn>;
+  getFloatFrequencyData: ReturnType<typeof vi.fn>;
+  getFloatTimeDomainData: ReturnType<typeof vi.fn>;
 }
 
 /** A spy-backed AudioContext constructor. Instances are collected in `instances`. */
@@ -37,6 +54,9 @@ export function makeFakeAudioContextClass(opts: FakeAudioContextOptions = {}) {
     sampleRate = opts.sampleRate ?? 48000;
     state: AudioContextState = opts.initialState ?? "suspended";
     currentTime = 0;
+    /** Replace to change what analysers created by this context return. */
+    spectrumSource: SpectrumSource = opts.spectrumSource ?? ((buf) => buf.fill(-Infinity));
+    analysers: FakeAnalyser[] = [];
     resume = vi.fn(async () => {
       this.state = "running";
     });
@@ -47,17 +67,23 @@ export function makeFakeAudioContextClass(opts: FakeAudioContextOptions = {}) {
       if (opts.failSource) throw new Error("source failure");
       return { connect: vi.fn(), disconnect: vi.fn() };
     });
-    createAnalyser = vi.fn(() => ({
-      fftSize: 2048,
-      frequencyBinCount: 1024,
-      smoothingTimeConstant: 0.8,
-      minDecibels: -100,
-      maxDecibels: -30,
-      connect: vi.fn(),
-      disconnect: vi.fn(),
-      getFloatFrequencyData: vi.fn((buf: Float32Array) => buf.fill(-Infinity)),
-      getFloatTimeDomainData: vi.fn((buf: Float32Array) => buf.fill(0)),
-    }));
+    createAnalyser = vi.fn((): FakeAnalyser => {
+      const analyser: FakeAnalyser = {
+        fftSize: 2048,
+        get frequencyBinCount() {
+          return this.fftSize / 2;
+        },
+        smoothingTimeConstant: 0.8,
+        minDecibels: -100,
+        maxDecibels: -30,
+        connect: vi.fn(),
+        disconnect: vi.fn(),
+        getFloatFrequencyData: vi.fn((buf: Float32Array) => this.spectrumSource(buf)),
+        getFloatTimeDomainData: vi.fn((buf: Float32Array) => buf.fill(0)),
+      };
+      this.analysers.push(analyser);
+      return analyser;
+    });
     audioWorklet = { addModule: vi.fn(async () => undefined) };
     constructor() {
       instances.push(this);
@@ -67,9 +93,13 @@ export function makeFakeAudioContextClass(opts: FakeAudioContextOptions = {}) {
   return { FakeAudioContext, instances };
 }
 
+export type FakeAudioContextInstance = InstanceType<
+  ReturnType<typeof makeFakeAudioContextClass>["FakeAudioContext"]
+>;
+
 export interface InstalledFakes {
   getUserMedia: ReturnType<typeof vi.fn>;
-  instances: InstanceType<ReturnType<typeof makeFakeAudioContextClass>["FakeAudioContext"]>[];
+  instances: FakeAudioContextInstance[];
   restore(): void;
 }
 
@@ -110,4 +140,25 @@ export function installWebAudioFakes(
       }
     },
   };
+}
+
+/**
+ * AnalyserNode-style dB spectrum: `levelDb` peaks at the fundamentals of the
+ * given MIDI notes plus two harmonics, -Infinity elsewhere.
+ */
+export function dbSpectrumForNotes(
+  midiNotes: number[],
+  { sampleRate = 48000, fftSize = 16384, levelDb = -20 } = {},
+): Float32Array {
+  const bins = fftSize / 2;
+  const binHz = sampleRate / fftSize;
+  const db = new Float32Array(bins).fill(-Infinity);
+  for (const midi of midiNotes) {
+    const f0 = 440 * Math.pow(2, (midi - 69) / 12);
+    for (let h = 1; h <= 3; h++) {
+      const k = Math.round((f0 * h) / binHz);
+      if (k < bins) db[k] = Math.max(db[k], levelDb - 6 * (h - 1));
+    }
+  }
+  return db;
 }

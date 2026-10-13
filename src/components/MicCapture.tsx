@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 interface MicCaptureProps {
   running: boolean;
   error: string | null;
@@ -6,7 +8,13 @@ interface MicCaptureProps {
   onReset: () => void;
 }
 
-export function MicCapture({ running, error, onStart, onStop, onReset }: MicCaptureProps) {
+export const MicCapture = memo(function MicCapture({
+  running,
+  error,
+  onStart,
+  onStop,
+  onReset,
+}: MicCaptureProps) {
   return (
     <div className="mic-capture">
       {!running ? (
@@ -33,4 +41,4 @@ export function MicCapture({ running, error, onStart, onStop, onReset }: MicCapt
       )}
     </div>
   );
-}
+});
