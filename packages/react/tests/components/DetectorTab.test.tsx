@@ -68,18 +68,18 @@ describe("DetectorTab", () => {
   it("shows waiting states everywhere before the first frame", () => {
     const { view } = renderTab(false);
     expect(screen.getAllByText("Waiting for signal…").length).toBeGreaterThanOrEqual(6);
-    expect(view.container.querySelectorAll(".chroma")).toHaveLength(7);
-    expect(view.container.querySelector(".chroma")?.getAttribute("data-colour")).toBe("single");
+    expect(view.container.querySelectorAll(".al-chroma")).toHaveLength(7);
+    expect(view.container.querySelector(".al-chroma")?.getAttribute("data-colour")).toBe("single");
   });
 
   it("fills the hero readouts and the ranked lists from the scores", () => {
     const { view } = renderTab(true, true);
     const hero = screen.getByRole("group", { name: "Estimated key" });
-    expect(hero.querySelector(".readout__value")?.textContent).toBe("G major");
+    expect(hero.querySelector(".al-readout__value")?.textContent).toBe("G major");
     expect(hero.getAttribute("data-mode")).toBe("maj");
     expect(screen.getByRole("group", { name: "Chord" }).textContent).toContain("G");
     expect(screen.getAllByRole("list", { name: /candidates/i }).length).toBeGreaterThanOrEqual(3);
-    expect(view.container.querySelector(".chroma")?.getAttribute("data-colour")).toBe("pitch");
+    expect(view.container.querySelector(".al-chroma")?.getAttribute("data-colour")).toBe("pitch");
     expect(screen.getByText("0.1234")).toBeTruthy();
   });
 

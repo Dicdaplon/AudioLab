@@ -68,8 +68,8 @@ export function DetectorTab({
   const topChord = data.chords[0];
 
   return (
-    <div className="detector">
-      <div className="detector__hero">
+    <div className="al-detector">
+      <div className="al-detector__hero">
         <Readout
           compact
           label="Chord"
@@ -82,7 +82,7 @@ export function DetectorTab({
         <KeyReadout label="Estimated key" meta={`${long} s`} keys={data.tonalityKeys} />
       </div>
 
-      <div className="detector__settings">
+      <div className="al-detector__settings">
         <SettingsRail>
           <SettingsPanel
             settings={settings}
@@ -95,7 +95,7 @@ export function DetectorTab({
         </SettingsRail>
       </div>
 
-      <div className="detector__chroma">
+      <div className="al-detector__chroma">
         <ChromaView
           title="Instantaneous chroma"
           chroma={data.instantaneousChroma}
@@ -121,7 +121,7 @@ export function DetectorTab({
         />
       </div>
 
-      <div className="detector__lists">
+      <div className="al-detector__lists">
         <ChordView chords={data.chords} windowSeconds={chordWindow} topN={6} />
         <KeyProbabilities
           title="Live key candidates"
@@ -138,7 +138,7 @@ export function DetectorTab({
       </div>
 
       <ToneBaseTonalityView
-        className="detector__tone"
+        className="al-detector__tone"
         presence={data.presenceHistogram}
         filteredLiveChroma={data.filteredLiveChroma}
         presenceIndicator={data.presenceIndicator}

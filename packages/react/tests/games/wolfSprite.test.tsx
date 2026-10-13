@@ -9,7 +9,7 @@ describe("WolfSprite", () => {
     const { container } = render(<WolfSprite width={100} />);
     const paths = [...container.querySelectorAll("path")];
     expect(paths).toHaveLength(WOLF_PATHS.length);
-    paths.forEach((p, i) => expect(p.getAttribute("class")).toBe(`wolf__${WOLF_PATHS[i].role}`));
+    paths.forEach((p, i) => expect(p.getAttribute("class")).toBe(`al-wolf__${WOLF_PATHS[i].role}`));
   });
 
   it("has exactly one ember eye and starts with the solid ink outline", () => {

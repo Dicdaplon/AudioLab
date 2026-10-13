@@ -76,13 +76,13 @@ describe("ChordGame", () => {
     const play = (frame: ChordScore[]) => view.rerender(<ChordGame chords={frame} running />);
     const text = (selector: string) => view.container.querySelector(selector)?.textContent;
     const stats = () =>
-      Array.from(view.container.querySelectorAll(".stat__value")).map((n) => n.textContent);
+      Array.from(view.container.querySelectorAll(".al-stat__value")).map((n) => n.textContent);
     return { view, play, text, stats };
   }
 
   it("scores after the target is top-1 for three frames and draws a new target", () => {
     const { play, text, stats } = setup();
-    expect(text(".readout--target .readout__value")).toBe("C");
+    expect(text(".al-readout--target .al-readout__value")).toBe("C");
 
     play(chord("C"));
     play(chord("C"));
@@ -90,7 +90,7 @@ describe("ChordGame", () => {
     play(chord("C"));
 
     expect(stats()).toEqual(["1", "1", "1", "0"]);
-    expect(text(".readout--target .readout__value")).toBe("G");
+    expect(text(".al-readout--target .al-readout__value")).toBe("G");
   });
 
   it("restarts the confirmation when another chord interrupts", () => {
@@ -99,7 +99,7 @@ describe("ChordGame", () => {
     play(chord("C"));
     play(chord("Am"));
     play(chord("C"));
-    expect(text(".game__progress-text")).toMatch(/^1\/3/);
+    expect(text(".al-game__progress-text")).toMatch(/^1\/3/);
     expect(stats()[0]).toBe("0");
   });
 
@@ -118,13 +118,13 @@ describe("ChordGame", () => {
     play(chord("C"));
     fireEvent.click(view.getAllByRole("button")[0]);
     expect(stats()).toEqual(["1", "0", "1", "1"]);
-    expect(text(".readout--target .readout__value")).toBe("C");
+    expect(text(".al-readout--target .al-readout__value")).toBe("C");
   });
 
   it("redraws the target when the pool no longer contains it", () => {
     const { view, text } = setup();
     fireEvent.change(view.getByRole("combobox"), { target: { value: "open-minor" } });
-    expect(text(".readout--target .readout__value")).toBe("Am");
+    expect(text(".al-readout--target .al-readout__value")).toBe("Am");
   });
 
   it("flashes the target briefly on a hit", () => {
@@ -133,7 +133,7 @@ describe("ChordGame", () => {
     play(chord("C"));
     play(chord("C"));
     play(chord("C"));
-    const target = view.container.querySelector(".readout--target");
+    const target = view.container.querySelector(".al-readout--target");
     expect(target?.hasAttribute("data-hit")).toBe(true);
     act(() => {
       vi.advanceTimersByTime(400);
@@ -144,7 +144,7 @@ describe("ChordGame", () => {
   it("shows the mic prompt and calls onStart while stopped", () => {
     const onStart = vi.fn();
     const view = render(<ChordGame chords={[]} running={false} onStart={onStart} />);
-    const prompt = view.container.querySelector(".notice--mic");
+    const prompt = view.container.querySelector(".al-notice--mic");
     expect(prompt).not.toBeNull();
     fireEvent.click(prompt!.querySelector("button")!);
     expect(onStart).toHaveBeenCalledTimes(1);

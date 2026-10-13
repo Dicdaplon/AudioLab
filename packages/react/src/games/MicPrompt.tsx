@@ -10,13 +10,13 @@ interface MicPromptProps {
 /** Call to action shown by the games while the microphone is off. */
 export function MicPrompt({ message, onStart }: MicPromptProps) {
   return (
-    <div className="notice notice--accent notice--mic">
-      <Icon name="mic" className="notice__icon" />
-      <div className="notice__body">
-        <p className="notice__text">{message}</p>
+    <div className="al-notice al-notice--accent al-notice--mic">
+      <Icon name="mic" className="al-notice__icon" />
+      <div className="al-notice__body">
+        <p className="al-notice__text">{message}</p>
         {onStart && (
-          <div className="notice__actions">
-            <button type="button" className="btn btn--accent btn--touch" onClick={onStart}>
+          <div className="al-notice__actions">
+            <button type="button" className="al-btn al-btn--accent al-btn--touch" onClick={onStart}>
               <Icon name="mic" />
               Start microphone
             </button>

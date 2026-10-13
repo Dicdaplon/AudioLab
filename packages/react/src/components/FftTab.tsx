@@ -53,14 +53,14 @@ export function FftTab({ mic, spectrum, settings, onSettingsChange }: FftTabProp
   const compact = !useMediaQuery(BREAKPOINTS.sm);
 
   return (
-    <div className="fft">
-      <div className="fft__settings">
+    <div className="al-fft">
+      <div className="al-fft__settings">
         <SettingsRail>
           <FftSettingsPanel settings={settings} onChange={onSettingsChange} />
         </SettingsRail>
       </div>
 
-      <Panel className="panel--bed fft__spectrum" as="section">
+      <Panel className="al-panel--bed al-fft__spectrum" as="section">
         <SpectrumPlot
           spectrumDb={spectrum.spectrumDb}
           binHz={spectrum.binHz}
@@ -73,7 +73,7 @@ export function FftTab({ mic, spectrum, settings, onSettingsChange }: FftTabProp
           minFreqHz={0}
           maxFreqHz={FFT_DISPLAY_MAX_HZ}
         />
-        <p className="hint">
+        <p className="al-hint">
           Magnitude spectrum (dB) from the AnalyserNode, 0–{FFT_DISPLAY_MAX_HZ / 1000} kHz. The
           dashed line is the noise floor ({spectrum.noiseMethod} method over the displayed band).
         </p>
@@ -82,10 +82,10 @@ export function FftTab({ mic, spectrum, settings, onSettingsChange }: FftTabProp
       <Panel
         title="Tempo"
         meta={`last ${windowLabel} s`}
-        className="panel--bed fft__tempo-panel"
+        className="al-panel--bed al-fft__tempo-panel"
         as="section"
       >
-        <p className="fft__status" role="status">
+        <p className="al-fft__status" role="status">
           {tempoStatus}
           {frame && frame.filledSeconds < windowSeconds && (
             <>
@@ -104,7 +104,7 @@ export function FftTab({ mic, spectrum, settings, onSettingsChange }: FftTabProp
           )}
         </p>
 
-        <div className="fft__tempo">
+        <div className="al-fft__tempo">
           <TimeSignalPlot
             signal={frame?.onsetEnvelope ?? EMPTY}
             sampleRate={frame?.envelopeRate ?? 0}
@@ -121,7 +121,7 @@ export function FftTab({ mic, spectrum, settings, onSettingsChange }: FftTabProp
           />
         </div>
 
-        <p className="hint">
+        <p className="al-hint">
           The loudness envelope of the last {windowLabel} s is turned into an onset-strength signal
           (RMS per block, log compression, half-wave rectified difference, lowpass at{" "}
           {settings.onsetLowpassHz.toFixed(1)} Hz). Its spectrum shows the dominant beat rates; the

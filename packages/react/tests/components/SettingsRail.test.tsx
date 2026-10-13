@@ -53,7 +53,7 @@ describe("SettingsRail", () => {
 
     matching.add(BREAKPOINTS.xl);
     act(() => fire(BREAKPOINTS.xl));
-    expect(view.container.querySelector("aside.rail")).not.toBeNull();
+    expect(view.container.querySelector("aside.al-rail")).not.toBeNull();
     expect(view.container.querySelector("details")).toBeNull();
   });
 

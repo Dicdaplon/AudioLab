@@ -11,7 +11,7 @@ describe("Readout", () => {
 
   it("shows the waiting state without a mode tint", () => {
     const view = render(<Readout label="Estimated key" meta="30 s" value={null} mode="maj" />);
-    const readout = view.container.querySelector(".readout")!;
+    const readout = view.container.querySelector(".al-readout")!;
     expect(readout.getAttribute("data-mode")).toBeNull();
     expect(readout.textContent).toContain("Waiting for signal…");
   });
@@ -20,13 +20,13 @@ describe("Readout", () => {
     const view = render(
       <Readout label="Estimated key" value="G" qualifier="major" mode="maj" probability={0.412} />,
     );
-    const readout = view.container.querySelector(".readout")!;
+    const readout = view.container.querySelector(".al-readout")!;
     expect(readout.getAttribute("data-mode")).toBe("maj");
-    expect(view.container.querySelector(".readout__value")?.textContent).toBe("G major");
+    expect(view.container.querySelector(".al-readout__value")?.textContent).toBe("G major");
     expect(readout.textContent).toContain("41.2 %");
     // 41.2 % → 2 of 5 segments.
     expect(screen.getByRole("img", { name: "confidence 2 of 5" })).toBeTruthy();
-    expect(view.container.querySelectorAll(".segments__seg[data-filled]")).toHaveLength(2);
+    expect(view.container.querySelectorAll(".al-segments__seg[data-filled]")).toHaveLength(2);
   });
 });
 
@@ -56,14 +56,14 @@ describe("RankList", () => {
       5,
     );
     const view = render(<RankList rows={rows} label="Keys" />);
-    const items = view.container.querySelectorAll(".ranklist__row");
+    const items = view.container.querySelectorAll(".al-ranklist__row");
     expect(items).toHaveLength(2);
     expect(items[0].getAttribute("aria-current")).toBe("true");
     expect(items[1].getAttribute("aria-current")).toBeNull();
     expect(items[0].getAttribute("data-mode")).toBe("maj");
     expect(items[1].getAttribute("data-mode")).toBe("min");
     expect(items[0].textContent).toContain("r=0.83");
-    expect(items[0].querySelector<HTMLElement>(".ranklist__fill")?.style.width).toBe("41%");
+    expect(items[0].querySelector<HTMLElement>(".al-ranklist__fill")?.style.width).toBe("41%");
   });
 
   it("splits a key name into tonic and mode", () => {
@@ -83,7 +83,7 @@ describe("ChromaBars", () => {
       <ChromaBars values={values} label="chroma" tonic={2} colourByPitch={false} />,
     );
     expect(screen.getByRole("img", { name: "chroma, strongest A" })).toBeTruthy();
-    const bars = view.container.querySelectorAll<HTMLElement>(".chroma__bar");
+    const bars = view.container.querySelectorAll<HTMLElement>(".al-chroma__bar");
     expect(bars).toHaveLength(12);
     expect(Array.from(bars).map((b) => b.textContent)).toEqual([
       "C",
@@ -102,12 +102,12 @@ describe("ChromaBars", () => {
     expect(bars[9].hasAttribute("data-max")).toBe(true);
     expect(bars[2].hasAttribute("data-tonic")).toBe(true);
     expect(bars[2].style.getPropertyValue("--v")).toBe("0.500");
-    expect(view.container.querySelector(".chroma")?.getAttribute("data-colour")).toBe("single");
+    expect(view.container.querySelector(".al-chroma")?.getAttribute("data-colour")).toBe("single");
   });
 
   it("switches to pitch-class colour on request", () => {
     const view = render(<ChromaBars values={new Float32Array(12)} label="chroma" colourByPitch />);
-    expect(view.container.querySelector(".chroma")?.getAttribute("data-colour")).toBe("pitch");
+    expect(view.container.querySelector(".al-chroma")?.getAttribute("data-colour")).toBe("pitch");
     expect(screen.getByRole("img", { name: "chroma, strongest none" })).toBeTruthy();
   });
 });

@@ -6,7 +6,7 @@ import { WOLF_ASPECT, WOLF_PATHS, WOLF_TRANSFORM, WOLF_VIEWBOX } from "./wolfArt
 export function WolfSprite({ width }: { width: number }) {
   return (
     <svg
-      className="wolf"
+      className="al-wolf"
       viewBox={WOLF_VIEWBOX}
       width={width}
       height={width * WOLF_ASPECT}
@@ -15,7 +15,7 @@ export function WolfSprite({ width }: { width: number }) {
     >
       <g transform={WOLF_TRANSFORM}>
         {WOLF_PATHS.map((p, i) => (
-          <path key={i} className={`wolf__${p.role}`} d={p.d} />
+          <path key={i} className={`al-wolf__${p.role}`} d={p.d} />
         ))}
       </g>
     </svg>

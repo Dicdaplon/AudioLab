@@ -25,7 +25,10 @@
       })();
     </script>
   </head>
-  <body>
+  <!-- `loupe` on <body> gives the whole document the design tokens (page
+       background, colour scheme) without touching the root font size; the
+       app also mounts a <LoupeRoot>, like any other consumer of the SDK. -->
+  <body class="loupe">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

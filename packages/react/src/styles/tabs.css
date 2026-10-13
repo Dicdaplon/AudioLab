@@ -4,10 +4,10 @@
 
 /* --- Tabs ---------------------------------------------------------------- */
 
-.tabs {
+.al-tabs {
   display: flex;
   align-items: stretch;
-  gap: var(--sp-1);
+  gap: var(--al-sp-1);
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
@@ -15,55 +15,55 @@
   mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
 }
 
-.tabs::-webkit-scrollbar {
+.al-tabs::-webkit-scrollbar {
   display: none;
 }
 
 @media (min-width: 720px) {
-  .tabs {
+  .al-tabs {
     mask-image: none;
     overflow: visible;
   }
 }
 
-.tab {
+.al-tab {
   flex: none;
-  height: var(--header-h);
-  padding: 0 var(--sp-3);
+  height: var(--al-header-h);
+  padding: 0 var(--al-sp-3);
   border: 0;
   background: transparent;
-  color: var(--color-ink-muted);
-  font-size: var(--step--1);
+  color: var(--al-color-ink-muted);
+  font-size: var(--al-step--1);
   font-weight: 500;
   white-space: nowrap;
   transition:
-    color var(--dur-1) var(--ease-out),
-    background-color var(--dur-1) var(--ease-out);
+    color var(--al-dur-1) var(--al-ease-out),
+    background-color var(--al-dur-1) var(--al-ease-out);
 }
 
-.tab:hover {
-  color: var(--color-ink);
-  background: var(--color-sunken);
+.al-tab:hover {
+  color: var(--al-color-ink);
+  background: var(--al-color-sunken);
 }
 
-.tab[aria-selected="true"] {
-  color: var(--color-ink);
-  box-shadow: inset 0 -2px 0 var(--color-accent);
+.al-tab[aria-selected="true"] {
+  color: var(--al-color-ink);
+  box-shadow: inset 0 -2px 0 var(--al-color-accent);
 }
 
-.tab:focus-visible {
+.al-tab:focus-visible {
   outline-offset: -2px;
 }
 
 /* --- Transport ----------------------------------------------------------- */
 
-.transport {
+.al-transport {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
+  gap: var(--al-sp-2);
 }
 
 /* The theme toggle keeps its glyph and word; it is the quietest control. */
-.theme-toggle {
+.al-theme-toggle {
   white-space: nowrap;
 }

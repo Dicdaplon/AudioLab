@@ -4,7 +4,12 @@ import { act, cleanup, render } from "@testing-library/react";
 import { DEFAULT_VIZ_THEME, readVizTheme, tickFont, useVizTheme } from "../../src/ui/vizTheme";
 
 function clearTokens(el: HTMLElement) {
-  for (const name of ["--viz-signal", "--viz-bed", "--plot-pad-left", "--plot-font-size"]) {
+  for (const name of [
+    "--al-viz-signal",
+    "--al-viz-bed",
+    "--al-plot-pad-left",
+    "--al-plot-font-size",
+  ]) {
     el.style.removeProperty(name);
   }
 }
@@ -24,10 +29,10 @@ describe("readVizTheme", () => {
 
   it("reads literal colours and plot geometry from the custom properties", () => {
     const root = document.documentElement;
-    root.style.setProperty("--viz-signal", "#123456");
-    root.style.setProperty("--viz-bed", " #ffffff ");
-    root.style.setProperty("--plot-pad-left", "36");
-    root.style.setProperty("--plot-font-size", "10");
+    root.style.setProperty("--al-viz-signal", "#123456");
+    root.style.setProperty("--al-viz-bed", " #ffffff ");
+    root.style.setProperty("--al-plot-pad-left", "36");
+    root.style.setProperty("--al-plot-font-size", "10");
     const theme = readVizTheme(root);
     expect(theme.signal).toBe("#123456");
     expect(theme.bed).toBe("#ffffff");
@@ -49,7 +54,7 @@ describe("readVizTheme", () => {
     render(<Probe />);
     expect(seen.at(-1)).toBe(DEFAULT_VIZ_THEME.signal);
 
-    root.style.setProperty("--viz-signal", "#0f5c4e");
+    root.style.setProperty("--al-viz-signal", "#0f5c4e");
     await act(async () => {
       root.dataset.theme = "light";
       // MutationObserver callbacks run as microtasks.

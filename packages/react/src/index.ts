@@ -8,6 +8,10 @@
  * of a component are available through `React.ComponentProps<typeof X>`.
  */
 
+// --- Root -------------------------------------------------------------------
+
+export { LOUPE_ROOT_CLASS, LoupeRoot, useLoupeRoot, type LoupeRootProps } from "./LoupeRoot";
+
 // --- Hooks ------------------------------------------------------------------
 
 export { useMicrophone, type MicrophoneSession } from "./hooks/useMicrophone";

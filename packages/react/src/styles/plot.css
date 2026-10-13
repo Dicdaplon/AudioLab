@@ -3,91 +3,91 @@
    canvas itself reads its colours from the --viz-* tokens.
    ========================================================================= */
 
-.plot {
+.al-plot {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
+  gap: var(--al-sp-2);
   min-width: 0;
 }
 
-.plot__head {
+.al-plot__head {
   display: flex;
   align-items: baseline;
-  gap: var(--sp-3) var(--sp-4);
+  gap: var(--al-sp-3) var(--al-sp-4);
   flex-wrap: wrap;
 }
 
-.plot__title {
-  font-size: var(--step--1);
+.al-plot__title {
+  font-size: var(--al-step--1);
   font-weight: 600;
-  color: var(--color-ink);
+  color: var(--al-color-ink);
 }
 
-.plot__meta {
-  font-size: var(--step--2);
-  color: var(--color-ink-muted);
+.al-plot__meta {
+  font-size: var(--al-step--2);
+  color: var(--al-color-ink-muted);
 }
 
-.plot__legend {
+.al-plot__legend {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-1) var(--sp-4);
+  gap: var(--al-sp-1) var(--al-sp-4);
   margin-left: auto;
-  font-size: var(--step--2);
-  color: var(--color-ink-muted);
+  font-size: var(--al-step--2);
+  color: var(--al-color-ink-muted);
 }
 
-.plot__legend li {
+.al-plot__legend li {
   display: inline-flex;
   align-items: center;
-  gap: var(--sp-2);
+  gap: var(--al-sp-2);
 }
 
 /* Legend keys: a short line in the series colour. */
-.key {
-  --c: var(--color-ink-muted);
+.al-key {
+  --c: var(--al-color-ink-muted);
   display: inline-block;
   width: 18px;
   height: 0;
   border-top: 2px solid var(--c);
 }
 
-.key--dash {
+.al-key--dash {
   border-top-style: dashed;
 }
 
 /* y axis title | frame
                 | x axis title */
-.plot__body {
+.al-plot__body {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   grid-template-rows: auto auto;
-  column-gap: var(--sp-2);
-  row-gap: var(--sp-1);
+  column-gap: var(--al-sp-2);
+  row-gap: var(--al-sp-1);
   align-items: stretch;
 }
 
-.plot__frame {
+.al-plot__frame {
   grid-column: 2;
   grid-row: 1;
   min-width: 0;
-  border: 1px solid var(--color-line);
-  border-radius: var(--r-2);
+  border: 1px solid var(--al-color-line);
+  border-radius: var(--al-r-2);
   overflow: hidden;
-  background: var(--color-bed);
+  background: var(--al-color-bed);
 }
 
-.plot__frame canvas {
+.al-plot__frame canvas {
   display: block;
 }
 
-.plot__axis {
-  font-family: var(--font-mono);
-  font-size: var(--step--2);
-  color: var(--color-ink-muted);
+.al-plot__axis {
+  font-family: var(--al-font-mono);
+  font-size: var(--al-step--2);
+  color: var(--al-color-ink-muted);
 }
 
-.plot__axis--y {
+.al-plot__axis--y {
   grid-column: 1;
   grid-row: 1;
   align-self: center;
@@ -96,7 +96,7 @@
   text-align: center;
 }
 
-.plot__axis--x {
+.al-plot__axis--x {
   grid-column: 2;
   grid-row: 2;
   text-align: center;
@@ -104,23 +104,23 @@
 
 /* --- FFT tab ------------------------------------------------------------- */
 
-.fft__tempo {
+.al-fft__tempo {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--sp-4);
+  gap: var(--al-sp-4);
 }
 
 @media (min-width: 1024px) {
-  .fft__tempo {
+  .al-fft__tempo {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-.fft__status {
-  font-size: var(--step--1);
-  color: var(--color-ink);
+.al-fft__status {
+  font-size: var(--al-step--1);
+  color: var(--al-color-ink);
 }
 
-.fft__status .num {
-  color: var(--color-ink);
+.al-fft__status .al-num {
+  color: var(--al-color-ink);
 }

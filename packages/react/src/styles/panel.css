@@ -3,52 +3,52 @@
    shadows: bed < canvas < surface < raised.
    ========================================================================= */
 
-.panel {
+.al-panel {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
+  gap: var(--al-sp-3);
   min-width: 0;
-  padding: var(--panel-pad);
-  background: var(--color-surface);
-  border: 1px solid var(--color-line);
-  border-radius: var(--r-3);
+  padding: var(--al-panel-pad);
+  background: var(--al-color-surface);
+  border: 1px solid var(--al-color-line);
+  border-radius: var(--al-r-3);
   /* Field rows query the panel width, not the viewport. */
   container: field / inline-size;
 }
 
-.panel__head {
+.al-panel__head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--sp-3);
+  gap: var(--al-sp-3);
   flex-wrap: wrap;
 }
 
-.panel__title {
-  font-size: var(--step--1);
+.al-panel__title {
+  font-size: var(--al-step--1);
   font-weight: 600;
-  color: var(--color-ink);
+  color: var(--al-color-ink);
 }
 
-.panel__meta {
-  font-size: var(--step--2);
-  color: var(--color-ink-muted);
+.al-panel__meta {
+  font-size: var(--al-step--2);
+  color: var(--al-color-ink-muted);
   white-space: nowrap;
 }
 
 /* Holds a plot or chroma bars: a window below the canvas. */
-.panel--bed {
-  background: var(--color-bed);
+.al-panel--bed {
+  background: var(--al-color-bed);
 }
 
-.panel--quiet {
+.al-panel--quiet {
   background: transparent;
 }
 
-.panel--settings {
-  gap: var(--sp-2);
+.al-panel--settings {
+  gap: var(--al-sp-2);
 }
 
-.panel--settings .panel__head {
-  margin-bottom: var(--sp-1);
+.al-panel--settings .al-panel__head {
+  margin-bottom: var(--al-sp-1);
 }

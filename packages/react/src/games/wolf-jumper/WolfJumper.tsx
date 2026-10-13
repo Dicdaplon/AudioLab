@@ -65,23 +65,23 @@ export function WolfJumper({
   });
 
   return (
-    <div className="game game--jumper">
+    <div className="al-game al-game--jumper">
       {!running && (
         <MicPrompt message="Start the microphone to begin the game." onStart={onStart} />
       )}
 
       {running && reducedMotion && !armed && (
-        <div className="notice notice--accent">
-          <Icon name="play" className="notice__icon" />
-          <div className="notice__body">
-            <p className="notice__text">
+        <div className="al-notice al-notice--accent">
+          <Icon name="play" className="al-notice__icon" />
+          <div className="al-notice__body">
+            <p className="al-notice__text">
               Your system asks for reduced motion: the notes start moving only when you launch the
               game.
             </p>
-            <div className="notice__actions">
+            <div className="al-notice__actions">
               <button
                 type="button"
-                className="btn btn--accent btn--touch"
+                className="al-btn al-btn--accent al-btn--touch"
                 onClick={() => setArmed(true)}
               >
                 <Icon name="play" />
@@ -95,7 +95,7 @@ export function WolfJumper({
       <Hud store={store} />
       <Scene store={store} onRestart={reset} />
 
-      <div className="game__controls">
+      <div className="al-game__controls">
         <NoiseGate
           signalLevelDb={signalLevelDb}
           thresholdDb={noiseGateDb}
@@ -112,14 +112,14 @@ export function WolfJumper({
         />
       </div>
 
-      <div className="game__actions">
-        <button type="button" className="btn btn--quiet btn--touch" onClick={reset}>
+      <div className="al-game__actions">
+        <button type="button" className="al-btn al-btn--quiet al-btn--touch" onClick={reset}>
           <Icon name="reset" />
           Reset
         </button>
       </div>
 
-      <p className="hint">
+      <p className="al-hint">
         Play the <strong>note</strong> shown on an enemy to destroy it (chain kill: every enemy with
         the same note on screen goes down at once). Bonus boxes are <strong>chords</strong>: play
         one to trigger its effect: +2 HP, shield 7 s, slow 7 s, or 5 identical notes. Speed

@@ -96,10 +96,10 @@ export function ChordGame({ chords, running, onStart }: ChordGameProps) {
   };
 
   return (
-    <div className="game game--chords">
+    <div className="al-game al-game--chords">
       {!running && <MicPrompt message="Start the microphone to play." onStart={onStart} />}
 
-      <Panel className="game__panel">
+      <Panel className="al-game__panel">
         <SelectField
           id="pool"
           label="Chord set"
@@ -114,65 +114,69 @@ export function ChordGame({ chords, running, onStart }: ChordGameProps) {
         </SelectField>
 
         <div
-          className="readout readout--target"
+          className="al-readout al-readout--target"
           data-hit={justHit ? "" : undefined}
           role="group"
           aria-label="Target chord"
         >
-          <span className="surtitre">Play</span>
-          <strong className="readout__value">{target}</strong>
+          <span className="al-surtitre">Play</span>
+          <strong className="al-readout__value">{target}</strong>
         </div>
 
-        <div className="game__progress">
+        <div className="al-game__progress">
           <Segments
             count={CONFIRMATIONS_NEEDED}
             filled={confirmation.count}
             label={`${confirmation.count} of ${CONFIRMATIONS_NEEDED} consecutive frames`}
           />
-          <span className="game__progress-text num">
+          <span className="al-game__progress-text al-num">
             {confirmation.count}/{CONFIRMATIONS_NEEDED} consecutive frames
           </span>
         </div>
 
-        <p className="game__status">
+        <p className="al-game__status">
           Detected:{" "}
-          <span className={match ? "chip chip--match" : "chip"}>
+          <span className={match ? "al-chip al-chip--match" : "al-chip"}>
             {match && <Icon name="check" size={14} />}
             {topName}
           </span>{" "}
-          <span className="num">({(topProb * 100).toFixed(0)} %)</span>
+          <span className="al-num">({(topProb * 100).toFixed(0)} %)</span>
         </p>
 
-        <dl className="stat-grid">
-          <div className="stat">
-            <dt className="stat__label">Score</dt>
-            <dd className="stat__value">{stats.score}</dd>
+        <dl className="al-stat-grid">
+          <div className="al-stat">
+            <dt className="al-stat__label">Score</dt>
+            <dd className="al-stat__value">{stats.score}</dd>
           </div>
-          <div className="stat">
-            <dt className="stat__label">Streak</dt>
-            <dd className="stat__value">{stats.streak}</dd>
+          <div className="al-stat">
+            <dt className="al-stat__label">Streak</dt>
+            <dd className="al-stat__value">{stats.streak}</dd>
           </div>
-          <div className="stat">
-            <dt className="stat__label">Best</dt>
-            <dd className="stat__value">{stats.bestStreak}</dd>
+          <div className="al-stat">
+            <dt className="al-stat__label">Best</dt>
+            <dd className="al-stat__value">{stats.bestStreak}</dd>
           </div>
-          <div className="stat">
-            <dt className="stat__label">Skipped</dt>
-            <dd className="stat__value">{stats.skipped}</dd>
+          <div className="al-stat">
+            <dt className="al-stat__label">Skipped</dt>
+            <dd className="al-stat__value">{stats.skipped}</dd>
           </div>
         </dl>
 
-        <div className="game__actions">
-          <button type="button" className="btn btn--quiet btn--touch" onClick={skip}>
+        <div className="al-game__actions">
+          <button type="button" className="al-btn al-btn--quiet al-btn--touch" onClick={skip}>
             Skip
           </button>
-          <button type="button" className="btn btn--quiet btn--touch" onClick={resetScores}>
+          <button
+            type="button"
+            className="al-btn al-btn--quiet al-btn--touch"
+            onClick={resetScores}
+          >
             <Icon name="reset" />
             Reset score
           </button>
         </div>
 
-        <p className="hint">
+        <p className="al-hint">
           To validate, the target chord must be detected as top-1 for {CONFIRMATIONS_NEEDED}{" "}
           consecutive frames with a probability ≥ {(MIN_PROBABILITY * 100).toFixed(0)} %. Hold the
           chord for about 1 s so the analysis window can settle.

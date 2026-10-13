@@ -69,5 +69,6 @@ export function useStoreSelector<S, R>(
     return stable;
   }, [store, selector, isEqual]);
 
-  return useSyncExternalStore(store.subscribe, getSnapshot);
+  // The same snapshot serves server rendering: the store is created per mount.
+  return useSyncExternalStore(store.subscribe, getSnapshot, getSnapshot);
 }

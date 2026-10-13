@@ -48,17 +48,17 @@ export function ToneBaseTonalityView({
       as="section"
       className={className}
     >
-      <div className="tonebase__bars">
-        <figure className="chroma-figure">
-          <figcaption className="surtitre">Filtered live chroma</figcaption>
+      <div className="al-tonebase__bars">
+        <figure className="al-chroma-figure">
+          <figcaption className="al-surtitre">Filtered live chroma</figcaption>
           <ChromaBars
             values={filteredLiveChroma}
             label="filtered live chroma"
             colourByPitch={colourByPitch}
           />
         </figure>
-        <figure className="chroma-figure">
-          <figcaption className="surtitre">Current indicator (0 / 1)</figcaption>
+        <figure className="al-chroma-figure">
+          <figcaption className="al-surtitre">Current indicator (0 / 1)</figcaption>
           <ChromaBars
             values={presenceIndicator}
             max={1}
@@ -67,8 +67,8 @@ export function ToneBaseTonalityView({
             colourByPitch={colourByPitch}
           />
         </figure>
-        <figure className="chroma-figure">
-          <figcaption className="surtitre">Presence over {tonalitySeconds} s</figcaption>
+        <figure className="al-chroma-figure">
+          <figcaption className="al-surtitre">Presence over {tonalitySeconds} s</figcaption>
           <ChromaBars
             values={presence}
             max={1}
@@ -79,7 +79,7 @@ export function ToneBaseTonalityView({
         </figure>
       </div>
 
-      <div className="tonebase__result">
+      <div className="al-tonebase__result">
         <Readout
           compact
           label="Key by presence"
@@ -91,11 +91,11 @@ export function ToneBaseTonalityView({
         {top ? (
           <RankList rows={keyRows(keys, topN)} label="Key candidates by presence" />
         ) : (
-          <p className="waiting">Waiting for signal…</p>
+          <p className="al-waiting">Waiting for signal…</p>
         )}
       </div>
 
-      <p className="hint">
+      <p className="al-hint">
         Top {topN} of 24 candidates — Krumhansl-Schmuckler correlation on the presence histogram
         (which notes were there), not on the energy.
       </p>

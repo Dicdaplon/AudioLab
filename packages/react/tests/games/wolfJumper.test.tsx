@@ -46,17 +46,17 @@ describe("WolfJumper", () => {
   it("shows full health and the mic prompt while stopped", () => {
     const view = renderGame(false);
     expect(
-      view.container.querySelectorAll(".segments--hp .segments__seg[data-filled]"),
+      view.container.querySelectorAll(".al-segments--hp .al-segments__seg[data-filled]"),
     ).toHaveLength(MAX_HP);
-    expect(view.container.querySelector(".notice--mic")).not.toBeNull();
-    expect(view.container.querySelector(".scene__note")).toBeNull();
+    expect(view.container.querySelector(".al-notice--mic")).not.toBeNull();
+    expect(view.container.querySelector(".al-scene__note")).toBeNull();
     expect(frameCallbacks.size).toBe(0);
   });
 
   it("spawns and moves enemies while running", () => {
     const view = renderGame();
     animateFor(200);
-    const enemy = view.container.querySelector<HTMLElement>(".scene__note");
+    const enemy = view.container.querySelector<HTMLElement>(".al-scene__note");
     expect(enemy).not.toBeNull();
     const left = parseFloat(enemy!.style.left);
     animateFor(500, 300);
@@ -67,16 +67,16 @@ describe("WolfJumper", () => {
     const view = renderGame();
     animateFor(60_000);
     expect(
-      view.container.querySelectorAll(".segments--hp .segments__seg[data-filled]"),
+      view.container.querySelectorAll(".al-segments--hp .al-segments__seg[data-filled]"),
     ).toHaveLength(0);
-    const overlay = view.container.querySelector(".overlay");
+    const overlay = view.container.querySelector(".al-overlay");
     expect(overlay).not.toBeNull();
     expect(frameCallbacks.size).toBe(0);
 
     fireEvent.click(overlay!.querySelector("button")!);
-    expect(view.container.querySelector(".overlay")).toBeNull();
+    expect(view.container.querySelector(".al-overlay")).toBeNull();
     expect(
-      view.container.querySelectorAll(".segments--hp .segments__seg[data-filled]"),
+      view.container.querySelectorAll(".al-segments--hp .al-segments__seg[data-filled]"),
     ).toHaveLength(MAX_HP);
     expect(frameCallbacks.size).toBe(1);
   });
@@ -84,7 +84,7 @@ describe("WolfJumper", () => {
   it("moves the noise gate threshold with the slider", () => {
     const view = renderGame();
     fireEvent.change(view.getByRole("slider"), { target: { value: "-25" } });
-    expect(view.container.querySelector(".gate__value")?.textContent).toBe("-25 dB");
-    expect(view.container.querySelector(".meter__gate:not([data-open])")).not.toBeNull();
+    expect(view.container.querySelector(".al-gate__value")?.textContent).toBe("-25 dB");
+    expect(view.container.querySelector(".al-meter__gate:not([data-open])")).not.toBeNull();
   });
 });

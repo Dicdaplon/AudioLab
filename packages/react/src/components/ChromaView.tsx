@@ -14,7 +14,7 @@ interface ChromaViewProps {
 /** One chroma window in a bed panel. */
 export function ChromaView({ chroma, title, meta, colourByPitch }: ChromaViewProps) {
   return (
-    <Panel title={title} meta={meta} className="panel--bed">
+    <Panel title={title} meta={meta} className="al-panel--bed">
       <ChromaBars values={chroma} label={title} colourByPitch={colourByPitch} />
     </Panel>
   );

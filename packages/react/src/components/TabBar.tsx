@@ -47,7 +47,7 @@ function TabBarInner<T extends string>({ tabs, active, onSelect, label }: TabBar
   };
 
   return (
-    <div className="tabs" role="tablist" aria-label={label} onKeyDown={onKeyDown}>
+    <div className="al-tabs" role="tablist" aria-label={label} onKeyDown={onKeyDown}>
       {tabs.map(({ id, label: text }) => {
         const selected = id === active;
         return (
@@ -60,7 +60,7 @@ function TabBarInner<T extends string>({ tabs, active, onSelect, label }: TabBar
             type="button"
             role="tab"
             id={tabId(id)}
-            className="tab"
+            className="al-tab"
             aria-selected={selected}
             aria-controls={panelId(id)}
             tabIndex={selected ? 0 : -1}

@@ -1,13 +1,16 @@
 "use client";
 
 /**
- * Canvas code cannot use var(): it reads the --viz-* tokens at draw time
- * through getComputedStyle. Those tokens hold literal colours for that
- * reason (see styles/tokens.css). The defaults below mirror the dark theme
- * so drawing still works where no stylesheet is loaded (tests).
+ * Canvas code cannot use var(): it reads the --al-viz-* tokens at draw time
+ * through getComputedStyle on the Loupe root element. Those tokens hold
+ * literal colours for that reason (see styles/tokens.css). The defaults
+ * below mirror the dark theme so drawing still works where no stylesheet
+ * is loaded (tests) and during server rendering.
  */
 
 import { useEffect, useState } from "react";
+
+import { useLoupeRoot } from "../LoupeRoot";
 
 export interface PlotPadding {
   top: number;
@@ -66,31 +69,31 @@ export const DEFAULT_VIZ_THEME: VizTheme = {
 };
 
 const COLOR_TOKENS: ReadonlyArray<[keyof VizTheme, string]> = [
-  ["bed", "--viz-bed"],
-  ["grid", "--viz-grid"],
-  ["gridStrong", "--viz-grid-strong"],
-  ["axis", "--viz-axis"],
-  ["axisLabel", "--viz-axis-label"],
-  ["signal", "--viz-signal"],
-  ["signalStrong", "--viz-signal-strong"],
-  ["signalFill", "--viz-signal-fill"],
-  ["trace2", "--viz-trace-2"],
-  ["noiseFloor", "--viz-noise-floor"],
-  ["threshold", "--viz-threshold"],
-  ["marker", "--viz-marker"],
-  ["peak", "--viz-peak"],
-  ["danger", "--viz-danger"],
-  ["modeMajor", "--viz-mode-major"],
-  ["modeMinor", "--viz-mode-minor"],
-  ["emptyText", "--viz-empty-text"],
-  ["fontMono", "--font-mono"],
-  ["fontUi", "--font-ui"],
+  ["bed", "--al-viz-bed"],
+  ["grid", "--al-viz-grid"],
+  ["gridStrong", "--al-viz-grid-strong"],
+  ["axis", "--al-viz-axis"],
+  ["axisLabel", "--al-viz-axis-label"],
+  ["signal", "--al-viz-signal"],
+  ["signalStrong", "--al-viz-signal-strong"],
+  ["signalFill", "--al-viz-signal-fill"],
+  ["trace2", "--al-viz-trace-2"],
+  ["noiseFloor", "--al-viz-noise-floor"],
+  ["threshold", "--al-viz-threshold"],
+  ["marker", "--al-viz-marker"],
+  ["peak", "--al-viz-peak"],
+  ["danger", "--al-viz-danger"],
+  ["modeMajor", "--al-viz-mode-major"],
+  ["modeMinor", "--al-viz-mode-minor"],
+  ["emptyText", "--al-viz-empty-text"],
+  ["fontMono", "--al-font-mono"],
+  ["fontUi", "--al-font-ui"],
 ];
 
 /**
- * Read the current data-viz tokens from `el` (the root element by default).
- * A token that is missing or empty keeps its default, so the result is
- * always complete.
+ * Read the current data-viz tokens from `el` (the document root by
+ * default). A token that is missing or empty keeps its default, so the
+ * result is always complete.
  */
 export function readVizTheme(el: Element = document.documentElement): VizTheme {
   const cs = getComputedStyle(el);
@@ -104,12 +107,12 @@ export function readVizTheme(el: Element = document.documentElement): VizTheme {
     const value = read(token);
     if (value) (theme as unknown as Record<string, string>)[key] = value;
   }
-  theme.tickPx = num("--plot-font-size", DEFAULT_VIZ_THEME.tickPx);
+  theme.tickPx = num("--al-plot-font-size", DEFAULT_VIZ_THEME.tickPx);
   theme.pad = {
-    top: num("--plot-pad-top", DEFAULT_VIZ_THEME.pad.top),
-    right: num("--plot-pad-right", DEFAULT_VIZ_THEME.pad.right),
-    bottom: num("--plot-pad-bottom", DEFAULT_VIZ_THEME.pad.bottom),
-    left: num("--plot-pad-left", DEFAULT_VIZ_THEME.pad.left),
+    top: num("--al-plot-pad-top", DEFAULT_VIZ_THEME.pad.top),
+    right: num("--al-plot-pad-right", DEFAULT_VIZ_THEME.pad.right),
+    bottom: num("--al-plot-pad-bottom", DEFAULT_VIZ_THEME.pad.bottom),
+    left: num("--al-plot-pad-left", DEFAULT_VIZ_THEME.pad.left),
   };
   return theme;
 }
@@ -133,18 +136,21 @@ export function tickFont(theme: VizTheme): string {
 }
 
 /**
- * The current viz theme, re-read when `<html data-theme>` changes or the
+ * The current viz theme of the nearest `<LoupeRoot>` (or of the document
+ * root when there is none), re-read when `<html data-theme>` changes or the
  * OS colour-scheme preference flips. Draw effects depend on the returned
- * object, so a theme change redraws every plot.
+ * object, so a theme change redraws every plot. Server rendering gets the
+ * defaults: nothing is read before the component is mounted.
  */
 export function useVizTheme(): VizTheme {
-  const [theme, setTheme] = useState<VizTheme>(() => readVizTheme());
+  const root = useLoupeRoot();
+  const [theme, setTheme] = useState<VizTheme>(DEFAULT_VIZ_THEME);
 
   useEffect(() => {
     // Keep the previous object when nothing changed so draw effects do not re-run.
     const refresh = () =>
       setTheme((prev) => {
-        const next = readVizTheme();
+        const next = readVizTheme(root?.current ?? document.documentElement);
         return sameTheme(prev, next) ? prev : next;
       });
     refresh();
@@ -168,7 +174,7 @@ export function useVizTheme(): VizTheme {
       observer?.disconnect();
       for (const media of queries) media.removeEventListener?.("change", refresh);
     };
-  }, []);
+  }, [root]);
 
   return theme;
 }

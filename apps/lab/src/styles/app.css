@@ -12,8 +12,8 @@ html {
 body {
   margin: 0;
   min-height: 100dvh;
-  background: var(--color-canvas);
-  transition: background-color var(--dur-3) var(--ease-out);
+  background: var(--al-color-canvas);
+  transition: background-color var(--al-dur-3) var(--al-ease-out);
 }
 
 .shell {
@@ -28,26 +28,26 @@ body {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: var(--color-canvas);
-  border-bottom: 1px solid var(--color-line-strong);
+  background: var(--al-color-canvas);
+  border-bottom: 1px solid var(--al-color-line-strong);
 }
 
 .topbar__inner {
-  max-width: var(--container);
+  max-width: var(--al-container);
   margin-inline: auto;
-  padding-inline: var(--gutter);
+  padding-inline: var(--al-gutter);
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-areas:
     "brand transport"
     "tabs tabs";
   align-items: center;
-  column-gap: var(--sp-4);
+  column-gap: var(--al-sp-4);
 }
 
 .topbar__brand {
   grid-area: brand;
-  height: var(--header-h);
+  height: var(--al-header-h);
   display: flex;
   align-items: center;
 }
@@ -62,15 +62,15 @@ body {
   justify-self: end;
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
-  padding-block: var(--sp-1);
+  gap: var(--al-sp-2);
+  padding-block: var(--al-sp-1);
 }
 
 @media (min-width: 720px) {
   .topbar__inner {
     grid-template-columns: auto 1fr auto;
     grid-template-areas: "brand tabs transport";
-    column-gap: var(--sp-5);
+    column-gap: var(--al-sp-5);
   }
 
   .topbar__transport {
@@ -83,23 +83,23 @@ body {
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: var(--sp-2);
-  color: var(--color-ink);
+  gap: var(--al-sp-2);
+  color: var(--al-color-ink);
   text-decoration: none;
-  font-family: var(--font-voice);
-  font-size: var(--step-1);
+  font-family: var(--al-font-voice);
+  font-size: var(--al-step-1);
   font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1;
-  border-radius: var(--r-1);
+  border-radius: var(--al-r-1);
 }
 
 .brand:visited {
-  color: var(--color-ink);
+  color: var(--al-color-ink);
 }
 
 .brand__e {
-  color: var(--color-accent);
+  color: var(--al-color-accent);
 }
 
 .mark {
@@ -107,14 +107,14 @@ body {
 }
 
 .mark__accent {
-  fill: var(--color-accent);
+  fill: var(--al-color-accent);
 }
 
 /* Under 480 px the bar cannot hold the brand, the LED, three buttons and
    their words: the words go to screen readers only, the icons stay. */
 @media (max-width: 479px) {
-  .topbar .transport__text,
-  .topbar .theme-toggle__word {
+  .topbar .al-transport__text,
+  .topbar .al-theme-toggle__word {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -124,21 +124,21 @@ body {
     white-space: nowrap;
   }
 
-  .topbar .badge--live {
+  .topbar .al-badge--live {
     gap: 0;
   }
 
-  .topbar .btn--quiet,
-  .topbar .theme-toggle {
-    padding-inline: var(--sp-2);
+  .topbar .al-btn--quiet,
+  .topbar .al-theme-toggle {
+    padding-inline: var(--al-sp-2);
   }
 
-  .topbar .btn--touch {
-    padding-inline: var(--sp-3);
+  .topbar .al-btn--touch {
+    padding-inline: var(--al-sp-3);
   }
 
   .topbar__inner {
-    column-gap: var(--sp-2);
+    column-gap: var(--al-sp-2);
   }
 }
 
@@ -147,22 +147,22 @@ body {
 .main {
   flex: 1;
   width: 100%;
-  max-width: var(--container);
+  max-width: var(--al-container);
   margin-inline: auto;
-  padding: var(--sp-5) var(--gutter) var(--sp-8);
+  padding: var(--al-sp-5) var(--al-gutter) var(--al-sp-8);
   overflow-x: clip;
 }
 
 @media (min-width: 720px) {
   .main {
-    padding-inline: var(--sp-5);
+    padding-inline: var(--al-sp-5);
   }
 }
 
 .tabpanel {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-5);
+  gap: var(--al-sp-5);
 }
 
 .tabpanel:focus {

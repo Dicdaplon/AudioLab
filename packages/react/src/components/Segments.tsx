@@ -17,12 +17,12 @@ export function Segments({ count, filled, label, className }: SegmentsProps) {
   const on = Math.max(0, Math.min(n, Math.round(filled)));
   return (
     <span
-      className={className ? `segments ${className}` : "segments"}
+      className={className ? `al-segments ${className}` : "al-segments"}
       role="img"
       aria-label={label}
     >
       {Array.from({ length: n }, (_, i) => (
-        <i key={i} className="segments__seg" data-filled={i < on ? "" : undefined} />
+        <i key={i} className="al-segments__seg" data-filled={i < on ? "" : undefined} />
       ))}
     </span>
   );

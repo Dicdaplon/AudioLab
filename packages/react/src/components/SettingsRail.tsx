@@ -16,12 +16,12 @@ interface SettingsRailProps {
 export function SettingsRail({ children }: SettingsRailProps) {
   const wide = useMediaQuery(BREAKPOINTS.xl);
   if (wide) {
-    return <aside className="rail">{children}</aside>;
+    return <aside className="al-rail">{children}</aside>;
   }
   return (
-    <details className="rail-details">
-      <summary className="rail-details__summary">Settings</summary>
-      <div className="rail-details__body">{children}</div>
+    <details className="al-rail-details">
+      <summary className="al-rail-details__summary">Settings</summary>
+      <div className="al-rail-details__body">{children}</div>
     </details>
   );
 }

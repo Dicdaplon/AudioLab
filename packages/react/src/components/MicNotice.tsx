@@ -20,14 +20,14 @@ interface MicNoticeProps {
  */
 export function MicNotice({ message, kind, onRetry }: MicNoticeProps) {
   return (
-    <div className="notice notice--danger" role="alert">
-      <Icon name="warning" className="notice__icon" />
-      <div className="notice__body">
-        <p className="notice__text">{message}</p>
+    <div className="al-notice al-notice--danger" role="alert">
+      <Icon name="warning" className="al-notice__icon" />
+      <div className="al-notice__body">
+        <p className="al-notice__text">{message}</p>
         {kind === "error" && (
-          <details className="notice__details">
+          <details className="al-notice__details">
             <summary>How to allow the microphone again</summary>
-            <ul className="notice__list">
+            <ul className="al-notice__list">
               <li>
                 <strong>Chrome / Edge:</strong> click the lock icon in the address bar, set
                 Microphone to Allow, then reload.
@@ -44,8 +44,8 @@ export function MicNotice({ message, kind, onRetry }: MicNoticeProps) {
           </details>
         )}
         {kind === "error" && onRetry && (
-          <div className="notice__actions">
-            <button type="button" className="btn btn--accent" onClick={onRetry}>
+          <div className="al-notice__actions">
+            <button type="button" className="al-btn al-btn--accent" onClick={onRetry}>
               <Icon name="mic" />
               Try again
             </button>

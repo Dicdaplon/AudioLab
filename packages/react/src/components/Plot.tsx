@@ -37,16 +37,16 @@ export function PlotFigure({
   children,
 }: PlotFigureProps) {
   return (
-    <figure className="plot">
-      <figcaption className="plot__head">
-        <span className="plot__title">{title}</span>
-        {meta && <span className="plot__meta num">{meta}</span>}
+    <figure className="al-plot">
+      <figcaption className="al-plot__head">
+        <span className="al-plot__title">{title}</span>
+        {meta && <span className="al-plot__meta al-num">{meta}</span>}
         {legend && legend.length > 0 && (
-          <ul className="plot__legend">
+          <ul className="al-plot__legend">
             {legend.map((item) => (
               <li key={item.label}>
                 <i
-                  className={`key key--${item.kind}`}
+                  className={`al-key al-key--${item.kind}`}
                   style={{ "--c": item.colour } as CSSProperties}
                   aria-hidden="true"
                 />
@@ -56,12 +56,12 @@ export function PlotFigure({
           </ul>
         )}
       </figcaption>
-      <div className="plot__body">
-        <span className="plot__axis plot__axis--y">{yLabel}</span>
-        <div className="plot__frame" ref={frameRef}>
+      <div className="al-plot__body">
+        <span className="al-plot__axis al-plot__axis--y">{yLabel}</span>
+        <div className="al-plot__frame" ref={frameRef}>
           {children}
         </div>
-        <span className="plot__axis plot__axis--x">{xLabel}</span>
+        <span className="al-plot__axis al-plot__axis--x">{xLabel}</span>
       </div>
     </figure>
   );

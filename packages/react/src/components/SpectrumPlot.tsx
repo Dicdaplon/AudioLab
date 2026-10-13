@@ -45,10 +45,10 @@ interface SpectrumPlotProps {
 }
 
 const LEGEND: Record<"signal" | "floor" | "slope" | "notes", LegendItem> = {
-  signal: { label: "magnitude", kind: "line", colour: "var(--viz-signal)" },
-  floor: { label: "noise floor", kind: "dash", colour: "var(--viz-noise-floor)" },
-  slope: { label: "slope", kind: "line", colour: "var(--viz-trace-2)" },
-  notes: { label: "A minor pentatonic", kind: "line", colour: "var(--viz-marker)" },
+  signal: { label: "magnitude", kind: "line", colour: "var(--al-viz-signal)" },
+  floor: { label: "noise floor", kind: "dash", colour: "var(--al-viz-noise-floor)" },
+  slope: { label: "slope", kind: "line", colour: "var(--al-viz-trace-2)" },
+  notes: { label: "A minor pentatonic", kind: "line", colour: "var(--al-viz-marker)" },
 };
 
 /**

@@ -1,132 +1,117 @@
 /* =========================================================================
-   Base: reset, document defaults and the text primitives every screen uses.
+   Base: the box model, text defaults and text primitives of the Loupe
+   subtree. Everything is scoped to `.loupe` (rendered by <LoupeRoot>): the
+   host document's html/body are never touched.
    ========================================================================= */
 
-*,
-*::before,
-*::after {
+.loupe,
+.loupe *,
+.loupe *::before,
+.loupe *::after {
   box-sizing: border-box;
 }
 
-* {
+.loupe * {
   margin: 0;
 }
 
-html {
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-}
-
-body {
-  min-height: 100dvh;
-  background: var(--color-canvas);
-  color: var(--color-ink);
-  font-family: var(--font-ui);
-  font-size: var(--step-0);
-  line-height: var(--leading-ui);
+.loupe {
+  color: var(--al-color-ink);
+  font-family: var(--al-font-ui);
+  font-size: var(--al-step-0);
+  line-height: var(--al-leading-ui);
   font-variant-numeric: tabular-nums lining-nums;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background-color var(--dur-3) var(--ease-out);
 }
 
-img,
-svg,
-canvas,
-video {
+.loupe :is(img, svg, canvas, video) {
   display: block;
   max-width: 100%;
 }
 
-input,
-button,
-select,
-textarea {
+.loupe :is(input, button, select, textarea) {
   font: inherit;
   color: inherit;
 }
 
-button {
+.loupe button {
   cursor: pointer;
 }
 
-button:disabled {
+.loupe button:disabled {
   cursor: not-allowed;
 }
 
-h1,
-h2,
-h3,
-h4 {
+.loupe :is(h1, h2, h3, h4) {
   font-size: inherit;
   font-weight: 600;
-  line-height: var(--leading-snug);
+  line-height: var(--al-leading-snug);
 }
 
-p {
+.loupe p {
   overflow-wrap: anywhere;
 }
 
-ol,
-ul {
+.loupe :is(ol, ul) {
   padding: 0;
   list-style: none;
 }
 
-a {
-  color: var(--color-link);
+.loupe a {
+  color: var(--al-color-link);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.15em;
 }
 
-code {
-  font-family: var(--font-mono);
+.loupe code {
+  font-family: var(--al-font-mono);
   font-size: 0.92em;
   padding: 0.05em 0.3em;
-  background: var(--color-sunken);
-  border-radius: var(--r-1);
+  background: var(--al-color-sunken);
+  border-radius: var(--al-r-1);
 }
 
-::selection {
-  background: var(--color-selection);
+.loupe ::selection {
+  background: var(--al-color-selection);
 }
 
-:focus-visible {
-  outline: 2px solid var(--color-focus);
+.loupe :focus-visible {
+  outline: 2px solid var(--al-color-focus);
   outline-offset: 2px;
 }
 
 /* --- Text primitives ------------------------------------------------------ */
 
 /* Everything measured is set in mono so columns of numbers align. */
-.num {
-  font-family: var(--font-mono);
+.al-num {
+  font-family: var(--al-font-mono);
   font-variant-numeric: tabular-nums;
 }
 
 /* Small caps label above a block: the "surtitre" of the book. */
-.surtitre {
-  font-size: var(--step--2);
+.al-surtitre {
+  font-size: var(--al-step--2);
   font-weight: 500;
-  letter-spacing: var(--tracking-caps);
+  letter-spacing: var(--al-tracking-caps);
   text-transform: uppercase;
-  color: var(--color-ink-muted);
+  color: var(--al-color-ink-muted);
 }
 
 /* Explanatory sentence under a component. */
-.hint {
-  font-size: var(--step--1);
+.al-hint {
+  font-size: var(--al-step--1);
   line-height: 1.5;
-  color: var(--color-ink-muted);
+  color: var(--al-color-ink-muted);
   max-width: 64ch;
 }
 
-.hint strong {
-  color: var(--color-ink);
+.al-hint strong {
+  color: var(--al-color-ink);
   font-weight: 600;
 }
 
-.visually-hidden {
+.al-visually-hidden {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -137,32 +122,32 @@ code {
 }
 
 /* The separator: two offset strokes, the sign laid flat. */
-.beat {
+.al-beat {
   position: relative;
   height: 10px;
   border: 0;
-  margin: var(--sp-5) 0;
+  margin: var(--al-sp-5) 0;
 }
 
-.beat::before,
-.beat::after {
+.al-beat::before,
+.al-beat::after {
   content: "";
   position: absolute;
   height: 2px;
-  background: var(--color-line-strong);
+  background: var(--al-color-line-strong);
 }
 
-.beat::before {
+.al-beat::before {
   width: 36px;
   left: 0;
   top: 0;
 }
 
-.beat::after {
+.al-beat::after {
   width: 24px;
   left: 2px;
   top: 6px;
-  background: var(--color-accent);
+  background: var(--al-color-accent);
 }
 
 /* --- Motion -------------------------------------------------------------- */
@@ -170,9 +155,10 @@ code {
 /* Nothing animates except what the user triggers, and live data. Under
    reduced motion even those collapse to an instant change. */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  .loupe,
+  .loupe *,
+  .loupe *::before,
+  .loupe *::after {
     animation-duration: 1ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;

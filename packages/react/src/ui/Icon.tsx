@@ -70,7 +70,7 @@ interface IconProps {
 export function Icon({ name, size = 16, className, label }: IconProps) {
   return (
     <svg
-      className={className ? `icon ${className}` : "icon"}
+      className={className ? `al-icon ${className}` : "al-icon"}
       width={size}
       height={size}
       viewBox="0 0 16 16"

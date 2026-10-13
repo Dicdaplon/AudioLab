@@ -19,11 +19,11 @@ export function KeyProbabilities({ keys, windowSeconds, topN = 12, title }: KeyP
   return (
     <Panel title={title} meta={`${windowSeconds} s`}>
       {keys.length === 0 ? (
-        <p className="waiting">Waiting for signal…</p>
+        <p className="al-waiting">Waiting for signal…</p>
       ) : (
         <RankList rows={keyRows(keys, topN)} label={title} />
       )}
-      <p className="hint">
+      <p className="al-hint">
         Top {topN} of 24 candidate keys (12 major + 12 minor), ranked by probability (softmax over
         the Pearson correlation <code>r</code> with the Krumhansl-Schmuckler profiles).
       </p>

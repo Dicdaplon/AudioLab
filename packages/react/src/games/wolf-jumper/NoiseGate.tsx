@@ -32,13 +32,13 @@ export function NoiseGate({
 }: NoiseGateProps) {
   const level = Math.round(signalLevelDb);
   return (
-    <div className="gate">
-      <div className="gate__head">
-        <span className="surtitre">Noise gate</span>
-        <span className="gate__value num">{thresholdDb.toFixed(0)} dB</span>
+    <div className="al-gate">
+      <div className="al-gate__head">
+        <span className="al-surtitre">Noise gate</span>
+        <span className="al-gate__value al-num">{thresholdDb.toFixed(0)} dB</span>
       </div>
       <div
-        className="meter"
+        className="al-meter"
         role="meter"
         aria-valuemin={METER_MIN_DB}
         aria-valuemax={METER_MIN_DB + METER_RANGE_DB}
@@ -46,19 +46,19 @@ export function NoiseGate({
         aria-valuetext={`${level} dB`}
         aria-label="signal level"
       >
-        <div className="meter__track">
+        <div className="al-meter__track">
           <div
-            className="meter__fill"
+            className="al-meter__fill"
             style={{ "--level": percent(meterFraction(signalLevelDb)) } as CSSProperties}
           />
           <div
-            className="meter__gate"
+            className="al-meter__gate"
             data-open={gateOpen ? "" : undefined}
             style={{ "--gate": percent(meterFraction(thresholdDb)) } as CSSProperties}
             title="Noise gate threshold"
           />
         </div>
-        <span className="meter__value num">{level} dB</span>
+        <span className="al-meter__value al-num">{level} dB</span>
       </div>
       <RangeField
         id="gate"

@@ -43,7 +43,7 @@ export function ChromaBars({
   }
   const scale = max ?? Math.max(1e-9, peak);
   const strongest = argmax >= 0 ? NOTE_NAMES[argmax] : "none";
-  const className = binary ? "chroma chroma--binary" : "chroma";
+  const className = binary ? "al-chroma al-chroma--binary" : "al-chroma";
 
   return (
     <div
@@ -61,17 +61,17 @@ export function ChromaBars({
         return (
           <div
             key={name}
-            className="chroma__bar"
+            className="al-chroma__bar"
             data-pc={i}
             data-max={i === argmax && peak > 0 ? "" : undefined}
             data-tonic={i === tonic ? "" : undefined}
             data-sharp={name.length > 1 ? "" : undefined}
             style={style}
           >
-            <span className="chroma__track">
-              <i className="chroma__fill" />
+            <span className="al-chroma__track">
+              <i className="al-chroma__fill" />
             </span>
-            <span className="chroma__label">{name}</span>
+            <span className="al-chroma__label">{name}</span>
           </div>
         );
       })}

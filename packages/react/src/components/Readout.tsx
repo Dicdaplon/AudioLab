@@ -41,35 +41,35 @@ export function Readout({
     probability === undefined ? null : Math.min(CONFIDENCE_SEGMENTS, Math.floor(probability * 5));
   return (
     <div
-      className={compact ? "readout readout--compact" : "readout"}
+      className={compact ? "al-readout al-readout--compact" : "al-readout"}
       data-mode={waiting ? undefined : mode}
       role="group"
       aria-label={label}
     >
-      <span className="readout__label surtitre">
+      <span className="al-readout__label al-surtitre">
         {label}
-        {meta && <span className="readout__meta num"> · {meta}</span>}
+        {meta && <span className="al-readout__meta al-num"> · {meta}</span>}
       </span>
-      <strong className="readout__value">
+      <strong className="al-readout__value">
         {waiting ? (
-          <span className="readout__empty" aria-label="no value yet">
+          <span className="al-readout__empty" aria-label="no value yet">
             —
           </span>
         ) : (
           <>
             {value}
-            {qualifier && <em className="readout__qualifier"> {qualifier}</em>}
+            {qualifier && <em className="al-readout__qualifier"> {qualifier}</em>}
           </>
         )}
       </strong>
       {waiting ? (
-        <span className="readout__hint">Waiting for signal…</span>
+        <span className="al-readout__hint">Waiting for signal…</span>
       ) : (
         probability !== undefined && (
-          <span className="readout__prob">
-            <span className="num">{(probability * 100).toFixed(1)} %</span>
+          <span className="al-readout__prob">
+            <span className="al-num">{(probability * 100).toFixed(1)} %</span>
             <Segments
-              className="segments--small readout__confidence"
+              className="al-segments--small al-readout__confidence"
               count={CONFIDENCE_SEGMENTS}
               filled={confidence ?? 0}
               label={`confidence ${confidence} of ${CONFIDENCE_SEGMENTS}`}

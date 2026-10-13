@@ -79,12 +79,12 @@ export function Scene({ store, onRestart }: SceneProps) {
 
   return (
     <div
-      className="scene-viewport"
+      className="al-scene-viewport"
       ref={viewportRef}
       style={{ height: Math.round(SCENE_HEIGHT * scale) }}
     >
       <div
-        className="scene"
+        className="al-scene"
         data-slow={slowOn ? "" : undefined}
         style={{
           width: SCENE_WIDTH,
@@ -92,10 +92,10 @@ export function Scene({ store, onRestart }: SceneProps) {
           transform: `scale(${scale})`,
         }}
       >
-        <div className="scene__ground" style={{ top: GROUND_Y }} />
+        <div className="al-scene__ground" style={{ top: GROUND_Y }} />
 
         <div
-          className="scene__runner"
+          className="al-scene__runner"
           data-shield={shieldOn ? "" : undefined}
           style={{ left: WOLF_X - WOLF_SPRITE_WIDTH * 0.66, top: GROUND_Y - WOLF_SPRITE_HEIGHT }}
           role="img"
@@ -121,7 +121,7 @@ function EnemySprite({ enemy }: { enemy: Enemy }) {
   const note = findNoteDef(enemy.pc);
   return (
     <div
-      className="scene__note"
+      className="al-scene__note"
       data-pc={enemy.pc}
       data-state={enemy.status}
       style={
@@ -143,7 +143,7 @@ function BonusSprite({ bonus }: { bonus: Bonus }) {
   const typeDef = findBonusTypeDef(bonus.type);
   return (
     <div
-      className="scene__bonus"
+      className="al-scene__bonus"
       data-type={bonus.type}
       data-state={bonus.status}
       style={{
@@ -154,9 +154,9 @@ function BonusSprite({ bonus }: { bonus: Bonus }) {
       }}
       title={typeDef.label}
     >
-      <Icon name={BONUS_ICON[bonus.type]} size={14} className="scene__bonus-icon" />
-      <span className="scene__bonus-chord">{bonus.chordName}</span>
-      <span className="scene__bonus-short">{typeDef.short}</span>
+      <Icon name={BONUS_ICON[bonus.type]} size={14} className="al-scene__bonus-icon" />
+      <span className="al-scene__bonus-chord">{bonus.chordName}</span>
+      <span className="al-scene__bonus-short">{typeDef.short}</span>
     </div>
   );
 }
@@ -164,16 +164,16 @@ function BonusSprite({ bonus }: { bonus: Bonus }) {
 function GameOverOverlay({ store, onRestart }: SceneProps) {
   const { score, bestStreak } = useStoreSelector(store, selectFinalScore, shallowEqual);
   return (
-    <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="game-over-title">
-      <div className="overlay__card">
-        <h3 className="overlay__title" id="game-over-title">
+    <div className="al-overlay" role="dialog" aria-modal="true" aria-labelledby="game-over-title">
+      <div className="al-overlay__card">
+        <h3 className="al-overlay__title" id="game-over-title">
           Game over
         </h3>
-        <p className="overlay__scores">
-          Score <strong className="num">{score}</strong> · Best streak{" "}
-          <strong className="num">{bestStreak}</strong>
+        <p className="al-overlay__scores">
+          Score <strong className="al-num">{score}</strong> · Best streak{" "}
+          <strong className="al-num">{bestStreak}</strong>
         </p>
-        <button type="button" className="btn btn--accent btn--touch" onClick={onRestart}>
+        <button type="button" className="al-btn al-btn--accent al-btn--touch" onClick={onRestart}>
           <Icon name="play" />
           Play again
         </button>

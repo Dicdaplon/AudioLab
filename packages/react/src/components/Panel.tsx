@@ -16,11 +16,11 @@ interface PanelProps {
 /** The surface every block of the lab sits on. */
 export function Panel({ title, meta, className, as: Tag = "div", children }: PanelProps) {
   return (
-    <Tag className={className ? `panel ${className}` : "panel"}>
+    <Tag className={className ? `al-panel ${className}` : "al-panel"}>
       {(title || meta) && (
-        <div className="panel__head">
-          {title && <h2 className="panel__title">{title}</h2>}
-          {meta && <span className="panel__meta num">{meta}</span>}
+        <div className="al-panel__head">
+          {title && <h2 className="al-panel__title">{title}</h2>}
+          {meta && <span className="al-panel__meta al-num">{meta}</span>}
         </div>
       )}
       {children}

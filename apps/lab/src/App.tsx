@@ -11,6 +11,7 @@ import {
 import {
   ChordGame,
   DetectorTab,
+  LoupeRoot,
   FftTab,
   MicNotice,
   MicTransport,
@@ -66,7 +67,7 @@ export default function App() {
   const micError = unsupported?.message ?? microphone.error;
 
   return (
-    <div className="shell">
+    <LoupeRoot className="shell">
       <header className="topbar">
         <div className="topbar__inner">
           <div className="topbar__brand">
@@ -88,7 +89,7 @@ export default function App() {
       </header>
 
       <main className="main">
-        <h1 className="visually-hidden">loup(e) — audio lab</h1>
+        <h1 className="al-visually-hidden">loup(e) — audio lab</h1>
 
         {micError && (
           <MicNotice
@@ -143,6 +144,6 @@ export default function App() {
           )}
         </section>
       </main>
-    </div>
+    </LoupeRoot>
   );
 }

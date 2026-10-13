@@ -19,7 +19,7 @@ export const FftSettingsPanel = memo(function FftSettingsPanel({
   onChange,
 }: FftSettingsPanelProps) {
   return (
-    <Panel title="Settings" className="panel--settings" as="section">
+    <Panel title="Settings" className="al-panel--settings" as="section">
       <SelectField
         id="noise-method"
         label="Noise floor"
@@ -61,7 +61,7 @@ export const FftSettingsPanel = memo(function FftSettingsPanel({
         Show A minor pentatonic notes (A, C, D, E, G)
       </Switch>
 
-      <p className="hint">
+      <p className="al-hint">
         The lowpass smooths the onset-strength envelope before the tempo analysis; lower values
         attenuate fast beat rates.
       </p>

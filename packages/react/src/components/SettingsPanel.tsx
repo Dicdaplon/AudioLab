@@ -35,7 +35,7 @@ export const SettingsPanel = memo(function SettingsPanel({
   };
 
   return (
-    <Panel title="Settings" className="panel--settings" as="section">
+    <Panel title="Settings" className="al-panel--settings" as="section">
       <RangeField
         id="live-sec"
         label="Live window"
@@ -86,14 +86,14 @@ export const SettingsPanel = memo(function SettingsPanel({
         <option value="median">Median (more robust)</option>
       </SelectField>
 
-      <dl className="stat-grid stat-grid--2">
-        <div className="stat">
-          <dt className="stat__label">Current threshold</dt>
-          <dd className="stat__value">{currentThreshold.toFixed(4)}</dd>
+      <dl className="al-stat-grid al-stat-grid--2">
+        <div className="al-stat">
+          <dt className="al-stat__label">Current threshold</dt>
+          <dd className="al-stat__value">{currentThreshold.toFixed(4)}</dd>
         </div>
-        <div className="stat">
-          <dt className="stat__label">Last peak</dt>
-          <dd className="stat__value">{lastPeak.toFixed(4)}</dd>
+        <div className="al-stat">
+          <dt className="al-stat__label">Last peak</dt>
+          <dd className="al-stat__value">{lastPeak.toFixed(4)}</dd>
         </div>
       </dl>
 
@@ -101,7 +101,7 @@ export const SettingsPanel = memo(function SettingsPanel({
         Colour chroma bars by pitch class
       </Switch>
 
-      <p className="hint">
+      <p className="al-hint">
         The presence filter keeps only the chroma bins above a fraction (the tolerance) of the
         recent peaks; the memory sets how many peaks are averaged. The threshold follows how
         concentrated the chroma is, not how loud the signal is.

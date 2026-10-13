@@ -39,64 +39,64 @@ export function Hud({ store }: { store: ReadableStore<GameState> }) {
   const noEffect = !shieldOn && !slowOn && hud.sameNoteRemaining === 0;
 
   return (
-    <div className="hud">
-      <dl className="stat-grid hud__stats">
-        <div className="stat">
-          <dt className="stat__label">Score</dt>
-          <dd className="stat__value">{hud.score}</dd>
+    <div className="al-hud">
+      <dl className="al-stat-grid al-hud__stats">
+        <div className="al-stat">
+          <dt className="al-stat__label">Score</dt>
+          <dd className="al-stat__value">{hud.score}</dd>
         </div>
-        <div className="stat">
-          <dt className="stat__label">Streak</dt>
-          <dd className="stat__value">{hud.streak}</dd>
+        <div className="al-stat">
+          <dt className="al-stat__label">Streak</dt>
+          <dd className="al-stat__value">{hud.streak}</dd>
         </div>
-        <div className="stat">
-          <dt className="stat__label">Best</dt>
-          <dd className="stat__value">{hud.bestStreak}</dd>
+        <div className="al-stat">
+          <dt className="al-stat__label">Best</dt>
+          <dd className="al-stat__value">{hud.bestStreak}</dd>
         </div>
-        <div className="stat">
-          <dt className="stat__label">Speed</dt>
-          <dd className="stat__value">{(travelMs / 1000).toFixed(1)} s</dd>
+        <div className="al-stat">
+          <dt className="al-stat__label">Speed</dt>
+          <dd className="al-stat__value">{(travelMs / 1000).toFixed(1)} s</dd>
         </div>
       </dl>
 
-      <div className="hud__row">
-        <div className="hud__hp">
-          <span className="surtitre">HP</span>
+      <div className="al-hud__row">
+        <div className="al-hud__hp">
+          <span className="al-surtitre">HP</span>
           <Segments
-            className="segments--hp"
+            className="al-segments--hp"
             count={MAX_HP}
             filled={hud.hp}
             label={`HP ${hud.hp} of ${MAX_HP}`}
           />
-          <span className="num hud__hp-text">
+          <span className="al-num al-hud__hp-text">
             {hud.hp} / {MAX_HP}
           </span>
         </div>
 
-        <ul className="hud__effects" aria-label="Active effects">
+        <ul className="al-hud__effects" aria-label="Active effects">
           {shieldOn && (
-            <li className="badge badge--effect" data-type="shield">
+            <li className="al-badge al-badge--effect" data-type="shield">
               <Icon name="shield" size={14} />
-              Shield <span className="num">{formatTenths(hud.shieldTenths)}</span>
+              Shield <span className="al-num">{formatTenths(hud.shieldTenths)}</span>
             </li>
           )}
           {slowOn && (
-            <li className="badge badge--effect" data-type="slow">
+            <li className="al-badge al-badge--effect" data-type="slow">
               <Icon name="slow" size={14} />
-              Slow <span className="num">{formatTenths(hud.slowTenths)}</span>
+              Slow <span className="al-num">{formatTenths(hud.slowTenths)}</span>
             </li>
           )}
           {hud.sameNoteRemaining > 0 && sameNote && (
             <li
-              className="badge badge--effect"
+              className="al-badge al-badge--effect"
               data-type="samenote"
               style={{ "--pc": `var(--viz-pc-${sameNote.pc})` } as CSSProperties}
             >
               <Icon name="target" size={14} />
-              Same note {sameNote.name} <span className="num">×{hud.sameNoteRemaining}</span>
+              Same note {sameNote.name} <span className="al-num">×{hud.sameNoteRemaining}</span>
             </li>
           )}
-          {noEffect && <li className="hud__placeholder">no active effect</li>}
+          {noEffect && <li className="al-hud__placeholder">no active effect</li>}
         </ul>
       </div>
     </div>
@@ -120,17 +120,17 @@ export function DetectionStatus({
   chordProbability,
 }: DetectionStatusProps) {
   return (
-    <p className="status">
-      <span className="status__label">Note</span>
-      <span className="chip">{gateOpen ? noteName : "—"}</span>
-      <span className="num">({(noteEnergy * 100).toFixed(0)} %)</span>
-      <span className="status__sep" aria-hidden="true">
+    <p className="al-status">
+      <span className="al-status__label">Note</span>
+      <span className="al-chip">{gateOpen ? noteName : "—"}</span>
+      <span className="al-num">({(noteEnergy * 100).toFixed(0)} %)</span>
+      <span className="al-status__sep" aria-hidden="true">
         ·
       </span>
-      <span className="status__label">Chord</span>
-      <span className="chip">{gateOpen ? chordName : "—"}</span>
-      <span className="num">({(chordProbability * 100).toFixed(0)} %)</span>
-      {!gateOpen && <span className="badge badge--gated">Gate closed</span>}
+      <span className="al-status__label">Chord</span>
+      <span className="al-chip">{gateOpen ? chordName : "—"}</span>
+      <span className="al-num">({(chordProbability * 100).toFixed(0)} %)</span>
+      {!gateOpen && <span className="al-badge al-badge--gated">Gate closed</span>}
     </p>
   );
 }

@@ -2,94 +2,94 @@
    Games: shared pieces, the chord game.
    ========================================================================= */
 
-.game {
+.al-game {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
+  gap: var(--al-sp-4);
   min-width: 0;
 }
 
-.game--chords {
+.al-game--chords {
   max-width: 640px;
   margin-inline: auto;
   width: 100%;
 }
 
-.game__panel {
-  gap: var(--sp-4);
+.al-game__panel {
+  gap: var(--al-sp-4);
 }
 
-.game__progress {
+.al-game__progress {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--al-sp-3);
   flex-wrap: wrap;
 }
 
-.game__progress-text {
-  font-size: var(--step--1);
-  color: var(--color-ink-muted);
+.al-game__progress-text {
+  font-size: var(--al-step--1);
+  color: var(--al-color-ink-muted);
 }
 
-.game__status {
+.al-game__status {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--sp-2);
-  font-size: var(--step--1);
-  color: var(--color-ink-muted);
+  gap: var(--al-sp-2);
+  font-size: var(--al-step--1);
+  color: var(--al-color-ink-muted);
 }
 
-.game__status .num {
-  color: var(--color-ink-muted);
+.al-game__status .al-num {
+  color: var(--al-color-ink-muted);
 }
 
-.game__actions {
+.al-game__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-2);
+  gap: var(--al-sp-2);
 }
 
 /* The target: the biggest voice in the lab, centred, no filet. On a hit it
    turns to the success tint for a moment; no scaling (nothing moves). */
-.readout--target {
+.al-readout--target {
   align-items: center;
   text-align: center;
-  padding-left: var(--panel-pad);
+  padding-left: var(--al-panel-pad);
   border-left-width: 1px;
-  border-left-color: var(--color-line);
-  transition: border-color var(--dur-1) var(--ease-out);
+  border-left-color: var(--al-color-line);
+  transition: border-color var(--al-dur-1) var(--al-ease-out);
 }
 
-.readout--target .readout__value {
-  font-size: var(--step-5);
-  transition: color var(--dur-1) var(--ease-out);
+.al-readout--target .al-readout__value {
+  font-size: var(--al-step-5);
+  transition: color var(--al-dur-1) var(--al-ease-out);
 }
 
-.readout--target[data-hit] {
-  border-color: var(--color-success);
+.al-readout--target[data-hit] {
+  border-color: var(--al-color-success);
 }
 
-.readout--target[data-hit] .readout__value {
-  color: var(--color-success);
+.al-readout--target[data-hit] .al-readout__value {
+  color: var(--al-color-success);
 }
 
 /* =========================================================================
    Wolf Jumper
    ========================================================================= */
 
-.game__controls {
+.al-game__controls {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--sp-4);
-  padding: var(--panel-pad);
-  background: var(--color-surface);
-  border: 1px solid var(--color-line);
-  border-radius: var(--r-3);
+  gap: var(--al-sp-4);
+  padding: var(--al-panel-pad);
+  background: var(--al-color-surface);
+  border: 1px solid var(--al-color-line);
+  border-radius: var(--al-r-3);
 }
 
 @media (min-width: 720px) {
-  .game__controls {
+  .al-game__controls {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: center;
   }
@@ -97,147 +97,147 @@
 
 /* --- HUD ----------------------------------------------------------------- */
 
-.hud {
+.al-hud {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
+  gap: var(--al-sp-3);
 }
 
-.hud__row {
+.al-hud__row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--sp-3) var(--sp-5);
+  gap: var(--al-sp-3) var(--al-sp-5);
 }
 
-.hud__hp {
+.al-hud__hp {
   display: inline-flex;
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--al-sp-3);
 }
 
-.segments--hp {
-  --segments-fill: var(--color-danger);
+.al-segments--hp {
+  --segments-fill: var(--al-color-danger);
 }
 
-.hud__hp-text {
-  font-size: var(--step--1);
-  color: var(--color-ink-muted);
+.al-hud__hp-text {
+  font-size: var(--al-step--1);
+  color: var(--al-color-ink-muted);
 }
 
-.hud__effects {
+.al-hud__effects {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--al-sp-3);
   min-height: 22px;
 }
 
-.hud__placeholder {
-  font-size: var(--step--1);
+.al-hud__placeholder {
+  font-size: var(--al-step--1);
   font-style: italic;
-  color: var(--color-ink-muted);
+  color: var(--al-color-ink-muted);
 }
 
-.badge--effect {
-  gap: var(--sp-1);
-  color: var(--color-ink);
+.al-badge--effect {
+  gap: var(--al-sp-1);
+  color: var(--al-color-ink);
 }
 
-.badge--effect .icon {
+.al-badge--effect .al-icon {
   color: var(--badge-tint);
 }
 
-.badge--effect[data-type="shield"] {
-  --badge-tint: var(--color-signal);
+.al-badge--effect[data-type="shield"] {
+  --badge-tint: var(--al-color-signal);
 }
 
-.badge--effect[data-type="slow"] {
-  --badge-tint: var(--color-trace-2);
+.al-badge--effect[data-type="slow"] {
+  --badge-tint: var(--al-color-trace-2);
 }
 
-.badge--effect[data-type="samenote"] {
+.al-badge--effect[data-type="samenote"] {
   --badge-tint: var(--pc);
 }
 
-.badge--effect[data-type="hp"] {
-  --badge-tint: var(--color-success);
+.al-badge--effect[data-type="hp"] {
+  --badge-tint: var(--al-color-success);
 }
 
 /* --- Scene --------------------------------------------------------------- */
 
 /* The viewport is as wide as the panel; the 880 × 260 stage scales to it. */
-.scene-viewport {
+.al-scene-viewport {
   position: relative;
   width: 100%;
   overflow: hidden;
-  border: 1px solid var(--color-line);
-  border-radius: var(--r-3);
-  background: var(--color-bed);
+  border: 1px solid var(--al-color-line);
+  border-radius: var(--al-r-3);
+  background: var(--al-color-bed);
 }
 
-.scene {
+.al-scene {
   position: absolute;
   top: 0;
   left: 0;
   transform-origin: top left;
   overflow: hidden;
-  background: var(--color-bed);
+  background: var(--al-color-bed);
 }
 
 /* Slow effect: a cool wash over the stage. */
-.scene[data-slow]::after {
+.al-scene[data-slow]::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: color-mix(in srgb, var(--color-trace-2) 10%, transparent);
+  background: color-mix(in srgb, var(--al-color-trace-2) 10%, transparent);
   pointer-events: none;
 }
 
 /* The ground: a dashed rail, like a 0 dB line. */
-.scene__ground {
+.al-scene__ground {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--color-sunken);
-  border-top: 1px dashed var(--color-line-strong);
+  background: var(--al-color-sunken);
+  border-top: 1px dashed var(--al-color-line-strong);
 }
 
 /* The runner: the wolf, galloping in the theme ink with an ember eye. */
-.scene__runner {
+.al-scene__runner {
   position: absolute;
   display: flex;
   align-items: flex-end;
-  color: var(--color-ink);
+  color: var(--al-color-ink);
   transform-origin: 30% 100%;
   animation: runner-gallop 0.42s ease-in-out infinite;
 }
 
-.wolf {
+.al-wolf {
   display: block;
   overflow: visible;
 }
 
-.wolf__ink {
+.al-wolf__ink {
   fill: currentColor;
 }
 
-.wolf__fill {
-  fill: var(--color-bed);
+.al-wolf__fill {
+  fill: var(--al-color-bed);
 }
 
-.wolf__eye {
-  fill: var(--color-accent);
+.al-wolf__eye {
+  fill: var(--al-color-accent);
 }
 
-.scene__runner[data-shield]::before {
+.al-scene__runner[data-shield]::before {
   content: "";
   position: absolute;
   inset: -8px -10px;
-  border: 2px solid var(--color-signal);
-  border-radius: var(--r-3);
+  border: 2px solid var(--al-color-signal);
+  border-radius: var(--al-r-3);
 }
 
 @keyframes runner-gallop {
@@ -254,218 +254,218 @@
 }
 
 /* Notes: a disc in the pitch-class colour, the letter on it. */
-.scene__note {
+.al-scene__note {
   position: absolute;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   background: var(--pc);
-  box-shadow: 0 0 0 2px var(--color-bed);
-  color: var(--viz-pc-on);
-  font-family: var(--font-mono);
+  box-shadow: 0 0 0 2px var(--al-color-bed);
+  color: var(--al-viz-pc-on);
+  font-family: var(--al-font-mono);
   font-size: 16px;
   font-weight: 600;
   transition:
-    opacity 350ms var(--ease-out),
-    transform 350ms var(--ease-out),
-    filter 350ms var(--ease-out);
+    opacity 350ms var(--al-ease-out),
+    transform 350ms var(--al-ease-out),
+    filter 350ms var(--al-ease-out);
 }
 
-.scene__note[data-state="killed"] {
+.al-scene__note[data-state="killed"] {
   opacity: 0;
   transform: scale(0.4);
 }
 
-.scene__note[data-state="reached"] {
+.al-scene__note[data-state="reached"] {
   opacity: 0.4;
   filter: grayscale(1);
 }
 
 /* Bonuses: a raised box with an accent border, the chord in the voice. */
-.scene__bonus {
+.al-scene__bonus {
   position: absolute;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 1px;
-  border: 2px solid var(--color-accent);
-  border-radius: var(--r-2);
-  background: var(--color-raised);
-  color: var(--color-ink);
+  border: 2px solid var(--al-color-accent);
+  border-radius: var(--al-r-2);
+  background: var(--al-color-raised);
+  color: var(--al-color-ink);
   transition:
-    opacity 350ms var(--ease-out),
-    transform 350ms var(--ease-out);
+    opacity 350ms var(--al-ease-out),
+    transform 350ms var(--al-ease-out);
 }
 
-.scene__bonus-icon {
-  color: var(--color-accent);
+.al-scene__bonus-icon {
+  color: var(--al-color-accent);
 }
 
-.scene__bonus-chord {
-  font-family: var(--font-voice);
-  font-size: var(--step-1);
+.al-scene__bonus-chord {
+  font-family: var(--al-font-voice);
+  font-size: var(--al-step-1);
   font-weight: 600;
   line-height: 1;
 }
 
-.scene__bonus-short {
+.al-scene__bonus-short {
   font-size: 10px;
   font-weight: 500;
-  letter-spacing: var(--tracking-caps);
+  letter-spacing: var(--al-tracking-caps);
   text-transform: uppercase;
-  color: var(--color-ink-muted);
+  color: var(--al-color-ink-muted);
 }
 
-.scene__bonus[data-state="collected"] {
+.al-scene__bonus[data-state="collected"] {
   opacity: 0;
   transform: scale(1.2);
 }
 
-.scene__bonus[data-state="expired"] {
+.al-scene__bonus[data-state="expired"] {
   opacity: 0;
 }
 
 /* --- Overlay ------------------------------------------------------------- */
 
-.overlay {
+.al-overlay {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-scrim);
+  background: var(--al-color-scrim);
 }
 
-.overlay__card {
+.al-overlay__card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--sp-3);
-  padding: var(--sp-5) var(--sp-6);
-  border: 1px solid var(--color-danger);
-  border-radius: var(--r-3);
-  background: var(--color-raised);
+  gap: var(--al-sp-3);
+  padding: var(--al-sp-5) var(--al-sp-6);
+  border: 1px solid var(--al-color-danger);
+  border-radius: var(--al-r-3);
+  background: var(--al-color-raised);
   text-align: center;
 }
 
-.overlay__title {
-  font-family: var(--font-voice);
-  font-size: var(--step-2);
+.al-overlay__title {
+  font-family: var(--al-font-voice);
+  font-size: var(--al-step-2);
   font-weight: 600;
 }
 
-.overlay__scores {
-  color: var(--color-ink-muted);
+.al-overlay__scores {
+  color: var(--al-color-ink-muted);
 }
 
-.overlay__scores strong {
-  color: var(--color-ink);
+.al-overlay__scores strong {
+  color: var(--al-color-ink);
 }
 
 /* --- Noise gate and meter ------------------------------------------------ */
 
-.gate {
+.al-gate {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
+  gap: var(--al-sp-2);
   min-width: 0;
   container: field / inline-size;
 }
 
-.gate__head {
+.al-gate__head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--sp-3);
+  gap: var(--al-sp-3);
 }
 
-.gate__value {
-  font-size: var(--step--1);
-  color: var(--color-ink);
+.al-gate__value {
+  font-size: var(--al-step--1);
+  color: var(--al-color-ink);
 }
 
-.meter {
+.al-meter {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--al-sp-3);
 }
 
-.meter__track {
+.al-meter__track {
   position: relative;
   height: 12px;
-  border: 1px solid var(--color-line);
-  border-radius: var(--r-1);
-  background: var(--color-bed);
+  border: 1px solid var(--al-color-line);
+  border-radius: var(--al-r-1);
+  background: var(--al-color-bed);
   overflow: visible;
 }
 
 /* Full-width gradient clipped to the level, so the colour is a position on
    the scale (low → mid → high), not a stretch of the fill. */
-.meter__fill {
+.al-meter__fill {
   position: absolute;
   inset: 0;
-  border-radius: var(--r-1);
+  border-radius: var(--al-r-1);
   background: linear-gradient(
     to right,
-    var(--viz-meter-low),
-    var(--viz-meter-mid) 70%,
-    var(--viz-meter-high) 90%
+    var(--al-viz-meter-low),
+    var(--al-viz-meter-mid) 70%,
+    var(--al-viz-meter-high) 90%
   );
   clip-path: inset(0 calc(100% - var(--level, 0%)) 0 0);
-  transition: clip-path var(--dur-live) linear;
+  transition: clip-path var(--al-dur-live) linear;
 }
 
 /* The gate marker overhangs the track; its colour says open/closed, the
    badge next to the status line says it in words. */
-.meter__gate {
+.al-meter__gate {
   position: absolute;
   top: -3px;
   bottom: -3px;
   left: var(--gate, 0%);
   width: 2px;
   margin-left: -1px;
-  background: var(--viz-gate-closed);
+  background: var(--al-viz-gate-closed);
 }
 
-.meter__gate[data-open] {
-  background: var(--viz-gate-open);
+.al-meter__gate[data-open] {
+  background: var(--al-viz-gate-open);
 }
 
-.meter__value {
+.al-meter__value {
   min-width: 5.5ch;
-  padding: 0 var(--sp-2);
-  border-radius: var(--r-1);
-  background: var(--color-sunken);
-  font-size: var(--step--1);
+  padding: 0 var(--al-sp-2);
+  border-radius: var(--al-r-1);
+  background: var(--al-color-sunken);
+  font-size: var(--al-step--1);
   text-align: right;
 }
 
 /* --- Status line --------------------------------------------------------- */
 
-.status {
+.al-status {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--sp-2);
-  font-size: var(--step--1);
-  color: var(--color-ink-muted);
+  gap: var(--al-sp-2);
+  font-size: var(--al-step--1);
+  color: var(--al-color-ink-muted);
 }
 
-.status__label {
+.al-status__label {
   font-weight: 500;
 }
 
-.status__sep {
-  padding-inline: var(--sp-1);
+.al-status__sep {
+  padding-inline: var(--al-sp-1);
 }
 
 /* --- Reduced motion ------------------------------------------------------ */
 
 @media (prefers-reduced-motion: reduce) {
-  .scene__runner {
+  .al-scene__runner {
     animation: none;
   }
 }

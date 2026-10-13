@@ -33,19 +33,19 @@ export const MicTransport = memo(function MicTransport({
 }: MicTransportProps) {
   const live = state === "live";
   return (
-    <div className="transport">
-      <span className="badge badge--live" data-state={state} role="status">
-        <span className="transport__text">{BADGE[state]}</span>
+    <div className="al-transport">
+      <span className="al-badge al-badge--live" data-state={state} role="status">
+        <span className="al-transport__text">{BADGE[state]}</span>
       </span>
       {live ? (
-        <button type="button" className="btn btn--danger btn--touch" onClick={onStop}>
+        <button type="button" className="al-btn al-btn--danger al-btn--touch" onClick={onStop}>
           <Icon name="stop" />
           Stop
         </button>
       ) : (
         <button
           type="button"
-          className="btn btn--accent btn--touch"
+          className="al-btn al-btn--accent al-btn--touch"
           onClick={onStart}
           disabled={state === "starting" || state === "unsupported"}
         >
@@ -55,12 +55,12 @@ export const MicTransport = memo(function MicTransport({
       )}
       <button
         type="button"
-        className="btn btn--quiet"
+        className="al-btn al-btn--quiet"
         onClick={onReset}
         title="Clears the analysis buffers (chroma windows and peak memory); the microphone stays on."
       >
         <Icon name="reset" />
-        <span className="transport__text">Reset</span>
+        <span className="al-transport__text">Reset</span>
       </button>
     </div>
   );

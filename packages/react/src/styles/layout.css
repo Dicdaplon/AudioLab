@@ -7,158 +7,158 @@
    Below xl the settings are a disclosure at the top of the tab; at xl they
    become a sticky rail on the right (.with-rail grids). */
 
-.rail-details {
-  border: 1px solid var(--color-line);
-  border-radius: var(--r-3);
-  background: var(--color-surface);
+.al-rail-details {
+  border: 1px solid var(--al-color-line);
+  border-radius: var(--al-r-3);
+  background: var(--al-color-surface);
 }
 
-.rail-details__summary {
+.al-rail-details__summary {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
-  min-height: var(--control-h-touch);
-  padding: 0 var(--panel-pad);
+  gap: var(--al-sp-2);
+  min-height: var(--al-control-h-touch);
+  padding: 0 var(--al-panel-pad);
   cursor: pointer;
-  font-size: var(--step--1);
+  font-size: var(--al-step--1);
   font-weight: 600;
   list-style: none;
 }
 
-.rail-details__summary::-webkit-details-marker {
+.al-rail-details__summary::-webkit-details-marker {
   display: none;
 }
 
-.rail-details__summary::before {
+.al-rail-details__summary::before {
   content: "";
   width: 0;
   height: 0;
   border: 5px solid transparent;
-  border-left: 7px solid var(--color-ink-muted);
-  transition: transform var(--dur-1) var(--ease-out);
+  border-left: 7px solid var(--al-color-ink-muted);
+  transition: transform var(--al-dur-1) var(--al-ease-out);
 }
 
-.rail-details[open] .rail-details__summary::before {
+.al-rail-details[open] .al-rail-details__summary::before {
   transform: rotate(90deg);
 }
 
-.rail-details__body .panel {
+.al-rail-details__body .al-panel {
   border: 0;
-  border-top: 1px solid var(--color-line);
-  border-radius: 0 0 var(--r-3) var(--r-3);
+  border-top: 1px solid var(--al-color-line);
+  border-radius: 0 0 var(--al-r-3) var(--al-r-3);
 }
 
 /* The summary already says "Settings". */
-.rail-details__body .panel__head {
+.al-rail-details__body .al-panel__head {
   display: none;
 }
 
-.rail {
+.al-rail {
   position: sticky;
-  top: calc(var(--header-h) + var(--sp-4));
+  top: calc(var(--al-header-h) + var(--al-sp-4));
 }
 
 /* --- Detector ------------------------------------------------------------ */
 
-.detector {
+.al-detector {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-5);
+  gap: var(--al-sp-5);
   min-width: 0;
 }
 
 @media (min-width: 1280px) {
-  .detector {
+  .al-detector {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) var(--rail);
+    grid-template-columns: minmax(0, 1fr) var(--al-rail);
     grid-template-areas:
       "hero rail"
       "chroma rail"
       "lists rail"
       "tone rail";
     align-items: start;
-    column-gap: var(--sp-5);
+    column-gap: var(--al-sp-5);
   }
 
-  .detector__hero {
+  .al-detector__hero {
     grid-area: hero;
   }
 
-  .detector__settings {
+  .al-detector__settings {
     grid-area: rail;
     align-self: stretch;
   }
 
-  .detector__chroma {
+  .al-detector__chroma {
     grid-area: chroma;
   }
 
-  .detector__lists {
+  .al-detector__lists {
     grid-area: lists;
   }
 
-  .detector__tone {
+  .al-detector__tone {
     grid-area: tone;
   }
 }
 
-.detector__hero,
-.detector__chroma,
-.detector__lists {
+.al-detector__hero,
+.al-detector__chroma,
+.al-detector__lists {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--sp-4);
+  gap: var(--al-sp-4);
 }
 
 @media (min-width: 480px) {
-  .detector__chroma {
+  .al-detector__chroma {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (min-width: 720px) {
-  .detector__hero,
-  .detector__lists {
+  .al-detector__hero,
+  .al-detector__lists {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 @media (min-width: 1024px) {
-  .detector__chroma {
+  .al-detector__chroma {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
 /* --- FFT ----------------------------------------------------------------- */
 
-.fft {
+.al-fft {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-5);
+  gap: var(--al-sp-5);
   min-width: 0;
 }
 
 @media (min-width: 1280px) {
-  .fft {
+  .al-fft {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) var(--rail);
+    grid-template-columns: minmax(0, 1fr) var(--al-rail);
     grid-template-areas:
       "spectrum rail"
       "tempo rail";
     align-items: start;
-    column-gap: var(--sp-5);
+    column-gap: var(--al-sp-5);
   }
 
-  .fft__settings {
+  .al-fft__settings {
     grid-area: rail;
     align-self: stretch;
   }
 
-  .fft__spectrum {
+  .al-fft__spectrum {
     grid-area: spectrum;
   }
 
-  .fft__tempo-panel {
+  .al-fft__tempo-panel {
     grid-area: tempo;
   }
 }

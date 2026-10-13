@@ -32,8 +32,8 @@ interface TempoPlotProps {
 }
 
 const LEGEND: LegendItem[] = [
-  { label: "envelope spectrum", kind: "line", colour: "var(--viz-signal)" },
-  { label: "estimate", kind: "dash", colour: "var(--viz-threshold)" },
+  { label: "envelope spectrum", kind: "line", colour: "var(--al-viz-signal)" },
+  { label: "estimate", kind: "dash", colour: "var(--al-viz-threshold)" },
 ];
 
 /**

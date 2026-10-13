@@ -69,7 +69,7 @@ describe("App", () => {
     expect(screen.getByRole("img", { name: "the wolf" })).toBeTruthy();
 
     fireEvent.click(screen.getByRole("tab", { name: "FFT" }));
-    expect(document.querySelector(".fft__status")?.textContent).toMatch(/Start the microphone/);
+    expect(document.querySelector(".al-fft__status")?.textContent).toMatch(/Start the microphone/);
 
     fireEvent.click(screen.getByRole("button", { name: /start mic/i }));
     expect(session.start).toHaveBeenCalledTimes(1);
