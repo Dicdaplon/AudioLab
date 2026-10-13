@@ -12,7 +12,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { CHORD_TEMPLATES, type ChordScore } from "../analysis/chordDetection";
+import { CHORD_TEMPLATES, type ChordScore } from "../../../analysis/chordDetection";
 
 const CONFIRMATIONS_NEEDED = 3; // ~300 ms at 10 Hz on top of the 1 s chord window
 const MIN_PROBABILITY = 0.18;

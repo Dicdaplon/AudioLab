@@ -1,13 +1,13 @@
 import { useState } from "react";
 
-import { ChordGame } from "./components/ChordGame";
+import { ChordGame } from "./features/games/chord-game/ChordGame";
 import { ChordView } from "./components/ChordView";
 import { ChromaView } from "./components/ChromaView";
 import { KeyProbabilities } from "./components/KeyProbabilities";
 import { MicCapture } from "./components/MicCapture";
 import { SettingsPanel, type ToneBaseSettings } from "./components/SettingsPanel";
 import { ToneBaseTonalityView } from "./components/ToneBaseTonalityView";
-import { WolfJumper } from "./components/WolfJumper";
+import { WolfJumper } from "./features/games/wolf-jumper/WolfJumper";
 import { FftTab } from "./components/FftTab";
 import { type FftSettings } from "./components/FftSettingsPanel";
 import { useTonality } from "./hooks/useTonality";

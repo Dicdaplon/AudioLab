@@ -24,8 +24,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import type { ChordScore } from "../analysis/chordDetection";
-import { CHROMA_SIZE } from "../analysis/chroma";
+import type { ChordScore } from "../../../analysis/chordDetection";
+import { CHROMA_SIZE } from "../../../analysis/chroma";
 
 // ---- Tuning ----
 
