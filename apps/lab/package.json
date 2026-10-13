@@ -1,0 +1,23 @@
+{
+  "name": "@audiolab/lab",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "AudioLab demo app: live key and chord detection, spectrum and tempo analysis, ear-training games.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json && vite build",
+    "preview": "vite preview",
+    "sweep": "tsx scripts/parameterSweep.ts",
+    "extract:backing": "tsx scripts/extractBackingExtracts.ts",
+    "analyze:backing": "tsx scripts/analyzeBacking.ts"
+  },
+  "dependencies": {
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@fontsource/ibm-plex-sans": "^5.3.0",
+    "@fontsource/source-serif-4": "^5.3.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}

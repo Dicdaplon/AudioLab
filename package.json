@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Browser-based audio analysis lab: live key and chord detection, spectrum and noise-floor analysis, and ear-training games built on the Web Audio API.",
+  "description": "Browser audio-analysis SDK (key, chord and tempo detection on the Web Audio API) with a React component library and a lab app.",
   "license": "MIT",
   "author": "dicdaplon",
   "repository": {
@@ -13,29 +13,26 @@
   "engines": {
     "node": ">=20"
   },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview",
+    "dev": "npm run dev -w apps/lab",
+    "build": "npm run build -w apps/lab",
+    "preview": "npm run preview -w apps/lab",
     "test": "vitest run --project unit --project dom",
     "test:samples": "vitest run --project samples",
     "test:all": "vitest run",
     "test:watch": "vitest --project unit --project dom",
     "coverage": "vitest run --project unit --project dom --coverage",
     "typecheck": "tsc -b",
-    "sweep": "tsx scripts/parameterSweep.ts",
-    "extract:backing": "tsx scripts/extractBackingExtracts.ts",
-    "analyze:backing": "tsx scripts/analyzeBacking.ts",
+    "sweep": "npm run sweep -w apps/lab",
+    "extract:backing": "npm run extract:backing -w apps/lab",
+    "analyze:backing": "npm run analyze:backing -w apps/lab",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
-  },
-  "dependencies": {
-    "@fontsource/ibm-plex-mono": "^5.3.0",
-    "@fontsource/ibm-plex-sans": "^5.3.0",
-    "@fontsource/source-serif-4": "^5.3.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

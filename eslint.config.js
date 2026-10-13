@@ -28,7 +28,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ["scripts/**/*.ts", "tests/**/*.ts", "vite.config.ts"],
+    files: ["**/scripts/**/*.ts", "**/tests/**/*.ts", "**/*.config.ts", "vitest.workspace.ts"],
     languageOptions: { globals: { ...globals.node } },
   },
   prettier,
