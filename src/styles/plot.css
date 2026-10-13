@@ -104,13 +104,6 @@
 
 /* --- FFT tab ------------------------------------------------------------- */
 
-.fft {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-5);
-  min-width: 0;
-}
-
 .fft__tempo {
   display: grid;
   grid-template-columns: minmax(0, 1fr);

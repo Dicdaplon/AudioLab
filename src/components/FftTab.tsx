@@ -3,10 +3,12 @@ import { TempoPlot } from "./TempoPlot";
 import { TimeSignalPlot } from "./TimeSignalPlot";
 import { FftSettingsPanel } from "./FftSettingsPanel";
 import { Panel } from "./Panel";
+import { SettingsRail } from "./SettingsRail";
 import type { MicSource } from "../audio/micStream";
 import { FFT_DISPLAY_MAX_HZ, type FftSettings } from "../config/settings";
 import { useTempoAnalysis } from "../hooks/useTempoAnalysis";
 import type { SpectrumState } from "../hooks/useTonality";
+import { BREAKPOINTS, useMediaQuery } from "../ui/useMediaQuery";
 
 interface FftTabProps {
   /** Open microphone session, or null when stopped. */
@@ -46,17 +48,21 @@ export function FftTab({ mic, spectrum, settings, onSettingsChange }: FftTabProp
   }
   const windowSeconds = frame ? frame.onsetEnvelope.length / frame.envelopeRate : 0;
   const windowLabel = windowSeconds > 0 ? windowSeconds.toFixed(0) : "8";
+  // Plots are shorter on a phone so the tempo pair fits one screen.
+  const compact = !useMediaQuery(BREAKPOINTS.sm);
 
   return (
     <div className="fft">
       <div className="fft__settings">
-        <FftSettingsPanel settings={settings} onChange={onSettingsChange} />
+        <SettingsRail>
+          <FftSettingsPanel settings={settings} onChange={onSettingsChange} />
+        </SettingsRail>
       </div>
 
       <Panel
         title="Magnitude spectrum"
         meta={`${spectrum.noiseMethod} floor ${spectrum.noiseFloorDb.toFixed(1)} dB`}
-        className="panel--bed"
+        className="panel--bed fft__spectrum"
         as="section"
       >
         <SpectrumPlot
@@ -64,7 +70,7 @@ export function FftTab({ mic, spectrum, settings, onSettingsChange }: FftTabProp
           binHz={spectrum.binHz}
           noiseFloorDb={spectrum.noiseFloorDb}
           title="Magnitude spectrum"
-          height={280}
+          height={compact ? 220 : 280}
           showSlope={settings.showSlope}
           showScaleNotes={settings.showScaleNotes}
           minFreqHz={0}
@@ -76,7 +82,12 @@ export function FftTab({ mic, spectrum, settings, onSettingsChange }: FftTabProp
         </p>
       </Panel>
 
-      <Panel title="Tempo" meta={`last ${windowLabel} s`} className="panel--bed" as="section">
+      <Panel
+        title="Tempo"
+        meta={`last ${windowLabel} s`}
+        className="panel--bed fft__tempo-panel"
+        as="section"
+      >
         <p className="fft__status" role="status">
           {tempoStatus}
           {frame && frame.filledSeconds < windowSeconds && (
@@ -102,14 +113,14 @@ export function FftTab({ mic, spectrum, settings, onSettingsChange }: FftTabProp
             sampleRate={frame?.envelopeRate ?? 0}
             title="Onset strength"
             yLabel="Onset strength"
-            height={160}
+            height={compact ? 140 : 160}
           />
           <TempoPlot
             spectrum={frame?.spectrum ?? EMPTY}
             bpmAxis={frame?.bpmAxis ?? EMPTY}
             estimate={estimate}
             title="Beat spectrum (40–240 BPM)"
-            height={180}
+            height={compact ? 160 : 180}
           />
         </div>
 

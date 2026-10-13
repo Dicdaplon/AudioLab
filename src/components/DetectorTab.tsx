@@ -7,6 +7,7 @@ import { ChromaView } from "./ChromaView";
 import { KeyProbabilities } from "./KeyProbabilities";
 import { Readout } from "./Readout";
 import { SettingsPanel } from "./SettingsPanel";
+import { SettingsRail } from "./SettingsRail";
 import { ToneBaseTonalityView } from "./ToneBaseTonalityView";
 
 export interface DetectorData {
@@ -77,14 +78,16 @@ export function DetectorTab({
       </div>
 
       <div className="detector__settings">
-        <SettingsPanel
-          settings={settings}
-          onChange={onSettingsChange}
-          currentThreshold={data.filterThreshold}
-          lastPeak={data.filterLastPeak}
-          colourByPitch={colourByPitch}
-          onColourByPitchChange={onColourByPitchChange}
-        />
+        <SettingsRail>
+          <SettingsPanel
+            settings={settings}
+            onChange={onSettingsChange}
+            currentThreshold={data.filterThreshold}
+            lastPeak={data.filterLastPeak}
+            colourByPitch={colourByPitch}
+            onColourByPitchChange={onColourByPitchChange}
+          />
+        </SettingsRail>
       </div>
 
       <div className="detector__chroma">
@@ -130,6 +133,7 @@ export function DetectorTab({
       </div>
 
       <ToneBaseTonalityView
+        className="detector__tone"
         presence={data.presenceHistogram}
         filteredLiveChroma={data.filteredLiveChroma}
         presenceIndicator={data.presenceIndicator}

@@ -738,24 +738,3 @@
   line-height: 1.4;
   margin: 0;
 }
-
-@media (max-width: 900px) {
-  .chroma-panels,
-  .result-panels,
-  .tone-base-bars {
-    grid-template-columns: 1fr;
-  }
-  .settings-row {
-    grid-template-columns: 1fr;
-  }
-  .game-target-name {
-    font-size: 3.5rem;
-  }
-  .game-stats,
-  .jumper-stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .jumper-scene {
-    width: 100% !important;
-  }
-}

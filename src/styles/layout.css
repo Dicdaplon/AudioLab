@@ -1,12 +1,100 @@
 /* =========================================================================
-   Page layouts: the detector bench.
+   Page layouts: the detector bench, the FFT tab and the settings rail.
+   Breakpoints (min-width): sm 480 · md 720 · lg 1024 · xl 1280.
    ========================================================================= */
+
+/* --- Settings rail --------------------------------------------------------
+   Below xl the settings are a disclosure at the top of the tab; at xl they
+   become a sticky rail on the right (.with-rail grids). */
+
+.rail-details {
+  border: 1px solid var(--color-line);
+  border-radius: var(--r-3);
+  background: var(--color-surface);
+}
+
+.rail-details__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--control-h-touch);
+  padding: 0 var(--panel-pad);
+  cursor: pointer;
+  font-size: var(--step--1);
+  font-weight: 600;
+  list-style: none;
+}
+
+.rail-details__summary::-webkit-details-marker {
+  display: none;
+}
+
+.rail-details__summary::before {
+  content: "";
+  width: 0;
+  height: 0;
+  border: 5px solid transparent;
+  border-left: 7px solid var(--color-ink-muted);
+  transition: transform var(--dur-1) var(--ease-out);
+}
+
+.rail-details[open] .rail-details__summary::before {
+  transform: rotate(90deg);
+}
+
+.rail-details__body .panel {
+  border: 0;
+  border-top: 1px solid var(--color-line);
+  border-radius: 0 0 var(--r-3) var(--r-3);
+}
+
+.rail {
+  position: sticky;
+  top: calc(var(--header-h) + var(--sp-4));
+}
+
+/* --- Detector ------------------------------------------------------------ */
 
 .detector {
   display: flex;
   flex-direction: column;
   gap: var(--sp-5);
   min-width: 0;
+}
+
+@media (min-width: 1280px) {
+  .detector {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--rail);
+    grid-template-areas:
+      "hero rail"
+      "chroma rail"
+      "lists rail"
+      "tone rail";
+    align-items: start;
+    column-gap: var(--sp-5);
+  }
+
+  .detector__hero {
+    grid-area: hero;
+  }
+
+  .detector__settings {
+    grid-area: rail;
+    align-self: stretch;
+  }
+
+  .detector__chroma {
+    grid-area: chroma;
+  }
+
+  .detector__lists {
+    grid-area: lists;
+  }
+
+  .detector__tone {
+    grid-area: tone;
+  }
 }
 
 .detector__hero,
@@ -33,5 +121,39 @@
 @media (min-width: 1024px) {
   .detector__chroma {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* --- FFT ----------------------------------------------------------------- */
+
+.fft {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  min-width: 0;
+}
+
+@media (min-width: 1280px) {
+  .fft {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--rail);
+    grid-template-areas:
+      "spectrum rail"
+      "tempo rail";
+    align-items: start;
+    column-gap: var(--sp-5);
+  }
+
+  .fft__settings {
+    grid-area: rail;
+    align-self: stretch;
+  }
+
+  .fft__spectrum {
+    grid-area: spectrum;
+  }
+
+  .fft__tempo-panel {
+    grid-area: tempo;
   }
 }

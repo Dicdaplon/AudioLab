@@ -18,6 +18,7 @@ interface ToneBaseTonalityViewProps {
   tonalitySeconds: number;
   topN?: number;
   colourByPitch?: boolean;
+  className?: string;
 }
 
 /**
@@ -33,12 +34,18 @@ export function ToneBaseTonalityView({
   tonalitySeconds,
   topN = 5,
   colourByPitch,
+  className,
 }: ToneBaseTonalityViewProps) {
   const top = keys[0];
   const topName = top ? splitKeyName(top.name) : null;
 
   return (
-    <Panel title="Presence tonality" meta={`${liveSeconds} s → ${tonalitySeconds} s`} as="section">
+    <Panel
+      title="Presence tonality"
+      meta={`${liveSeconds} s → ${tonalitySeconds} s`}
+      as="section"
+      className={className}
+    >
       <div className="tonebase__bars">
         <figure className="chroma-figure">
           <figcaption className="surtitre">Filtered live chroma</figcaption>

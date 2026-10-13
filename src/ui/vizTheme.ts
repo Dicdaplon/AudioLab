@@ -155,15 +155,16 @@ export function useVizTheme(): VizTheme {
         : null;
     observer?.observe(document.documentElement, { attributes: true });
 
-    const media =
+    // OS colour-scheme flips and the phone breakpoint (plot geometry tokens).
+    const queries =
       typeof window.matchMedia === "function"
-        ? window.matchMedia("(prefers-color-scheme: light)")
-        : null;
-    media?.addEventListener?.("change", refresh);
+        ? ["(prefers-color-scheme: light)", "(max-width: 479px)"].map((q) => window.matchMedia(q))
+        : [];
+    for (const media of queries) media.addEventListener?.("change", refresh);
 
     return () => {
       observer?.disconnect();
-      media?.removeEventListener?.("change", refresh);
+      for (const media of queries) media.removeEventListener?.("change", refresh);
     };
   }, []);
 
