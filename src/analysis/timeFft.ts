@@ -1,18 +1,27 @@
 /**
- * FFT-based time-domain analysis: converts magnitude spectrum to dB scale
- * and computes per-bin frequency assignment.
+ * Windowed, amplitude-normalised FFT of a real signal, in dB.
  *
- * Used for Section 1 (FFT magnitude + noise floor visualization) and Section 2
- * (temporal envelope analysis via lowpass filtering).
+ * dB reference ("dBFS-sine"): the one-sided magnitude is scaled by
+ * 2 / Σw (1 / Σw for the DC bin), where w is the analysis window. A
+ * full-scale sine of amplitude 1 centred on a bin therefore reads exactly
+ * 0 dB, whatever the FFT size or window; a constant signal of value 1 reads
+ * 0 dB at DC. Silence yields -Infinity in every bin.
+ *
+ * The window is applied over the actual signal length before zero-padding
+ * to the next power of two, so padding only interpolates the spectrum and
+ * does not change the normalisation.
  */
 
 import { fftMagnitude } from "./fft";
 
-/**
- * Find the next power of 2 >= n.
- * @param n A positive integer.
- * @returns The smallest power of 2 that is >= n.
- */
+export type FftWindow = "hann" | "rectangular";
+
+export interface FftDbOptions {
+  /** Analysis window. Default "hann" (periodic form, -31.5 dB sidelobes). */
+  window?: FftWindow;
+}
+
+/** Smallest power of two ≥ n. */
 export function nextPow2(n: number): number {
   if (n <= 0) throw new Error("nextPow2: input must be > 0");
   let p = 1;
@@ -20,43 +29,81 @@ export function nextPow2(n: number): number {
   return p;
 }
 
+/**
+ * Periodic Hann window of length N: w[n] = 0.5 − 0.5·cos(2πn / N).
+ * The periodic form (denominator N, not N − 1) is the right choice for
+ * spectral analysis: a bin-centred tone then leaks exactly −6.02 dB into
+ * the two neighbouring bins and nothing elsewhere.
+ */
+export function periodicHannWindow(length: number): Float32Array {
+  const w = new Float32Array(length);
+  if (length === 1) {
+    w[0] = 1;
+    return w;
+  }
+  for (let n = 0; n < length; n++) {
+    w[n] = 0.5 - 0.5 * Math.cos((2 * Math.PI * n) / length);
+  }
+  return w;
+}
+
 export interface FftDbResult {
-  /** FFT magnitude spectrum (linear scale). */
+  /** Normalised one-sided magnitude (1.0 = full-scale sine). */
   magnitude: Float32Array;
-  /** Magnitude spectrum converted to dB scale (20 * log10(mag)). */
+  /** Magnitude in dB: 20·log10(magnitude), -Infinity for zero. */
   spectrumDb: Float32Array;
-  /** Center frequency (Hz) of each bin. */
+  /** Bin spacing in Hz: sampleRate / fftSize. */
   binHz: number;
-  /** Total number of bins in the one-sided spectrum. */
+  /** Number of bins in the one-sided spectrum (fftSize / 2). */
   binCount: number;
+  /** FFT length actually used (next power of two ≥ signal length). */
+  fftSize: number;
 }
 
 /**
- * Compute FFT of a real signal and convert to dB scale.
+ * Windowed FFT of a real signal, converted to dB (see module doc for the
+ * reference level).
  *
- * @param signal Input audio frame (Float32Array).
- * @param sampleRate Sample rate in Hz.
- * @returns Object with magnitude, spectrumDb, and bin frequency information.
- *
- * The magnitude spectrum is one-sided (DC to Nyquist). Each bin k has
- * center frequency: f_k = k * binHz, where binHz = sampleRate / (2 * N).
+ * @param signal Input samples (any length ≥ 1; zero-padded to a power of two).
+ * @param sampleRate Sample rate of `signal`, in Hz.
  */
-export function computeFftDb(signal: Float32Array, sampleRate: number): FftDbResult {
-  const fftSize = nextPow2(signal.length);
+export function computeFftDb(
+  signal: ArrayLike<number>,
+  sampleRate: number,
+  options: FftDbOptions = {},
+): FftDbResult {
+  const n = signal.length;
+  if (n === 0) throw new Error("computeFftDb: signal must not be empty");
+  const window = options.window ?? "hann";
+  const fftSize = Math.max(2, nextPow2(n));
 
-  // Pad input to FFT size if necessary.
   const padded = new Float32Array(fftSize);
-  for (let i = 0; i < signal.length; i++) padded[i] = signal[i];
+  let windowSum = 0;
+  if (window === "rectangular") {
+    for (let i = 0; i < n; i++) padded[i] = signal[i];
+    windowSum = n;
+  } else {
+    const w = periodicHannWindow(n);
+    for (let i = 0; i < n; i++) {
+      padded[i] = signal[i] * w[i];
+      windowSum += w[i];
+    }
+  }
 
   const magnitude = fftMagnitude(padded);
   const binCount = magnitude.length;
-  const binHz = sampleRate / (2 * binCount);
+  const binHz = sampleRate / fftSize;
 
+  // One-sided amplitude scaling: bins k ≥ 1 carry half of a real tone's
+  // energy (the other half sits in the mirrored bin), hence the factor 2.
+  const acScale = 2 / windowSum;
+  const dcScale = 1 / windowSum;
   const spectrumDb = new Float32Array(binCount);
   for (let k = 0; k < binCount; k++) {
-    const mag = magnitude[k];
+    const mag = magnitude[k] * (k === 0 ? dcScale : acScale);
+    magnitude[k] = mag;
     spectrumDb[k] = mag > 0 ? 20 * Math.log10(mag) : -Infinity;
   }
 
-  return { magnitude, spectrumDb, binHz, binCount };
+  return { magnitude, spectrumDb, binHz, binCount, fftSize };
 }
