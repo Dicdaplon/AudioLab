@@ -1,0 +1,75 @@
+/* =========================================================================
+   Games: shared pieces, the chord game.
+   ========================================================================= */
+
+.game {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+.game--chords {
+  max-width: 640px;
+  margin-inline: auto;
+  width: 100%;
+}
+
+.game__panel {
+  gap: var(--sp-4);
+}
+
+.game__progress {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.game__progress-text {
+  font-size: var(--step--1);
+  color: var(--color-ink-muted);
+}
+
+.game__status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  font-size: var(--step--1);
+  color: var(--color-ink-muted);
+}
+
+.game__status .num {
+  color: var(--color-ink-muted);
+}
+
+.game__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* The target: the biggest voice in the lab, centred, no filet. On a hit it
+   turns to the success tint for a moment; no scaling (nothing moves). */
+.readout--target {
+  align-items: center;
+  text-align: center;
+  padding-left: var(--panel-pad);
+  border-left-width: 1px;
+  border-left-color: var(--color-line);
+  transition: border-color var(--dur-1) var(--ease-out);
+}
+
+.readout--target .readout__value {
+  font-size: var(--step-5);
+  transition: color var(--dur-1) var(--ease-out);
+}
+
+.readout--target[data-hit] {
+  border-color: var(--color-success);
+}
+
+.readout--target[data-hit] .readout__value {
+  color: var(--color-success);
+}

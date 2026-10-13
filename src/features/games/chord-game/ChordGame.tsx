@@ -13,6 +13,10 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
 
 import type { ChordScore } from "../../../analysis/chordDetection";
+import { SelectField } from "../../../components/Field";
+import { Panel } from "../../../components/Panel";
+import { Segments } from "../../../components/Segments";
+import { Icon } from "../../../ui/Icon";
 import { MicPrompt } from "../MicPrompt";
 import { useConfirmedDetection } from "../useConfirmedDetection";
 import { CHORD_POOLS, DEFAULT_POOL, POOL_KEYS, pickChord, type PoolKey } from "./pools";
@@ -42,6 +46,7 @@ export function ChordGame({ chords, running, onStart }: ChordGameProps) {
   const top = chords[0];
   const topName = top?.name ?? "—";
   const topProb = top?.probability ?? 0;
+  const match = running && topName === target;
 
   const advance = useCallback(
     (kind: "hit" | "skip") => {
@@ -88,78 +93,89 @@ export function ChordGame({ chords, running, onStart }: ChordGameProps) {
     }
   };
 
-  const progress = Math.min(1, confirmation.count / CONFIRMATIONS_NEEDED);
-
   return (
-    <div className="chord-game">
+    <div className="game game--chords">
       {!running && <MicPrompt message="Start the microphone to play." onStart={onStart} />}
 
-      <div className="game-pool">
-        <label htmlFor="pool">Chord set:</label>
-        <select id="pool" value={poolKey} onChange={(e) => changePool(e.target.value as PoolKey)}>
+      <Panel className="game__panel">
+        <SelectField
+          id="pool"
+          label="Chord set"
+          value={poolKey}
+          onChange={(v) => changePool(v as PoolKey)}
+        >
           {POOL_KEYS.map((key) => (
             <option key={key} value={key}>
               {CHORD_POOLS[key].label} ({CHORD_POOLS[key].chords.length})
             </option>
           ))}
-        </select>
-      </div>
+        </SelectField>
 
-      <div className={`game-target ${justHit ? "hit" : ""}`}>
-        <span className="game-target-label">Play:</span>
-        <span className="game-target-name">{target}</span>
-      </div>
-
-      <div className="game-progress">
-        <div className="game-progress-fill" style={{ width: `${(progress * 100).toFixed(0)}%` }} />
-        <span className="game-progress-text">
-          {confirmation.count}/{CONFIRMATIONS_NEEDED} consecutive frames
-        </span>
-      </div>
-
-      <div className="game-detected">
-        <span>Detected: </span>
-        <span
-          className={"game-detected-name " + (running && topName === target ? "match" : "no-match")}
+        <div
+          className="readout readout--target"
+          data-hit={justHit ? "" : undefined}
+          role="group"
+          aria-label="Target chord"
         >
-          {topName}
-        </span>
-        <span className="game-detected-prob">({(topProb * 100).toFixed(0)}%)</span>
-      </div>
+          <span className="surtitre">Play</span>
+          <strong className="readout__value">{target}</strong>
+        </div>
 
-      <div className="game-stats">
-        <div>
-          <span className="game-stat-label">Score</span>
-          <span className="game-stat-value">{stats.score}</span>
+        <div className="game__progress">
+          <Segments
+            count={CONFIRMATIONS_NEEDED}
+            filled={confirmation.count}
+            label={`${confirmation.count} of ${CONFIRMATIONS_NEEDED} consecutive frames`}
+          />
+          <span className="game__progress-text num">
+            {confirmation.count}/{CONFIRMATIONS_NEEDED} consecutive frames
+          </span>
         </div>
-        <div>
-          <span className="game-stat-label">Streak</span>
-          <span className="game-stat-value">{stats.streak}</span>
-        </div>
-        <div>
-          <span className="game-stat-label">Best</span>
-          <span className="game-stat-value">{stats.bestStreak}</span>
-        </div>
-        <div>
-          <span className="game-stat-label">Skipped</span>
-          <span className="game-stat-value">{stats.skipped}</span>
-        </div>
-      </div>
 
-      <div className="game-actions">
-        <button type="button" className="mic-btn mic-reset" onClick={skip}>
-          Skip
-        </button>
-        <button type="button" className="mic-btn mic-reset" onClick={resetScores}>
-          Reset score
-        </button>
-      </div>
+        <p className="game__status">
+          Detected:{" "}
+          <span className={match ? "chip chip--match" : "chip"}>
+            {match && <Icon name="check" size={14} />}
+            {topName}
+          </span>{" "}
+          <span className="num">({(topProb * 100).toFixed(0)} %)</span>
+        </p>
 
-      <p className="game-hint">
-        To validate, the target chord must be detected as top-1 for {CONFIRMATIONS_NEEDED}{" "}
-        consecutive frames with a probability ≥ {(MIN_PROBABILITY * 100).toFixed(0)}%. Hold the
-        chord for about 1 s so the analysis window can settle.
-      </p>
+        <dl className="stat-grid">
+          <div className="stat">
+            <dt className="stat__label">Score</dt>
+            <dd className="stat__value">{stats.score}</dd>
+          </div>
+          <div className="stat">
+            <dt className="stat__label">Streak</dt>
+            <dd className="stat__value">{stats.streak}</dd>
+          </div>
+          <div className="stat">
+            <dt className="stat__label">Best</dt>
+            <dd className="stat__value">{stats.bestStreak}</dd>
+          </div>
+          <div className="stat">
+            <dt className="stat__label">Skipped</dt>
+            <dd className="stat__value">{stats.skipped}</dd>
+          </div>
+        </dl>
+
+        <div className="game__actions">
+          <button type="button" className="btn btn--quiet btn--touch" onClick={skip}>
+            Skip
+          </button>
+          <button type="button" className="btn btn--quiet btn--touch" onClick={resetScores}>
+            <Icon name="reset" />
+            Reset score
+          </button>
+        </div>
+
+        <p className="hint">
+          To validate, the target chord must be detected as top-1 for {CONFIRMATIONS_NEEDED}{" "}
+          consecutive frames with a probability ≥ {(MIN_PROBABILITY * 100).toFixed(0)} %. Hold the
+          chord for about 1 s so the analysis window can settle.
+        </p>
+      </Panel>
     </div>
   );
 }
