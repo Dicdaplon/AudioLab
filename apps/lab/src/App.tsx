@@ -27,11 +27,15 @@ import {
 
 import { About } from "./components/About";
 import { Brand } from "./components/Brand";
+import { ScalesTab } from "./components/ScalesTab";
+import { TunerTab } from "./components/TunerTab";
 
-type Tab = "detector" | "game" | "jumper" | "fft" | "about";
+type Tab = "detector" | "tuner" | "scales" | "game" | "jumper" | "fft" | "about";
 
 const TABS: ReadonlyArray<TabDef<Tab>> = [
   { id: "detector", label: "Detector" },
+  { id: "tuner", label: "Tuner" },
+  { id: "scales", label: "Scales" },
   { id: "game", label: "Chord game" },
   { id: "jumper", label: "Wolf Jumper" },
   { id: "fft", label: "FFT" },
@@ -114,6 +118,24 @@ export default function App() {
               onSettingsChange={setSettings}
               colourByPitch={colourByPitch}
               onColourByPitchChange={setColourByPitch}
+            />
+          )}
+
+          {tab === "tuner" && (
+            <TunerTab
+              mic={microphone.mic}
+              running={microphone.running}
+              onStart={microphone.start}
+            />
+          )}
+
+          {tab === "scales" && (
+            <ScalesTab
+              presence={tonality.presenceHistogram}
+              windowSeconds={settings.tonalityAcquisitionSeconds}
+              running={microphone.running}
+              onStart={microphone.start}
+              colourByPitch={colourByPitch}
             />
           )}
 

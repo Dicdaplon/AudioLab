@@ -228,3 +228,116 @@ body {
 .about__note {
   color: var(--al-color-ink-muted);
 }
+
+/* --- Tuner ---------------------------------------------------------------- */
+
+.tuner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--al-sp-5);
+  max-width: 40rem;
+}
+
+.tuner__readout[data-intune] .al-readout__value {
+  color: var(--al-color-accent);
+}
+
+.tuner__octave {
+  font-size: 0.45em;
+  vertical-align: baseline;
+  margin-left: 0.1em;
+  color: var(--al-color-ink-muted);
+}
+
+.tuner__unit {
+  font-size: var(--al-step--1);
+  color: var(--al-color-ink-muted);
+}
+
+.tuner__meter {
+  position: relative;
+  height: 3.5rem;
+  margin-block: var(--al-sp-3);
+}
+
+.tuner__scale {
+  position: absolute;
+  inset: 0;
+  border-bottom: 1px solid var(--al-color-line-strong);
+}
+
+.tuner__tick {
+  position: absolute;
+  bottom: 0;
+  transform: translateX(-50%);
+  padding-bottom: var(--al-sp-2);
+  font-size: var(--al-step--2);
+  color: var(--al-color-ink-muted);
+}
+
+.tuner__tick::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 1px;
+  height: var(--al-sp-2);
+  background: var(--al-color-line-strong);
+}
+
+.tuner__tick[data-zero] {
+  color: var(--al-color-ink);
+}
+
+.tuner__zone {
+  position: absolute;
+  left: 45%;
+  right: 45%;
+  bottom: 0;
+  height: 3px;
+  background: var(--al-color-accent);
+  opacity: 0.35;
+}
+
+.tuner__needle {
+  position: absolute;
+  bottom: 0;
+  left: calc(50% + var(--cents, 0) * 1%);
+  width: 2px;
+  height: 100%;
+  background: var(--al-color-ink-muted);
+  transform: translateX(-50%);
+  opacity: 0;
+}
+
+.tuner__meter[data-active] .tuner__needle {
+  opacity: 1;
+}
+
+.tuner__meter[data-intune] .tuner__needle {
+  background: var(--al-color-accent);
+  width: 3px;
+}
+
+.tuner__stats {
+  margin-block: var(--al-sp-3);
+}
+
+/* --- Scales --------------------------------------------------------------- */
+
+.scales {
+  display: flex;
+  flex-direction: column;
+  gap: var(--al-stack-gap, var(--al-sp-5));
+}
+
+.scales__bars {
+  display: grid;
+  gap: var(--al-grid-gap, var(--al-sp-4));
+}
+
+@media (min-width: 720px) {
+  .scales__bars {
+    grid-template-columns: 1fr 1fr;
+  }
+}
