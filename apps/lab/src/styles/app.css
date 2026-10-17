@@ -365,3 +365,196 @@ body {
     grid-template-columns: minmax(9rem, 12rem) 1fr 4.5rem minmax(8rem, 14rem);
   }
 }
+
+/* --- Rhythm --------------------------------------------------------------- */
+
+.rhythm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--al-stack-gap, var(--al-sp-5));
+}
+
+.rhythm__diagnostics {
+  display: grid;
+  gap: var(--al-grid-gap, var(--al-sp-4));
+}
+
+@media (min-width: 960px) {
+  .rhythm__diagnostics {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
+.rhythm__exercise {
+  display: flex;
+  flex-direction: column;
+  gap: var(--al-sp-4);
+  margin-top: var(--al-sp-4);
+}
+
+.rhythm__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--al-sp-4);
+}
+
+.rhythm__tempo {
+  margin: 0;
+  align-self: center;
+}
+
+.rhythm__message,
+.rhythm__status {
+  margin: 0;
+  font-size: var(--al-step-1);
+  color: var(--al-color-ink);
+}
+
+.rhythm__status {
+  font-size: var(--al-step-0);
+  color: var(--al-color-ink-muted);
+}
+
+/* Written rhythm: two bars on a line, one dot per note. */
+.rhythm__score {
+  position: relative;
+  height: 64px;
+  margin: 0 var(--al-sp-4);
+  padding: 0;
+  list-style: none;
+  border-bottom: 1px solid var(--al-color-line-strong);
+}
+
+.rhythm__beat {
+  position: absolute;
+  bottom: 0;
+  width: 1px;
+  height: 12px;
+  background: var(--al-color-line);
+}
+
+.rhythm__beat[data-bar] {
+  height: 100%;
+  background: var(--al-color-line-strong);
+}
+
+.rhythm__note {
+  position: absolute;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  background: var(--al-color-ink-muted);
+  transition: background-color var(--al-dur-2) var(--al-ease-out);
+}
+
+.rhythm__note[data-tier="onTime"] {
+  background: var(--al-color-success);
+}
+
+.rhythm__note[data-tier="early"],
+.rhythm__note[data-tier="late"] {
+  background: var(--al-viz-threshold);
+}
+
+.rhythm__note[data-tier="missed"] {
+  background: transparent;
+  border: 2px solid var(--al-color-danger);
+}
+
+.rhythm__note[data-tier="early"]::after,
+.rhythm__note[data-tier="late"]::after {
+  position: absolute;
+  top: -1.4em;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: var(--al-step--2);
+  color: var(--al-color-ink-muted);
+  white-space: nowrap;
+}
+
+.rhythm__note[data-tier="early"]::after {
+  content: "early";
+}
+
+.rhythm__note[data-tier="late"]::after {
+  content: "late";
+}
+
+/* Scrolling notes: the lane is drawn on a canvas. */
+.rhythm__lane {
+  display: block;
+  width: 100%;
+  height: 96px;
+  border: 1px solid var(--al-color-line);
+  border-radius: var(--al-r-2);
+}
+
+.rhythm__gate {
+  display: flex;
+  flex-direction: column;
+  gap: var(--al-sp-2);
+}
+
+.rhythm__floor {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--floor, 0%);
+  width: 2px;
+  margin-left: -1px;
+  background: var(--al-viz-noise-floor);
+}
+
+.rhythm__strip {
+  margin: var(--al-sp-4) 0 0;
+}
+
+.rhythm__strip-canvas {
+  display: block;
+  width: 100%;
+  height: 72px;
+  margin-top: var(--al-sp-2);
+  border: 1px solid var(--al-color-line);
+  border-radius: var(--al-r-2);
+}
+
+.rhythm__stats {
+  margin-bottom: var(--al-sp-4);
+}
+
+.rhythm__budget {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--al-step--1);
+}
+
+.rhythm__budget caption {
+  text-align: left;
+  padding-bottom: var(--al-sp-2);
+}
+
+.rhythm__budget th,
+.rhythm__budget td {
+  padding: var(--al-sp-1) var(--al-sp-2);
+  border-bottom: 1px solid var(--al-color-line);
+  text-align: left;
+  font-weight: normal;
+}
+
+.rhythm__budget thead th {
+  color: var(--al-color-ink-muted);
+}
+
+.rhythm__budget tfoot th,
+.rhythm__budget tfoot td {
+  font-weight: 600;
+  border-bottom: none;
+}
+
+.rhythm__budget td[data-source="assumed"] {
+  color: var(--al-color-ink-muted);
+}

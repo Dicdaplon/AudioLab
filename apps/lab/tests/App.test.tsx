@@ -141,6 +141,27 @@ describe("App", () => {
     }
   });
 
+  it("shows the rhythm exercises in plain words, with the timing diagnostics beside them", () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole("tab", { name: "Rhythm" }));
+    expect(screen.getByRole("tabpanel").id).toBe("panel-rhythm");
+    const panel = (title: string) =>
+      screen.getByRole("heading", { name: title }).closest("section") as HTMLElement;
+    const play = () => panel("Play in time");
+    expect(screen.getByLabelText("Rhythm", { selector: "select" })).toBeTruthy();
+    expect(play().textContent).toMatch(/play this rhythm at your own pace/i);
+
+    fireEvent.change(screen.getByLabelText("Exercise"), { target: { value: "notes" } });
+    expect(play().textContent).toMatch(/Start the microphone first/);
+    fireEvent.change(screen.getByLabelText("Exercise"), { target: { value: "chords" } });
+    expect(screen.getByRole("button", { name: "Start" })).toHaveProperty("disabled", true);
+    expect(play().textContent).not.toMatch(/frame|onset|latency|probability|chroma|flux|dB|ms\b/i);
+
+    // The diagnostics are where the numbers live.
+    expect(panel("Timing").textContent).toMatch(/Reaction delay/);
+    expect(panel("Listening").textContent).toMatch(/Waiting for the microphone/);
+  });
+
   it("shows Stop while live", () => {
     session.running = true;
     render(<App />);

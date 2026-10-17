@@ -37,10 +37,11 @@ import {
 import { About } from "./components/About";
 import { ChordOptions } from "./components/ChordOptions";
 import { Brand } from "./components/Brand";
+import { RhythmTab } from "./components/rhythm/RhythmTab";
 import { ScalesTab } from "./components/ScalesTab";
 import { TunerTab } from "./components/TunerTab";
 
-type Tab = "detector" | "tuner" | "scales" | "game" | "jumper" | "fft" | "about";
+type Tab = "detector" | "tuner" | "scales" | "game" | "jumper" | "rhythm" | "fft" | "about";
 
 const TABS: ReadonlyArray<TabDef<Tab>> = [
   { id: "detector", label: "Detector" },
@@ -48,6 +49,7 @@ const TABS: ReadonlyArray<TabDef<Tab>> = [
   { id: "scales", label: "Scales" },
   { id: "game", label: "Chord game" },
   { id: "jumper", label: "Wolf Jumper" },
+  { id: "rhythm", label: "Rhythm" },
   { id: "fft", label: "FFT" },
   { id: "about", label: "About" },
 ];
@@ -194,6 +196,14 @@ export default function App() {
               chords={tonality.chords}
               running={microphone.running}
               signalLevelDb={tonality.signalLevelDb}
+              onStart={microphone.start}
+            />
+          )}
+
+          {tab === "rhythm" && (
+            <RhythmTab
+              mic={microphone.mic}
+              running={microphone.running}
               onStart={microphone.start}
             />
           )}
