@@ -6,6 +6,7 @@ import {
   type DetectorSettings,
   type FftSettings,
 } from "@audiolab/core";
+import type { ChordAcceptPolicy, NoteSource } from "@audiolab/core/games";
 
 import {
   ChordGame,
@@ -20,12 +21,21 @@ import {
   panelId,
   tabId,
   useMicrophone,
+  usePitch,
   useTonality,
   type MicState,
   type TabDef,
 } from "@audiolab/react";
 
+import {
+  VOCABULARIES,
+  chordGamePools,
+  minChordProbability,
+  wolfBonusChords,
+  type Vocabulary,
+} from "./chordOptions";
 import { About } from "./components/About";
+import { ChordOptions } from "./components/ChordOptions";
 import { Brand } from "./components/Brand";
 import { ScalesTab } from "./components/ScalesTab";
 import { TunerTab } from "./components/TunerTab";
@@ -47,6 +57,9 @@ export default function App() {
   const [settings, setSettings] = useState<DetectorSettings>(DEFAULT_DETECTOR_SETTINGS);
   const [fftSettings, setFftSettings] = useState<FftSettings>(DEFAULT_FFT_SETTINGS);
   const [colourByPitch, setColourByPitch] = useState(false);
+  const [vocabulary, setVocabulary] = useState<Vocabulary>("triads");
+  const [accept, setAccept] = useState<ChordAcceptPolicy>("exact");
+  const [noteSource, setNoteSource] = useState<NoteSource>("chroma");
 
   // Environment check (secure context, getUserMedia, AudioContext), after mount.
   const microphone = useMicrophone();
@@ -62,6 +75,11 @@ export default function App() {
     maxFilterMode: settings.maxFilterMode,
     fftEnabled: tab === "fft",
     noiseMethod: fftSettings.noiseMethod,
+    chordQualities: VOCABULARIES[vocabulary].qualities,
+  });
+  // Only captured while Wolf Jumper reads its notes from the pitch tracker.
+  const pitch = usePitch(microphone.mic, {
+    enabled: tab === "jumper" && noteSource === "pitch",
   });
 
   let micState: MicState = "idle";
@@ -111,6 +129,17 @@ export default function App() {
           aria-labelledby={tabId(tab)}
           tabIndex={-1}
         >
+          {(tab === "detector" || tab === "game" || tab === "jumper") && (
+            <ChordOptions
+              vocabulary={vocabulary}
+              onVocabularyChange={setVocabulary}
+              accept={tab === "detector" ? undefined : accept}
+              onAcceptChange={setAccept}
+              noteSource={tab === "jumper" ? noteSource : undefined}
+              onNoteSourceChange={setNoteSource}
+            />
+          )}
+
           {tab === "detector" && (
             <DetectorTab
               data={tonality}
@@ -144,11 +173,23 @@ export default function App() {
               chords={tonality.chords}
               running={microphone.running}
               onStart={microphone.start}
+              pools={chordGamePools(vocabulary)}
+              accept={accept}
+              minProbability={minChordProbability(vocabulary)}
             />
           )}
 
           {tab === "jumper" && (
             <WolfJumper
+              // The bonus chords are read at mount: a new vocabulary starts a new game.
+              key={vocabulary}
+              config={{ bonusChords: wolfBonusChords(vocabulary) }}
+              detection={{
+                noteSource,
+                chordAccept: accept,
+                minChordProbability: minChordProbability(vocabulary),
+              }}
+              pitch={pitch.estimate}
               instantaneousChroma={tonality.instantaneousChroma}
               chords={tonality.chords}
               running={microphone.running}

@@ -78,7 +78,11 @@ export { panelId, tabId } from "./ui/tabIds";
 
 // --- Games ------------------------------------------------------------------
 
-export { ChordGame } from "./games/chord-game/ChordGame";
+export {
+  ChordGame,
+  DEFAULT_CHORD_GAME_POOLS,
+  type ChordGamePool,
+} from "./games/chord-game/ChordGame";
 export { CHORD_POOL_LABELS_EN } from "./games/chord-game/labels";
 export { WolfJumper } from "./games/wolf-jumper/WolfJumper";
 export { bonusTypeLabels, type BonusTypeLabels } from "./games/wolf-jumper/constants";

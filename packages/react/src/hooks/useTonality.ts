@@ -20,6 +20,7 @@ import {
   emptyTonalityFrame,
   estimateNoiseFloor,
   FFT_DISPLAY_MAX_HZ,
+  type ChordQuality,
   type HighWaterMarkMode,
   type MicSource,
   NOISE_FLOOR_SILENCE_DB,
@@ -51,6 +52,8 @@ export interface UseTonalityOptions {
   fftEnabled?: boolean;
   /** Noise floor estimation method ("median", "mean", "p80"). */
   noiseMethod?: NoiseFloorMethod;
+  /** Chord qualities the chord ranking considers. Default: major and minor triads. */
+  chordQualities?: readonly ChordQuality[];
 }
 
 /** Magnitude spectrum of the last frame (only updated while `fftEnabled`). */
@@ -86,7 +89,9 @@ export function useTonality(mic: MicSource | null, options: UseTonalityOptions =
     filterTolerancy: options.maxFilterTolerancy ?? DEFAULT_DETECTOR_SETTINGS.maxFilterTolerancy,
     filterMemory: options.maxFilterMemory ?? DEFAULT_DETECTOR_SETTINGS.maxFilterMemory,
     filterMode: options.maxFilterMode ?? DEFAULT_DETECTOR_SETTINGS.maxFilterMode,
+    chordQualities: options.chordQualities,
   };
+  const chordQualitiesKey = options.chordQualities?.join(",");
   const fftEnabled = options.fftEnabled ?? false;
   const noiseMethod = options.noiseMethod ?? DEFAULT_FFT_SETTINGS.noiseMethod;
 
@@ -115,6 +120,7 @@ export function useTonality(mic: MicSource | null, options: UseTonalityOptions =
     engineConfig.filterTolerancy,
     engineConfig.filterMemory,
     engineConfig.filterMode,
+    chordQualitiesKey,
   ]);
 
   // Analysis loop, bound to the microphone session.

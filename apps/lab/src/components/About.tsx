@@ -35,6 +35,36 @@ export function About() {
           <br />I keep both here, documented and tested, so I can build on them, and so can others.
         </p>
 
+        <h3 className="about__subtitle">What you can try here</h3>
+        <ul>
+          <li>
+            <strong>Detector</strong>: the key and the chord, live. Pick a chord vocabulary: the 24
+            triads, or sevenths, sixths, sus2 / sus4 and diminished chords on top.
+          </li>
+          <li>
+            <strong>Tuner</strong> and <strong>Scales</strong>: a McLeod pitch tracker, and the
+            scales that fit what you just played.
+          </li>
+          <li>
+            <strong>Chord game</strong>: play the chord on screen, now with seventh and suspended
+            sets, and a choice: same notes, or the triad is enough (E for E7).
+          </li>
+          <li>
+            <strong>Wolf Jumper</strong>: notes to shoot, chords to collect. The note can come from
+            the chroma or from the pitch tracker, which follows the fundamental rather than the
+            loudest harmonic of a string.
+          </li>
+          <li>
+            <strong>FFT</strong>: the spectrum, its noise floor, and where the tempo hides.
+          </li>
+        </ul>
+        <p>
+          Under the hood it is an SDK, <code>@audiolab/core</code> and <code>@audiolab/react</code>:
+          the same detectors run here and on ecoleduloup.fr. The extended chord vocabulary is
+          measured on a synthetic guitar so far (95 % right with every quality on); recorded takes
+          are next.
+        </p>
+
         <p>
           AI is the next layer. Not as a magic box, but as one more way to listen: classical signal
           processing first, learned models where they genuinely help.

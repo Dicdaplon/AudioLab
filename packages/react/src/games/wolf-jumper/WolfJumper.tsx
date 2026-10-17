@@ -22,8 +22,8 @@
 
 import { useState } from "react";
 
-import { type ChordScore, pitchClassName } from "@audiolab/core";
-import type { WolfJumperConfig, WolfJumperDetectionConfig } from "@audiolab/core/games";
+import { type ChordScore, type PitchEstimate, pitchClassName } from "@audiolab/core";
+import type { WolfDetectorConfig, WolfJumperConfig } from "@audiolab/core/games";
 import { Icon } from "../../ui/Icon";
 import { useMediaQuery } from "../../ui/useMediaQuery";
 import { MicPrompt } from "../MicPrompt";
@@ -45,8 +45,10 @@ interface WolfJumperProps {
   onStart?: () => void;
   /** Game tuning (note pool, bonus chords, speeds, health, ...), read once at mount. */
   config?: Partial<WolfJumperConfig>;
-  /** Detection tuning (smoothing, confirmations, thresholds). */
-  detection?: Partial<WolfJumperDetectionConfig>;
+  /** Detection tuning (smoothing, confirmations, thresholds, note source, chord policy). */
+  detection?: Partial<Omit<WolfDetectorConfig, "noiseGateDb">>;
+  /** Latest `usePitch` estimate, read with `detection.noteSource: "pitch"`. */
+  pitch?: PitchEstimate | null;
 }
 
 export function WolfJumper({
@@ -57,6 +59,7 @@ export function WolfJumper({
   onStart,
   config,
   detection,
+  pitch,
 }: WolfJumperProps) {
   // Under reduced motion nothing moves until the player asks for it.
   const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
@@ -68,6 +71,7 @@ export function WolfJumper({
     chords,
     running: playing,
     signalLevelDb,
+    pitch,
     config,
     detection,
   });
@@ -135,8 +139,11 @@ export function WolfJumper({
         {(tuning.shieldDurationMs / 1000).toFixed(0)} s, slow{" "}
         {(tuning.slowDurationMs / 1000).toFixed(0)} s, or {tuning.sameNoteCount} identical notes.
         Speed increases with the score ({(tuning.initialTravelMs / 1000).toFixed(1)} s →{" "}
-        {(tuning.minTravelMs / 1000).toFixed(1)} s). Note detection ≈ 300 ms (3-frame smoothing + 2
-        confirmation frames). Chord detection = top-1 over the 1 s window + 3 confirmation frames.
+        {(tuning.minTravelMs / 1000).toFixed(1)} s). Note detection ≈ 300 ms (
+        {detection?.noteSource === "pitch"
+          ? "pitch tracker, 2 confirmation frames"
+          : "3-frame chroma smoothing + 2 confirmation frames"}
+        ). Chord detection = top-1 over the 1 s window + 3 confirmation frames.
       </p>
     </div>
   );

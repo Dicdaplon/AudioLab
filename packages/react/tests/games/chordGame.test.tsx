@@ -116,3 +116,40 @@ describe("ChordGame", () => {
     expect(onStart).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("ChordGame pools and accept policy", () => {
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
+
+  const E7 = { root: 4, quality: "dom7" } as const;
+  const frame = (quality: "maj" | "dom7"): ChordScore[] => [
+    { root: 4, quality, name: quality === "maj" ? "E" : "E7", similarity: 0.9, probability: 0.5 },
+  ];
+
+  it("offers the given pools and scores a triad under the triad policy", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    const pools = [
+      { id: "sevenths", label: "Sevenths", chords: [E7, { root: 9, quality: "dom7" } as const] },
+    ];
+    const view = render(<ChordGame chords={[]} running pools={pools} accept="triad" />);
+    const options = Array.from(view.container.querySelectorAll("option"), (o) => o.textContent);
+    expect(options).toEqual(["Sevenths (2)"]);
+    expect(view.container.querySelector(".al-readout__value")?.textContent).toBe("E7");
+    for (const q of ["maj", "dom7", "maj"] as const) {
+      view.rerender(<ChordGame chords={frame(q)} running pools={pools} accept="triad" />);
+    }
+    expect(view.container.querySelector(".al-stat__value")?.textContent).toBe("1");
+  });
+
+  it("does not score the triad under the exact policy", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    const pools = [{ id: "sevenths", label: "Sevenths", chords: [E7] }];
+    const view = render(<ChordGame chords={[]} running pools={pools} />);
+    for (let i = 0; i < 3; i++) {
+      view.rerender(<ChordGame chords={frame("maj")} running pools={pools} />);
+    }
+    expect(view.container.querySelector(".al-stat__value")?.textContent).toBe("0");
+  });
+});

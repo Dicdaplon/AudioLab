@@ -13,19 +13,20 @@
  * come from `@audiolab/core/games`; this file is the English UI.
  */
 
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 
 import { type ChordScore, chordName } from "@audiolab/core";
 import {
   CHORD_GAME_DEFAULTS,
   CHORD_POOLS,
   CHORD_POOL_IDS,
-  type ChordPoolId,
+  type ChordAcceptPolicy,
   type ChordRef,
   chordGameReducer,
   chordKey,
   DEFAULT_CHORD_POOL,
   INITIAL_CHORD_GAME_STATS,
+  matchesTarget,
   pickChord,
   sameChord,
 } from "@audiolab/core/games";
@@ -38,6 +39,21 @@ import { useConfirmedDetection } from "../useConfirmedDetection";
 import { CHORD_POOL_LABELS_EN } from "./labels";
 
 const HIT_FLASH_MS = 350;
+const NO_CHORDS: readonly ChordRef[] = [];
+
+/** A chord set the player can pick, with its label. */
+export interface ChordGamePool {
+  id: string;
+  label: string;
+  chords: readonly ChordRef[];
+}
+
+/** The built-in pools of `@audiolab/core/games`, with their English labels. */
+export const DEFAULT_CHORD_GAME_POOLS: readonly ChordGamePool[] = CHORD_POOL_IDS.map((id) => ({
+  id,
+  label: CHORD_POOL_LABELS_EN[id],
+  chords: CHORD_POOLS[id],
+}));
 
 interface ChordGameProps {
   /** Latest chord ranking from `useTonality` (already sorted by probability). */
@@ -50,6 +66,13 @@ interface ChordGameProps {
   confirmations?: number;
   /** Minimum top-1 score of a counted frame. Default `CHORD_GAME_DEFAULTS.minProbability`. */
   minProbability?: number;
+  /**
+   * Chord sets offered to the player, in order. Default the built-in pools.
+   * The detector must rank the qualities they use (`chordQualities` of `useTonality`).
+   */
+  pools?: readonly ChordGamePool[];
+  /** Which detections count for the target (see `matchesTarget`). Default "exact". */
+  accept?: ChordAcceptPolicy;
 }
 
 export function ChordGame({
@@ -58,9 +81,13 @@ export function ChordGame({
   onStart,
   confirmations = CHORD_GAME_DEFAULTS.confirmations,
   minProbability = CHORD_GAME_DEFAULTS.minProbability,
+  pools = DEFAULT_CHORD_GAME_POOLS,
+  accept = "exact",
 }: ChordGameProps) {
-  const [poolId, setPoolId] = useState<ChordPoolId>(DEFAULT_CHORD_POOL);
-  const pool = CHORD_POOLS[poolId];
+  const [poolId, setPoolId] = useState<string>(DEFAULT_CHORD_POOL);
+  const selected = pools.find((p) => p.id === poolId) ?? pools[0];
+  // Pools are constants in practice: keyed on the selected pool, not the list identity.
+  const pool = useMemo(() => selected?.chords ?? NO_CHORDS, [selected]);
 
   // The first target is drawn after mount: a random draw during render would
   // differ between the server and the client and break hydration.
@@ -74,7 +101,8 @@ export function ChordGame({
   const top = chords[0];
   const topName = top?.name ?? "—";
   const topProb = top?.probability ?? 0;
-  const match = running && top !== undefined && target !== null && sameChord(top, target);
+  const match =
+    running && top !== undefined && target !== null && matchesTarget(top, target, { accept });
 
   const advance = useCallback(
     (kind: "hit" | "skip") => {
@@ -112,9 +140,9 @@ export function ChordGame({
     setTarget(pickChord(pool));
   };
 
-  const changePool = (id: ChordPoolId) => {
+  const changePool = (id: string) => {
     setPoolId(id);
-    const nextPool = CHORD_POOLS[id];
+    const nextPool = pools.find((p) => p.id === id)?.chords ?? [];
     if (!target || !nextPool.some((c) => sameChord(c, target))) {
       setTarget(pickChord(nextPool));
       resetConfirmation();
@@ -126,15 +154,10 @@ export function ChordGame({
       {!running && <MicPrompt message="Start the microphone to play." onStart={onStart} />}
 
       <Panel className="al-game__panel">
-        <SelectField
-          id="pool"
-          label="Chord set"
-          value={poolId}
-          onChange={(v) => changePool(v as ChordPoolId)}
-        >
-          {CHORD_POOL_IDS.map((id) => (
-            <option key={id} value={id}>
-              {CHORD_POOL_LABELS_EN[id]} ({CHORD_POOLS[id].length})
+        <SelectField id="pool" label="Chord set" value={selected?.id ?? ""} onChange={changePool}>
+          {pools.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.label} ({p.chords.length})
             </option>
           ))}
         </SelectField>
@@ -206,8 +229,9 @@ export function ChordGame({
 
         <p className="al-hint">
           To validate, the target chord must be detected as top-1 for {confirmations} consecutive
-          frames with a probability ≥ {(minProbability * 100).toFixed(0)} %. Hold the chord for
-          about 1 s so the analysis window can settle.
+          frames with a probability ≥ {(minProbability * 100).toFixed(0)} %
+          {accept === "triad" && " (its triad counts too: E for E7, and E7 for E)"}. Hold the chord
+          for about 1 s so the analysis window can settle.
         </p>
       </Panel>
     </div>

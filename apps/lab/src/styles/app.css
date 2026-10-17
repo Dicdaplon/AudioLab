@@ -169,6 +169,14 @@ body {
   outline: none;
 }
 
+/* --- Detection options (chord vocabulary, match policy, note source) ----- */
+
+.lab-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--al-sp-3) var(--al-sp-5);
+}
+
 /* --- About --------------------------------------------------------------- */
 
 .about {

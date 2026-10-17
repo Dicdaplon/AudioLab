@@ -106,6 +106,30 @@ describe("App", () => {
     expect(screen.getByText("Unavailable")).toBeTruthy();
   });
 
+  it("offers the chord vocabulary, the match policy and the note source where they apply", () => {
+    render(<App />);
+    const vocabulary = screen.getByLabelText("Chord vocabulary") as HTMLSelectElement;
+    expect(vocabulary.value).toBe("triads");
+    expect(screen.queryByLabelText("A chord counts when")).toBeNull();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Chord game" }));
+    const pools = () =>
+      Array.from((screen.getByLabelText("Chord set") as HTMLSelectElement).options, (o) => o.value);
+    expect(pools()).not.toContain("open-sevenths");
+    fireEvent.change(screen.getByLabelText("Chord vocabulary"), { target: { value: "sevenths" } });
+    expect(pools()).toContain("open-sevenths");
+    expect(pools()).not.toContain("suspended");
+    fireEvent.change(screen.getByLabelText("Chord vocabulary"), { target: { value: "all" } });
+    expect(pools()).toContain("suspended");
+    fireEvent.change(screen.getByLabelText("A chord counts when"), { target: { value: "triad" } });
+    expect(screen.getByText(/its triad counts too/)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Wolf Jumper" }));
+    expect((screen.getByLabelText("Note detection") as HTMLSelectElement).value).toBe("chroma");
+    fireEvent.change(screen.getByLabelText("Note detection"), { target: { value: "pitch" } });
+    expect(screen.getByText(/pitch tracker, 2 confirmation frames/)).toBeTruthy();
+  });
+
   it("shows Stop while live", () => {
     session.running = true;
     render(<App />);
