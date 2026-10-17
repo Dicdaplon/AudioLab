@@ -201,17 +201,28 @@ describe("startSampleCapture", () => {
     b.stop();
   });
 
-  it("counts frames for a bare Float32Array message", async () => {
+  it("ignores messages that are not frame-tagged batches", async () => {
     const { FakeAudioContext } = makeFakeAudioContextClass();
     const ctx = new FakeAudioContext() as unknown as AudioContext;
-    const starts: number[] = [];
-    const capture = await startSampleCapture(ctx, source, (_s, info) =>
-      starts.push(info.startFrame),
-    );
+    const onSamples = vi.fn();
+    const capture = await startSampleCapture(ctx, source, onSamples);
     nodes[0].emit(new Float32Array(4));
-    nodes[0].emit(new Float32Array(4));
-    expect(starts).toEqual([0, 4]);
+    nodes[0].emit({ samples: [1, 2], startFrame: 0 });
+    expect(onSamples).not.toHaveBeenCalled();
     capture.stop();
+  });
+
+  it("retries the module load after a failure", async () => {
+    const { FakeAudioContext } = makeFakeAudioContextClass();
+    const ctx = new FakeAudioContext();
+    ctx.audioWorklet!.addModule.mockRejectedValueOnce(new Error("network"));
+    const first = await startSampleCapture(ctx as unknown as AudioContext, source, vi.fn());
+    expect(first.method).toBe("analyser");
+    first.stop();
+    const second = await startSampleCapture(ctx as unknown as AudioContext, source, vi.fn());
+    expect(second.method).toBe("worklet");
+    expect(ctx.audioWorklet!.addModule).toHaveBeenCalledTimes(2);
+    second.stop();
   });
 
   it("stop() tolerates a graph that is already torn down (closed context)", async () => {

@@ -45,15 +45,15 @@ export interface OnsetEvidenceOptions<L> {
   toMs?: number;
   /** Key of a label, for counting (default `String(label)`). */
   keyOf?: (label: L) => string;
-  /** Observations kept, in seconds. Default 2. */
-  historySeconds?: number;
+  /** Observations kept, in ms. Default 2000. */
+  historyMs?: number;
 }
 
 export class OnsetEvidence<L> {
   readonly fromMs: number;
   readonly toMs: number;
   private readonly keyOf: (label: L) => string;
-  private readonly historySeconds: number;
+  private readonly historyMs: number;
   private readonly observations: LabelObservation<L>[] = [];
   private readonly pending: { id: number; time: number }[] = [];
 
@@ -62,7 +62,7 @@ export class OnsetEvidence<L> {
     this.toMs = options.toMs ?? 160;
     if (!(this.toMs > this.fromMs)) throw new Error("toMs must be > fromMs");
     this.keyOf = options.keyOf ?? ((label) => String(label));
-    this.historySeconds = options.historySeconds ?? 2;
+    this.historyMs = options.historyMs ?? 2000;
   }
 
   observe(observation: LabelObservation<L>): void {
@@ -93,7 +93,7 @@ export class OnsetEvidence<L> {
       this.pending.splice(i, 1);
       out.push(this.labelAt(p.id, p.time));
     }
-    const horizon = now - this.historySeconds;
+    const horizon = now - this.historyMs / 1000;
     while (this.observations.length > 0 && this.observations[0].time < horizon) {
       this.observations.shift();
     }

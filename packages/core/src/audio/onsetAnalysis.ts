@@ -119,11 +119,22 @@ export async function startOnsetAnalysis(
     });
     exactTiming = info.exact;
     const { onsets } = pipeline.push(samples, info.startFrame);
-    analysedTime = (info.startFrame + samples.length) / info.sampleRate - decisionLatencyMs / 1000;
+    analysedTime =
+      (info.startFrame + samples.length) / info.sampleRate -
+      pipeline.detector.maxDecisionLatencySeconds;
     if (onsets.length > 0) {
       const timed = onsets.map((o) => ({ ...o, perfTimeMs: clock.contextTimeToPerfMs(o.time) }));
       recent = [...recent, ...timed].slice(-keep);
-      for (const onset of timed) for (const l of listeners) l(onset);
+      for (const onset of timed) {
+        for (const l of listeners) {
+          // A failing listener must not stop the others, or the batch.
+          try {
+            l(onset);
+          } catch (err) {
+            console.error(err);
+          }
+        }
+      }
     }
     options.onSamples?.(samples, info);
   };

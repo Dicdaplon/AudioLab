@@ -116,7 +116,7 @@ export function useOnsetAnalysis(
         if (!analysis) return;
         const analysedTime =
           (info.startFrame + samples.length) / info.sampleRate -
-          analysis.pipeline.detector.decisionLatencySeconds;
+          analysis.pipeline.detector.maxDecisionLatencySeconds;
         optionsRef.current.onBatch?.(history, analysedTime);
       },
     })

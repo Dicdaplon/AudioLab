@@ -48,7 +48,7 @@ describe("usePitch", () => {
     const batch = 2048;
     const total = Math.round(seconds * SR);
     for (let start = 0; start + batch <= total; start += batch) {
-      worklet.nodes[0].emit(sine(freq, batch, amplitude, start));
+      worklet.nodes[0].emit({ samples: sine(freq, batch, amplitude, start), startFrame: start });
     }
   }
 

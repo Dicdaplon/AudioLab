@@ -125,12 +125,21 @@ describe("timing budget", () => {
     expect(absurd.components[0].source).toBe("assumed");
   });
 
-  it("widens everything for a Bluetooth headset", () => {
+  it("widens everything for a Bluetooth headset, and only for one", () => {
     expect(looksLikeBluetooth("AirPods Pro (Bluetooth)")).toBe(true);
+    expect(looksLikeBluetooth("Galaxy Buds2 Hands-Free")).toBe(true);
     expect(looksLikeBluetooth("Microphone (Realtek High Definition Audio)")).toBe(false);
+    expect(looksLikeBluetooth("USB Headset Microphone")).toBe(false);
+    expect(looksLikeBluetooth("Headset Microphone (Jabra Evolve 20)")).toBe(false);
     const b = estimateTimingBudget({ deviceLabel: "Galaxy Buds2 Hands-Free" });
     expect(b.components[0].offsetMs).toBe(BLUETOOTH_INPUT_LATENCY_MS);
     expect(b.minToleranceMs).toBeGreaterThan(100);
+    // A latency reported by the browser wins over a label.
+    const reported = estimateTimingBudget({
+      deviceLabel: "AirPods (Bluetooth)",
+      reportedInputLatencySeconds: 0.18,
+    });
+    expect(reported.components[0]).toMatchObject({ offsetMs: 180, source: "reported" });
   });
 
   it("replaces input + display by a calibration and adds the strum for chords", () => {

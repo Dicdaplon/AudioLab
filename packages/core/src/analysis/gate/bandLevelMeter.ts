@@ -11,7 +11,8 @@
  * "Audio EQ Cookbook" high-pass with Q = 1/√2.
  */
 
-import { ENVELOPE_FLOOR_DB } from "../onset/attackEnvelope";
+import { resolveConfig } from "../../utils/resolveConfig";
+import { rmsToDb } from "../levels";
 
 export interface BandLevelMeterConfig {
   sampleRate: number;
@@ -20,6 +21,11 @@ export interface BandLevelMeterConfig {
   /** Block length in seconds. Default 0.01. */
   blockSeconds: number;
 }
+
+export const BAND_LEVEL_METER_DEFAULTS: Omit<BandLevelMeterConfig, "sampleRate"> = {
+  highPassHz: 80,
+  blockSeconds: 0.01,
+};
 
 export type BandLevelMeterOptions = Partial<BandLevelMeterConfig> & { sampleRate: number };
 
@@ -47,11 +53,10 @@ export class BandLevelMeter {
 
   constructor(options: BandLevelMeterOptions) {
     if (!(options.sampleRate > 0)) throw new Error("sampleRate must be > 0");
-    const cfg: BandLevelMeterConfig = {
-      sampleRate: options.sampleRate,
-      highPassHz: options.highPassHz ?? 80,
-      blockSeconds: options.blockSeconds ?? 0.01,
-    };
+    const cfg: BandLevelMeterConfig = resolveConfig(
+      { ...BAND_LEVEL_METER_DEFAULTS, sampleRate: options.sampleRate },
+      options,
+    );
     this.config = cfg;
     this.blockSize = Math.max(1, Math.round(cfg.blockSeconds * cfg.sampleRate));
     if (cfg.highPassHz > 0 && cfg.highPassHz < cfg.sampleRate / 2) {
@@ -77,11 +82,16 @@ export class BandLevelMeter {
     this.nextFrame = null;
   }
 
-  /** Feed samples; returns the levels of the blocks completed by them. */
+  /**
+   * Feed samples; returns the levels of the blocks completed by them. A
+   * `startFrame` that does not follow the previous push restarts the filter
+   * and the block, like the other stream tools.
+   */
   push(samples: ArrayLike<number>, startFrame?: number): LevelBlock[] {
-    if (this.nextFrame === null || startFrame !== undefined) {
-      this.nextFrame = startFrame ?? this.nextFrame ?? 0;
+    if (startFrame !== undefined && this.nextFrame !== null && startFrame !== this.nextFrame) {
+      this.reset();
     }
+    if (this.nextFrame === null) this.nextFrame = startFrame ?? 0;
     const out: LevelBlock[] = [];
     for (let i = 0; i < samples.length; i++) {
       const x = samples[i];
@@ -97,7 +107,7 @@ export class BandLevelMeter {
         const rms = Math.sqrt(this.sumSquares / this.blockSize);
         out.push({
           endFrame: this.nextFrame + i + 1,
-          levelDb: rms > 0 ? Math.max(ENVELOPE_FLOOR_DB, 20 * Math.log10(rms)) : ENVELOPE_FLOOR_DB,
+          levelDb: rmsToDb(rms),
         });
         this.sumSquares = 0;
         this.inBlock = 0;

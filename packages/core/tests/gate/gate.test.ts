@@ -126,6 +126,12 @@ describe("AdaptiveNoiseGate", () => {
     expect(gate.push({ levelDb: -30, dtMs: 10 }).open).toBe(true);
   });
 
+  it("says when it is still settling", () => {
+    const gate = new AdaptiveNoiseGate();
+    expect(feed(gate, -50, 1000).settling).toBe(true);
+    expect(feed(gate, -50, 7000).settling).toBe(false);
+  });
+
   it("does not learn a player who starts at once at a steady level", () => {
     const gate = new AdaptiveNoiseGate();
     // Strumming from the first second: −30 dB with ±1 dB, no pause, for 5 s.

@@ -93,6 +93,18 @@ describe("WolfJumperDetector", () => {
     expect(setup().detector.gate).toBeNull();
   });
 
+  it("adaptive gate: pitch estimates between chroma frames do not speed up its clock", () => {
+    const { detector, push } = setup({ gate: "adaptive", noteSource: "pitch" });
+    const quiet = { frequency: 0, midi: 0, pitchClass: 0, cents: 0, clarity: 0.1 };
+    for (let i = 0; i < 60; i++) push({ instantaneousChroma: chroma(5, 0.3), signalLevelDb: -70 });
+    push({ instantaneousChroma: chroma(0), signalLevelDb: -50 });
+    expect(detector.gateOpen).toBe(true);
+    // One quiet chroma frame (100 ms) with five pitch updates: still within the 250 ms hold.
+    push({ instantaneousChroma: chroma(5, 0.3), signalLevelDb: -70 });
+    for (let i = 0; i < 5; i++) push({ pitch: { ...quiet } });
+    expect(detector.gateOpen).toBe(true);
+  });
+
   it("adaptive gate: a clear pitch opens it even when quiet", () => {
     const { detector, push } = setup({ gate: "adaptive", noteSource: "pitch" });
     for (let i = 0; i < 60; i++) push({ instantaneousChroma: chroma(5, 0.3), signalLevelDb: -70 });

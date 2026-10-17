@@ -184,6 +184,30 @@ describe("OnsetDetector", () => {
     }
   });
 
+  it("works at 44.1 kHz", () => {
+    const sr = 44100;
+    const { signal, startFrames } = performance(melody(10), {
+      sampleRate: sr,
+      seconds: 4.4,
+      noiseRms: 0.001,
+    });
+    const det = new OnsetDetector({ sampleRate: sr });
+    const onsets = pushChunks(signal, (c, f) => det.push(c, f));
+    expect(onsets).toHaveLength(10);
+    onsets.forEach((o, i) => expect(Math.abs(o.frame - startFrames[i]) / sr).toBeLessThan(0.005));
+  });
+
+  it("decides every onset within its worst-case latency", () => {
+    const det = new OnsetDetector({ sampleRate: SR });
+    expect(det.maxDecisionLatencySeconds).toBeGreaterThan(det.decisionLatencySeconds);
+    const { signal } = performance(melody(12), { seconds: 5, noiseRms: 0.002 });
+    for (const o of pushChunks(signal, (c, f) => det.push(c, f))) {
+      expect((o.decidedAtFrame - o.frame) / SR).toBeLessThanOrEqual(
+        det.maxDecisionLatencySeconds + 128 / SR,
+      );
+    }
+  });
+
   it("restarts cleanly after a gap in the stream", () => {
     const det = new OnsetDetector({ sampleRate: SR });
     const { signal, startFrames } = performance([{ time: 0.3, midi: 52 }], { seconds: 0.8 });

@@ -64,7 +64,7 @@ describe("startOnsetAnalysis", () => {
     const first = snap.recentOnsets[0];
     expect(first.perfTimeMs).toBeCloseTo(first.time * 1000 + 1005, 6);
     expect(snap.analysedTime).toBeCloseTo(
-      (origin + signal.length) / SR - snap.decisionLatencyMs / 1000,
+      (origin + signal.length) / SR - analysis.pipeline.detector.maxDecisionLatencySeconds,
       2,
     );
     expect(snap.counts.accepted).toBe(2);

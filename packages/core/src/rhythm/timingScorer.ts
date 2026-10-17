@@ -82,7 +82,7 @@ export interface TimingScorerConfig {
   tolerance: TimingTolerance;
   /** Latency subtracted from onset times, in ms (`TimingBudget.offsetMs`). Default 0. */
   offsetMs: number;
-  /** Window = min(windowMs, windowRatio · gap to the nearest note). Default 0.5. */
+  /** Window = min(windowMs, windowRatio · gap to the nearest note), ratio capped at 0.5. Default 0.5. */
   windowRatio: number;
   /** Learn and subtract a constant offset. Default false. */
   adaptiveBias: boolean;
@@ -114,6 +114,8 @@ export interface TimingScorerState {
   results: readonly NoteResult[];
   /** Matched onset time (corrected, s) per unresolved note, or null. */
   candidates: readonly (number | null)[];
+  /** Offset of each note's matched onset before the bias, in ms (feeds the bias). */
+  rawDeltasMs: readonly (number | null)[];
   /** Onsets that matched no note. */
   extras: readonly PlayedOnset[];
   /** Learnt bias, in ms. */
@@ -144,7 +146,8 @@ export function createTimingScorerState(
     const prev = i > 0 ? n.time - sorted[i - 1].time : Infinity;
     const next = i < sorted.length - 1 ? sorted[i + 1].time - n.time : Infinity;
     const gap = Math.min(prev, next);
-    return Math.min(config.tolerance.windowMs / 1000, config.windowRatio * gap);
+    // Capped at half the gap: neighbouring windows never overlap.
+    return Math.min(config.tolerance.windowMs / 1000, Math.min(0.5, config.windowRatio) * gap);
   });
   return {
     notes: sorted,
@@ -160,6 +163,7 @@ export function createTimingScorerState(
       heardLabel: null,
     })),
     candidates: sorted.map(() => null),
+    rawDeltasMs: sorted.map(() => null),
     extras: [],
     biasMs: 0,
     biasSamples: [],
@@ -219,8 +223,18 @@ function onOnset(
   candidates[best] = t;
   const results = [...state.results];
   const deltaMs = (t - state.notes[best].time) * 1000;
-  results[best] = { ...results[best], onsetId: onset.id, deltaMs };
-  let next: TimingScorerState = { ...state, candidates, results, extras };
+  // A new onset carries no label yet, whatever the replaced one had.
+  const expectsLabel = state.notes[best].label !== undefined;
+  results[best] = {
+    ...results[best],
+    onsetId: onset.id,
+    deltaMs,
+    label: expectsLabel ? "pending" : "none",
+    heardLabel: null,
+  };
+  const rawDeltasMs = [...state.rawDeltasMs];
+  rawDeltasMs[best] = deltaMs + state.biasMs;
+  let next: TimingScorerState = { ...state, candidates, rawDeltasMs, results, extras };
   const changed: NoteResult[] = [];
   if (Math.abs(deltaMs) <= config.tolerance.onTimeMs) {
     next = resolve(next, best, config);
@@ -239,9 +253,10 @@ function resolve(
   const tier = r.deltaMs === null ? "missed" : classifyDelta(r.deltaMs, config.tolerance);
   results[k] = { ...r, resolved: true, tier };
   let { biasMs, biasSamples } = state;
-  if (config.adaptiveBias && r.deltaMs !== null) {
-    // The raw offset is the corrected one plus the bias it was corrected by.
-    biasSamples = [...biasSamples, r.deltaMs + biasMs].slice(-config.biasWindow);
+  const raw = state.rawDeltasMs[k];
+  if (config.adaptiveBias && raw !== null) {
+    // The offset before the bias, as measured when the onset was matched.
+    biasSamples = [...biasSamples, raw].slice(-config.biasWindow);
     if (biasSamples.length >= config.minBiasSamples) {
       const m = medianOf(biasSamples);
       biasMs = Math.max(-config.maxBiasMs, Math.min(config.maxBiasMs, m));

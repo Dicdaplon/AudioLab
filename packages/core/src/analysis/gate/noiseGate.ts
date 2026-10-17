@@ -95,10 +95,17 @@ export interface NoiseGateState {
   closeThresholdDb: number;
   /** True during the warm-up (the gate is held open). */
   warmingUp: boolean;
+  /**
+   * True while the floor is still climbing towards the background (rise
+   * limit): the threshold is lower than it will be. An exercise can wait for
+   * it before a count-in ("listening to the room…").
+   */
+  settling: boolean;
   /** True when the floor is above `noisyFloorDb`. */
   noisy: boolean;
   /** Last input level, in dBFS. */
   levelDb: number;
+  // The fields below are the reducer's own state: read them, do not build on them.
   /** Internal: time spent below the close threshold, in ms. */
   readonly belowMs: number;
   /** Internal: time since the start, in ms. */
@@ -118,6 +125,7 @@ export function initialNoiseGateState(
     openThresholdDb: config.minFloorDb + config.openMarginDb,
     closeThresholdDb: config.minFloorDb + config.closeMarginDb,
     warmingUp: true,
+    settling: true,
     noisy: false,
     levelDb: -Infinity,
     belowMs: 0,
@@ -173,6 +181,7 @@ export function stepNoiseGate(
     openThresholdDb,
     closeThresholdDb,
     warmingUp,
+    settling: floorDb < target - 1,
     noisy: floorDb > config.noisyFloorDb,
     levelDb: level,
     belowMs,

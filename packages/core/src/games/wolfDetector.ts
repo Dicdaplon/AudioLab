@@ -144,7 +144,9 @@ export function stepWolfDetector(
   let gateState = state.gate;
   let gateOpen: boolean;
   if (config.gate === "adaptive") {
-    if (newChroma || frame.pitch !== state.lastPitch) {
+    // One step per analysis frame (a new chroma): pitch estimates may arrive
+    // more often, and each step counts `frameMs`.
+    if (newChroma) {
       const clear = (frame.pitch?.clarity ?? 0) >= config.minPitchClarity;
       gateState = stepNoiseGate(state.gate, {
         levelDb: frame.signalLevelDb,

@@ -109,7 +109,10 @@ onset falls back to the middle of the flux window and is flagged
 
 **Decision latency** (when the onset is known, not when it happened):
 ≈ 24 ms at 48 kHz (half a window, one hop of look-ahead, 10 ms of
-refinement). Add the capture batch (11 ms with 512) and delivery for the
+refinement); the worst case, an attack at the far end of the searched
+window, is `maxDecisionLatencySeconds` ≈ 34 ms, and the analysed time
+passed to scorers (`analysedTime`) subtracts that worst case so no note is
+declared missed while its onset is still being decided. Add the capture batch (11 ms with 512) and delivery for the
 reaction delay shown in the lab.
 
 ### 2.4 Measured accuracy
@@ -164,7 +167,9 @@ noise through than cut a note.
   6 dB/s. A player who starts at once with a steady level is therefore
   not learnt as background (10 s to climb from −90 to −30 dBFS, and every
   decay between notes pulls it back down); a quiet room is learnt in about
-  4 s, with the gate slightly too open meanwhile.
+  4 s, with the gate slightly too open meanwhile. `settling` is true while
+  the floor is still climbing: an exercise can show "listening to the
+  room…" for a few seconds before its count-in.
 - **Decision**: opens instantly at floor + 6 dB, or on a caller's tonal cue
   (Wolf Jumper passes a clear pitch); closes below floor + 3 dB after
   250 ms (hysteresis + hold: a guitar decays slowly); open during the first
@@ -198,8 +203,10 @@ detected onset (audio clock) = T + display + input
   reach the audio thread. **No web API measures it without playing a sound
   and recording it** (loopback). `MediaTrackSettings.latency` is used when
   it is plausible (0–500 ms; Chrome is known to report a constant),
-  otherwise 10 ± 8 ms is assumed. A Bluetooth headset microphone (spotted
-  by its label) is assumed at 150 ± 50 ms.
+  otherwise 10 ± 8 ms is assumed. When nothing is reported and the label
+  says Bluetooth (`bluetooth`, `airpods`, `hands-free`, `bt`; not
+  "headset", which wired USB headsets share), 100 ± 60 ms is assumed: a
+  label is a weak clue, the adaptive bias refines it.
 
 What does **not** shift timestamps: the capture's batching, the delivery
 to the main thread, the detector's decision delay. They only delay the
@@ -225,13 +232,13 @@ From the frame-tagged batches alone:
 `estimateTimingBudget` turns this into components, each with an offset, a
 standard deviation and a source (`measured`, `reported`, `assumed`):
 
-| Component      | Offset                                  | σ                                               | Source                       |
-| -------------- | --------------------------------------- | ----------------------------------------------- | ---------------------------- |
-| input          | reported, else 10 ms (Bluetooth 150 ms) | max(5, ½ reported), else 8 ms (Bluetooth 50 ms) | reported / assumed           |
-| display        | 1.5 frames                              | 1 frame                                         | assumed (period measured)    |
-| clock          | 0                                       | offset spread, ≥ 0.5 ms                         | measured                     |
-| detector       | 0                                       | 4 ms                                            | assumed (synthetic baseline) |
-| strum (chords) | 0                                       | 12 ms                                           | assumed                      |
+| Component      | Offset                                         | σ                                                      | Source                       |
+| -------------- | ---------------------------------------------- | ------------------------------------------------------ | ---------------------------- |
+| input          | reported, else 10 ms (Bluetooth label: 100 ms) | max(5, ½ reported), else 8 ms (Bluetooth label: 60 ms) | reported / assumed           |
+| display        | 1.5 frames                                     | 1 frame                                                | assumed (period measured)    |
+| clock          | 0                                              | offset spread, ≥ 0.5 ms                                | measured                     |
+| detector       | 0                                              | 4 ms                                                   | assumed (synthetic baseline) |
+| strum (chords) | 0                                              | 12 ms                                                  | assumed                      |
 
 Offsets add; uncertainties add in quadrature. A typical wired setup on a
 60 Hz screen gives ≈ 35 ms of offset and σ ≈ 19 ms. `minToleranceMs = 2σ`

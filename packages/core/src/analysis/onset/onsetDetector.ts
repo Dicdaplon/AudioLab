@@ -42,6 +42,8 @@ export interface OnsetDetectorOptions {
   refineSeconds?: number;
 }
 
+export const ONSET_DETECTOR_DEFAULTS = { refineSeconds: 0.01 } as const;
+
 export interface OnsetEvent {
   /** Monotonic number since the detector was created (React keys, dedup). */
   id: number;
@@ -87,7 +89,9 @@ export class OnsetDetector {
       frameRate: options.sampleRate / this.odf.config.hopSize,
     });
     this.envelope = new AttackEnvelope({ ...options.attack, sampleRate: options.sampleRate });
-    this.refineFrames = Math.round((options.refineSeconds ?? 0.01) * options.sampleRate);
+    this.refineFrames = Math.round(
+      (options.refineSeconds ?? ONSET_DETECTOR_DEFAULTS.refineSeconds) * options.sampleRate,
+    );
   }
 
   /** Typical delay between an attack and its report, in seconds. */
@@ -96,6 +100,18 @@ export class OnsetDetector {
     return (
       (frameSize / 2 + hopSize * (1 + this.picker.delayFrames) + this.refineFrames) /
       this.sampleRate
+    );
+  }
+
+  /**
+   * Longest delay between an attack and its report, in seconds: the attack
+   * may sit anywhere in the flux window searched before the decision. The
+   * time up to which every onset is known is the analysed time minus this.
+   */
+  get maxDecisionLatencySeconds(): number {
+    const { hopSize, frameSize } = this.odf.config;
+    return (
+      (frameSize + hopSize * (1 + this.picker.delayFrames) + this.refineFrames) / this.sampleRate
     );
   }
 

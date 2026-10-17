@@ -110,6 +110,7 @@ export { TimeRingBuffer } from "./analysis/timeBuffer";
 // --- Onsets and adaptive gate ------------------------------------------------
 
 export {
+  SUPER_FLUX_DEFAULTS,
   SuperFluxOdf,
   defaultFrameSize,
   diffFramesFor,
@@ -126,14 +127,16 @@ export {
   type PeakPickerOptions,
   type PickedPeak,
 } from "./analysis/onset/peakPicker";
+export { ENVELOPE_FLOOR_DB, rmsToDb } from "./analysis/levels";
 export {
+  ATTACK_ENVELOPE_DEFAULTS,
   AttackEnvelope,
-  ENVELOPE_FLOOR_DB,
   type AttackEnvelopeConfig,
   type AttackEnvelopeOptions,
   type LocatedAttack,
 } from "./analysis/onset/attackEnvelope";
 export {
+  ONSET_DETECTOR_DEFAULTS,
   OnsetDetector,
   type OnsetDetectorOptions,
   type OnsetEvent,
@@ -153,6 +156,7 @@ export {
   type NoteAfterOnsetOptions,
 } from "./analysis/onset/afterOnset";
 export {
+  BAND_LEVEL_METER_DEFAULTS,
   BandLevelMeter,
   type BandLevelMeterConfig,
   type BandLevelMeterOptions,

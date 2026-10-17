@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   OnsetEvidence,
+  TIMING_SCORER_DEFAULTS,
   TimingScorer,
   classifyDelta,
   createTimingScorerState,
@@ -114,6 +115,35 @@ describe("TimingScorer", () => {
     expect(adaptive.biasMs).toBeLessThan(125);
     // The first notes teach the bias; the rest are on time.
     expect(adaptive.results.slice(5).every((r) => r.tier === "onTime")).toBe(true);
+  });
+
+  it("drops the label of a replaced onset (the new one is not labelled yet)", () => {
+    const scorer = new TimingScorer(grid(1, 0.5, 1, "E"), { tolerance: TOL });
+    scorer.onset({ id: 1, time: 1.12 });
+    scorer.label(1, "E");
+    expect(scorer.results[0].label).toBe("correct");
+    scorer.onset({ id: 2, time: 1.06 }); // nearer: replaces onset 1
+    expect(scorer.results[0]).toMatchObject({ onsetId: 2, label: "pending", heardLabel: null });
+  });
+
+  it("caps the window ratio so neighbouring windows never overlap", () => {
+    const s = createTimingScorerState(
+      [
+        { id: "a", time: 1 },
+        { id: "b", time: 1.1 },
+      ],
+      { ...TIMING_SCORER_DEFAULTS, windowRatio: 0.9 },
+    );
+    expect(s.windows[0] + s.windows[1]).toBeLessThanOrEqual(0.1 + 1e-12);
+  });
+
+  it("feeds the bias with the offset measured at match time", () => {
+    // Late notes resolve after their window, when the bias may have moved.
+    const notes = grid(10);
+    const onsets = notes.map((n, i) => ({ id: i, time: n.time + 0.12 }));
+    const state = scoreTimings(notes, onsets, { tolerance: TOL, adaptiveBias: true });
+    expect(state.biasMs).toBeCloseTo(120, 6);
+    expect(state.biasSamples.every((v) => Math.abs(v - 120) < 1e-6)).toBe(true);
   });
 
   it("grades the label independently of the timing", () => {

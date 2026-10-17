@@ -22,6 +22,9 @@
  * spectral frames.
  */
 
+import { resolveConfig } from "../../utils/resolveConfig";
+import { ENVELOPE_FLOOR_DB, rmsToDb } from "../levels";
+
 export interface AttackEnvelopeConfig {
   sampleRate: number;
   /** Samples per envelope block. Default 32. */
@@ -46,10 +49,18 @@ export interface AttackEnvelopeConfig {
   peakToleranceDb: number;
 }
 
-export type AttackEnvelopeOptions = Partial<AttackEnvelopeConfig> & { sampleRate: number };
+export const ATTACK_ENVELOPE_DEFAULTS: Omit<AttackEnvelopeConfig, "sampleRate"> = {
+  blockSize: 32,
+  historySeconds: 0.2,
+  baselineSeconds: 0.03,
+  riseFraction: 0.3,
+  minRiseDb: 4,
+  preEmphasis: 0.97,
+  maxRiseDb: 30,
+  peakToleranceDb: 6,
+};
 
-/** Level reported for an all-zero block. */
-export const ENVELOPE_FLOOR_DB = -120;
+export type AttackEnvelopeOptions = Partial<AttackEnvelopeConfig> & { sampleRate: number };
 
 export interface LocatedAttack {
   /** Stream frame of the first sample of the attack block. */
@@ -74,17 +85,10 @@ export class AttackEnvelope {
 
   constructor(options: AttackEnvelopeOptions) {
     if (!(options.sampleRate > 0)) throw new Error("sampleRate must be > 0");
-    const cfg: AttackEnvelopeConfig = {
-      sampleRate: options.sampleRate,
-      blockSize: options.blockSize ?? 32,
-      historySeconds: options.historySeconds ?? 0.2,
-      baselineSeconds: options.baselineSeconds ?? 0.03,
-      riseFraction: options.riseFraction ?? 0.3,
-      minRiseDb: options.minRiseDb ?? 4,
-      preEmphasis: options.preEmphasis ?? 0.97,
-      maxRiseDb: options.maxRiseDb ?? 30,
-      peakToleranceDb: options.peakToleranceDb ?? 6,
-    };
+    const cfg: AttackEnvelopeConfig = resolveConfig(
+      { ...ATTACK_ENVELOPE_DEFAULTS, sampleRate: options.sampleRate },
+      options,
+    );
     if (!(cfg.blockSize >= 1)) throw new Error("blockSize must be ≥ 1");
     this.config = cfg;
     const length = Math.max(8, Math.ceil((cfg.historySeconds * cfg.sampleRate) / cfg.blockSize));
@@ -118,8 +122,7 @@ export class AttackEnvelope {
       this.inBlock++;
       if (this.inBlock === blockSize) {
         const rms = Math.sqrt(this.sumSquares / blockSize);
-        this.levels[this.blocks % this.levels.length] =
-          rms > 0 ? Math.max(ENVELOPE_FLOOR_DB, 20 * Math.log10(rms)) : ENVELOPE_FLOOR_DB;
+        this.levels[this.blocks % this.levels.length] = rmsToDb(rms);
         this.blocks++;
         this.sumSquares = 0;
         this.inBlock = 0;

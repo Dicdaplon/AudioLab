@@ -126,12 +126,12 @@ async function startWorkletCapture(
     processorOptions: batchSize !== undefined ? { batchSize } : {},
   });
   let stopped = false;
-  let nextFrame = 0;
   node.port.onmessage = (event: MessageEvent) => {
     if (stopped) return;
     const data = event.data as unknown;
     const receivedAtMs = nowMs();
     const sampleRate = context.sampleRate;
+    // The processor ships with this file (versioned name): one message format.
     if (isBatchMessage(data)) {
       onSamples(data.samples, {
         startFrame: data.startFrame,
@@ -139,11 +139,6 @@ async function startWorkletCapture(
         receivedAtMs,
         exact: true,
       });
-      nextFrame = data.startFrame + data.samples.length;
-    } else if (data instanceof Float32Array) {
-      // A bare batch carries no frame: count the samples instead.
-      onSamples(data, { startFrame: nextFrame, sampleRate, receivedAtMs, exact: false });
-      nextFrame += data.length;
     }
   };
   source.connect(node);

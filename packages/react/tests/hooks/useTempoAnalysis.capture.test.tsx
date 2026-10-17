@@ -57,7 +57,7 @@ describe("useTempoAnalysis with the real sample capture", () => {
     for (let start = 0; start + batch <= 10 * SR; start += batch) {
       const data = new Float32Array(batch);
       for (let i = 0; i < batch; i++) data[i] = click(start + i, 120);
-      worklet.nodes[0].emit(data);
+      worklet.nodes[0].emit({ samples: data, startFrame: start });
     }
     act(() => {
       vi.advanceTimersByTime(200);

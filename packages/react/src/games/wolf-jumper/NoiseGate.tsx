@@ -29,7 +29,7 @@ interface NoiseGateProps {
   thresholdDb: number;
   gateOpen: boolean;
   onThresholdChange: (db: number) => void;
-  /** Gate mode. Default "manual" (the slider alone). */
+  /** Gate mode. Default "auto", as in `WolfJumper`. */
   mode?: GateSetting;
   onModeChange?: (mode: GateSetting) => void;
   /** Automatic gate state, to draw its threshold and the learnt background. */
@@ -41,7 +41,7 @@ export function NoiseGate({
   thresholdDb,
   gateOpen,
   onThresholdChange,
-  mode = "manual",
+  mode = "auto",
   onModeChange,
   gate,
 }: NoiseGateProps) {

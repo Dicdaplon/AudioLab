@@ -98,11 +98,16 @@ export interface TimingBudgetInput {
 /** Typical input latency of a built-in or wired microphone, and its spread. */
 export const ASSUMED_INPUT_LATENCY_MS = 10;
 export const ASSUMED_INPUT_UNCERTAINTY_MS = 8;
-/** A Bluetooth headset microphone (HFP) adds 100–200 ms. */
-export const BLUETOOTH_INPUT_LATENCY_MS = 150;
-export const BLUETOOTH_INPUT_UNCERTAINTY_MS = 50;
+/**
+ * A Bluetooth headset microphone (HFP) adds 100–200 ms. Applied only when
+ * nothing is reported and the label says Bluetooth: a label is a weak clue,
+ * so a moderate offset with a wide uncertainty, for an adaptive bias to refine.
+ */
+export const BLUETOOTH_INPUT_LATENCY_MS = 100;
+export const BLUETOOTH_INPUT_UNCERTAINTY_MS = 60;
 
-const BLUETOOTH_LABEL = /bluetooth|airpods|hands-?free|headset|buds|\bbt\b/i;
+// Not "headset" or "buds": wired USB headsets are called that too.
+const BLUETOOTH_LABEL = /bluetooth|airpods|hands-?free|\bbt\b/i;
 
 /** True when a device label looks like a Bluetooth headset. */
 export function looksLikeBluetooth(label: string | undefined): boolean {
@@ -123,19 +128,19 @@ export function estimateTimingBudget(input: TimingBudgetInput = {}): TimingBudge
     });
   } else {
     const reported = input.reportedInputLatencySeconds;
-    if (looksLikeBluetooth(input.deviceLabel)) {
-      components.push({
-        id: "input",
-        offsetMs: BLUETOOTH_INPUT_LATENCY_MS,
-        uncertaintyMs: BLUETOOTH_INPUT_UNCERTAINTY_MS,
-        source: "assumed",
-      });
-    } else if (reported !== undefined && reported > 0 && reported <= 0.5) {
+    if (reported !== undefined && reported > 0 && reported <= 0.5) {
       components.push({
         id: "input",
         offsetMs: reported * 1000,
         uncertaintyMs: Math.max(5, reported * 500),
         source: "reported",
+      });
+    } else if (looksLikeBluetooth(input.deviceLabel)) {
+      components.push({
+        id: "input",
+        offsetMs: BLUETOOTH_INPUT_LATENCY_MS,
+        uncertaintyMs: BLUETOOTH_INPUT_UNCERTAINTY_MS,
+        source: "assumed",
       });
     } else {
       components.push({

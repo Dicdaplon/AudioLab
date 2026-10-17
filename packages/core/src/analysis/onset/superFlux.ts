@@ -56,6 +56,16 @@ export interface SuperFluxConfig {
   diffFrames: number;
 }
 
+/** Defaults that do not depend on the sample rate (the window and μ do: see below). */
+export const SUPER_FLUX_DEFAULTS = {
+  hopSize: 128,
+  bandsPerOctave: 12,
+  minFrequency: 30,
+  maxFrequency: 16000,
+  logGain: 1,
+  maxFilterRadius: 1,
+} as const;
+
 export type SuperFluxOptions = Partial<SuperFluxConfig> & { sampleRate: number };
 
 /** One ODF value. `endFrame` is the stream frame just after the frame's last sample. */
@@ -161,21 +171,22 @@ export class SuperFluxOdf {
     const sampleRate = options.sampleRate;
     if (!(sampleRate > 0)) throw new Error("sampleRate must be > 0");
     const frameSize = options.frameSize ?? defaultFrameSize(sampleRate);
+    const d = SUPER_FLUX_DEFAULTS;
     if (frameSize < 16 || (frameSize & (frameSize - 1)) !== 0) {
       throw new Error("frameSize must be a power of two ≥ 16");
     }
-    const hopSize = options.hopSize ?? 128;
+    const hopSize = options.hopSize ?? d.hopSize;
     if (!(hopSize >= 1 && hopSize <= frameSize))
       throw new Error("hopSize must be in [1, frameSize]");
     const cfg: SuperFluxConfig = {
       sampleRate,
       frameSize,
       hopSize,
-      bandsPerOctave: options.bandsPerOctave ?? 12,
-      minFrequency: options.minFrequency ?? 30,
-      maxFrequency: options.maxFrequency ?? 16000,
-      logGain: options.logGain ?? 1,
-      maxFilterRadius: options.maxFilterRadius ?? 1,
+      bandsPerOctave: options.bandsPerOctave ?? d.bandsPerOctave,
+      minFrequency: options.minFrequency ?? d.minFrequency,
+      maxFrequency: options.maxFrequency ?? d.maxFrequency,
+      logGain: options.logGain ?? d.logGain,
+      maxFilterRadius: options.maxFilterRadius ?? d.maxFilterRadius,
       diffFrames: options.diffFrames ?? diffFramesFor(frameSize, hopSize),
     };
     if (!(cfg.diffFrames >= 1)) throw new Error("diffFrames must be ≥ 1");
