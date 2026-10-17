@@ -6,6 +6,8 @@
  * re-exported from this file are internal and may change without notice.
  */
 
+export { BUILD_INFO, type BuildInfo } from "./buildInfo";
+
 // --- DSP -------------------------------------------------------------------
 
 export {

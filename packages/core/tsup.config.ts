@@ -1,5 +1,7 @@
 import { defineConfig } from "tsup";
 
+import { buildInfoDefine } from "../../scripts/buildInfo";
+
 /**
  * Three ESM entries with declarations:
  *
@@ -8,7 +10,8 @@ import { defineConfig } from "tsup";
  * - `offline` the Node-only file pipeline (`@audiolab/core/offline`), kept
  *             apart so a browser bundle never pulls `node:fs` or `audio-decode`.
  *
- * Dependencies and peer dependencies are left external by tsup.
+ * Dependencies and peer dependencies are left external by tsup. `define`
+ * stamps the version and commit into `BUILD_INFO`.
  */
 export default defineConfig({
   entry: {
@@ -23,4 +26,5 @@ export default defineConfig({
   splitting: true,
   treeshake: true,
   clean: true,
+  define: buildInfoDefine("package.json"),
 });

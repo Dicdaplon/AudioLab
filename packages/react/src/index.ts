@@ -9,6 +9,8 @@
  * of a component are available through `React.ComponentProps<typeof X>`.
  */
 
+export { BUILD_INFO, type BuildInfo } from "./buildInfo";
+
 // --- Root -------------------------------------------------------------------
 
 export { LOUPE_ROOT_CLASS, LoupeRoot, useLoupeRoot, type LoupeRootProps } from "./LoupeRoot";

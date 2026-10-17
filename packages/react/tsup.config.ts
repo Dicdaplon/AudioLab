@@ -1,5 +1,7 @@
 import { defineConfig } from "tsup";
 
+import { buildInfoDefine } from "../../scripts/buildInfo";
+
 /**
  * One ESM bundle with declarations, plus the two stylesheets.
  *
@@ -23,6 +25,7 @@ export default defineConfig([
     // No rollup `treeshake` pass here: it strips the directive again.
     banner: { js: '"use client";' },
     external: ["react/jsx-runtime"],
+    define: buildInfoDefine("package.json"),
   },
   {
     entry: { styles: "src/styles/index.css", fonts: "src/styles/fonts.css" },
