@@ -1,6 +1,6 @@
 {
   "name": "@audiolab/react",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "React hooks, components, plots and games for @audiolab/core: live key and chord readouts, spectrum and tempo plots, ear-training games, with the Loupe design system.",
   "keywords": [
     "react",
@@ -55,7 +55,7 @@
     "build": "tsup && tsup --config tsup.art.config.ts"
   },
   "dependencies": {
-    "@audiolab/core": "^0.1.0"
+    "@audiolab/core": "^0.2.0"
   },
   "peerDependencies": {
     "@fontsource/ibm-plex-mono": "^5.0.0",
