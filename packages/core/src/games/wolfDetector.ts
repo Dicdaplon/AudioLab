@@ -32,7 +32,7 @@ import type { PitchEstimate } from "../analysis/pitch";
 import { chordKey, matchesTarget, parseChordKey, type ChordAcceptPolicy } from "./chordRef";
 import type { ChordRef } from "./chordRef";
 import { EMPTY_CONFIRMATION, stepConfirmation, type ConfirmationState } from "./confirmation";
-import { resolveConfig } from "./resolveConfig";
+import { resolveConfig } from "../utils/resolveConfig";
 import {
   WOLF_JUMPER_DETECTION_DEFAULTS,
   dominantNote,

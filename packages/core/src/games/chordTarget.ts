@@ -17,7 +17,7 @@ import type { ChordScore } from "../analysis/chordDetection";
 import { CHORD_GAME_DEFAULTS, type ChordGameConfig } from "./chordGame";
 import { chordKey, matchesTarget, type ChordAcceptPolicy, type ChordRef } from "./chordRef";
 import { EMPTY_CONFIRMATION, stepConfirmation, type ConfirmationState } from "./confirmation";
-import { resolveConfig } from "./resolveConfig";
+import { resolveConfig } from "../utils/resolveConfig";
 
 export interface ChordTargetConfig extends ChordGameConfig {
   /** Which detections count for the target. Default `"exact"`. */
