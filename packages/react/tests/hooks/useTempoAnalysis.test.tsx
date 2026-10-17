@@ -83,7 +83,14 @@ describe("useTempoAnalysis", () => {
     await waitFor(() => expect(captures).toHaveLength(1));
     await waitFor(() => expect(result.current.captureMethod).toBe("worklet"));
 
-    act(() => captures[0].listener(clickTrack(120)));
+    act(() =>
+      captures[0].listener(clickTrack(120), {
+        startFrame: 0,
+        sampleRate: 48000,
+        receivedAtMs: 0,
+        exact: true,
+      }),
+    );
     await waitFor(() => expect(result.current.frame?.estimate).not.toBeNull());
     expect(Math.abs(result.current.frame!.estimate!.bpm - 120)).toBeLessThan(3);
     expect(result.current.frame!.envelopeRate).toBe(93.75);

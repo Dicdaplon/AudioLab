@@ -16,9 +16,9 @@ describe("sampleCaptureWorklet.source.ts", () => {
     expect(renderWorkletModule(fresh)).toContain(JSON.stringify(fresh));
   });
 
-  it("is a self-contained script registering the sample-capture processor", () => {
+  it("is a self-contained script registering the versioned capture processor", () => {
     expect(SAMPLE_CAPTURE_WORKLET_SOURCE).toContain("registerProcessor(");
-    expect(SAMPLE_CAPTURE_WORKLET_SOURCE).toContain('"sample-capture"');
+    expect(SAMPLE_CAPTURE_WORKLET_SOURCE).toContain('"audiolab-sample-capture-2"');
     expect(SAMPLE_CAPTURE_WORKLET_SOURCE).not.toMatch(/\bimport\b|\brequire\(/);
   });
 });

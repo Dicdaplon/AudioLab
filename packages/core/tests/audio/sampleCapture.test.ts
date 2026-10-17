@@ -8,7 +8,7 @@ import {
   type InstalledWorkletNode,
 } from "../helpers/fakeWebAudio";
 
-import { startSampleCapture } from "../../src/audio/sampleCapture";
+import { SAMPLE_CAPTURE_PROCESSOR, startSampleCapture } from "../../src/audio/sampleCapture";
 
 describe("SampleBatcher", () => {
   it("emits fresh batches of exactly batchSize samples", () => {
@@ -40,6 +40,27 @@ describe("SampleBatcher", () => {
   it("rejects an invalid batch size", () => {
     expect(() => new SampleBatcher(0, () => undefined)).toThrow();
   });
+
+  it("reports the stream frame of each batch and flushes on a discontinuity", () => {
+    const emitted: [number[], number][] = [];
+    const b = new SampleBatcher(4, (batch, start) => emitted.push([Array.from(batch), start]));
+    b.push([1, 2], 100);
+    b.push([3, 4, 5], 102);
+    // 105 expected next: 200 is a gap, so [5] goes out alone first.
+    b.push([6, 7, 8, 9], 200);
+    expect(emitted).toEqual([
+      [[1, 2, 3, 4], 100],
+      [[5], 104],
+      [[6, 7, 8, 9], 200],
+    ]);
+  });
+
+  it("counts frames from the first push when none are given", () => {
+    const starts: number[] = [];
+    const b = new SampleBatcher(3, (_batch, start) => starts.push(start));
+    b.push([1, 2, 3, 4, 5, 6, 7]);
+    expect(starts).toEqual([0, 3]);
+  });
 });
 
 describe("sample capture worklet processor", () => {
@@ -59,30 +80,52 @@ describe("sample capture worklet processor", () => {
   });
 
   afterEach(() => {
+    delete g.currentFrame;
     delete g.AudioWorkletProcessor;
     delete g.registerProcessor;
     registered = null;
   });
 
-  it("registers 'sample-capture' and posts transferable 2048-sample batches", async () => {
+  it("registers its versioned name and posts transferable, frame-tagged 2048-sample batches", async () => {
+    g.currentFrame = 4096;
     await import("../../src/audio/sampleCapture.worklet");
-    expect(registered?.name).toBe("sample-capture");
+    expect(registered?.name).toBe(SAMPLE_CAPTURE_PROCESSOR);
     const processor = new registered!.ctor() as {
       process(inputs: Float32Array[][]): boolean;
     };
 
     const block = new Float32Array(128).fill(0.25);
-    for (let i = 0; i < 15; i++) expect(processor.process([[block]])).toBe(true);
+    for (let i = 0; i < 15; i++) {
+      expect(processor.process([[block]])).toBe(true);
+      g.currentFrame = (g.currentFrame as number) + 128;
+    }
     expect(postMessage).not.toHaveBeenCalled();
     block.fill(0.5);
     processor.process([[block]]); // 16 × 128 = 2048
     expect(postMessage).toHaveBeenCalledTimes(1);
-    const [batch, transfer] = postMessage.mock.calls[0] as [Float32Array, ArrayBuffer[]];
+    const [message, transfer] = postMessage.mock.calls[0] as [
+      { samples: Float32Array; startFrame: number },
+      ArrayBuffer[],
+    ];
+    const batch = message.samples;
+    expect(message.startFrame).toBe(4096);
     expect(batch).toBeInstanceOf(Float32Array);
     expect(batch).toHaveLength(2048);
     expect(batch[0]).toBe(0.25);
     expect(batch[2047]).toBe(0.5);
     expect(transfer).toEqual([batch.buffer]);
+  });
+
+  it("takes its batch size from the processor options", async () => {
+    await import("../../src/audio/sampleCapture.worklet");
+    const processor = new (registered!.ctor as new (o: unknown) => unknown)({
+      processorOptions: { batchSize: 256 },
+    }) as { process(inputs: Float32Array[][]): boolean };
+    const block = new Float32Array(128);
+    processor.process([[block]]);
+    processor.process([[block]]);
+    expect(postMessage).toHaveBeenCalledTimes(1);
+    expect((postMessage.mock.calls[0][0] as { samples: Float32Array }).samples).toHaveLength(256);
   });
 
   it("ignores empty inputs and stays alive", async () => {
@@ -122,17 +165,20 @@ describe("startSampleCapture", () => {
     expect(capture.method).toBe("worklet");
     expect(ctx.audioWorklet.addModule).toHaveBeenCalledWith(expect.stringMatching(/^blob:/));
     expect(nodes).toHaveLength(1);
-    expect(nodes[0].name).toBe("sample-capture");
+    expect(nodes[0].name).toBe(SAMPLE_CAPTURE_PROCESSOR);
     expect(source.connect).toHaveBeenCalledWith(nodes[0]);
     expect(nodes[0].connect).toHaveBeenCalledWith(ctx.destination);
 
     expect(nodes[0].options).toMatchObject({ channelCount: 1, channelCountMode: "explicit" });
 
     const batch = new Float32Array([1, 2, 3]);
-    nodes[0].emit(batch);
+    nodes[0].emit({ samples: batch, startFrame: 960 });
     nodes[0].emit("not samples");
     expect(onSamples).toHaveBeenCalledTimes(1);
-    expect(onSamples).toHaveBeenCalledWith(batch);
+    expect(onSamples).toHaveBeenCalledWith(
+      batch,
+      expect.objectContaining({ startFrame: 960, sampleRate: ctx.sampleRate, exact: true }),
+    );
 
     capture.stop();
     capture.stop();
@@ -141,6 +187,31 @@ describe("startSampleCapture", () => {
     expect(nodes[0].port.onmessage).toBeNull();
     nodes[0].emit(batch);
     expect(onSamples).toHaveBeenCalledTimes(1);
+  });
+
+  it("adds the module once per context and passes the batch size", async () => {
+    const { FakeAudioContext } = makeFakeAudioContextClass();
+    const ctx = new FakeAudioContext() as unknown as AudioContext;
+    const a = await startSampleCapture(ctx, source, vi.fn(), { batchSize: 512 });
+    const b = await startSampleCapture(ctx, source, vi.fn());
+    expect(ctx.audioWorklet.addModule).toHaveBeenCalledTimes(1);
+    expect(nodes[0].options?.processorOptions).toEqual({ batchSize: 512 });
+    expect(nodes[1].options?.processorOptions).toEqual({});
+    a.stop();
+    b.stop();
+  });
+
+  it("counts frames for a bare Float32Array message", async () => {
+    const { FakeAudioContext } = makeFakeAudioContextClass();
+    const ctx = new FakeAudioContext() as unknown as AudioContext;
+    const starts: number[] = [];
+    const capture = await startSampleCapture(ctx, source, (_s, info) =>
+      starts.push(info.startFrame),
+    );
+    nodes[0].emit(new Float32Array(4));
+    nodes[0].emit(new Float32Array(4));
+    expect(starts).toEqual([0, 4]);
+    capture.stop();
   });
 
   it("stop() tolerates a graph that is already torn down (closed context)", async () => {
