@@ -111,12 +111,8 @@ export function useOnsetAnalysis(
     void startOnsetAnalysis(mic.context, mic.source, {
       pipeline: optionsRef.current.pipeline,
       batchSize: optionsRef.current.batchSize,
-      onSamples: (samples, info) => {
+      onSamples: (samples, info, analysedTime) => {
         history.push(samples, info.startFrame);
-        if (!analysis) return;
-        const analysedTime =
-          (info.startFrame + samples.length) / info.sampleRate -
-          analysis.pipeline.detector.maxDecisionLatencySeconds;
         optionsRef.current.onBatch?.(history, analysedTime);
       },
     })

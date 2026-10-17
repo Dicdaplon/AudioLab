@@ -31,6 +31,7 @@ import type { MicSource } from "./micStream";
 import {
   startSampleCapture,
   type CaptureMethod,
+  type SampleBatchInfo,
   type SampleCapture,
   type SampleListener,
 } from "./sampleCapture";
@@ -59,6 +60,16 @@ export interface OnsetAnalysisSnapshot {
 
 export type OnsetListener = (onset: TimedOnset) => void;
 
+/**
+ * A captured batch, with the AudioContext time up to which every onset is
+ * known once this batch is analysed (see `OnsetAnalysisSnapshot.analysedTime`).
+ */
+export type AnalysedBatchListener = (
+  samples: Float32Array,
+  info: SampleBatchInfo,
+  analysedTime: number,
+) => void;
+
 export interface OnsetAnalysis {
   readonly method: CaptureMethod;
   readonly pipeline: OnsetPipeline;
@@ -78,7 +89,7 @@ export interface OnsetAnalysisOptions {
   /** Onsets kept in `recentOnsets`. Default 32. */
   recentOnsets?: number;
   /** Also receive every captured batch (to run another analysis on the same capture). */
-  onSamples?: SampleListener;
+  onSamples?: AnalysedBatchListener;
   /** Try the AudioWorklet first. Default true. */
   preferWorklet?: boolean;
 }
@@ -136,7 +147,7 @@ export async function startOnsetAnalysis(
         }
       }
     }
-    options.onSamples?.(samples, info);
+    options.onSamples?.(samples, info, analysedTime);
   };
 
   const capture: SampleCapture = await startSampleCapture(context, source, onBatch, {

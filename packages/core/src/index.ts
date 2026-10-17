@@ -266,6 +266,7 @@ export {
   timingInputFromMic,
   type OnsetAnalysis,
   type OnsetAnalysisOptions,
+  type AnalysedBatchListener,
   type OnsetAnalysisSnapshot,
   type OnsetListener,
   type TimedOnset,

@@ -72,4 +72,43 @@ describe("useOnsetAnalysis", () => {
     unmount();
     expect(worklet.nodes[0].port.onmessage).toBeNull();
   });
+
+  it("stops a capture that finishes starting after unmount", async () => {
+    const { unmount } = renderHook(() => useOnsetAnalysis(mic));
+    unmount();
+    await waitFor(() => expect(worklet.nodes).toHaveLength(1));
+    await waitFor(() => expect(worklet.nodes[0].port.onmessage).toBeNull());
+  });
+
+  it("builds the budget from the measured frame period and clock spread", async () => {
+    let frame = 0;
+    const callbacks: FrameRequestCallback[] = [];
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+      callbacks.push(cb);
+      return callbacks.length;
+    });
+    vi.stubGlobal("cancelAnimationFrame", () => undefined);
+    const { result } = renderHook(() =>
+      useOnsetAnalysis(mic, { updatesPerSecond: 50, strummed: true }),
+    );
+    act(() => {
+      // 70 frames at 120 Hz.
+      for (let k = 0; k < 70; k++) callbacks.shift()?.((frame += 1000 / 120));
+    });
+    await waitFor(() => expect(result.current.captureMethod).toBe("worklet"));
+    act(() => {
+      for (let i = 0; i < 8; i++) {
+        worklet.nodes[0].emit({ samples: new Float32Array(512), startFrame: i * 512 });
+      }
+    });
+    await waitFor(() => {
+      const ids = result.current.budget?.components.map((c) => c.id);
+      expect(ids).toContain("strum");
+      const display = result.current.budget!.components.find((c) => c.id === "display")!;
+      expect(display.offsetMs).toBeCloseTo(12.5, 1);
+      const clock = result.current.budget!.components.find((c) => c.id === "clock")!;
+      expect(clock.source).toBe("measured");
+    });
+    vi.unstubAllGlobals();
+  });
 });
