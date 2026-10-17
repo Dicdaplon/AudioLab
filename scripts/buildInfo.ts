@@ -1,6 +1,8 @@
 /**
  * Build stamp for the tsup configs: the package version and the git commit
- * it was built from (`-dirty` when the tree had uncommitted changes), passed
+ * it was built from (`-dirty` when tracked files had uncommitted changes;
+ * untracked files are ignored, tsup writes its bundled config next to the
+ * package while it builds), passed
  * to esbuild as the `__AUDIOLAB_BUILD__` constant. A host can then tell
  * which commit a packed tarball comes from (`BUILD_INFO`).
  */
@@ -21,6 +23,6 @@ function git(command: string): string {
 export function buildInfoDefine(packageJsonPath: string): Record<string, string> {
   const { version } = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { version: string };
   const sha = git("rev-parse --short HEAD") || "unknown";
-  const commit = git("status --porcelain") ? `${sha}-dirty` : sha;
+  const commit = git("status --porcelain --untracked-files=no") ? `${sha}-dirty` : sha;
   return { __AUDIOLAB_BUILD__: JSON.stringify({ version, commit }) };
 }
