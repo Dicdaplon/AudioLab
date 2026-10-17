@@ -57,7 +57,8 @@
     "sweep": "tsx scripts/parameterSweep.ts",
     "extract:backing": "tsx scripts/extractBackingExtracts.ts",
     "analyze:backing": "tsx scripts/analyzeBacking.ts",
-    "measure:chords": "tsx scripts/measureChords.ts"
+    "measure:chords": "tsx scripts/measureChords.ts",
+    "measure:onsets": "tsx scripts/measureOnsets.ts"
   },
   "peerDependencies": {
     "audio-decode": "^2.2.2"

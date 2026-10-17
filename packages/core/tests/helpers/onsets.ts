@@ -26,6 +26,8 @@ export interface PerformanceOptions {
   attackMs?: number;
   /** Decay time constant of each pluck, in s. Default 0.8. */
   decaySeconds?: number;
+  /** Add the pick-noise burst. Default true (false: a thumb or finger). */
+  pick?: boolean;
   seed?: number;
 }
 
@@ -33,16 +35,23 @@ export interface PerformanceOptions {
 export function pluck(
   midi: number,
   amplitude: number,
-  { sampleRate = 48000, attackMs = 2, decaySeconds = 0.8, seconds = 1.2, seed = 3 } = {},
+  {
+    sampleRate = 48000,
+    attackMs = 2,
+    decaySeconds = 0.8,
+    seconds = 1.2,
+    seed = 3,
+    pick = true,
+  } = {},
 ): Float32Array {
   const tone = pluckedTone(midiToHz(midi), { sampleRate, seconds, decaySeconds, seed });
   const rand = mulberry32(seed * 7 + 1);
   const ramp = Math.max(1, Math.round((attackMs / 1000) * sampleRate));
-  const noiseLen = Math.round(0.004 * sampleRate);
+  const noiseLen = pick ? Math.round(0.004 * sampleRate) : 0;
   for (let i = 0; i < tone.length; i++) {
     const env = i < ramp ? i / ramp : 1;
-    const pick = i < noiseLen ? (rand() - 0.5) * 0.6 * (1 - i / noiseLen) : 0;
-    tone[i] = amplitude * (env * tone[i] + pick);
+    const noise = i < noiseLen ? (rand() - 0.5) * 0.6 * (1 - i / noiseLen) : 0;
+    tone[i] = amplitude * (env * tone[i] + noise);
   }
   return tone;
 }
@@ -65,6 +74,7 @@ export function performance(
         sampleRate,
         attackMs: opts.attackMs,
         decaySeconds: opts.decaySeconds,
+        pick: opts.pick,
         seed: seed + h * 13 + s,
       });
       for (let i = 0; i < tone.length && offset + i < signal.length; i++) {
