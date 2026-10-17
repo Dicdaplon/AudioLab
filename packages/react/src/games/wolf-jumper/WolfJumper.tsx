@@ -119,9 +119,7 @@ export function WolfJumper({
         <DetectionStatus
           gateOpen={gateOpen}
           noteName={note ? pitchClassName(note.pc) : "—"}
-          noteEnergy={note?.energy ?? 0}
           chordName={chords[0]?.name ?? "—"}
-          chordProbability={chords[0]?.probability ?? 0}
         />
       </div>
 
@@ -135,15 +133,10 @@ export function WolfJumper({
       <p className="al-hint">
         Play the <strong>note</strong> shown on an enemy to destroy it (chain kill: every enemy with
         the same note on screen goes down at once). Bonus boxes are <strong>chords</strong>: play
-        one to trigger its effect: +{tuning.hpBonusAmount} HP, shield{" "}
+        one and hold it to trigger its effect: +{tuning.hpBonusAmount} HP, shield{" "}
         {(tuning.shieldDurationMs / 1000).toFixed(0)} s, slow{" "}
         {(tuning.slowDurationMs / 1000).toFixed(0)} s, or {tuning.sameNoteCount} identical notes.
-        Speed increases with the score ({(tuning.initialTravelMs / 1000).toFixed(1)} s →{" "}
-        {(tuning.minTravelMs / 1000).toFixed(1)} s). Note detection ≈ 300 ms (
-        {detection?.noteSource === "pitch"
-          ? "pitch tracker, 2 confirmation frames"
-          : "3-frame chroma smoothing + 2 confirmation frames"}
-        ). Chord detection = top-1 over the 1 s window + 3 confirmation frames.
+        The enemies speed up as your score grows. Let each note ring a moment.
       </p>
     </div>
   );

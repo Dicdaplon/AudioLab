@@ -47,12 +47,14 @@ describe("ChordGame", () => {
   });
 
   it("restarts the confirmation when another chord interrupts", () => {
-    const { play, text, stats } = setup();
+    const { view, play, text, stats } = setup();
     play(chord("C"));
     play(chord("C"));
     play(chord("Am"));
     play(chord("C"));
-    expect(text(".al-game__progress-text")).toMatch(/^1\/3/);
+    // One segment of three: the run restarted on the last C.
+    expect(view.container.querySelectorAll(".al-game__progress [data-filled]")).toHaveLength(1);
+    expect(text(".al-game__progress-text")).toBe("Hold the chord…");
     expect(stats()[0]).toBe("0");
   });
 
@@ -104,7 +106,10 @@ describe("ChordGame", () => {
     play(chord("C", 0.6));
     play(chord("C", 0.6));
     expect(view.container.querySelector(".al-stat__value")?.textContent).toBe("1");
-    expect(view.container.querySelector(".al-game__progress-text")?.textContent).toMatch(/\/2/);
+    expect(view.container.querySelectorAll(".al-game__progress .al-segments__seg")).toHaveLength(2);
+    expect(view.container.querySelector(".al-game__progress-text")?.textContent).toBe(
+      "Play the chord",
+    );
   });
 
   it("shows the mic prompt and calls onStart while stopped", () => {

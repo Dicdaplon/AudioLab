@@ -46,7 +46,7 @@ export function ChordOptions({
           onChange={(v) => onAcceptChange(v as ChordAcceptPolicy)}
         >
           <option value="exact">it has the same notes</option>
-          <option value="triad">its triad matches (E for E7)</option>
+          <option value="triad">the plain chord is enough (E for E7)</option>
         </SelectField>
       )}
 
@@ -57,8 +57,8 @@ export function ChordOptions({
           value={noteSource}
           onChange={(v) => onNoteSourceChange(v as NoteSource)}
         >
-          <option value="chroma">strongest chroma bin</option>
-          <option value="pitch">pitch tracker (MPM)</option>
+          <option value="pitch">follow the pitch (best for low strings)</option>
+          <option value="chroma">loudest note in the spectrum</option>
         </SelectField>
       )}
     </Panel>

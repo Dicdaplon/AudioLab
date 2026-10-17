@@ -178,20 +178,19 @@ export function ChordGame({
           <Segments
             count={confirmations}
             filled={confirmation.count}
-            label={`${confirmation.count} of ${confirmations} consecutive frames`}
+            label={confirmation.count > 0 ? "Hold the chord" : "Play the chord"}
           />
-          <span className="al-game__progress-text al-num">
-            {confirmation.count}/{confirmations} consecutive frames
+          <span className="al-game__progress-text">
+            {confirmation.count > 0 ? "Hold the chord…" : "Play the chord"}
           </span>
         </div>
 
         <p className="al-game__status">
-          Detected:{" "}
+          I hear:{" "}
           <span className={match ? "al-chip al-chip--match" : "al-chip"}>
             {match && <Icon name="check" size={14} />}
             {topName}
-          </span>{" "}
-          <span className="al-num">({(topProb * 100).toFixed(0)} %)</span>
+          </span>
         </p>
 
         <dl className="al-stat-grid">
@@ -228,10 +227,8 @@ export function ChordGame({
         </div>
 
         <p className="al-hint">
-          To validate, the target chord must be detected as top-1 for {confirmations} consecutive
-          frames with a probability ≥ {(minProbability * 100).toFixed(0)} %
-          {accept === "triad" && " (its triad counts too: E for E7, and E7 for E)"}. Hold the chord
-          for about 1 s so the analysis window can settle.
+          Play the chord and hold it until the bar fills.
+          {accept === "triad" && " The plain chord counts too: E for E7, and E7 for E."}
         </p>
       </Panel>
     </div>

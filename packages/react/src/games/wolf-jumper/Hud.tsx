@@ -114,31 +114,21 @@ export function Hud({ store }: { store: ReadableStore<GameState> }) {
 interface DetectionStatusProps {
   gateOpen: boolean;
   noteName: string;
-  noteEnergy: number;
   chordName: string;
-  chordProbability: number;
 }
 
 /** What the detector currently hears, as seen by the game. */
-export function DetectionStatus({
-  gateOpen,
-  noteName,
-  noteEnergy,
-  chordName,
-  chordProbability,
-}: DetectionStatusProps) {
+export function DetectionStatus({ gateOpen, noteName, chordName }: DetectionStatusProps) {
   return (
     <p className="al-status">
       <span className="al-status__label">Note</span>
       <span className="al-chip">{gateOpen ? noteName : "—"}</span>
-      <span className="al-num">({(noteEnergy * 100).toFixed(0)} %)</span>
       <span className="al-status__sep" aria-hidden="true">
         ·
       </span>
       <span className="al-status__label">Chord</span>
       <span className="al-chip">{gateOpen ? chordName : "—"}</span>
-      <span className="al-num">({(chordProbability * 100).toFixed(0)} %)</span>
-      {!gateOpen && <span className="al-badge al-badge--gated">Gate closed</span>}
+      {!gateOpen && <span className="al-badge al-badge--gated">Too quiet</span>}
     </p>
   );
 }

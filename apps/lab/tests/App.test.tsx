@@ -122,14 +122,23 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Chord vocabulary"), { target: { value: "all" } });
     expect(pools()).toContain("suspended");
     fireEvent.change(screen.getByLabelText("A chord counts when"), { target: { value: "triad" } });
-    expect(screen.getByText(/its triad counts too/)).toBeTruthy();
+    expect(screen.getByText(/The plain chord counts too/)).toBeTruthy();
 
     fireEvent.click(screen.getByRole("tab", { name: "Wolf Jumper" }));
     // The pitch tracker by default: the chroma hears the fifth of the low strings.
     expect((screen.getByLabelText("Note detection") as HTMLSelectElement).value).toBe("pitch");
-    expect(screen.getByText(/pitch tracker, 2 confirmation frames/)).toBeTruthy();
     fireEvent.change(screen.getByLabelText("Note detection"), { target: { value: "chroma" } });
-    expect(screen.getByText(/3-frame chroma smoothing/)).toBeTruthy();
+    expect((screen.getByLabelText("Note detection") as HTMLSelectElement).value).toBe("chroma");
+  });
+
+  it("speaks to players, not to the detector", () => {
+    render(<App />);
+    for (const tab of ["Chord game", "Wolf Jumper"]) {
+      fireEvent.click(screen.getByRole("tab", { name: tab }));
+      expect(screen.getByRole("tabpanel").textContent).not.toMatch(
+        /frame|top-1|probability|chroma bin|smoothing|confirmation|MPM/i,
+      );
+    }
   });
 
   it("shows Stop while live", () => {
