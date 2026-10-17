@@ -15,7 +15,15 @@ export {
   type ConfirmationStep,
 } from "./confirmation";
 export { SeededRandom, nextRandom, randomSeed } from "./rng";
-export { chordKey, parseChordKey, sameChord, type ChordRef } from "./chordRef";
+export {
+  chordKey,
+  matchesTarget,
+  parseChordKey,
+  sameChord,
+  type ChordAcceptPolicy,
+  type ChordRef,
+  type MatchesTargetOptions,
+} from "./chordRef";
 export {
   CHORD_GAME_DEFAULTS,
   CHORD_POOLS,
