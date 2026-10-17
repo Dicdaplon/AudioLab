@@ -74,10 +74,22 @@ describe("extended qualities", () => {
     expect(sevenFirst[0]).toMatchObject({ root: 9, quality: "min7", name: "Am7" });
 
     const all = chordTemplates(CHORD_QUALITIES);
+    expect(all).toHaveLength(132);
     const sets = new Set(all.map((t) => chordPitchClasses(t.root, t.quality).join(",")));
-    expect(sets.size).toBe(all.length);
-    // 132 chords minus the three collision families (6/m7, m6/m7b5, sus2/sus4).
-    expect(all).toHaveLength(132 - 36);
+    // Three collision families: 6 = m7, m6 = m7b5, sus2 = sus4 a fifth up.
+    expect(sets.size).toBe(132 - 36);
+    const scores = detectChord(chroma([9, 11, 4]), { qualities: CHORD_QUALITIES });
+    expect(scores).toHaveLength(132 - 36);
+  });
+
+  it("names a shared pitch set after its strongest root", () => {
+    const qualities = ["sus2", "sus4"] as const;
+    // A D E with a heavy A: Asus4, not Dsus2.
+    expect(detectChord(chroma([9, 2, 4], [2, 1, 1]), { qualities })[0].name).toBe("Asus4");
+    expect(detectChord(chroma([9, 2, 4], [1, 2, 1]), { qualities })[0].name).toBe("Dsus2");
+    // C E G A with a heavy C: C6, even with min7 listed first.
+    const sixth = chroma([0, 4, 7, 9], [2, 1, 1, 1]);
+    expect(detectChord(sixth, { qualities: ["min7", "maj6"] })[0].name).toBe("C6");
   });
 
   it("keeps a triad with a faint seventh a triad, and names a real seventh", () => {

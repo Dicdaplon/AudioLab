@@ -10,15 +10,17 @@
  * `detectChord(chroma, { qualities })`. Two refinements keep the extended
  * set usable:
  *
- *   - A triad with a faint extra pitch class (a guitar string puts energy in
- *     the minor-seventh bin: the 7th harmonic of the root is 31 cents flat
- *     of it) should stay a triad. Each quality carries a small bias
- *     subtracted from its similarity before ranking (`CHORD_QUALITY_BIAS`):
- *     zero for the triads, positive for the four-note chords.
- *   - Some chords share their pitch classes (C6 = Am7, Cm6 = Am7b5, Asus2 =
- *     Esus4): chroma cannot tell them apart. Only the reading whose quality
- *     comes first in `qualities` is scored, so the probability is not split
- *     between two names for the same notes.
+ *   - Each quality carries a bias subtracted from its similarity before
+ *     ranking (`CHORD_QUALITY_BIAS`, overridable per call). It is the knob
+ *     for a triad with a faint extra pitch class (a guitar string puts some
+ *     energy in the minor-seventh bin: its 7th harmonic is 31 cents flat of
+ *     it) that should stay a triad.
+ *   - Some chords share their pitch classes (C6 = Am7, Cm6 = Am7b5, and
+ *     every sus2 is the sus4 of the note a fifth up: Asus2 = Esus4, Dsus2 =
+ *     Asus4). Only one reading of a pitch set is scored, so the probability
+ *     is not split between two names for the same notes: the one whose root
+ *     is the strongest pitch class (a guitar bass and its octaves weigh on
+ *     the root), then the quality listed first in `qualities`.
  *
  * Reference:
  *   Fujishima, T. (1999). Realtime chord recognition of musical sound:
@@ -67,20 +69,24 @@ export const CHORD_QUALITY_INTERVALS: Readonly<Record<ChordQuality, readonly num
 
 /**
  * Similarity penalty per quality, subtracted before ranking. Zero for the
- * major and minor triads (so the default output is unchanged); set for the
- * others from the synthetic guitar sweep (tests/engine/guitarChords.test.ts).
+ * major and minor triads, so the default output is unchanged. The other
+ * values come from the synthetic guitar sweep (`npm run measure:chords`):
+ * on open voicings a penalty on the four-note chords only lost sevenths
+ * (no triad was ever read as a seventh), while one on the diminished
+ * chords stopped A7 and D7 from reading as C#dim and F#dim. Raise the
+ * four-note values if real recordings show triads turning into sevenths.
  */
 export const CHORD_QUALITY_BIAS: Readonly<Record<ChordQuality, number>> = {
   maj: 0,
   min: 0,
-  dom7: 0.03,
-  maj7: 0.03,
-  min7: 0.03,
-  sus2: 0.01,
-  sus4: 0.01,
-  maj6: 0.03,
-  min6: 0.03,
-  dim: 0.01,
+  dom7: 0,
+  maj7: 0,
+  min7: 0,
+  sus2: 0,
+  sus4: 0,
+  maj6: 0,
+  min6: 0,
+  dim: 0.03,
   min7b5: 0.03,
 };
 
@@ -171,13 +177,9 @@ export function chordName(root: number, quality: ChordQuality): string {
 }
 
 function templatesFor(qualities: readonly ChordQuality[]): ChordTemplate[] {
-  const seen = new Set<string>();
   const templates: ChordTemplate[] = [];
   for (const quality of qualities) {
     for (let root = 0; root < CHROMA_SIZE; root++) {
-      const pitchSet = chordPitchClasses(root, quality).join(",");
-      if (seen.has(pitchSet)) continue;
-      seen.add(pitchSet);
       templates.push({
         root,
         quality,
@@ -192,28 +194,49 @@ function templatesFor(qualities: readonly ChordQuality[]): ChordTemplate[] {
 /** The 24 chord templates: 12 majors followed by 12 minors. */
 export const CHORD_TEMPLATES: readonly ChordTemplate[] = templatesFor(TRIAD_QUALITIES);
 
-const templateCache = new Map<string, readonly ChordTemplate[]>([
-  [TRIAD_QUALITIES.join(","), CHORD_TEMPLATES],
+interface CandidateSet {
+  templates: readonly ChordTemplate[];
+  /** Indices into `templates`, one group per distinct pitch set, in listing order. */
+  groups: readonly (readonly number[])[];
+}
+
+function candidateSet(templates: readonly ChordTemplate[]): CandidateSet {
+  const byPitchSet = new Map<string, number[]>();
+  templates.forEach((t, i) => {
+    const pitchSet = chordPitchClasses(t.root, t.quality).join(",");
+    const group = byPitchSet.get(pitchSet);
+    if (group) group.push(i);
+    else byPitchSet.set(pitchSet, [i]);
+  });
+  return { templates, groups: [...byPitchSet.values()] };
+}
+
+const candidateCache = new Map<string, CandidateSet>([
+  [TRIAD_QUALITIES.join(","), candidateSet(CHORD_TEMPLATES)],
 ]);
 
-/**
- * Templates for the given qualities: roots 0..11 for each quality, in the
- * order given. A chord whose pitch classes equal those of an earlier
- * template is left out (Am7 after C6). Throws on an empty list or an
- * unknown quality.
- */
-export function chordTemplates(qualities: readonly ChordQuality[]): readonly ChordTemplate[] {
+function candidatesFor(qualities: readonly ChordQuality[]): CandidateSet {
   const id = qualities.join(",");
-  let templates = templateCache.get(id);
-  if (!templates) {
+  let set = candidateCache.get(id);
+  if (!set) {
     if (qualities.length === 0) throw new Error("chord qualities: the list is empty");
     for (const q of qualities) {
       if (!isChordQuality(q)) throw new Error(`chord qualities: unknown quality "${q}"`);
     }
-    templates = templatesFor(qualities);
-    templateCache.set(id, templates);
+    set = candidateSet(templatesFor(qualities));
+    candidateCache.set(id, set);
   }
-  return templates;
+  return set;
+}
+
+/**
+ * Templates for the given qualities: roots 0..11 for each quality, in the
+ * order given, including the chords that share a pitch set (`detectChord`
+ * scores one reading of each). Throws on an empty list or an unknown
+ * quality.
+ */
+export function chordTemplates(qualities: readonly ChordQuality[]): readonly ChordTemplate[] {
+  return candidatesFor(qualities).templates;
 }
 
 /** Cosine similarity between two equal-length vectors. */
@@ -260,7 +283,13 @@ export function detectChord(
   }
   const opts: DetectChordOptions = typeof options === "number" ? { temperature: options } : options;
   const temperature = opts.temperature ?? 0.1;
-  const templates = chordTemplates(opts.qualities ?? TRIAD_QUALITIES);
+  const { templates: all, groups } = candidatesFor(opts.qualities ?? TRIAD_QUALITIES);
+  // One reading per pitch set: the strongest root, then the first listed.
+  const templates = groups.map((group) => {
+    let best = all[group[0]];
+    for (const i of group) if (chroma[all[i].root] > chroma[best.root]) best = all[i];
+    return best;
+  });
   const bias = (q: ChordQuality) => opts.qualityBias?.[q] ?? CHORD_QUALITY_BIAS[q];
 
   const similarities = templates.map((c) => cosineSimilarity(chroma, c.template));

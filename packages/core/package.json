@@ -51,7 +51,8 @@
     "build:worklet": "tsx scripts/buildWorklet.ts",
     "sweep": "tsx scripts/parameterSweep.ts",
     "extract:backing": "tsx scripts/extractBackingExtracts.ts",
-    "analyze:backing": "tsx scripts/analyzeBacking.ts"
+    "analyze:backing": "tsx scripts/analyzeBacking.ts",
+    "measure:chords": "tsx scripts/measureChords.ts"
   },
   "peerDependencies": {
     "audio-decode": "^2.2.2"

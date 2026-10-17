@@ -32,6 +32,7 @@
     "sweep": "npm run sweep -w packages/core",
     "extract:backing": "npm run extract:backing -w packages/core",
     "analyze:backing": "npm run analyze:backing -w packages/core",
+    "measure:chords": "npm run measure:chords -w packages/core --",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
