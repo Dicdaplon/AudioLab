@@ -36,6 +36,11 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./art": {
+      "audiolab-source": "./src/art.ts",
+      "types": "./dist/art.d.ts",
+      "default": "./dist/art.js"
+    },
     "./styles.css": {
       "audiolab-source": "./src/styles/index.css",
       "default": "./dist/styles.css"
@@ -47,7 +52,7 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "tsup"
+    "build": "tsup && tsup --config tsup.art.config.ts"
   },
   "dependencies": {
     "@audiolab/core": "^0.1.0"

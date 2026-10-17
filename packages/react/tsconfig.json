@@ -3,5 +3,5 @@
   "compilerOptions": {
     "tsBuildInfoFile": "../../node_modules/.tmp/tsconfig.react.tsbuildinfo"
   },
-  "include": ["src", "tests", "tsup.config.ts"]
+  "include": ["src", "tests", "tsup.config.ts", "tsup.art.config.ts"]
 }
