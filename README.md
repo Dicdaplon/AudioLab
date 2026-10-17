@@ -410,10 +410,13 @@ docs/                         ARCHITECTURE.md, THEORY.md, INTEGRATION.md
   guitar only. No augmented chords, no bass detection (so C6/Am7 and the sus2/sus4 pairs
   are one pitch set, named by a heuristic); Western 12-TET tuning with A4 = 440 Hz (the
   tuner's reference is the only adjustable one); mono input.
-- **Guitar single notes.** The Wolf Jumper's default note is the strongest chroma bin,
-  which a string's 2nd and 3rd harmonics can pull to the octave or the fifth.
-  `noteSource: "pitch"` reads a `PitchTracker` estimate instead; the two have not been
-  compared on recorded notes yet, so the default stays on the chroma.
+- **Guitar single notes.** The chroma note source takes the strongest pitch class. On the
+  low strings a small microphone rolls off the fundamental and the 3rd harmonic is the
+  loudest partial, so E2, F2, G2 and A2 read as their fifth (B, C, D, E) and the Wolf
+  Jumper enemy survives. `noteSource: "pitch"` reads a `PitchTracker` estimate, which
+  follows the period and gets these notes right (`tests/engine/guitarNotes.test.ts`, on a
+  wound-string model, not a recording). The lab uses it; the core default stays
+  `"chroma"` because the pitch source needs the caller to run the tracker.
 - **Pitch detection is monophonic.** MPM reads one note at a time; chords and dense
   noise give no estimate. A 2048-sample window reaches down to 60 Hz at 48 kHz (two
   periods); stiff strings read a fraction of a cent sharp of their nominal fundamental.

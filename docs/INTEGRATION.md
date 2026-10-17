@@ -295,10 +295,13 @@ durations, lanes) is in `WOLF_JUMPER_DEFAULTS` and overridable in `config`. The 
 drawing is plain data in `@audiolab/react/art` (`WOLF_PATHS`, `WOLF_VIEWBOX`,
 `WOLF_TRANSFORM`, `WOLF_ASPECT`): no React, no CSS, safe in a server component.
 
-**Notes from the pitch tracker.** The strongest chroma bin of a guitar string can be its
-2nd or 3rd harmonic (the octave or the fifth). With `noteSource: "pitch"` the detector
-reads a monophonic `PitchTracker` estimate that you pass in the frame instead. It has not
-been measured against the chroma on recorded notes yet, so the default stays `"chroma"`.
+**Notes from the pitch tracker (recommended for guitar).** The chroma note is the
+strongest pitch class. On the low strings a small microphone rolls off the fundamental and
+the 3rd harmonic is the loudest partial: E2, F2, G2 and A2 read as B, C, D and E, so the
+enemy never dies (the upper octaves are fine). With `noteSource: "pitch"` the detector
+reads a monophonic `PitchTracker` estimate that you pass in the frame instead; it follows
+the period and gets the low notes right (`tests/engine/guitarNotes.test.ts`). The default
+stays `"chroma"` only because the pitch source needs you to run the tracker.
 
 ```ts
 import { PitchTracker, startSampleCapture } from "@audiolab/core";

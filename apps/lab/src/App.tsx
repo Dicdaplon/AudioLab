@@ -59,7 +59,7 @@ export default function App() {
   const [colourByPitch, setColourByPitch] = useState(false);
   const [vocabulary, setVocabulary] = useState<Vocabulary>("triads");
   const [accept, setAccept] = useState<ChordAcceptPolicy>("exact");
-  const [noteSource, setNoteSource] = useState<NoteSource>("chroma");
+  const [noteSource, setNoteSource] = useState<NoteSource>("pitch");
 
   // Environment check (secure context, getUserMedia, AudioContext), after mount.
   const microphone = useMicrophone();

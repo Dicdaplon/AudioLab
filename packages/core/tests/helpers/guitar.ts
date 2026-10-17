@@ -36,6 +36,43 @@ export interface StrumOptions {
   inharmonicity?: number;
 }
 
+export interface LowStringOptions {
+  sampleRate: number;
+  seconds: number;
+  /** Level of the fundamental, in dB relative to the 2nd partial. Default −6. */
+  fundamentalDb?: number;
+  /** Level of the 3rd partial, in dB relative to the 2nd. Default +3. */
+  thirdHarmonicDb?: number;
+  seed?: number;
+}
+
+/**
+ * A wound string heard through a small microphone: the fundamental is
+ * rolled off (high-pass around 120 Hz, 12 dB per octave, on top of
+ * `fundamentalDb`), the 3rd partial is the loudest, the others fall by
+ * 3 dB per octave. Below about A2 the chroma's strongest bin is then the
+ * fifth of the note (the 3rd harmonic), not the note.
+ */
+export function lowStringTone(midi: number, opts: LowStringOptions): Float32Array {
+  const { sampleRate, seconds, fundamentalDb = -6, thirdHarmonicDb = 3, seed = 5 } = opts;
+  const f0 = midiToHz(midi);
+  const tone = pluckedTone(f0, {
+    sampleRate,
+    seconds,
+    harmonics: 30,
+    decaySeconds: 3,
+    inharmonicity: 5e-5,
+    seed,
+    amplitude: (k) => {
+      const f = k * f0;
+      const highPass = f < 120 ? (f / 120) ** 2 : 1;
+      const db = k === 1 ? fundamentalDb : k === 3 ? thirdHarmonicDb : -3 * Math.log2(k);
+      return highPass * 10 ** (db / 20);
+    },
+  });
+  return addNoise(tone, 35, seed);
+}
+
 function midiToHz(midi: number): number {
   return 440 * Math.pow(2, (midi - 69) / 12);
 }

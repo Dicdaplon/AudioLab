@@ -125,9 +125,11 @@ describe("App", () => {
     expect(screen.getByText(/its triad counts too/)).toBeTruthy();
 
     fireEvent.click(screen.getByRole("tab", { name: "Wolf Jumper" }));
-    expect((screen.getByLabelText("Note detection") as HTMLSelectElement).value).toBe("chroma");
-    fireEvent.change(screen.getByLabelText("Note detection"), { target: { value: "pitch" } });
+    // The pitch tracker by default: the chroma hears the fifth of the low strings.
+    expect((screen.getByLabelText("Note detection") as HTMLSelectElement).value).toBe("pitch");
     expect(screen.getByText(/pitch tracker, 2 confirmation frames/)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Note detection"), { target: { value: "chroma" } });
+    expect(screen.getByText(/3-frame chroma smoothing/)).toBeTruthy();
   });
 
   it("shows Stop while live", () => {
