@@ -3,10 +3,11 @@ import { defineConfig } from "tsup";
 import { buildInfoDefine } from "../../scripts/buildInfo";
 
 /**
- * Three ESM entries with declarations:
+ * Four ESM entries with declarations:
  *
  * - `index`   the browser-safe API (DSP, engines, Web Audio adapters);
  * - `games`   the pure game engines (`@audiolab/core/games`);
+ * - `rhythm`  the pure rhythm and timing assessment (`@audiolab/core/rhythm`);
  * - `offline` the Node-only file pipeline (`@audiolab/core/offline`), kept
  *             apart so a browser bundle never pulls `node:fs` or `audio-decode`.
  *
@@ -17,6 +18,7 @@ export default defineConfig({
   entry: {
     index: "src/index.ts",
     "games/index": "src/games/index.ts",
+    "rhythm/index": "src/rhythm/index.ts",
     "offline/index": "src/offline/index.ts",
   },
   format: ["esm"],

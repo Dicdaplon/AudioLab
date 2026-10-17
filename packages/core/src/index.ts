@@ -106,6 +106,91 @@ export {
   type PitchTrackerOptions,
 } from "./analysis/pitch";
 export { TimeRingBuffer } from "./analysis/timeBuffer";
+
+// --- Onsets and adaptive gate ------------------------------------------------
+
+export {
+  SuperFluxOdf,
+  defaultFrameSize,
+  diffFramesFor,
+  logFilterbank,
+  type Filterbank,
+  type OdfFrame,
+  type SuperFluxConfig,
+  type SuperFluxOptions,
+} from "./analysis/onset/superFlux";
+export {
+  OnlinePeakPicker,
+  PEAK_PICKER_DEFAULTS,
+  type PeakPickerConfig,
+  type PeakPickerOptions,
+  type PickedPeak,
+} from "./analysis/onset/peakPicker";
+export {
+  AttackEnvelope,
+  ENVELOPE_FLOOR_DB,
+  type AttackEnvelopeConfig,
+  type AttackEnvelopeOptions,
+  type LocatedAttack,
+} from "./analysis/onset/attackEnvelope";
+export {
+  OnsetDetector,
+  type OnsetDetectorOptions,
+  type OnsetEvent,
+} from "./analysis/onset/onsetDetector";
+export {
+  OnsetPipeline,
+  type OnsetPipelineOptions,
+  type OnsetPipelineResult,
+} from "./analysis/onset/onsetPipeline";
+export {
+  BandLevelMeter,
+  type BandLevelMeterConfig,
+  type BandLevelMeterOptions,
+  type LevelBlock,
+} from "./analysis/gate/bandLevelMeter";
+export {
+  INITIAL_LEVEL_FLOOR_STATE,
+  LEVEL_FLOOR_DEFAULTS,
+  LevelFloorTracker,
+  levelFloorOf,
+  stepLevelFloor,
+  type LevelFloorConfig,
+  type LevelFloorState,
+} from "./analysis/gate/levelFloorTracker";
+export {
+  AdaptiveNoiseGate,
+  NOISE_GATE_DEFAULTS,
+  initialNoiseGateState,
+  stepNoiseGate,
+  type NoiseGateConfig,
+  type NoiseGateInput,
+  type NoiseGateState,
+} from "./analysis/gate/noiseGate";
+
+// --- Timing ------------------------------------------------------------------
+
+export {
+  AudioClockSync,
+  CLOCK_SYNC_DEFAULTS,
+  type CaptureBatchInfo,
+  type ClockSyncConfig,
+  type ClockSyncStats,
+} from "./timing/clockSync";
+export {
+  ASSUMED_INPUT_LATENCY_MS,
+  ASSUMED_INPUT_UNCERTAINTY_MS,
+  BLUETOOTH_INPUT_LATENCY_MS,
+  BLUETOOTH_INPUT_UNCERTAINTY_MS,
+  combineTimingComponents,
+  estimateTimingBudget,
+  looksLikeBluetooth,
+  type TimingBudget,
+  type TimingBudgetInput,
+  type TimingComponent,
+  type TimingComponentId,
+  type TimingComponentSource,
+} from "./timing/timingBudget";
 export { argmax, clamp, mean, median, softmax } from "./analysis/math";
 
 // --- Engines ---------------------------------------------------------------
@@ -158,10 +243,20 @@ export {
 export {
   startSampleCapture,
   type CaptureMethod,
+  type SampleBatchInfo,
   type SampleCapture,
   type SampleCaptureOptions,
   type SampleListener,
 } from "./audio/sampleCapture";
+export {
+  startOnsetAnalysis,
+  timingInputFromMic,
+  type OnsetAnalysis,
+  type OnsetAnalysisOptions,
+  type OnsetAnalysisSnapshot,
+  type OnsetListener,
+  type TimedOnset,
+} from "./audio/onsetAnalysis";
 export { SampleBatcher } from "./audio/sampleBatcher";
 
 // --- Settings and note maths ----------------------------------------------

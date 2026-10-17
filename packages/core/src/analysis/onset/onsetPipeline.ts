@@ -1,0 +1,116 @@
+/**
+ * Onset pipeline: detector + adaptive gate on one sample stream. Pure
+ * TypeScript, the composition used by the live adapter and testable in
+ * Node.
+ *
+ *   samples ─┬─► OnsetDetector ─────────► candidates ─┐
+ *            └─► BandLevelMeter ─► AdaptiveNoiseGate ─┴─► accept? ─► onsets
+ *
+ * A candidate is accepted when the band level around its attack (the
+ * loudest level block between the attack and the decision) reaches
+ * `floor + onsetMarginDb`. The floor moves slowly, so evaluating it at the
+ * decision rather than at the attack makes no practical difference. The
+ * gate state itself (open / closed, with hysteresis and hold) is exposed
+ * for display and for consumers of continuous frames, but does not veto
+ * onsets: an attack that clears the margin counts even while the gate is
+ * still closing from silence.
+ *
+ * Rejected candidates are counted, not lost silently: a UI can show that
+ * the room is noisy, and a test can check what was filtered.
+ */
+
+import { BandLevelMeter, type BandLevelMeterOptions } from "../gate/bandLevelMeter";
+import { AdaptiveNoiseGate, type NoiseGateConfig, type NoiseGateState } from "../gate/noiseGate";
+import { OnsetDetector, type OnsetDetectorOptions, type OnsetEvent } from "./onsetDetector";
+
+export interface OnsetPipelineOptions extends OnsetDetectorOptions {
+  /** Level meter settings (high-pass, block length). */
+  level?: Omit<BandLevelMeterOptions, "sampleRate">;
+  /** Gate settings. */
+  gate?: Partial<NoiseGateConfig>;
+  /** Margin above the floor for an onset to count, in dB. Default 6. */
+  onsetMarginDb?: number;
+}
+
+export interface OnsetPipelineResult {
+  /** Accepted onsets decided by this push, in order. */
+  onsets: readonly OnsetEvent[];
+  /** Gate state after this push. */
+  gate: NoiseGateState;
+}
+
+const NONE: readonly OnsetEvent[] = Object.freeze([]);
+
+export class OnsetPipeline {
+  readonly detector: OnsetDetector;
+  readonly meter: BandLevelMeter;
+  readonly gate: AdaptiveNoiseGate;
+  readonly onsetMarginDb: number;
+  /** Recent band levels (end frame, dB), long enough to cover a decision delay. */
+  private readonly levels: { endFrame: number; levelDb: number }[] = [];
+  private accepted = 0;
+  private rejected = 0;
+
+  constructor(options: OnsetPipelineOptions) {
+    this.detector = new OnsetDetector(options);
+    this.meter = new BandLevelMeter({ ...options.level, sampleRate: options.sampleRate });
+    this.gate = new AdaptiveNoiseGate(options.gate);
+    this.onsetMarginDb = options.onsetMarginDb ?? 6;
+  }
+
+  get sampleRate(): number {
+    return this.detector.sampleRate;
+  }
+
+  /** Onsets accepted and candidates rejected since the start. */
+  get counts(): { accepted: number; rejected: number } {
+    return { accepted: this.accepted, rejected: this.rejected };
+  }
+
+  reset(): void {
+    this.detector.reset();
+    this.meter.reset();
+    this.gate.reset();
+    this.levels.length = 0;
+    this.accepted = 0;
+    this.rejected = 0;
+  }
+
+  push(samples: ArrayLike<number>, startFrame?: number): OnsetPipelineResult {
+    const blockMs = (this.meter.blockSize / this.sampleRate) * 1000;
+    for (const block of this.meter.push(samples, startFrame)) {
+      this.gate.push({ levelDb: block.levelDb, dtMs: blockMs });
+      this.levels.push(block);
+    }
+    // Keep about 200 ms of levels: more than any decision delay.
+    const keep = Math.ceil(200 / blockMs);
+    if (this.levels.length > keep) this.levels.splice(0, this.levels.length - keep);
+
+    const candidates = this.detector.push(samples, startFrame);
+    if (candidates.length === 0) return { onsets: NONE, gate: this.gate.state };
+
+    const threshold = this.gate.state.floorDb + this.onsetMarginDb;
+    const onsets: OnsetEvent[] = [];
+    for (const c of candidates) {
+      if (this.levelAround(c) >= threshold) {
+        onsets.push(c);
+        this.accepted++;
+      } else {
+        this.rejected++;
+      }
+    }
+    return { onsets: onsets.length > 0 ? onsets : NONE, gate: this.gate.state };
+  }
+
+  /** Loudest band level whose block overlaps [attack, decision]. */
+  private levelAround(onset: OnsetEvent): number {
+    let best = -Infinity;
+    const blockSize = this.meter.blockSize;
+    for (const l of this.levels) {
+      if (l.endFrame > onset.frame && l.endFrame - blockSize <= onset.decidedAtFrame) {
+        if (l.levelDb > best) best = l.levelDb;
+      }
+    }
+    return best;
+  }
+}
