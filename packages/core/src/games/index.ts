@@ -62,3 +62,23 @@ export {
   type WolfJumperConfig,
   type WolfJumperDetectionConfig,
 } from "./wolfJumper";
+export {
+  CHORD_TARGET_DEFAULTS,
+  ChordTargetMatcher,
+  stepChordTarget,
+  type ChordTargetConfig,
+  type ChordTargetFrame,
+  type ChordTargetStep,
+} from "./chordTarget";
+export {
+  INITIAL_WOLF_DETECTOR_STATE,
+  WOLF_DETECTOR_DEFAULTS,
+  WolfJumperDetector,
+  aliveBonusChords,
+  stepWolfDetector,
+  type NoteSource,
+  type WolfDetectorConfig,
+  type WolfDetectorFrame,
+  type WolfDetectorState,
+  type WolfDetectorStep,
+} from "./wolfDetector";
