@@ -13,11 +13,16 @@ export type ChordPoolId =
 const maj = (root: number): ChordRef => ({ root, quality: "maj" });
 const min = (root: number): ChordRef => ({ root, quality: "min" });
 
-/** Open guitar chords: C G D A E F major and A E D minor. */
+/** C G D A E F major and A E D minor (F is a barre chord on guitar). */
 const OPEN_MAJOR: readonly ChordRef[] = [maj(0), maj(7), maj(2), maj(9), maj(4), maj(5)];
 const OPEN_MINOR: readonly ChordRef[] = [min(9), min(4), min(2)];
 
-/** Chord subsets the player can practise with, keyed by a stable id. */
+/**
+ * Example pools, the ones of the lab app ChordGame, keyed by a stable id.
+ * Hosts with their own teaching material should pass their own lists to
+ * `pickChord` (which takes any pool); these are not extended to the
+ * qualities beyond major and minor.
+ */
 export const CHORD_POOLS: Readonly<Record<ChordPoolId, readonly ChordRef[]>> = {
   "open-major": OPEN_MAJOR,
   "open-minor": OPEN_MINOR,

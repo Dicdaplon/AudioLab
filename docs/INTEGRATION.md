@@ -221,57 +221,112 @@ your own names and draw the cents.
 classes. Pass your own `ScaleDefinition[]` to add scales; use `SCALE_NAMES_EN` or your
 own map for labels.
 
-**Wolf Jumper.** The whole game is `gameReducer` over a `GameState` from
-`createInitialState(seed, config)`; the host owns the clock and the detector:
+**Live loop.** `startLiveAnalysis` is the analysis loop of `useTonality` without React:
+an AnalyserNode on your source, polled at the engine's frame rate, each spectrum run
+through a `TonalityEngine`. Nothing is rendered per frame: read `latest()` from your own
+clock, or `subscribe()`.
+
+```ts
+import { TonalityEngine, openMicrophone, startLiveAnalysis } from "@audiolab/core";
+
+const mic = await openMicrophone({ context: Tone.getContext().rawContext as AudioContext });
+const engine = new TonalityEngine({ framesPerSecond: 10, chordQualities: ["maj", "min", "dom7"] });
+const live = startLiveAnalysis({ context: mic.context, source: mic.source, engine });
+
+const frame = live.latest(); // TonalityFrame | null, e.g. in requestAnimationFrame
+const unsubscribe = live.subscribe((frame) => detector.push(frame /* … */));
+
+live.stop(); // clears the timer, detaches the analyser; the context keeps running
+await mic.dispose();
+```
+
+**Chord qualities.** The detector ranks the 24 major and minor triads unless told
+otherwise. Enable more with `TonalityEngine({ chordQualities })` (or
+`detectChord(chroma, { qualities })`): `dom7`, `maj7`, `min7`, `sus2`, `sus4`, `maj6`,
+`min6`, `dim`, `min7b5`. Enable only what the exercise needs: each quality adds twelve
+candidates and spreads the scores (see the README for the measured effect and the
+thresholds). `chordName(root, quality)` gives "E7", "Asus4"; `baseTriad(quality)` gives
+the triad under a chord. Some chords share their notes (C6 = Am7, Asus2 = Esus4,
+Asus4 = Dsus2): only one name is reported, so compare chords with `matchesTarget`, not by
+name or by `sameChord`:
+
+```ts
+matchesTarget(detected, { root: 4, quality: "dom7" }); // exact: same pitch classes
+matchesTarget(detected, { root: 4, quality: "dom7" }, { accept: "triad" }); // E counts too
+```
+
+**Wolf Jumper.** The rules are `gameReducer` over a `GameState` from
+`createInitialState(seed, config)`; the detection is a `WolfJumperDetector`. The host
+owns the two clocks:
 
 ```ts
 import {
+  WolfJumperDetector,
+  aliveBonusChords,
   createInitialState,
   gameReducer,
-  dominantNote,
-  pushChromaFrame,
-  stepConfirmation,
-  EMPTY_CONFIRMATION,
-  chordKey,
-  parseChordKey,
-  WOLF_JUMPER_DETECTION_DEFAULTS as D,
 } from "@audiolab/core/games";
 
 let game = createInitialState(seed, { notePool: [9, 0, 2, 4, 7] }); // A minor pentatonic
+const detector = new WolfJumperDetector({ noiseGateDb: -60, chordAccept: "triad" });
 game = gameReducer(game, { type: "start" });
 
 // Animation loop (requestAnimationFrame): advance the game clock.
 game = gameReducer(game, { type: "tick", dtMs });
 
-// Detector loop (10 Hz, from TonalityEngine frames): notes and chords, debounced.
-frames = pushChromaFrame(frames, frame.instantaneousChroma, D.noteSmoothFrames);
-const note = dominantNote(frames);
-const step = stepConfirmation(noteRun, note?.pc ?? null, note?.energy ?? 0, {
-  required: D.noteConfirmations,
-  minProbability: D.minNoteEnergy,
-});
-noteRun = step.state;
-if (step.confirmed !== null) game = gameReducer(game, { type: "noteDetected", pc: step.confirmed });
-
-const top = frame.chords[0];
-const chordStep = stepConfirmation(chordRun, top ? chordKey(top) : null, top?.probability ?? 0, {
-  required: D.chordConfirmations,
-  minProbability: D.minChordProbability,
-});
-chordRun = chordStep.state;
-if (chordStep.confirmed !== null) {
-  game = gameReducer(game, { type: "chordDetected", chord: parseChordKey(chordStep.confirmed) });
+// Analysis loop (each TonalityFrame, while playing): notes and chords, debounced.
+for (const action of detector.push(frame, game.config.notePool, aliveBonusChords(game))) {
+  game = gameReducer(game, action);
 }
+detector.note; // { pc, energy } heard, for display (may be outside the pool)
+detector.configure({ noiseGateDb }); // a noise-gate slider
+detector.reset(); // on pause: a resumed game starts from fresh audio
 ```
+
+The detector smooths the chroma, keeps the notes of the pool, confirms notes and chords
+over a few frames and gates on `signalLevelDb`; its tuning is `WOLF_DETECTOR_DEFAULTS`.
+Pushing the same frame twice counts once. With `aliveBonusChords(game)` as targets, a
+detection that `matchesTarget` a bonus chord under `chordAccept` collects it.
 
 Render `game.enemies` (`pc`, `progress` 0 → 1, `laneY`, `status`), `game.bonuses`
 (`chord`, `type`), `game.hp` / `game.config.maxHp`, `game.score`; `gameReducer` returns
 the same object when nothing changed. Every tuning value (speeds, spawn rhythm, bonus
-durations, lanes) is in `WOLF_JUMPER_DEFAULTS` and overridable in `config`.
+durations, lanes) is in `WOLF_JUMPER_DEFAULTS` and overridable in `config`. The wolf
+drawing is plain data in `@audiolab/react/art` (`WOLF_PATHS`, `WOLF_VIEWBOX`,
+`WOLF_TRANSFORM`, `WOLF_ASPECT`): no React, no CSS, safe in a server component.
 
-**Chord game.** `pickChord(CHORD_POOLS[poolId], previous)` draws the target,
-`stepConfirmation` with `CHORD_GAME_DEFAULTS` confirms a hit when the detector's top
-chord `sameChord`s the target, `chordGameReducer` keeps score / streak / skipped.
+**Notes from the pitch tracker.** The strongest chroma bin of a guitar string can be its
+2nd or 3rd harmonic (the octave or the fifth). With `noteSource: "pitch"` the detector
+reads a monophonic `PitchTracker` estimate that you pass in the frame instead. It has not
+been measured against the chroma on recorded notes yet, so the default stays `"chroma"`.
+
+```ts
+import { PitchTracker, startSampleCapture } from "@audiolab/core";
+
+const tracker = new PitchTracker({ sampleRate: mic.context.sampleRate });
+const capture = await startSampleCapture(mic.context, mic.source, (s) => tracker.push(s));
+const detector = new WolfJumperDetector({ noteSource: "pitch" });
+// in the analysis loop:
+detector.push({ ...frame, pitch: tracker.estimate }, game.config.notePool, aliveBonusChords(game));
+// teardown: capture.stop()
+```
+
+**Chord game.** `pickChord(pool, previous)` draws the target from any list of chord
+references (`CHORD_POOLS` are the lab's examples; bring your own),
+`ChordTargetMatcher` confirms it, `chordGameReducer` keeps score / streak / skipped:
+
+```ts
+const matcher = new ChordTargetMatcher({ accept: "triad", noiseGateDb: -60 });
+const { confirmed, count } = matcher.push(frame, target); // count drives a progress bar
+if (confirmed) {
+  stats = chordGameReducer(stats, { type: "hit" });
+  target = pickChord(pool, target);
+}
+// on a skip or a pool change: matcher.reset()
+```
+
+**Which build.** `BUILD_INFO` (from both packages) is `{ version, commit }` of the
+tarball you installed; it reads `"dev"` when the sources are used directly.
 
 ## 8. Developing across the two repositories
 
@@ -283,16 +338,17 @@ exactly what npm would install:
 npm run build:packages
 npm pack -w packages/core -w packages/react --pack-destination ../MusicalBook/web/vendor
 # prints the file names, audiolab-core-<version>.tgz and audiolab-react-<version>.tgz
-# (the packages are at 0.0.0 until the first release: audiolab-core-0.0.0.tgz)
+# every release bumps the version, so each tarball has its own file name
 
 # in MusicalBook/web
-npm install ./vendor/audiolab-core-0.0.0.tgz ./vendor/audiolab-react-0.0.0.tgz
+npm install ./vendor/audiolab-core-0.2.0.tgz ./vendor/audiolab-react-0.2.0.tgz
 ```
 
 A host that only uses the engines installs the core tarball alone. Repeat the pack /
-install after each SDK change. If npm keeps an old tarball (same version, same file
-name), delete `node_modules/@audiolab` and the lock entry, or bump the version with a
-changeset first.
+install after each SDK release. `BUILD_INFO` tells which version and commit a tarball
+was built from (a `-dirty` suffix means uncommitted changes). If npm keeps an old
+tarball (same version, same file name), delete `node_modules/@audiolab` and the lock
+entry.
 
 For a tighter loop, `file:` dependencies on the package directories work too
 (`"@audiolab/react": "file:../../AudioLab/packages/react"`) — they install symlinks, so

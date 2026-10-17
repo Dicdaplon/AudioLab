@@ -121,15 +121,17 @@ covers React StrictMode's double mount). The environment check is exposed as
 
 ### 2. Key and chord path (`useTonality`, `TonalityEngine`)
 
-`useTonality(mic, options)` creates an AnalyserNode (`fftSize` 16384, smoothing 0) on the
-session and a `TonalityEngine`, then polls with `setInterval` at `framesPerSecond`
-(10 Hz). Each tick:
+`useTonality(mic, options)` creates a `TonalityEngine` and hands it to `startLiveAnalysis`
+(core), which puts an AnalyserNode (`fftSize` 16384, smoothing 0) on the session and polls
+it with `setInterval` at `framesPerSecond` (10 Hz); hosts without React call the same
+function. Each tick:
 
 1. `readSpectrumDb()` fills a pre-allocated buffer with the dB spectrum.
 2. `engine.processDbSpectrum()` converts it to magnitude (−90 dB gate), folds it into a
    chroma, pushes it into the chord, live and tonality windows, runs the high-water-mark
    filter on the live window and pushes the resulting indicator into the presence window,
    then returns a `TonalityFrame` (all chromas, rankings, filter state, signal level).
+   The chord ranking covers the 24 triads unless `chordQualities` enables more.
 3. When the FFT tab is visible (`fftEnabled`), the dB spectrum is copied and the noise
    floor is estimated over 0–4 kHz. Other tabs skip this work.
 
@@ -196,7 +198,9 @@ the `TonalityFrame` down:
   (`CHORD_GAME_DEFAULTS`, overridable by props). Pools, draws and scoring come from
   `core/games/chordGame.ts`; the component only adds the English labels.
 - **Wolf Jumper:** consumes `instantaneousChroma` (notes: argmax of the last 3 frames,
-  confirmed twice), `chords`, and `signalLevelDb` (noise gate). The game itself is the
+  confirmed twice), `chords`, and `signalLevelDb` (noise gate), through the pure
+  `WolfJumperDetector` of `core/games/wolfDetector.ts`, which turns each frame into
+  reducer actions (the hook only dispatches them). The game itself is the
   pure reducer of `core/games/wolfJumper.ts` with a seeded RNG, its own game clock and a
   `config` resolved from `WOLF_JUMPER_DEFAULTS` (note pool, bonus chords, speeds,
   health...), held in a small external store so only the scene re-renders at display
@@ -277,7 +281,7 @@ tab slows the key/chord updates; the worklet capture itself stays gapless.
 
 | To add...                        | Change                                                                                                                                                                                                         |
 | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Chord qualities (7th, sus, dim)  | Add intervals to `QUALITY_INTERVALS` and the quality to `ChordQuality` in `core/src/analysis/chordDetection.ts`; templates are built from it                                                                   |
+| Chord qualities (aug, 9th...)    | Add intervals to `CHORD_QUALITY_INTERVALS`, a suffix, a base triad and a bias, and the quality to `ChordQuality` and `CHORD_QUALITIES` in `core/src/analysis/chordDetection.ts`; templates are built from it   |
 | Other key profiles               | Replace or add entries in `KEY_PROFILES` (`keyDetection.ts`), e.g. Temperley or harmonic-minor profiles                                                                                                        |
 | Harmonic weighting of the chroma | `spectrumToChroma()` in `chroma.ts`: per-bin weights or harmonic suppression before folding                                                                                                                    |
 | A new per-frame analysis         | A pure module in `core/src/analysis/`, called from `TonalityEngine.pushChroma()` and exposed in `TonalityFrame`                                                                                                |

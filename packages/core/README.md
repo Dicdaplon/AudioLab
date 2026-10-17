@@ -19,20 +19,17 @@ ESM only, TypeScript declarations included. Three entry points: `@audiolab/core`
 ## Minimal usage
 
 ```ts
-import { TonalityEngine, createAnalyser, openMicrophone, readSpectrumDb } from "@audiolab/core";
+import { openMicrophone, startLiveAnalysis } from "@audiolab/core";
 
 // Must run from a user gesture (click): browsers keep the AudioContext suspended otherwise.
 const mic = await openMicrophone(); // throws MicrophoneError with a stable `code`
-const analyser = createAnalyser(mic.context, mic.source, { fftSize: 16384 });
-const engine = new TonalityEngine({ framesPerSecond: 10 });
+const live = startLiveAnalysis({ context: mic.context, source: mic.source, framesPerSecond: 10 });
 
-const timer = setInterval(() => {
-  const frame = engine.processDbSpectrum(readSpectrumDb(analyser), analyser.sampleRate);
-  console.log(frame.tonalityKeys[0]?.name, frame.chords[0]?.name);
-}, 100);
+live.subscribe((frame) => console.log(frame.tonalityKeys[0]?.name, frame.chords[0]?.name));
+// or read live.latest() from your own clock
 
 // Later:
-clearInterval(timer);
+live.stop(); // detaches the analyser, never closes the context
 await mic.dispose();
 ```
 
@@ -100,27 +97,32 @@ scales.
 
 ### Game engines (`@audiolab/core/games`)
 
-Pure reducers and pools, keyed by pitch classes and `{ root, quality }` chord references:
+Pure reducers and detectors, keyed by pitch classes and `{ root, quality }` chord
+references:
 
 ```ts
 import {
-  CHORD_POOLS,
-  chordGameReducer,
+  ChordTargetMatcher,
+  WolfJumperDetector,
+  aliveBonusChords,
   createInitialState,
   gameReducer,
   pickChord,
-  stepConfirmation,
 } from "@audiolab/core/games";
 
 // Wolf Jumper, restricted to A minor pentatonic, 3 HP:
 let game = createInitialState(seed, { notePool: [9, 0, 2, 4, 7], maxHp: 3 });
+const detector = new WolfJumperDetector({ chordAccept: "triad" });
 game = gameReducer(game, { type: "start" });
 game = gameReducer(game, { type: "tick", dtMs: 16 }); // from your animation loop
-game = gameReducer(game, { type: "noteDetected", pc: 9 }); // from your detector
-game = gameReducer(game, { type: "chordDetected", chord: { root: 9, quality: "min" } });
+for (const action of detector.push(frame, game.config.notePool, aliveBonusChords(game))) {
+  game = gameReducer(game, action); // noteDetected / chordDetected, from each TonalityFrame
+}
 
-// Chord game:
-const target = pickChord(CHORD_POOLS["open-mix"]); // { root, quality } | null
+// Chord game, on your own chord list:
+let target = pickChord(myChords); // { root, quality } | null
+const matcher = new ChordTargetMatcher({ accept: "exact" });
+if (matcher.push(frame, target).confirmed) target = pickChord(myChords, target);
 ```
 
 See [docs/INTEGRATION.md](../../docs/INTEGRATION.md#7-engines-for-custom-uis) for the
@@ -131,25 +133,26 @@ full loop (confirmation of noisy detections, display names).
 Everything below is exported from `@audiolab/core`; modules not re-exported from
 `src/index.ts` are internal.
 
-| Area      | Exports                                                                                                                                                                                                                                                                                                               |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Engines   | `TonalityEngine` (per-frame chroma → key / chord / presence), `TempoAnalyzer` (onset envelope → beat spectrum → BPM), `emptyTonalityFrame`, their config and frame types                                                                                                                                              |
-| Chroma    | `spectrumToChroma`, `dbSpectrumToMagnitude`, `averageChromas`, `l1Normalize`, `ChromaWindow`, `CHROMA_SIZE`                                                                                                                                                                                                           |
-| Detection | `detectKey`, `detectMajorKey`, `detectChord`, `detectKeyFromPresence`, `HighWaterMarkFilter`, `KEY_PROFILES`, `CHORD_TEMPLATES`, `keyName`, `keyShortName`, `chordName`, `relativeMajorTonic`                                                                                                                         |
-| Pitch     | `detectPitch` → `PitchEstimate` (frequency, midi, pitchClass, cents, clarity) or null, `PitchTracker` (push samples, `estimate`, `setReferenceA4`, `reset`), `PITCH_DEFAULTS`, `normalizedSquareDifference`, `frequencyToPitch`                                                                                       |
-| Scales    | `matchScales` → `ScaleMatch[]` (scaleId, tonic, pitchClasses, score, missing, outside), `SCALES` (12 built-in `ScaleDefinition`s with stable ids), `SCALE_NAMES_EN`, `scalePitchClasses`                                                                                                                              |
-| Signal    | `fftMagnitude`, `fftInPlace`, `applyHannWindow`, `computeFftDb`, `periodicHannWindow`, `nextPow2`, `LowpassFilter` (4th-order Butterworth), `estimateNoiseFloor`, `spectrumSlopeDbPerHz`, `TimeRingBuffer`, `softmax`, `mean`, `median`, `argmax`, `clamp`                                                            |
-| Web Audio | `openMicrophone({ context?, stream?, constraints? })` → `MicSource` (`ownsContext`, `ownsStream`, `dispose()`), `checkMicrophoneSupport`, `MicrophoneError` / `toMicError` (stable error codes), `createAnalyser` + `readSpectrumDb`, `startSampleCapture` (AudioWorklet with AnalyserNode fallback), `SampleBatcher` |
-| Settings  | `DEFAULT_DETECTOR_SETTINGS`, `DEFAULT_FFT_SETTINGS`, `ANALYSIS_DEFAULTS`, `ONSET_LOWPASS_RANGE`, `FFT_DISPLAY_MAX_HZ` and the `DetectorSettings` / `FftSettings` types                                                                                                                                                |
-| Notes     | `NOTE_NAMES`, `freqToMidi`, `midiToFreq`, `freqToPitchClass`, `pitchClassName`, `pitchClassFrequencies`, `A_MINOR_PENTATONIC_PITCH_CLASSES`                                                                                                                                                                           |
+| Area      | Exports                                                                                                                                                                                                                                                                                                                                                                                                        |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Engines   | `TonalityEngine` (per-frame chroma → key / chord / presence; `chordQualities` option), `startLiveAnalysis` (AnalyserNode polling loop: `latest`, `subscribe`, `stop`), `TempoAnalyzer` (onset envelope → beat spectrum → BPM), `emptyTonalityFrame`, their config and frame types                                                                                                                              |
+| Chroma    | `spectrumToChroma`, `dbSpectrumToMagnitude`, `averageChromas`, `l1Normalize`, `ChromaWindow`, `CHROMA_SIZE`                                                                                                                                                                                                                                                                                                    |
+| Detection | `detectKey`, `detectMajorKey`, `detectChord(chroma, { qualities, temperature, qualityBias })`, `detectKeyFromPresence`, `HighWaterMarkFilter`, `KEY_PROFILES`, `CHORD_TEMPLATES`, `CHORD_QUALITIES` / `TRIAD_QUALITIES` / `CHORD_QUALITY_INTERVALS` / `CHORD_QUALITY_BIAS`, `chordTemplates`, `chordPitchClasses`, `baseTriad`, `isChordQuality`, `keyName`, `keyShortName`, `chordName`, `relativeMajorTonic` |
+| Pitch     | `detectPitch` → `PitchEstimate` (frequency, midi, pitchClass, cents, clarity) or null, `PitchTracker` (push samples, `estimate`, `setReferenceA4`, `reset`), `PITCH_DEFAULTS`, `normalizedSquareDifference`, `frequencyToPitch`                                                                                                                                                                                |
+| Scales    | `matchScales` → `ScaleMatch[]` (scaleId, tonic, pitchClasses, score, missing, outside), `SCALES` (12 built-in `ScaleDefinition`s with stable ids), `SCALE_NAMES_EN`, `scalePitchClasses`                                                                                                                                                                                                                       |
+| Signal    | `fftMagnitude`, `fftInPlace`, `applyHannWindow`, `computeFftDb`, `periodicHannWindow`, `nextPow2`, `LowpassFilter` (4th-order Butterworth), `estimateNoiseFloor`, `spectrumSlopeDbPerHz`, `TimeRingBuffer`, `softmax`, `mean`, `median`, `argmax`, `clamp`                                                                                                                                                     |
+| Web Audio | `openMicrophone({ context?, stream?, constraints? })` → `MicSource` (`ownsContext`, `ownsStream`, `dispose()`), `checkMicrophoneSupport`, `MicrophoneError` / `toMicError` (stable error codes), `createAnalyser` + `readSpectrumDb`, `startSampleCapture` (AudioWorklet with AnalyserNode fallback), `SampleBatcher`                                                                                          |
+| Build     | `BUILD_INFO` (`version`, `commit` of the build)                                                                                                                                                                                                                                                                                                                                                                |
+| Settings  | `DEFAULT_DETECTOR_SETTINGS`, `DEFAULT_FFT_SETTINGS`, `ANALYSIS_DEFAULTS`, `ONSET_LOWPASS_RANGE`, `FFT_DISPLAY_MAX_HZ` and the `DetectorSettings` / `FftSettings` types                                                                                                                                                                                                                                         |
+| Notes     | `NOTE_NAMES`, `freqToMidi`, `midiToFreq`, `freqToPitchClass`, `pitchClassName`, `pitchClassFrequencies`, `A_MINOR_PENTATONIC_PITCH_CLASSES`                                                                                                                                                                                                                                                                    |
 
 ### `@audiolab/core/games`
 
-| Area        | Exports                                                                                                                                                                                                                                                                                                                                                              |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Wolf Jumper | `createInitialState(seed, config?)`, `gameReducer`, `GameState` / `GameAction`, `WOLF_JUMPER_DEFAULTS` + `WolfJumperConfig` (note pool, bonus chords and types, health, travel and spawn curves, durations, lanes), `WOLF_JUMPER_DETECTION_DEFAULTS`, `computeTravelMs`, `computeSpawnMs`, `shieldRemainingMs`, `slowRemainingMs`, `pushChromaFrame`, `dominantNote` |
-| Chord game  | `CHORD_POOLS` keyed by `ChordPoolId`, `CHORD_POOL_IDS`, `DEFAULT_CHORD_POOL`, `pickChord`, `chordGameReducer` + `INITIAL_CHORD_GAME_STATS`, `CHORD_GAME_DEFAULTS` (confirmation frames, minimum score)                                                                                                                                                               |
-| Shared      | `ChordRef` + `sameChord` / `chordKey` / `parseChordKey`, `stepConfirmation` + `EMPTY_CONFIRMATION` (debounce a per-frame detector into events), `SeededRandom` / `nextRandom` / `randomSeed`                                                                                                                                                                         |
+| Area        | Exports                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Wolf Jumper | `createInitialState(seed, config?)`, `gameReducer`, `GameState` / `GameAction`, `WOLF_JUMPER_DEFAULTS` + `WolfJumperConfig` (note pool, bonus chords and types, health, travel and spawn curves, durations, lanes), `WOLF_JUMPER_DETECTION_DEFAULTS`, `computeTravelMs`, `computeSpawnMs`, `shieldRemainingMs`, `slowRemainingMs`, `pushChromaFrame`, `dominantNote`; detection: `WolfJumperDetector` / `stepWolfDetector`, `WOLF_DETECTOR_DEFAULTS` (noise gate, note source, chord policy), `aliveBonusChords` |
+| Chord game  | `CHORD_POOLS` (the lab examples) keyed by `ChordPoolId`, `CHORD_POOL_IDS`, `DEFAULT_CHORD_POOL`, `pickChord` (any pool), `ChordTargetMatcher` / `stepChordTarget` + `CHORD_TARGET_DEFAULTS`, `chordGameReducer` + `INITIAL_CHORD_GAME_STATS`, `CHORD_GAME_DEFAULTS` (confirmation frames, minimum score)                                                                                                                                                                                                         |
+| Shared      | `ChordRef` + `sameChord` / `matchesTarget` (`exact` or `triad`) / `chordKey` / `parseChordKey`, `stepConfirmation` + `EMPTY_CONFIRMATION` (debounce a per-frame detector into events), `SeededRandom` / `nextRandom` / `randomSeed`                                                                                                                                                                                                                                                                              |
 
 ### `@audiolab/core/offline` (Node only)
 

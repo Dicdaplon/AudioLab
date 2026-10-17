@@ -123,6 +123,42 @@ benchmark. The pitch figures are measured on **synthetic** signals (the generato
 from a 61-point sweep with the same generators): the repository holds no recorded
 single-string fixture.
 
+### Extended chord qualities (synthetic guitar)
+
+`npm run measure:chords` strums 20 open voicings on a **model** of a guitar (plucked
+partials, pluck-position comb, 10–30 ms strums, 30 and 20 dB SNR; 8 takes each) through
+the live path, with each candidate set. It is not a recording: these are baselines, and
+the same script measures labelled recordings (`npm run measure:chords -- <dir>`).
+"Exact" counts a detection with the same pitch classes as the chord played; "triad"
+also accepts the same root and base triad (E for E7), as `matchesTarget` does.
+
+| Candidate set (`qualities`)    | Exact | Triad | Top-1 probability, p10 / median |
+| ------------------------------ | ----- | ----- | ------------------------------- |
+| `maj, min` (default)           | 40 %  | 64 %  | 0.32 / 0.69                     |
+| `maj, min, dom7, maj7, min7`   | 70 %  | 70 %  | 0.15 / 0.39                     |
+| all eleven (`CHORD_QUALITIES`) | 95 %  | 95 %  | 0.24 / 0.37                     |
+
+The neighbours, with all eleven qualities enabled:
+
+| Played | Read as         | Played | Read as                      |
+| ------ | --------------- | ------ | ---------------------------- |
+| E      | **E** 100 %     | E7     | **E7** 100 %                 |
+| A      | **A** 100 %     | A7     | **A7** 100 %                 |
+| C      | **C** 100 %     | Cmaj7  | **Cmaj7** 50 %, Em 50 %      |
+| Am     | **Am** 100 %    | Am7    | C 50 %, C6 50 % ¹            |
+| C6     | **C6** 100 %    | Asus2  | Esus4 75 % ¹, **Asus2** 25 % |
+| Asus4  | **Asus4** 100 % | D      | **D** 100 %                  |
+| Dsus4  | **Dsus4** 100 % | D7, B7 | **D7**, **B7** 100 %         |
+
+¹ Same pitch classes: C6 = Am7 and Asus2 = Esus4 (also Asus4 = Dsus2, Cm6 = Am7b5).
+Chroma cannot tell them apart; the detector names the reading whose root is the
+strongest pitch class, and `matchesTarget` accepts either. The real confusions left are
+**Am7 → C** and **Cmaj7 → Em**: the open voicings play the added note once, against
+doubled triad notes. No triad was read as a seventh. More candidates spread the softmax:
+with the sevenths set, 10 % of the takes score under 0.15, below the 0.18
+`minProbability` the games use by default; check the distribution on your own set before
+keeping that threshold.
+
 ## Features
 
 - **Live key detection.** Krumhansl–Schmuckler correlation over all 24 major and minor
@@ -263,6 +299,7 @@ the permission prompt.
 | `npm run sweep`            | Grid search of the chord and presence parameters over the samples                   |
 | `npm run extract:backing`  | Cut three 30 s WAV extracts from each track in `packages/core/localSample/`         |
 | `npm run analyze:backing`  | Print chord histogram and key rankings for the backing-track extract                |
+| `npm run measure:chords`   | Chord confusion per quality set, synthetic guitar or `-- <dir>` of recordings       |
 
 ## Testing strategy
 
@@ -292,8 +329,8 @@ tested in Node against signals whose answer is known analytically.
 - **Game engines.** The Wolf Jumper reducer is tested action by action with a fixed seed;
   a seed-1 sequence is pinned so the move of the engine to `@audiolab/core/games` (and
   any future tuning change) is visible.
-- **Measured on the current `main`:** `npm run coverage` runs 562 tests in 54 files
-  (about 12 s); `npm run test:samples` runs 44 tests in 4 files (about 6 s).
+- **Measured on the current `main`:** `npm run coverage` runs 611 tests in 62 files
+  (about 15 s); `npm run test:samples` runs 44 tests in 4 files (about 6 s).
 
 Coverage (v8, unit + dom) and the thresholds enforced in
 [`vitest.config.ts`](vitest.config.ts):
@@ -325,15 +362,15 @@ packages/core/                @audiolab/core
 │   │   ├── chroma.ts         dB → magnitude, spectrum → 12-bin chroma
 │   │   ├── windowing.ts      ChromaWindow: ring buffer with incremental mean
 │   │   ├── keyDetection.ts   Krumhansl–Schmuckler, 24 keys, Pearson + softmax
-│   │   ├── chordDetection.ts 24 triad templates, cosine + softmax
+│   │   ├── chordDetection.ts Chord templates (24 triads by default, 11 qualities), cosine + softmax
 │   │   ├── highWaterMark.ts  Adaptive peak-relative threshold filter
 │   │   ├── presenceTonality.ts  Key ranking from a presence histogram
 │   │   ├── pitch.ts          MPM pitch detection (NSDF, peak picking), PitchTracker for a tuner
 │   │   ├── scales.ts         Scale definitions and matchScales (ranking by inclusion)
 │   │   ├── fft.ts · timeFft.ts · lowpass.ts · noiseFloor.ts · spectrumSlope.ts · timeBuffer.ts · math.ts
 │   │   └── engine/           TonalityEngine (per-frame pipeline), TempoAnalyzer (onset → beat spectrum → BPM)
-│   ├── audio/                Web Audio adapters: micStream, errors, analyser, sampleCapture (+ worklet, bundled string)
-│   ├── games/                `@audiolab/core/games`: Wolf Jumper reducer + config, chord game pools and scoring, confirmation, seeded RNG
+│   ├── audio/                Web Audio adapters: micStream, errors, analyser, liveAnalysis, sampleCapture (+ worklet, bundled string)
+│   ├── games/                `@audiolab/core/games`: Wolf Jumper reducer + detector, chord game scoring + target matcher, confirmation, seeded RNG
 │   ├── offline/              `@audiolab/core/offline`: file decoding, framing (Node only)
 │   ├── config/settings.ts    Settings types and defaults
 │   └── utils/notes.ts        Note maths
@@ -368,9 +405,15 @@ docs/                         ARCHITECTURE.md, THEORY.md, INTEGRATION.md
   rank together. The sample tests accept either.
 - **Harmonics.** The chroma has no harmonic suppression: the 5th harmonic adds a major
   third, which can push minor chords towards major.
-- **Vocabulary.** Major and minor triads only (no sevenths, sus, diminished or
-  augmented); Western 12-TET tuning with A4 = 440 Hz (the tuner's reference is the only
-  adjustable one); mono input.
+- **Vocabulary.** Major and minor triads by default; sevenths, sixths, sus2/sus4,
+  diminished and half-diminished are opt-in (`qualities`) and measured on a synthetic
+  guitar only. No augmented chords, no bass detection (so C6/Am7 and the sus2/sus4 pairs
+  are one pitch set, named by a heuristic); Western 12-TET tuning with A4 = 440 Hz (the
+  tuner's reference is the only adjustable one); mono input.
+- **Guitar single notes.** The Wolf Jumper's default note is the strongest chroma bin,
+  which a string's 2nd and 3rd harmonics can pull to the octave or the fifth.
+  `noteSource: "pitch"` reads a `PitchTracker` estimate instead; the two have not been
+  compared on recorded notes yet, so the default stays on the chroma.
 - **Pitch detection is monophonic.** MPM reads one note at a time; chords and dense
   noise give no estimate. A 2048-sample window reaches down to 60 Hz at 48 kHz (two
   periods); stiff strings read a fraction of a cent sharp of their nominal fundamental.
