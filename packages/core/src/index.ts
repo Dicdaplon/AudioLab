@@ -32,13 +32,23 @@ export {
   type KeyScore,
 } from "./analysis/keyDetection";
 export {
+  CHORD_QUALITIES,
+  CHORD_QUALITY_BIAS,
+  CHORD_QUALITY_INTERVALS,
   CHORD_TEMPLATES,
+  TRIAD_QUALITIES,
+  baseTriad,
   chordName,
+  chordPitchClasses,
+  chordTemplates,
   cosineSimilarity,
   detectChord,
+  isChordQuality,
+  type BaseTriad,
   type ChordQuality,
   type ChordScore,
   type ChordTemplate,
+  type DetectChordOptions,
 } from "./analysis/chordDetection";
 export {
   HIGH_WATER_MARK_DEFAULTS,

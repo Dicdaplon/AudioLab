@@ -6,7 +6,7 @@ import {
   type DetectorSettings,
   type KeyScore,
 } from "@audiolab/core";
-import { splitKeyName } from "../ui/rankRows";
+import { qualityMode, splitKeyName } from "../ui/rankRows";
 import { ChordView } from "./ChordView";
 import { ChromaView } from "./ChromaView";
 import { KeyProbabilities } from "./KeyProbabilities";
@@ -75,7 +75,7 @@ export function DetectorTab({
           label="Chord"
           meta={`${chordWindow} s`}
           value={topChord?.name ?? null}
-          mode={topChord?.quality}
+          mode={topChord && qualityMode(topChord.quality)}
           probability={topChord?.probability}
         />
         <KeyReadout label="Live key" meta={`${live} s`} keys={data.liveKeys} />

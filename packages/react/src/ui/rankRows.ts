@@ -1,13 +1,20 @@
 /** Adapters from analysis scores to what the readouts and ranked lists show. */
 
-import { type ChordScore, type KeyScore } from "@audiolab/core";
+import { baseTriad, type ChordQuality, type ChordScore, type KeyScore } from "@audiolab/core";
 import type { RankRow } from "../components/RankList";
+import type { Mode } from "../components/Readout";
+
+/** The major / minor tint of a chord quality; none for sus and dim chords. */
+export function qualityMode(quality: ChordQuality): Mode | undefined {
+  const triad = baseTriad(quality);
+  return triad === "maj" || triad === "min" ? triad : undefined;
+}
 
 export function chordRows(chords: ChordScore[], topN: number): RankRow[] {
   return chords.slice(0, topN).map((c) => ({
     key: `${c.root}-${c.quality}`,
     name: c.name,
-    mode: c.quality,
+    mode: qualityMode(c.quality),
     probability: c.probability,
     stat: `cos=${c.similarity.toFixed(2)}`,
   }));

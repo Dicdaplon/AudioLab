@@ -20,7 +20,7 @@
  * the aggregates and rankings. `process*()` does both.
  */
 
-import { detectChord, type ChordScore } from "../chordDetection";
+import { chordTemplates, detectChord, type ChordQuality, type ChordScore } from "../chordDetection";
 import { CHROMA_SIZE, dbSpectrumToMagnitude, spectrumToChroma } from "../chroma";
 import {
   HighWaterMarkFilter,
@@ -52,6 +52,13 @@ export interface TonalityEngineConfig {
   filterMemory: number;
   /** High-water-mark peak aggregation. */
   filterMode: HighWaterMarkMode;
+  /**
+   * Chord qualities the chord ranking considers, in tie-break order (see
+   * `detectChord`). Default: major and minor triads.
+   */
+  chordQualities?: readonly ChordQuality[];
+  /** Overrides of `CHORD_QUALITY_BIAS` for the chord ranking. */
+  chordQualityBias?: Partial<Record<ChordQuality, number>>;
 }
 
 export const TONALITY_ENGINE_DEFAULTS: TonalityEngineConfig = {
@@ -125,6 +132,8 @@ export function emptyTonalityFrame(): TonalityFrame {
 }
 
 function normaliseConfig(cfg: TonalityEngineConfig): TonalityEngineConfig {
+  // Fail on a bad quality list at configuration time, not on the next frame.
+  if (cfg.chordQualities) chordTemplates(cfg.chordQualities);
   return {
     ...cfg,
     filterTolerancy: clamp(cfg.filterTolerancy, 0, 1),
@@ -300,7 +309,12 @@ export class TonalityEngine {
       filterThreshold: this.filter.currentThreshold,
       filterLastPeak: this.filter.lastPeak,
       signalLevelDb: this.lastLevelDb,
-      chords: hasAudio ? detectChord(chordChroma) : [],
+      chords: hasAudio
+        ? detectChord(chordChroma, {
+            qualities: this.cfg.chordQualities,
+            qualityBias: this.cfg.chordQualityBias,
+          })
+        : [],
       liveKeys: hasAudio ? detectKey(liveChroma) : [],
       tonalityKeys: hasAudio ? detectKey(tonalityChroma) : [],
       presenceKeys: hasAudio ? detectKeyFromPresence(presence) : [],

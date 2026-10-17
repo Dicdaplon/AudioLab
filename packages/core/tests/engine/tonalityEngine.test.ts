@@ -195,4 +195,28 @@ describe("TonalityEngine", () => {
     const engine = new TonalityEngine();
     expect(() => engine.pushChroma(new Float32Array(11))).toThrow();
   });
+
+  it("ranks the configured chord qualities", () => {
+    const e7 = chromaOf(4, 8, 11, 2);
+    const engine = new TonalityEngine();
+    for (let i = 0; i < 10; i++) engine.pushChroma(e7);
+    expect(engine.snapshot().chords).toHaveLength(24);
+    expect(engine.snapshot().chords[0].name).toBe("E");
+
+    engine.configure({ chordQualities: ["maj", "min", "dom7"] });
+    const frame = engine.snapshot();
+    expect(frame.chords).toHaveLength(36);
+    expect(frame.chords[0]).toMatchObject({ name: "E7", quality: "dom7" });
+
+    engine.configure({ chordQualityBias: { dom7: 1 } });
+    expect(engine.snapshot().chords[0].name).toBe("E");
+  });
+
+  it("rejects an unknown chord quality when configured", () => {
+    expect(() => new TonalityEngine({ chordQualities: [] })).toThrow(/empty/);
+    const engine = new TonalityEngine();
+    expect(() => engine.configure({ chordQualities: ["maj", "aug" as "maj"] })).toThrow(
+      /unknown quality/,
+    );
+  });
 });
