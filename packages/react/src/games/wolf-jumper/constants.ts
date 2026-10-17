@@ -3,9 +3,14 @@
  * and their tuning live in `@audiolab/core/games` (`WOLF_JUMPER_DEFAULTS`).
  */
 
-import type { BonusType, WolfJumperConfig } from "@audiolab/core/games";
+import {
+  WOLF_DETECTOR_DEFAULTS,
+  type BonusType,
+  type WolfJumperConfig,
+} from "@audiolab/core/games";
 
-export const DEFAULT_NOISE_GATE_DB = -60;
+/** Default noise gate of the game, from the core detector. */
+export const DEFAULT_NOISE_GATE_DB = WOLF_DETECTOR_DEFAULTS.noiseGateDb;
 
 // ---- Scene geometry (px, in stage coordinates; the stage scales to fit) ----
 

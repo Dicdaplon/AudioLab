@@ -6,33 +6,27 @@
  *
  *   - Owns the game store and runs the requestAnimationFrame loop, only while
  *     the mic is running and the game is not over.
- *   - NOTES: argmax of the last `noteSmoothFrames` instantaneous chromas
- *     (≈ 300 ms smoothing), confirmed `noteConfirmations` consecutive
- *     frames → fast and snappy.
- *   - CHORDS: top-1 of the detector's 1 s chord window, confirmed
- *     `chordConfirmations` frames with a score ≥ `minChordProbability` → robust.
- *   - Both pipelines are gated by the noise gate (signal-level dB threshold).
+ *   - Detection (note smoothing, note pool, confirmations, noise gate) is a
+ *     `WolfJumperDetector`: each new analysis frame is pushed to it while
+ *     playing, and the actions it returns are dispatched to the store. It is
+ *     reset on pause, so a resumed game starts from fresh audio.
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import type { ChordScore } from "@audiolab/core";
+import type { ChordScore, PitchEstimate } from "@audiolab/core";
 import {
-  chordKey,
+  aliveBonusChords,
   createInitialState,
-  dominantNote,
   gameReducer,
-  parseChordKey,
-  pushChromaFrame,
   randomSeed,
-  WOLF_JUMPER_DETECTION_DEFAULTS,
+  WolfJumperDetector,
   type DominantNote,
   type GameAction,
   type GameState,
+  type WolfDetectorConfig,
   type WolfJumperConfig,
-  type WolfJumperDetectionConfig,
 } from "@audiolab/core/games";
-import { useConfirmedDetection } from "../useConfirmedDetection";
 import { DEFAULT_NOISE_GATE_DB } from "./constants";
 import { createStore, useStoreSelector, type Store } from "./store";
 
@@ -43,10 +37,12 @@ export interface WolfJumperInputs {
   chords: ChordScore[];
   running: boolean;
   signalLevelDb: number;
+  /** Latest `usePitch` estimate; read only with `detection.noteSource: "pitch"`. */
+  pitch?: PitchEstimate | null;
   /** Game tuning (note pool, bonus chords, speeds, health, ...), read once at mount. */
   config?: Partial<WolfJumperConfig>;
-  /** Detection tuning (smoothing, confirmations, thresholds). */
-  detection?: Partial<WolfJumperDetectionConfig>;
+  /** Detection tuning (smoothing, confirmations, thresholds, note source, chord policy). */
+  detection?: Partial<Omit<WolfDetectorConfig, "noiseGateDb">>;
 }
 
 export interface WolfJumperController {
@@ -61,13 +57,13 @@ export interface WolfJumperController {
 }
 
 const selectGameOver = (s: GameState) => s.gameOver;
-const selectNotePool = (s: GameState) => s.config.notePool;
 
 export function useWolfJumper({
   instantaneousChroma,
   chords,
   running,
   signalLevelDb,
+  pitch,
   config,
   detection,
 }: WolfJumperInputs): WolfJumperController {
@@ -75,15 +71,7 @@ export function useWolfJumper({
     createStore(gameReducer, createInitialState(randomSeed(), config)),
   );
   const gameOver = useStoreSelector(store, selectGameOver);
-  const notePool = useStoreSelector(store, selectNotePool);
   const playing = running && !gameOver;
-  const {
-    noteSmoothFrames = WOLF_JUMPER_DETECTION_DEFAULTS.noteSmoothFrames,
-    noteConfirmations = WOLF_JUMPER_DETECTION_DEFAULTS.noteConfirmations,
-    minNoteEnergy = WOLF_JUMPER_DETECTION_DEFAULTS.minNoteEnergy,
-    chordConfirmations = WOLF_JUMPER_DETECTION_DEFAULTS.chordConfirmations,
-    minChordProbability = WOLF_JUMPER_DETECTION_DEFAULTS.minChordProbability,
-  } = detection ?? {};
 
   useAnimationFrames(
     playing,
@@ -93,31 +81,62 @@ export function useWolfJumper({
 
   const [noiseGateDb, setNoiseGateDb] = useState(DEFAULT_NOISE_GATE_DB);
   const gateOpen = signalLevelDb > noiseGateDb;
-  const listening = playing && gateOpen;
 
-  // --- Notes ---
-  const chromaFrames = useChromaHistory(instantaneousChroma, noteSmoothFrames);
-  const note = useMemo(() => dominantNote(chromaFrames), [chromaFrames]);
-  const noteInPool = note !== null && notePool.includes(note.pc);
-  useConfirmedDetection({
-    frame: instantaneousChroma,
-    label: listening && noteInPool ? note.pc : null,
-    probability: note?.energy ?? 0,
-    required: noteConfirmations,
-    minProbability: minNoteEnergy,
-    onConfirm: (pc) => store.dispatch({ type: "noteDetected", pc }),
-  });
+  const [detector] = useState(
+    () => new WolfJumperDetector({ ...detection, noiseGateDb: DEFAULT_NOISE_GATE_DB }),
+  );
+  const {
+    noteSmoothFrames,
+    noteConfirmations,
+    minNoteEnergy,
+    chordConfirmations,
+    minChordProbability,
+    noteSource,
+    minPitchClarity,
+    chordAccept,
+  } = detection ?? {};
+  // Declared before the push effect, so a frame always sees the latest tuning.
+  useEffect(() => {
+    detector.configure({
+      noteSmoothFrames,
+      noteConfirmations,
+      minNoteEnergy,
+      chordConfirmations,
+      minChordProbability,
+      noteSource,
+      minPitchClarity,
+      chordAccept,
+      noiseGateDb,
+    });
+  }, [
+    detector,
+    noteSmoothFrames,
+    noteConfirmations,
+    minNoteEnergy,
+    chordConfirmations,
+    minChordProbability,
+    noteSource,
+    minPitchClarity,
+    chordAccept,
+    noiseGateDb,
+  ]);
 
-  // --- Chords ---
-  const topChord = chords[0];
-  useConfirmedDetection({
-    frame: chords,
-    label: listening && topChord ? chordKey(topChord) : null,
-    probability: topChord?.probability ?? 0,
-    required: chordConfirmations,
-    minProbability: minChordProbability,
-    onConfirm: (key) => store.dispatch({ type: "chordDetected", chord: parseChordKey(key) }),
-  });
+  const [note, setNote] = useState<DominantNote | null>(null);
+  useEffect(() => {
+    if (!playing) {
+      detector.reset();
+      return;
+    }
+    const game = store.getState();
+    const actions = detector.push(
+      { instantaneousChroma, chords, signalLevelDb, pitch },
+      game.config.notePool,
+      aliveBonusChords(game),
+    );
+    actions.forEach(store.dispatch);
+    const heard = detector.note;
+    setNote((prev) => (prev?.pc === heard?.pc && prev?.energy === heard?.energy ? prev : heard));
+  }, [detector, store, playing, instantaneousChroma, chords, signalLevelDb, pitch]);
 
   const reset = useCallback(() => store.dispatch({ type: "reset" }), [store]);
 
@@ -147,20 +166,4 @@ function useAnimationFrames(
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
   }, [active, onStart, onFrame]);
-}
-
-/** Last `size` chroma frames, updated whenever a new frame arrives. */
-function useChromaHistory(chroma: Float32Array, size: number): readonly Float32Array[] {
-  const [history, setHistory] = useState<{
-    latest: Float32Array | null;
-    frames: readonly Float32Array[];
-  }>({ latest: null, frames: [] });
-
-  // Derive state from the incoming frame during render (no extra effect pass).
-  if (history.latest !== chroma) {
-    const next = { latest: chroma, frames: pushChromaFrame(history.frames, chroma, size) };
-    setHistory(next);
-    return next.frames;
-  }
-  return history.frames;
 }
