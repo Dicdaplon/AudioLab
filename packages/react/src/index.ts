@@ -30,6 +30,12 @@ export {
 } from "./hooks/useTempoAnalysis";
 export { usePitch, type PitchState, type UsePitchOptions } from "./hooks/usePitch";
 export {
+  useOnsetAnalysis,
+  type OnsetAnalysisState,
+  type UseOnsetAnalysisOptions,
+} from "./hooks/useOnsetAnalysis";
+export { useDisplayFramePeriod } from "./hooks/useDisplayFramePeriod";
+export {
   useConfirmedDetection,
   type UseConfirmedDetectionArgs,
   type UseConfirmedDetectionResult,
