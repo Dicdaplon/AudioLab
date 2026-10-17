@@ -221,6 +221,16 @@ your own names and draw the cents.
 classes. Pass your own `ScaleDefinition[]` to add scales; use `SCALE_NAMES_EN` or your
 own map for labels.
 
+**Rhythm exercises.** `useOnsetAnalysis(mic, { onOnset, onBatch })` (or
+`startOnsetAnalysis` without React) gives onsets on the AudioContext clock, the sample
+history to name what was played (`noteAfterOnset`, `chordAfterOnset`) and the session's
+`TimingBudget`. Grade scrolling notes or chords with `TimingScorer` from
+`@audiolab/core/rhythm` (tolerance from `toleranceFromUncertainty(budget.uncertaintyMs)`,
+`offsetMs: budget.offsetMs`, `adaptiveBias: true`), and a written rhythm played without a
+click with `fitPattern(beats, onsetTimes)`. The full recipe, the measured accuracy and
+the limits are in [TIMING.md](TIMING.md#6-using-it-in-an-exercise). The Wolf Jumper
+detector takes `gate: "adaptive"` so no learner has a threshold to set.
+
 **Live loop.** `startLiveAnalysis` is the analysis loop of `useTonality` without React:
 an AnalyserNode on your source, polled at the engine's frame rate, each spectrum run
 through a `TonalityEngine`. Nothing is rendered per frame: read `latest()` from your own

@@ -185,7 +185,16 @@ keeping that threshold.
 - **Chord game.** Ear-training: play the requested chord; a hit needs a stable detection
   over several frames. Six chord pools, from open guitar chords to all 24 triads.
 - **Wolf Jumper.** A small arcade game: play the note shown on an incoming enemy to
-  destroy it, play chords to collect bonuses. Includes an adjustable noise gate.
+  destroy it, play chords to collect bonuses. The noise gate learns the room by itself
+  (a manual threshold stays available).
+- **Onset timing and rhythm.** When each note starts, to the millisecond: SuperFlux
+  spectral flux, online peak picking and attack localisation on a 0.7 ms envelope, on
+  frame-tagged AudioWorklet batches so a late batch never moves a timestamp. An
+  adaptive noise gate with no setting, a latency budget built without playing any sound
+  (clock offset, delivery and startup delays measured from the capture), and
+  `@audiolab/core/rhythm`: scrolling-note scoring with an adaptive bias, written
+  rhythms graded at a free tempo, "right note / chord at that onset". See
+  [docs/TIMING.md](docs/TIMING.md).
 - **Game engines as pure modules.** `@audiolab/core/games` holds the reducers, pools and
   confirmation logic of both games, keyed by pitch classes and chord references rather
   than labels, with a configurable Wolf Jumper (note pool, bonus chords, speeds, health).

@@ -55,6 +55,11 @@ export function About() {
             loudest harmonic of a string.
           </li>
           <li>
+            <strong>Rhythm</strong>: play a written rhythm at your own pace, or notes and chords as
+            they reach a line. Each note is placed to the millisecond on the audio clock, with no
+            click and no threshold to set, and the page shows how sure it can be.
+          </li>
+          <li>
             <strong>FFT</strong>: the spectrum, its noise floor, and where the tempo hides.
           </li>
         </ul>

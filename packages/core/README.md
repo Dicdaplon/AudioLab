@@ -128,6 +128,38 @@ if (matcher.push(frame, target).confirmed) target = pickChord(myChords, target);
 See [docs/INTEGRATION.md](../../docs/INTEGRATION.md#7-engines-for-custom-uis) for the
 full loop (confirmation of noisy detections, display names).
 
+### Onsets, gate and rhythm
+
+```ts
+import {
+  openMicrophone,
+  startOnsetAnalysis,
+  estimateTimingBudget,
+  timingInputFromMic,
+} from "@audiolab/core";
+import { TimingScorer, toleranceFromUncertainty } from "@audiolab/core/rhythm";
+
+const mic = await openMicrophone();
+const analysis = await startOnsetAnalysis(mic.context, mic.source);
+const budget = estimateTimingBudget(timingInputFromMic(mic));
+
+const now = analysis.clock.perfMsToContextTime(performance.now())!;
+const scorer = new TimingScorer(
+  [0, 1, 2, 3].map((i) => ({ id: i, time: now + 2 + i * 0.75 })),
+  {
+    tolerance: toleranceFromUncertainty(budget.uncertaintyMs),
+    offsetMs: budget.offsetMs,
+    adaptiveBias: true,
+  },
+);
+analysis.subscribe((onset) => scorer.onset({ id: onset.id, time: onset.time }));
+setInterval(() => scorer.advance(analysis.latest().analysedTime), 50);
+```
+
+Every stage is a separate pure module (`OnsetDetector`, `AdaptiveNoiseGate`,
+`AudioClockSync`, `estimateTimingBudget`, `fitPattern`…); algorithms, measured accuracy,
+references and limits are in [docs/TIMING.md](../../docs/TIMING.md).
+
 ## API overview
 
 Everything below is exported from `@audiolab/core`; modules not re-exported from
@@ -141,6 +173,9 @@ Everything below is exported from `@audiolab/core`; modules not re-exported from
 | Pitch     | `detectPitch` → `PitchEstimate` (frequency, midi, pitchClass, cents, clarity) or null, `PitchTracker` (push samples, `estimate`, `setReferenceA4`, `reset`), `PITCH_DEFAULTS`, `normalizedSquareDifference`, `frequencyToPitch`                                                                                                                                                                                |
 | Scales    | `matchScales` → `ScaleMatch[]` (scaleId, tonic, pitchClasses, score, missing, outside), `SCALES` (12 built-in `ScaleDefinition`s with stable ids), `SCALE_NAMES_EN`, `scalePitchClasses`                                                                                                                                                                                                                       |
 | Signal    | `fftMagnitude`, `fftInPlace`, `applyHannWindow`, `computeFftDb`, `periodicHannWindow`, `nextPow2`, `LowpassFilter` (4th-order Butterworth), `estimateNoiseFloor`, `spectrumSlopeDbPerHz`, `TimeRingBuffer`, `softmax`, `mean`, `median`, `argmax`, `clamp`                                                                                                                                                     |
+| Onsets    | `OnsetDetector` (samples + start frame → `OnsetEvent`: frame, time, strength, level, localized), its stages `SuperFluxOdf`, `OnlinePeakPicker`, `AttackEnvelope`; `OnsetPipeline` (detector + gate acceptance); `StreamHistory`, `noteAfterOnset` / `chordAfterOnset` (+ `noteReadyAt` / `chordReadyAt`)                                                                                                       |
+| Gate      | `AdaptiveNoiseGate` / `stepNoiseGate` + `NOISE_GATE_DEFAULTS` (learnt floor, hysteresis, hold, warm-up, `noisy`), `LevelFloorTracker` / `stepLevelFloor` (sliding minimum), `BandLevelMeter` (80 Hz high-pass, 10 ms levels)                                                                                                                                                                                   |
+| Timing    | `AudioClockSync` (context ↔ performance clock, delivery, startup, gaps), `estimateTimingBudget` / `combineTimingComponents` → `TimingBudget` (offset, σ, minimum tolerance), `looksLikeBluetooth`, `startOnsetAnalysis` (live loop: `latest`, `subscribe`, `stop`), `timingInputFromMic`                                                                                                                       |
 | Web Audio | `openMicrophone({ context?, stream?, constraints? })` → `MicSource` (`ownsContext`, `ownsStream`, `dispose()`), `checkMicrophoneSupport`, `MicrophoneError` / `toMicError` (stable error codes), `createAnalyser` + `readSpectrumDb`, `startSampleCapture` (AudioWorklet with AnalyserNode fallback), `SampleBatcher`                                                                                          |
 | Build     | `BUILD_INFO` (`version`, `commit` of the build)                                                                                                                                                                                                                                                                                                                                                                |
 | Settings  | `DEFAULT_DETECTOR_SETTINGS`, `DEFAULT_FFT_SETTINGS`, `ANALYSIS_DEFAULTS`, `ONSET_LOWPASS_RANGE`, `FFT_DISPLAY_MAX_HZ` and the `DetectorSettings` / `FftSettings` types                                                                                                                                                                                                                                         |
@@ -153,6 +188,15 @@ Everything below is exported from `@audiolab/core`; modules not re-exported from
 | Wolf Jumper | `createInitialState(seed, config?)`, `gameReducer`, `GameState` / `GameAction`, `WOLF_JUMPER_DEFAULTS` + `WolfJumperConfig` (note pool, bonus chords and types, health, travel and spawn curves, durations, lanes), `WOLF_JUMPER_DETECTION_DEFAULTS`, `computeTravelMs`, `computeSpawnMs`, `shieldRemainingMs`, `slowRemainingMs`, `pushChromaFrame`, `dominantNote`; detection: `WolfJumperDetector` / `stepWolfDetector`, `WOLF_DETECTOR_DEFAULTS` (noise gate, note source, chord policy), `aliveBonusChords` |
 | Chord game  | `CHORD_POOLS` (the lab examples) keyed by `ChordPoolId`, `CHORD_POOL_IDS`, `DEFAULT_CHORD_POOL`, `pickChord` (any pool), `ChordTargetMatcher` / `stepChordTarget` + `CHORD_TARGET_DEFAULTS`, `chordGameReducer` + `INITIAL_CHORD_GAME_STATS`, `CHORD_GAME_DEFAULTS` (confirmation frames, minimum score)                                                                                                                                                                                                         |
 | Shared      | `ChordRef` + `sameChord` / `matchesTarget` (`exact` or `triad`) / `chordKey` / `parseChordKey`, `stepConfirmation` + `EMPTY_CONFIRMATION` (debounce a per-frame detector into events), `SeededRandom` / `nextRandom` / `randomSeed`                                                                                                                                                                                                                                                                              |
+
+### `@audiolab/core/rhythm`
+
+| Area      | Exports                                                                                                                                    |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Scoring   | `TimingScorer` / `stepTimingScorer` / `createTimingScorerState` + `TIMING_SCORER_DEFAULTS` (timing × label, adaptive bias), `scoreTimings` |
+| Rhythm    | `fitPattern` (written rhythm at a free tempo → tempo, per-note residuals and tiers)                                                        |
+| Tolerance | `toleranceFromUncertainty`, `classifyDelta`, `TIMING_TOLERANCE_DEFAULTS`                                                                   |
+| Stats     | `timingStats` (bias, jitter, drift), `medianOf`, `OnsetEvidence` (label observations → label per onset)                                    |
 
 ### `@audiolab/core/offline` (Node only)
 
@@ -173,7 +217,8 @@ replay recordings through the same `TonalityEngine` the live path uses.
 ## The AudioWorklet
 
 `startSampleCapture` prefers an `AudioWorkletProcessor` running on the audio thread. The
-processor is shipped **inside the bundle as a string** and loaded through a Blob URL
+processor posts batches tagged with the AudioContext frame of their first sample
+(`SampleBatchInfo`), loads once per context, and is shipped **inside the bundle as a string** and loaded through a Blob URL
 (`data:` URL where object URLs are unavailable), so it works under any bundler (Next.js /
 webpack, Vite, esbuild…) with no asset copying or special loader. Two consequences:
 

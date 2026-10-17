@@ -512,7 +512,8 @@ of section 5 do that.
 - **Vocabulary.** Triads only; sevenths, sus, diminished and augmented chords would need
   more templates. Alternative key profiles (Temperley, harmonic minor) could be compared.
 - **Tempo.** Octave disambiguation (autocorrelation or harmonic sum), and a beat-phase
-  tracker for a visual metronome.
+  tracker for a visual metronome. Note-level timing (onsets, latency, rhythm scoring)
+  has its own document: [TIMING.md](TIMING.md).
 - **Pitch.** Monophonic by construction; a polyphonic reading would need a different
   model. The multiples refinement assumes a steady note over the window; vibrato is
   averaged. A recorded single-string fixture would turn the synthetic figures above into

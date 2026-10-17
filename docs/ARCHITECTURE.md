@@ -1,18 +1,19 @@
 # Architecture
 
 How AudioLab is organised, how audio flows from the microphone to the screen, and where to
-plug in new analyses. For the maths behind each stage, see [THEORY.md](THEORY.md); for
+plug in new analyses. For the maths behind each stage, see [THEORY.md](THEORY.md) and, for onsets, the gate,
+latency and rhythm, [TIMING.md](TIMING.md); for
 mounting the SDK in another application, see [INTEGRATION.md](INTEGRATION.md).
 
 ## Packages
 
 The repository is an npm workspace with two publishable packages and one private app.
 
-| Package           | Path             | What it is                                                                                                                               | Depends on                                      |
-| ----------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| `@audiolab/core`  | `packages/core`  | Framework-free TypeScript: DSP (incl. pitch and scales), engines, Web Audio adapters, settings, note maths; game engines under `./games` | nothing (`audio-decode` optional, offline only) |
-| `@audiolab/react` | `packages/react` | Hooks, components, canvas plots, games, theme helpers and the Loupe stylesheets                                                          | `@audiolab/core`; peers `react`, `react-dom`    |
-| `@audiolab/lab`   | `apps/lab`       | The demo app deployed to GitHub Pages: a shell (brand, top bar, tabs) composing the SDK                                                  | both packages                                   |
+| Package           | Path             | What it is                                                                                                                                                                                               | Depends on                                      |
+| ----------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `@audiolab/core`  | `packages/core`  | Framework-free TypeScript: DSP (incl. pitch, scales, onsets, adaptive gate), engines, timing, Web Audio adapters, settings, note maths; game engines under `./games`, rhythm assessment under `./rhythm` | nothing (`audio-decode` optional, offline only) |
+| `@audiolab/react` | `packages/react` | Hooks, components, canvas plots, games, theme helpers and the Loupe stylesheets                                                                                                                          | `@audiolab/core`; peers `react`, `react-dom`    |
+| `@audiolab/lab`   | `apps/lab`       | The demo app deployed to GitHub Pages: a shell (brand, top bar, tabs) composing the SDK                                                                                                                  | both packages                                   |
 
 Dependencies point one way: **lab → react → core**. Core never imports React or a Node
 built-in outside its `offline` subpath (ESLint enforces both), so the signal processing is
@@ -27,11 +28,15 @@ flowchart LR
     Core["@audiolab/core<br/>DSP · engines · Web Audio · settings"]
     Games["@audiolab/core/games<br/>game reducers · pools · confirmation"] --> Core
     React --> Games
+    Rhythm["@audiolab/core/rhythm<br/>timing scorer · pattern fit · tolerance"]
+    Lab --> Rhythm
     Offline["@audiolab/core/offline<br/>decode + frame files (Node)"] --> Core
 ```
 
-Each package has one main entry (`src/index.ts`) that is the public API; core adds two
-subpaths, `@audiolab/core/games` (the pure game engines, browser-safe) and
+Each package has one main entry (`src/index.ts`) that is the public API; core adds three
+subpaths, `@audiolab/core/games` (the pure game engines, browser-safe),
+`@audiolab/core/rhythm` (pure rhythm assessment over plain `{ time }` objects; it
+imports nothing from the main entry, and the main entry never imports it) and
 `@audiolab/core/offline` (Node only). Everything not re-exported from an entry is
 internal. Workspace consumers resolve the packages through the
 `audiolab-source` export condition (TypeScript `customConditions`, Vite / Vitest
@@ -47,6 +52,9 @@ build of the lab and external consumers use the `dist` built by tsup.
 | Pitch        | `core/src/analysis/pitch.ts`         | fft, math, notes                    | none               | Node (synthetic)      |
 | Scales       | `core/src/analysis/scales.ts`        | chroma (size)                       | none               | Node                  |
 | Engines      | `core/src/analysis/engine/`          | DSP modules                         | none               | Node                  |
+| Onsets, gate | `core/src/analysis/onset/`, `gate/`  | fft, chroma, pitch, chord detection | none               | Node (synthetic)      |
+| Timing       | `core/src/timing/`                   | nothing                             | none               | Node                  |
+| Rhythm       | `core/src/rhythm/`                   | nothing outside `rhythm/`           | none               | Node                  |
 | Offline      | `core/src/offline/`                  | engines, DSP, `audio-decode`        | none (Node only)   | Node, samples         |
 | Settings     | `core/src/config/`                   | DSP (types and defaults)            | none               | Node                  |
 | Audio        | `core/src/audio/`                    | nothing else in core                | Web Audio, media   | Node + fake Web Audio |
@@ -176,6 +184,20 @@ FFTs) every 1024 samples, median over three raw estimates, note-name hysteresis.
 20 Hz timer publishes the estimate to React only when it changed. The reference A4 is
 applied to the tracker without restarting the capture.
 
+### 3c. Onset path (`useOnsetAnalysis`, `startOnsetAnalysis`)
+
+The Rhythm tab mounts `useOnsetAnalysis`, which calls `startOnsetAnalysis` with
+512-sample batches. Each batch carries the AudioContext frame of its first sample; it
+goes to `AudioClockSync` (with its arrival time, for the clock map and the delivery and
+startup measures), to the pure `OnsetPipeline` (`BandLevelMeter` → `AdaptiveNoiseGate`,
+`OnsetDetector` = `SuperFluxOdf` → `OnlinePeakPicker` → `AttackEnvelope`) and to a
+`StreamHistory` kept by the hook. Accepted onsets reach the exercise through
+`onOnset` (no re-render); after each batch `onBatch` gives the analysed time, used to
+advance a `TimingScorer` and to name the note or chord of pending onsets with
+`noteAfterOnset` / `chordAfterOnset`. A 10 Hz timer publishes the diagnostic snapshot
+and the `TimingBudget`. Timestamps come from the frames, so main-thread jank delays
+verdicts but never moves notes; see [TIMING.md](TIMING.md).
+
 ### 4. UI
 
 `LoupeRoot` renders the `.loupe` element that carries every design token
@@ -198,7 +220,8 @@ the `TonalityFrame` down:
   (`CHORD_GAME_DEFAULTS`, overridable by props). Pools, draws and scoring come from
   `core/games/chordGame.ts`; the component only adds the English labels.
 - **Wolf Jumper:** consumes `instantaneousChroma` (notes: argmax of the last 3 frames,
-  confirmed twice), `chords`, and `signalLevelDb` (noise gate), through the pure
+  confirmed twice), `chords`, and `signalLevelDb` (noise gate, automatic by default:
+  the detector's `gate: "adaptive"` learns the room), through the pure
   `WolfJumperDetector` of `core/games/wolfDetector.ts`, which turns each frame into
   reducer actions (the hook only dispatches them). The game itself is the
   pure reducer of `core/games/wolfJumper.ts` with a seeded RNG, its own game clock and a
@@ -208,6 +231,9 @@ the `TonalityFrame` down:
   name them with `pitchClassName` / `chordName`.
 - **FFT tab:** spectrum plot with noise floor, slope and pentatonic overlays; onset
   envelope and beat spectrum from `useTempoAnalysis`.
+- **Rhythm tab (lab):** `useOnsetAnalysis` feeds three exercises (a written rhythm graded
+  by `fitPattern`, notes and chords scrolling to a line graded by `TimingScorer`), the
+  automatic gate with an onset timeline, and the latency budget.
 
 Plots are drawn on `<canvas>` with helpers from `ui/plotMath.ts`; long signals are
 reduced to one min/max pair per pixel column.
@@ -228,8 +254,8 @@ sequenceDiagram
         AT->>AT: AnalyserNode updates its FFT buffer
         AT->>AT: worklet process(): batcher.push(channel)
     end
-    AT-->>MT: postMessage(Float32Array[2048], transfer)
-    MT->>MT: TempoAnalyzer.pushSamples()
+    AT-->>MT: postMessage({ samples, startFrame }, transfer)
+    MT->>MT: TempoAnalyzer.pushSamples() / OnsetPipeline.push(samples, startFrame)
     loop setInterval 100 ms
         MT->>MT: getFloatFrequencyData → TonalityEngine
         MT->>R: setFrame(TonalityFrame)
