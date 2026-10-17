@@ -144,6 +144,15 @@ export {
   type OnsetPipelineResult,
 } from "./analysis/onset/onsetPipeline";
 export {
+  StreamHistory,
+  chordAfterOnset,
+  chordReadyAt,
+  noteAfterOnset,
+  noteReadyAt,
+  type ChordAfterOnsetOptions,
+  type NoteAfterOnsetOptions,
+} from "./analysis/onset/afterOnset";
+export {
   BandLevelMeter,
   type BandLevelMeterConfig,
   type BandLevelMeterOptions,
