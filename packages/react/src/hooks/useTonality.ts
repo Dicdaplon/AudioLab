@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * Live key / chord analysis: polls an AnalyserNode on the given microphone
- * source at `framesPerSecond` and runs each spectrum through the
- * `TonalityEngine`. The hook owns no microphone; pass it the `mic` from
+ * Live key / chord analysis: `startLiveAnalysis` on the given microphone
+ * source (an AnalyserNode polled at `framesPerSecond`, each spectrum run
+ * through the `TonalityEngine`), with every frame put in React state. The hook owns no microphone; pass it the `mic` from
  * `useMicrophone()` (or null to stay idle).
  *
  * The magnitude spectrum and noise floor for the FFT tab are only copied
@@ -15,7 +15,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   ANALYSIS_DEFAULTS,
-  createAnalyser,
   DEFAULT_DETECTOR_SETTINGS,
   DEFAULT_FFT_SETTINGS,
   emptyTonalityFrame,
@@ -25,7 +24,7 @@ import {
   type MicSource,
   NOISE_FLOOR_SILENCE_DB,
   type NoiseFloorMethod,
-  readSpectrumDb,
+  startLiveAnalysis,
   TonalityEngine,
   type TonalityEngineConfig,
   type TonalityFrame,
@@ -127,29 +126,26 @@ export function useTonality(mic: MicSource | null, options: UseTonalityOptions =
       return;
     }
 
-    const analyser = createAnalyser(mic.context, mic.source, { fftSize });
     const engine = new TonalityEngine(engineConfigRef.current);
     engineRef.current = engine;
+    const live = startLiveAnalysis({ context: mic.context, source: mic.source, engine, fftSize });
 
-    const tick = () => {
-      const db = readSpectrumDb(analyser);
-      setFrame(engine.processDbSpectrum(db, analyser.sampleRate));
+    live.subscribe((next, { db, sampleRate }) => {
+      setFrame(next);
 
       const { fftEnabled: wantSpectrum, noiseMethod: method } = liveOptsRef.current;
       if (wantSpectrum) {
-        const binHz = analyser.sampleRate / (2 * db.length);
+        const binHz = sampleRate / (2 * db.length);
         const spectrumDb = new Float32Array(db); // React must own its copy
         const { noiseFloorDb } = estimateNoiseFloor(spectrumDb, method, {
           toBin: Math.ceil(FFT_DISPLAY_MAX_HZ / binHz),
         });
         setSpectrum({ spectrumDb, binHz, noiseFloorDb, noiseMethod: method });
       }
-    };
+    });
 
-    const id = setInterval(tick, 1000 / framesPerSecond);
     return () => {
-      clearInterval(id);
-      analyser.analyser.disconnect();
+      live.stop();
       if (engineRef.current === engine) engineRef.current = null;
     };
   }, [mic, fftSize, framesPerSecond]);

@@ -149,6 +149,13 @@ export {
   type AnalyserSetup,
 } from "./audio/analyser";
 export {
+  startLiveAnalysis,
+  type LiveAnalysis,
+  type LiveAnalysisOptions,
+  type LiveFrameListener,
+  type LiveSpectrum,
+} from "./audio/liveAnalysis";
+export {
   startSampleCapture,
   type CaptureMethod,
   type SampleCapture,

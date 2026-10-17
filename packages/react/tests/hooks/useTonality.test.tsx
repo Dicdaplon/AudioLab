@@ -101,6 +101,9 @@ describe("useTonality", () => {
     rerender({ m: null });
     expect(vi.getTimerCount()).toBe(0);
     expect(context.analysers[0].disconnect).toHaveBeenCalledTimes(1);
+    // The source → analyser link is cut too (the source stays the mic's).
+    expect(mic.source.disconnect).toHaveBeenCalledWith(context.analysers[0]);
+    expect(context.close).not.toHaveBeenCalled();
     expect(result.current.chords).toEqual([]);
   });
 
