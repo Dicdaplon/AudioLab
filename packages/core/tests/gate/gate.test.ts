@@ -88,6 +88,10 @@ describe("AdaptiveNoiseGate", () => {
     expect(s.open).toBe(true);
     s = feed(gate, -65, 200);
     expect(s.warmingUp).toBe(false);
+    // The floor climbs from −90 at 6 dB/s: still learning, still open.
+    expect(s.floorDb).toBeCloseTo(-86.4, 0);
+    expect(s.open).toBe(true);
+    s = feed(gate, -65, 4400);
     expect(s.floorDb).toBeCloseTo(-65, 0);
     s = feed(gate, -65, NOISE_GATE_DEFAULTS.holdMs + 20);
     expect(s.open).toBe(false);
@@ -96,7 +100,7 @@ describe("AdaptiveNoiseGate", () => {
 
   it("opens instantly 6 dB above the floor and holds through a decay", () => {
     const gate = new AdaptiveNoiseGate();
-    feed(gate, -65, 1500);
+    feed(gate, -65, 5000);
     expect(gate.open).toBe(false);
     expect(gate.push({ levelDb: -58, dtMs: 10 }).open).toBe(true);
     // Between the thresholds (−62..−59): stays open however long.
@@ -108,17 +112,27 @@ describe("AdaptiveNoiseGate", () => {
 
   it("lets a tonal cue open it whatever the level", () => {
     const gate = new AdaptiveNoiseGate();
-    feed(gate, -65, 1500);
+    feed(gate, -65, 5000);
+    expect(gate.open).toBe(false);
     expect(gate.push({ levelDb: -64, dtMs: 10, tonal: true }).open).toBe(true);
   });
 
   it("follows a louder room and flags it noisy, without blocking", () => {
     const gate = new AdaptiveNoiseGate();
     feed(gate, -70, 1000);
-    const s = feed(gate, -38, 8000);
+    const s = feed(gate, -38, 14000);
     expect(s.floorDb).toBeCloseTo(-38, 0);
     expect(s.noisy).toBe(true);
     expect(gate.push({ levelDb: -30, dtMs: 10 }).open).toBe(true);
+  });
+
+  it("does not learn a player who starts at once at a steady level", () => {
+    const gate = new AdaptiveNoiseGate();
+    // Strumming from the first second: −30 dB with ±1 dB, no pause, for 5 s.
+    let s = gate.state;
+    for (let t = 0; t < 5000; t += 10) s = gate.push({ levelDb: -30 + Math.sin(t / 50), dtMs: 10 });
+    expect(s.open).toBe(true);
+    expect(s.floorDb).toBeLessThan(-55);
   });
 
   it("clamps the floor and survives silence and NaN", () => {
@@ -131,7 +145,7 @@ describe("AdaptiveNoiseGate", () => {
 
   it("keeps the floor when reconfigured, forgets it on reset", () => {
     const gate = new AdaptiveNoiseGate();
-    feed(gate, -50, 1000);
+    feed(gate, -50, 7000);
     gate.configure({ openMarginDb: 10 });
     expect(gate.state.floorDb).toBeCloseTo(-50, 0);
     expect(gate.config.openMarginDb).toBe(10);
@@ -154,10 +168,10 @@ describe("OnsetPipeline", () => {
     expect(pipeline.counts.accepted).toBe(10);
   });
 
-  it("rejects candidates that do not rise above the floor", () => {
-    // Bursty noise: short random bursts 3 dB above a steady floor.
+  it("ignores bursts of room noise and learns their level", () => {
+    // Noise with bursts 3 dB louder, for 12 s: no onset, floor learnt.
     const rand = mulberry32(4);
-    const n = 4 * SR;
+    const n = 12 * SR;
     const signal = new Float32Array(n);
     for (let i = 0; i < n; i++) {
       const burst = Math.floor(i / 2400) % 7 === 3 ? 1.4 : 1;
@@ -166,6 +180,24 @@ describe("OnsetPipeline", () => {
     const pipeline = new OnsetPipeline({ sampleRate: SR });
     const onsets = pushChunks(signal, (c, f) => pipeline.push(c, f).onsets);
     expect(onsets).toHaveLength(0);
-    expect(pipeline.gate.state.floorDb).toBeGreaterThan(-50);
+    expect(pipeline.gate.state.floorDb).toBeCloseTo(-45, 0);
+    // −45 dBFS of background is a loud room: flagged, yet nothing is blocked.
+    expect(pipeline.gate.state.noisy).toBe(true);
+  });
+
+  it("rejects candidates whose attack stays under floor + margin", () => {
+    const hits = Array.from({ length: 6 }, (_, i) => ({
+      time: 9 + i * 0.5,
+      midi: 64,
+      amplitude: 0.04,
+    }));
+    const { signal } = performance(hits, { seconds: 12.5, noiseRms: 0.006 });
+    const run = (onsetMarginDb: number) => {
+      const pipeline = new OnsetPipeline({ sampleRate: SR, onsetMarginDb });
+      pushChunks(signal, (c, f) => pipeline.push(c, f).onsets);
+      return pipeline.counts;
+    };
+    expect(run(6)).toEqual({ accepted: 6, rejected: 0 });
+    expect(run(25)).toEqual({ accepted: 0, rejected: 6 });
   });
 });

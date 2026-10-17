@@ -6,13 +6,21 @@
  * slider, and every rule leans towards letting sound through, because
  * cutting a real note is worse for a learner than reacting to a noise:
  *
- *   floor   = min of the smoothed level over the last `floorWindowMs`
+ *   floor   = min of the smoothed level over the last `floorWindowMs`,
+ *             starting at `minFloorDb` and rising at most
+ *             `floorRiseDbPerSecond` (default 6 dB/s); it falls at once
  *   opens   when level ≥ floor + `openMarginDb`   (default 6 dB, instantly)
  *           or `tonal` is true (a caller's cue, e.g. a clear pitch)
  *   closes  when level < floor + `closeMarginDb`  (default 3 dB, hysteresis)
  *           and not tonal, for `holdMs` in a row   (default 250 ms: a guitar
  *           decays slowly and must not be chopped between notes)
  *   starts  open for `warmupMs` (default 500 ms) while the floor is learnt
+ *
+ * The rise limit is what keeps a player who starts at once, and keeps a
+ * steady level, from being learnt as background: the floor needs 10 s to
+ * climb from −90 to −30 dBFS, and any decay between notes pulls it back
+ * down. In a quiet room it reaches the real background (around −65 dBFS)
+ * in about 4 s, with the gate a little too open meanwhile.
  *
  * The floor is clamped to [`minFloorDb`, `maxFloorDb`]. Above
  * `noisyFloorDb` the room is flagged `noisy`: the gate keeps working with
@@ -48,6 +56,8 @@ export interface NoiseGateConfig {
   floorWindowMs: number;
   /** Smoothing of the level that feeds the floor (one-pole), in ms. Default 50. */
   floorSmoothingMs: number;
+  /** Fastest rise of the floor, in dB per second. Default 6. */
+  floorRiseDbPerSecond: number;
   /** Floor clamp, in dBFS. Defaults −90 and −30. */
   minFloorDb: number;
   maxFloorDb: number;
@@ -62,6 +72,7 @@ export const NOISE_GATE_DEFAULTS: NoiseGateConfig = {
   warmupMs: 500,
   floorWindowMs: 6000,
   floorSmoothingMs: 50,
+  floorRiseDbPerSecond: 6,
   minFloorDb: -90,
   maxFloorDb: -30,
   noisyFloorDb: -45,
@@ -84,7 +95,7 @@ export interface NoiseGateState {
   closeThresholdDb: number;
   /** True during the warm-up (the gate is held open). */
   warmingUp: boolean;
-  /** True when the unclamped floor is above `noisyFloorDb`. */
+  /** True when the floor is above `noisyFloorDb`. */
   noisy: boolean;
   /** Last input level, in dBFS. */
   levelDb: number;
@@ -131,8 +142,11 @@ export function stepNoiseGate(
     windowMs: config.floorWindowMs,
     subWindows: 6,
   });
-  const rawFloor = levelFloorOf(floor) ?? config.minFloorDb;
-  const floorDb = Math.min(config.maxFloorDb, Math.max(config.minFloorDb, rawFloor));
+  const target = Math.min(
+    config.maxFloorDb,
+    Math.max(config.minFloorDb, levelFloorOf(floor) ?? config.minFloorDb),
+  );
+  const floorDb = Math.min(target, state.floorDb + (config.floorRiseDbPerSecond * dtMs) / 1000);
   const openThresholdDb = floorDb + config.openMarginDb;
   const closeThresholdDb = floorDb + Math.min(config.closeMarginDb, config.openMarginDb);
 
@@ -159,7 +173,7 @@ export function stepNoiseGate(
     openThresholdDb,
     closeThresholdDb,
     warmingUp,
-    noisy: rawFloor > config.noisyFloorDb,
+    noisy: floorDb > config.noisyFloorDb,
     levelDb: level,
     belowMs,
     elapsedMs,
