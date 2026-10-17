@@ -30,7 +30,7 @@ import { MicPrompt } from "../MicPrompt";
 import { DetectionStatus, Hud } from "./Hud";
 import { NoiseGate } from "./NoiseGate";
 import { Scene } from "./Scene";
-import { useWolfJumper } from "./useWolfJumper";
+import { useWolfJumper, type GateSetting } from "./useWolfJumper";
 
 interface WolfJumperProps {
   /** Instantaneous chroma (per-frame, ~100 ms). */
@@ -46,7 +46,9 @@ interface WolfJumperProps {
   /** Game tuning (note pool, bonus chords, speeds, health, ...), read once at mount. */
   config?: Partial<WolfJumperConfig>;
   /** Detection tuning (smoothing, confirmations, thresholds, note source, chord policy). */
-  detection?: Partial<Omit<WolfDetectorConfig, "noiseGateDb">>;
+  detection?: Partial<Omit<WolfDetectorConfig, "noiseGateDb" | "gate">>;
+  /** Initial noise gate: "auto" (learns the room, nothing to set) or "manual". Default "auto". */
+  gate?: GateSetting;
   /** Latest `usePitch` estimate, read with `detection.noteSource: "pitch"`. */
   pitch?: PitchEstimate | null;
 }
@@ -60,21 +62,24 @@ export function WolfJumper({
   config,
   detection,
   pitch,
+  gate: initialGate,
 }: WolfJumperProps) {
   // Under reduced motion nothing moves until the player asks for it.
   const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const [armed, setArmed] = useState(false);
   const playing = running && (!reducedMotion || armed);
 
-  const { store, noiseGateDb, setNoiseGateDb, gateOpen, note, reset } = useWolfJumper({
-    instantaneousChroma,
-    chords,
-    running: playing,
-    signalLevelDb,
-    pitch,
-    config,
-    detection,
-  });
+  const { store, noiseGateDb, setNoiseGateDb, gateMode, setGateMode, gate, gateOpen, note, reset } =
+    useWolfJumper({
+      instantaneousChroma,
+      chords,
+      running: playing,
+      signalLevelDb,
+      pitch,
+      config,
+      detection,
+      gate: initialGate,
+    });
   const tuning = store.getState().config;
 
   return (
@@ -114,6 +119,9 @@ export function WolfJumper({
           thresholdDb={noiseGateDb}
           gateOpen={gateOpen}
           onThresholdChange={setNoiseGateDb}
+          mode={gateMode}
+          onModeChange={setGateMode}
+          gate={gate}
         />
 
         <DetectionStatus

@@ -75,6 +75,36 @@ describe("WolfJumperDetector", () => {
     expect(state().score).toBe(1);
   });
 
+  it("adaptive gate: learns the room, then lets notes through without a threshold", () => {
+    const { detector, dispatch, push, state } = setup({ gate: "adaptive" });
+    expect(detector.gate).toBeNull(); // nothing pushed yet
+    // 6 s of room noise at −70 dB: the floor is learnt, the gate closes.
+    for (let i = 0; i < 60; i++) {
+      push({ instantaneousChroma: chroma(5, 0.3), signalLevelDb: -70 + (i % 2) });
+    }
+    expect(detector.gateOpen).toBe(false);
+    expect(detector.gate?.floorDb).toBeCloseTo(-70, 0);
+    dispatch({ type: "spawnEnemy", pc: 0 });
+    // A note 10 dB above the room (−60 dB, which the fixed −60 gate would cut).
+    push({ instantaneousChroma: chroma(0), signalLevelDb: -60 });
+    push({ instantaneousChroma: chroma(0), signalLevelDb: -60 });
+    expect(detector.gateOpen).toBe(true);
+    expect(state().score).toBe(1);
+    expect(setup().detector.gate).toBeNull();
+  });
+
+  it("adaptive gate: a clear pitch opens it even when quiet", () => {
+    const { detector, push } = setup({ gate: "adaptive", noteSource: "pitch" });
+    for (let i = 0; i < 60; i++) push({ instantaneousChroma: chroma(5, 0.3), signalLevelDb: -70 });
+    expect(detector.gateOpen).toBe(false);
+    push({
+      instantaneousChroma: chroma(0),
+      signalLevelDb: -68,
+      pitch: { frequency: 261.6, midi: 60, pitchClass: 0, cents: 0, clarity: 0.97 },
+    });
+    expect(detector.gateOpen).toBe(true);
+  });
+
   it("collects a bonus when its chord is held for three frames", () => {
     const { dispatch, push, state } = setup();
     dispatch({ type: "spawnBonus", bonusType: "shield", chord: { root: 7, quality: "maj" } });

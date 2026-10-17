@@ -17,7 +17,11 @@
  *     `minChordProbability`: robust. Given the chords the game is waiting
  *     for, a detection that matches one of them under `chordAccept` counts
  *     as that chord (so "triad" lets E collect an E7 bonus).
- *   - Both are gated: frames at or below `noiseGateDb` count as silence.
+ *   - Both are gated. With `gate: "fixed"` (the default) frames at or below
+ *     `noiseGateDb` count as silence. With `gate: "adaptive"` an adaptive
+ *     noise gate learns the room's background from the frame levels and
+ *     opens 6 dB above it (a clear pitch opens it too), so the player has
+ *     nothing to set; the step reports its state as `gate`.
  *   - Notes outside the note pool never count (the display still gets them).
  *   - A frame already seen (same `instantaneousChroma` / `chords` objects)
  *     is not counted twice, so pushing from a re-render or a StrictMode
@@ -29,6 +33,11 @@
 
 import type { ChordScore } from "../analysis/chordDetection";
 import type { PitchEstimate } from "../analysis/pitch";
+import {
+  initialNoiseGateState,
+  stepNoiseGate,
+  type NoiseGateState,
+} from "../analysis/gate/noiseGate";
 import { chordKey, matchesTarget, parseChordKey, type ChordAcceptPolicy } from "./chordRef";
 import type { ChordRef } from "./chordRef";
 import { EMPTY_CONFIRMATION, stepConfirmation, type ConfirmationState } from "./confirmation";
@@ -45,9 +54,16 @@ import {
 
 export type NoteSource = "chroma" | "pitch";
 
+/** "fixed": the `noiseGateDb` threshold; "adaptive": learnt from the room. */
+export type GateMode = "fixed" | "adaptive";
+
 export interface WolfDetectorConfig extends WolfJumperDetectionConfig {
-  /** Frames whose `signalLevelDb` is at or below this level are ignored. */
+  /** Frames whose `signalLevelDb` is at or below this level are ignored (`gate: "fixed"`). */
   noiseGateDb: number;
+  /** How silence is told apart. Default "fixed". */
+  gate: GateMode;
+  /** Time between two analysis frames, in ms, for the adaptive gate. Default 100. */
+  frameMs: number;
   /** Where the played note comes from. */
   noteSource: NoteSource;
   /** Minimum clarity of a pitch estimate (`noteSource: "pitch"`). */
@@ -59,6 +75,8 @@ export interface WolfDetectorConfig extends WolfJumperDetectionConfig {
 export const WOLF_DETECTOR_DEFAULTS: WolfDetectorConfig = {
   ...WOLF_JUMPER_DETECTION_DEFAULTS,
   noiseGateDb: -60,
+  gate: "fixed",
+  frameMs: 100,
   noteSource: "chroma",
   minPitchClarity: 0.9,
   chordAccept: "exact",
@@ -82,6 +100,8 @@ export interface WolfDetectorState {
   lastChroma: Float32Array | null;
   lastChords: readonly ChordScore[] | null;
   lastPitch: PitchEstimate | null | undefined;
+  /** Adaptive gate state, stepped on new frames only. */
+  gate: NoiseGateState;
 }
 
 export const INITIAL_WOLF_DETECTOR_STATE: WolfDetectorState = {
@@ -91,6 +111,7 @@ export const INITIAL_WOLF_DETECTOR_STATE: WolfDetectorState = {
   lastChroma: null,
   lastChords: null,
   lastPitch: undefined,
+  gate: initialNoiseGateState(),
 };
 
 export interface WolfDetectorStep {
@@ -100,6 +121,8 @@ export interface WolfDetectorStep {
   /** The note heard, for display; may be outside the note pool. */
   note: DominantNote | null;
   gateOpen: boolean;
+  /** Adaptive gate state (background, thresholds); null with `gate: "fixed"`. */
+  gate: NoiseGateState | null;
 }
 
 /** Chords of the bonuses still on screen: the `targetChords` of a push. */
@@ -114,11 +137,27 @@ export function stepWolfDetector(
   targetChords: readonly ChordRef[] | undefined,
   config: WolfDetectorConfig,
 ): WolfDetectorStep {
-  const gateOpen = frame.signalLevelDb > config.noiseGateDb;
   const actions: GameAction[] = [];
+  const newChroma = frame.instantaneousChroma !== state.lastChroma;
+
+  // --- Gate ---
+  let gateState = state.gate;
+  let gateOpen: boolean;
+  if (config.gate === "adaptive") {
+    if (newChroma || frame.pitch !== state.lastPitch) {
+      const clear = (frame.pitch?.clarity ?? 0) >= config.minPitchClarity;
+      gateState = stepNoiseGate(state.gate, {
+        levelDb: frame.signalLevelDb,
+        dtMs: config.frameMs,
+        tonal: config.noteSource === "pitch" && clear,
+      });
+    }
+    gateOpen = gateState.open;
+  } else {
+    gateOpen = frame.signalLevelDb > config.noiseGateDb;
+  }
 
   // --- Notes ---
-  const newChroma = frame.instantaneousChroma !== state.lastChroma;
   const history = newChroma
     ? pushChromaFrame(state.history, frame.instantaneousChroma, config.noteSmoothFrames)
     : state.history;
@@ -185,10 +224,12 @@ export function stepWolfDetector(
       lastChroma: frame.instantaneousChroma,
       lastChords: frame.chords,
       lastPitch: frame.pitch,
+      gate: gateState,
     },
     actions,
     note,
     gateOpen,
+    gate: config.gate === "adaptive" ? gateState : null,
   };
 }
 
@@ -197,6 +238,7 @@ export class WolfJumperDetector {
   private state: WolfDetectorState = INITIAL_WOLF_DETECTOR_STATE;
   private lastNote: DominantNote | null = null;
   private lastGateOpen = false;
+  private lastGate: NoiseGateState | null = null;
 
   constructor(config: Partial<WolfDetectorConfig> = {}) {
     this.cfg = resolveConfig(WOLF_DETECTOR_DEFAULTS, config);
@@ -220,6 +262,11 @@ export class WolfJumperDetector {
     return this.lastGateOpen;
   }
 
+  /** Adaptive gate state after the last frame, or null with `gate: "fixed"`. */
+  get gate(): NoiseGateState | null {
+    return this.lastGate;
+  }
+
   /**
    * Feed one analysis frame; returns the actions to dispatch. Pass the
    * game's `config.notePool`, and `aliveBonusChords(state)` as
@@ -234,6 +281,7 @@ export class WolfJumperDetector {
     this.state = step.state;
     this.lastNote = step.note;
     this.lastGateOpen = step.gateOpen;
+    this.lastGate = step.gate;
     return step.actions;
   }
 
@@ -242,5 +290,6 @@ export class WolfJumperDetector {
     this.state = INITIAL_WOLF_DETECTOR_STATE;
     this.lastNote = null;
     this.lastGateOpen = false;
+    this.lastGate = null;
   }
 }

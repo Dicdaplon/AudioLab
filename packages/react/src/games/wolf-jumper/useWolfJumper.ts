@@ -10,11 +10,13 @@
  *     `WolfJumperDetector`: each new analysis frame is pushed to it while
  *     playing, and the actions it returns are dispatched to the store. It is
  *     reset on pause, so a resumed game starts from fresh audio.
+ *   - The noise gate is automatic by default (the detector's adaptive gate
+ *     learns the room); setting a threshold switches it to manual.
  */
 
 import { useCallback, useEffect, useState } from "react";
 
-import type { ChordScore, PitchEstimate } from "@audiolab/core";
+import type { ChordScore, NoiseGateState, PitchEstimate } from "@audiolab/core";
 import {
   aliveBonusChords,
   createInitialState,
@@ -42,14 +44,25 @@ export interface WolfJumperInputs {
   /** Game tuning (note pool, bonus chords, speeds, health, ...), read once at mount. */
   config?: Partial<WolfJumperConfig>;
   /** Detection tuning (smoothing, confirmations, thresholds, note source, chord policy). */
-  detection?: Partial<Omit<WolfDetectorConfig, "noiseGateDb">>;
+  detection?: Partial<Omit<WolfDetectorConfig, "noiseGateDb" | "gate">>;
+  /** Initial gate mode. Default "auto". */
+  gate?: GateSetting;
 }
+
+/** "auto": learnt from the room; "manual": the player's threshold. */
+export type GateSetting = "auto" | "manual";
 
 export interface WolfJumperController {
   store: GameStore;
   gameOver: boolean;
+  /** Manual threshold, in dB (used in manual mode). */
   noiseGateDb: number;
+  /** Set the manual threshold; switches the gate to manual. */
   setNoiseGateDb: (db: number) => void;
+  gateMode: GateSetting;
+  setGateMode: (mode: GateSetting) => void;
+  /** Automatic gate state (background, threshold), null in manual mode or before a frame. */
+  gate: NoiseGateState | null;
   gateOpen: boolean;
   /** Smoothed strongest pitch class, for display (may be outside the note pool). */
   note: DominantNote | null;
@@ -66,6 +79,7 @@ export function useWolfJumper({
   pitch,
   config,
   detection,
+  gate: initialGate = "auto",
 }: WolfJumperInputs): WolfJumperController {
   const [store] = useState<GameStore>(() =>
     createStore(gameReducer, createInitialState(randomSeed(), config)),
@@ -79,8 +93,14 @@ export function useWolfJumper({
     useCallback((dtMs: number) => store.dispatch({ type: "tick", dtMs }), [store]),
   );
 
-  const [noiseGateDb, setNoiseGateDb] = useState(DEFAULT_NOISE_GATE_DB);
-  const gateOpen = signalLevelDb > noiseGateDb;
+  const [noiseGateDb, setManualDb] = useState(DEFAULT_NOISE_GATE_DB);
+  const [gateMode, setGateMode] = useState<GateSetting>(initialGate);
+  const setNoiseGateDb = useCallback((db: number) => {
+    setManualDb(db);
+    setGateMode("manual");
+  }, []);
+  const [gate, setGate] = useState<NoiseGateState | null>(null);
+  const gateOpen = gateMode === "manual" ? signalLevelDb > noiseGateDb : gate === null || gate.open;
 
   const [detector] = useState(
     () => new WolfJumperDetector({ ...detection, noiseGateDb: DEFAULT_NOISE_GATE_DB }),
@@ -107,6 +127,7 @@ export function useWolfJumper({
       minPitchClarity,
       chordAccept,
       noiseGateDb,
+      gate: gateMode === "auto" ? "adaptive" : "fixed",
     });
   }, [
     detector,
@@ -119,6 +140,7 @@ export function useWolfJumper({
     minPitchClarity,
     chordAccept,
     noiseGateDb,
+    gateMode,
   ]);
 
   const [note, setNote] = useState<DominantNote | null>(null);
@@ -136,11 +158,23 @@ export function useWolfJumper({
     actions.forEach(store.dispatch);
     const heard = detector.note;
     setNote((prev) => (prev?.pc === heard?.pc && prev?.energy === heard?.energy ? prev : heard));
+    setGate(detector.gate);
   }, [detector, store, playing, instantaneousChroma, chords, signalLevelDb, pitch]);
 
   const reset = useCallback(() => store.dispatch({ type: "reset" }), [store]);
 
-  return { store, gameOver, noiseGateDb, setNoiseGateDb, gateOpen, note, reset };
+  return {
+    store,
+    gameOver,
+    noiseGateDb,
+    setNoiseGateDb,
+    gateMode,
+    setGateMode,
+    gate: gateMode === "auto" ? gate : null,
+    gateOpen,
+    note,
+    reset,
+  };
 }
 
 /**

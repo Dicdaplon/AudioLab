@@ -91,6 +91,7 @@ export {
 } from "./games/chord-game/ChordGame";
 export { CHORD_POOL_LABELS_EN } from "./games/chord-game/labels";
 export { WolfJumper } from "./games/wolf-jumper/WolfJumper";
+export type { GateSetting } from "./games/wolf-jumper/useWolfJumper";
 export { bonusTypeLabels, type BonusTypeLabels } from "./games/wolf-jumper/constants";
 export { MicPrompt } from "./games/MicPrompt";
 

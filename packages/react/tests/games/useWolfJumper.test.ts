@@ -111,8 +111,8 @@ describe("useWolfJumper", () => {
     expect(hook.result.current.note?.pc).toBe(0);
   });
 
-  it("ignores notes while the noise gate is closed", () => {
-    const { hook, update, state } = setup({ signalLevelDb: -80 });
+  it("ignores notes while the manual noise gate is closed", () => {
+    const { hook, update, state } = setup({ signalLevelDb: -80, gate: "manual" });
     act(() => hook.result.current.store.dispatch({ type: "spawnEnemy", pc: 0 }));
     expect(hook.result.current.gateOpen).toBe(false);
     for (let i = 0; i < 4; i++) update({ instantaneousChroma: chroma(0) });
@@ -122,6 +122,25 @@ describe("useWolfJumper", () => {
     update({ instantaneousChroma: chroma(0) });
     update({ instantaneousChroma: chroma(0) });
     expect(state().score).toBe(1);
+  });
+
+  it("gates automatically by default and switches to manual on a threshold", () => {
+    const { hook, update, state } = setup({ signalLevelDb: -70 });
+    expect(hook.result.current.gateMode).toBe("auto");
+    // Room noise: the gate learns it, then closes.
+    for (let i = 0; i < 60; i++) update({ instantaneousChroma: chroma(5, 0.3 + i * 0.001) });
+    expect(hook.result.current.gate?.floorDb).toBeCloseTo(-70, 0);
+    expect(hook.result.current.gateOpen).toBe(false);
+    // A note 8 dB above the room gets through.
+    act(() => hook.result.current.store.dispatch({ type: "spawnEnemy", pc: 0 }));
+    update({ instantaneousChroma: chroma(0), signalLevelDb: -62 });
+    update({ instantaneousChroma: chroma(0, 0.81), signalLevelDb: -62 });
+    expect(state().score).toBe(1);
+
+    act(() => hook.result.current.setNoiseGateDb(-40));
+    expect(hook.result.current.gateMode).toBe("manual");
+    expect(hook.result.current.gate).toBeNull();
+    expect(hook.result.current.gateOpen).toBe(false);
   });
 
   it("collects a bonus when its chord is held for three frames", () => {

@@ -434,6 +434,23 @@
   background: var(--al-viz-gate-open);
 }
 
+/* The learnt room background, in automatic mode. */
+.al-meter__floor {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--floor, 0%);
+  width: 2px;
+  margin-left: -1px;
+  background: var(--al-viz-noise-floor);
+}
+
+.al-gate__hint {
+  margin: 0;
+  font-size: var(--al-step--1);
+  color: var(--al-color-ink-muted);
+}
+
 .al-meter__value {
   min-width: 5.5ch;
   padding: 0 var(--al-sp-2);

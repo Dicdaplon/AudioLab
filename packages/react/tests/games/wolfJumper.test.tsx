@@ -83,8 +83,16 @@ describe("WolfJumper", () => {
     expect(frameCallbacks.size).toBe(1);
   });
 
+  it("gates automatically, with no slider until the player asks for one", () => {
+    const view = renderGame();
+    expect(view.container.querySelector(".al-gate__value")?.textContent).toBe("Auto");
+    expect(view.queryByRole("slider")).toBeNull();
+    expect(view.getByText("Adjusts to your room by itself.")).toBeTruthy();
+  });
+
   it("moves the noise gate threshold with the slider", () => {
     const view = renderGame();
+    fireEvent.click(view.getByRole("switch", { name: "Set it myself" }));
     fireEvent.change(view.getByRole("slider"), { target: { value: "-25" } });
     expect(view.container.querySelector(".al-gate__value")?.textContent).toBe("-25 dB");
     expect(view.container.querySelector(".al-meter__gate:not([data-open])")).not.toBeNull();

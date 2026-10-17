@@ -76,6 +76,7 @@ export {
   WolfJumperDetector,
   aliveBonusChords,
   stepWolfDetector,
+  type GateMode,
   type NoteSource,
   type WolfDetectorConfig,
   type WolfDetectorFrame,
