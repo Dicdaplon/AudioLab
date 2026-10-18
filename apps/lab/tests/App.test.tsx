@@ -144,7 +144,7 @@ describe("App", () => {
     render(<App />);
     const vocabulary = screen.getByLabelText("Chords it knows") as HTMLSelectElement;
     expect(vocabulary.value).toBe("triads");
-    expect(document.body.textContent).toContain("A C7 is read as C.");
+    expect(document.body.textContent).toContain("a C7 shows as C");
     expect(screen.queryByLabelText("A chord counts when")).toBeNull();
 
     open("Chord game");

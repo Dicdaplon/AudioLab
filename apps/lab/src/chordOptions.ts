@@ -14,17 +14,17 @@ export const VOCABULARIES: Readonly<
 > = {
   triads: {
     label: "Major and minor only (C, Am…)",
-    hint: "The safest: 24 chords to choose from. A C7 is read as C.",
+    hint: "Three-note chords, 24 in all, each clearly different: the steadiest. Expect the plain chord only (a C7 shows as C), and now and then a minor chord flashing major.",
     qualities: TRIAD_QUALITIES,
   },
   sevenths: {
     label: "Add the sevenths (C7, Cmaj7, Am7)",
-    hint: "More names, a little more hesitation: Am7 and C6 share their notes.",
+    hint: "A seventh is a three-note chord plus one note, so it hides a smaller chord inside (Am7 holds every note of C). Expect the full name when that fourth note rings clearly, the smaller chord when it is quiet.",
     qualities: ["maj", "min", "dom7", "maj7", "min7"],
   },
   all: {
     label: "Every chord type (6, sus, dim too)",
-    hint: "The richest, and the most hesitant: chords that share notes get one name.",
+    hint: "Some of these are the very same notes under two names (C6 and Am7, Csus2 and Gsus4). Expect the most detail and the most hesitation: such chords can swap names, and that is not a playing mistake.",
     qualities: CHORD_QUALITIES,
   },
 };
