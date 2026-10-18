@@ -35,6 +35,14 @@ import {
   type Vocabulary,
 } from "./chordOptions";
 import { About } from "./components/About";
+import {
+  ChordGameHow,
+  ChordHow,
+  KeyHow,
+  SpectrumHow,
+  TempoHow,
+  WolfJumperHow,
+} from "./how/explanations";
 import { ChordOptions } from "./components/ChordOptions";
 import { Brand } from "./components/Brand";
 import { RhythmTab } from "./components/rhythm/RhythmTab";
@@ -143,13 +151,19 @@ export default function App() {
           )}
 
           {tab === "detector" && (
-            <DetectorTab
-              data={tonality}
-              settings={settings}
-              onSettingsChange={setSettings}
-              colourByPitch={colourByPitch}
-              onColourByPitchChange={setColourByPitch}
-            />
+            <>
+              <DetectorTab
+                data={tonality}
+                settings={settings}
+                onSettingsChange={setSettings}
+                colourByPitch={colourByPitch}
+                onColourByPitchChange={setColourByPitch}
+              />
+              <div className="lab-how">
+                <KeyHow />
+                <ChordHow />
+              </div>
+            </>
           )}
 
           {tab === "tuner" && (
@@ -171,33 +185,43 @@ export default function App() {
           )}
 
           {tab === "game" && (
-            <ChordGame
-              chords={tonality.chords}
-              running={microphone.running}
-              onStart={microphone.start}
-              pools={chordGamePools(vocabulary)}
-              accept={accept}
-              minProbability={minChordProbability(vocabulary)}
-            />
+            <>
+              <ChordGame
+                chords={tonality.chords}
+                running={microphone.running}
+                onStart={microphone.start}
+                pools={chordGamePools(vocabulary)}
+                accept={accept}
+                minProbability={minChordProbability(vocabulary)}
+              />
+              <div className="lab-how">
+                <ChordGameHow />
+              </div>
+            </>
           )}
 
           {tab === "jumper" && (
-            <WolfJumper
-              // The bonus chords are read at mount: a new vocabulary starts a new game.
-              key={vocabulary}
-              config={{ bonusChords: wolfBonusChords(vocabulary) }}
-              detection={{
-                noteSource,
-                chordAccept: accept,
-                minChordProbability: minChordProbability(vocabulary),
-              }}
-              pitch={pitch.estimate}
-              instantaneousChroma={tonality.instantaneousChroma}
-              chords={tonality.chords}
-              running={microphone.running}
-              signalLevelDb={tonality.signalLevelDb}
-              onStart={microphone.start}
-            />
+            <>
+              <WolfJumper
+                // The bonus chords are read at mount: a new vocabulary starts a new game.
+                key={vocabulary}
+                config={{ bonusChords: wolfBonusChords(vocabulary) }}
+                detection={{
+                  noteSource,
+                  chordAccept: accept,
+                  minChordProbability: minChordProbability(vocabulary),
+                }}
+                pitch={pitch.estimate}
+                instantaneousChroma={tonality.instantaneousChroma}
+                chords={tonality.chords}
+                running={microphone.running}
+                signalLevelDb={tonality.signalLevelDb}
+                onStart={microphone.start}
+              />
+              <div className="lab-how">
+                <WolfJumperHow />
+              </div>
+            </>
           )}
 
           {tab === "rhythm" && (
@@ -209,12 +233,18 @@ export default function App() {
           )}
 
           {tab === "fft" && (
-            <FftTab
-              mic={microphone.mic}
-              spectrum={tonality.fft}
-              settings={fftSettings}
-              onSettingsChange={setFftSettings}
-            />
+            <>
+              <FftTab
+                mic={microphone.mic}
+                spectrum={tonality.fft}
+                settings={fftSettings}
+                onSettingsChange={setFftSettings}
+              />
+              <div className="lab-how">
+                <SpectrumHow />
+                <TempoHow />
+              </div>
+            </>
           )}
 
           {tab === "about" && <About />}

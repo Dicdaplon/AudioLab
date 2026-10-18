@@ -629,3 +629,15 @@ body {
 .rhythm__score[data-cursor="on"] .rhythm__cursor {
   opacity: 1;
 }
+
+/* --- How? sheets under a tab ----------------------------------------------- */
+
+.lab-how {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--al-sp-5);
+}
+
+.lab-how .al-how:last-child {
+  border-bottom: 1px dashed var(--al-color-line-strong);
+}

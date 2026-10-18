@@ -9,6 +9,7 @@ import {
   usePlayAlong,
 } from "@audiolab/react";
 
+import { PlayAlongHow } from "../../how/explanations";
 import type { ExerciseEnv } from "./env";
 import { ListeningPanel } from "./ListeningPanel";
 import { MetronomeBar } from "./MetronomeBar";
@@ -127,6 +128,7 @@ export function RhythmTab({ mic, running, onStart }: RhythmTabProps) {
         {(exercise === "notes" || exercise === "chords") && (
           <ScrollingLane key={exercise} mode={exercise} env={env} />
         )}
+        <PlayAlongHow />
       </Panel>
 
       <div className="rhythm__diagnostics">

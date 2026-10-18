@@ -135,7 +135,9 @@ describe("App", () => {
     render(<App />);
     for (const tab of ["Chord game", "Wolf Jumper"]) {
       fireEvent.click(screen.getByRole("tab", { name: tab }));
-      expect(screen.getByRole("tabpanel").textContent).not.toMatch(
+      const copy = screen.getByRole("tabpanel").cloneNode(true) as HTMLElement;
+      copy.querySelectorAll(".al-how").forEach((h) => h.remove());
+      expect(copy.textContent).not.toMatch(
         /frame|top-1|probability|chroma bin|smoothing|confirmation|MPM/i,
       );
     }
@@ -157,13 +159,34 @@ describe("App", () => {
     expect(play().textContent).toMatch(/Start the microphone first/);
     fireEvent.change(screen.getByLabelText("Exercise"), { target: { value: "chords" } });
     expect(screen.getByRole("button", { name: "Start" })).toHaveProperty("disabled", true);
-    expect(play().textContent).not.toMatch(
+    // The How? sheet explains the machinery on purpose; the rest speaks to players.
+    const copy = play().cloneNode(true) as HTMLElement;
+    copy.querySelectorAll(".al-how").forEach((h) => h.remove());
+    expect(copy.textContent).not.toMatch(
       /frame|onset|latency|probability|chroma|flux|\bdB\b|\bms\b/i,
     );
 
     // The diagnostics are where the numbers live.
     expect(panel("Timing").textContent).toMatch(/Reaction delay/);
     expect(panel("Listening").textContent).toMatch(/Waiting for the microphone/);
+  });
+
+  it("offers a How? sheet under every feature", () => {
+    render(<App />);
+    const topics: Record<string, string[]> = {
+      Detector: ["finding the key", "naming the chord"],
+      Tuner: ["reading the pitch"],
+      Scales: ["matching scales"],
+      "Chord game": ["when a chord counts"],
+      "Wolf Jumper": ["notes, and a gate with no knob"],
+      Rhythm: ["grading the timing", "when a note starts", "latency and tolerance"],
+      FFT: ["the spectrum", "the tempo"],
+    };
+    for (const [tab, expected] of Object.entries(topics)) {
+      fireEvent.click(screen.getByRole("tab", { name: tab }));
+      const found = Array.from(document.querySelectorAll(".al-how__topic"), (t) => t.textContent);
+      expect(found).toEqual(expected);
+    }
   });
 
   it("shows Stop while live", () => {

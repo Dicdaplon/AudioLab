@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { matchScales, pitchClassName, SCALE_NAMES_EN, type ScaleMatch } from "@audiolab/core";
 import { ChromaBars, MicPrompt, Panel, RangeField, RankList, type RankRow } from "@audiolab/react";
+import { ScalesHow } from "../how/explanations";
 
 const TOP_N = 8;
 const DEFAULT_THRESHOLD = 0.25;
@@ -98,12 +99,7 @@ export function ScalesTab({
         ) : (
           <p className="al-waiting">Waiting for signal…</p>
         )}
-        <p className="al-hint">
-          Ranked by inclusion: scales holding every note heard first, then the fewest unplayed scale
-          notes, then the share of the presence inside the scale. The bar is a summary score
-          (presence inside × fraction of the scale played). Relative scales (C major pentatonic, A
-          minor pentatonic) share their notes and tie.
-        </p>
+        <ScalesHow />
       </Panel>
     </div>
   );

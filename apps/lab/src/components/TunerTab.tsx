@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { A4_FREQ, type MicSource, pitchClassName } from "@audiolab/core";
 import { MicPrompt, Panel, RangeField, Segments, usePitch } from "@audiolab/react";
+import { TunerHow } from "../how/explanations";
 
 const A4_MIN = 415;
 const A4_MAX = 466;
@@ -134,11 +135,7 @@ export function TunerTab({ mic, running, onStart }: TunerTabProps) {
           unit="Hz"
         />
 
-        <p className="al-hint">
-          McLeod pitch method (normalised square difference, parabolic interpolation) on 2048-sample
-          windows, median over three frames; the note name holds until the pitch is more than 60
-          cents away from it. Play one note at a time; chords and heavy noise give no reading.
-        </p>
+        <TunerHow />
       </Panel>
     </div>
   );

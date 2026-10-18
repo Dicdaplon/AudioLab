@@ -1,6 +1,7 @@
 import type { OnsetAnalysisSnapshot, TimingBudget, TimingComponent } from "@audiolab/core";
 import { toleranceFromUncertainty } from "@audiolab/core/rhythm";
 import { Panel } from "@audiolab/react";
+import { LatencyHow } from "../../how/explanations";
 
 const COMPONENT_LABELS: Record<string, string> = {
   input: "Microphone → audio thread",
@@ -108,14 +109,7 @@ export function TimingPanel({ snapshot, budget, captureMethod }: TimingPanelProp
         </table>
       )}
 
-      <p className="al-hint">
-        Onsets carry the exact audio frame they were played at, so a batch that reaches the page
-        late delays the verdict (reaction delay), never the timestamp. What shifts the timestamps is
-        the total above: the microphone path (no browser measures it without playing a sound, so it
-        is assumed unless reported) and the screen (1.5 frames of the measured refresh period). The
-        on-time window is never narrower than twice the combined uncertainty; the scrolling
-        exercises also learn any constant offset left over from the first notes.
-      </p>
+      <LatencyHow />
     </Panel>
   );
 }

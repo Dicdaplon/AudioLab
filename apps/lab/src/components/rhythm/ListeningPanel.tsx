@@ -1,6 +1,7 @@
 import { useEffect, useRef, type CSSProperties } from "react";
 import type { OnsetAnalysis, OnsetAnalysisSnapshot } from "@audiolab/core";
 import { Panel, useVizTheme } from "@audiolab/react";
+import { OnsetHow } from "../../how/explanations";
 
 const METER_MIN_DB = -90;
 const METER_RANGE_DB = 80;
@@ -71,13 +72,7 @@ export function ListeningPanel({ snapshot, analysis }: ListeningPanelProps) {
 
       <OnsetStrip snapshot={snapshot} analysis={analysis} />
 
-      <p className="al-hint">
-        No threshold to set: the gate learns the background (the quietest level of the last 6 s),
-        opens 6 dB above it and lets each note ring for 250 ms before closing. An onset counts when
-        its attack rises 6 dB above the background. Onsets come from a SuperFlux spectral flux (21
-        ms window, 2.7 ms hop) with online peak picking, then the attack start is found on a 0.7 ms
-        level envelope.
-      </p>
+      <OnsetHow />
     </Panel>
   );
 }
