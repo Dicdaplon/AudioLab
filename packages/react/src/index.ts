@@ -35,6 +35,12 @@ export {
   type UseOnsetAnalysisOptions,
 } from "./hooks/useOnsetAnalysis";
 export { useDisplayFramePeriod } from "./hooks/useDisplayFramePeriod";
+export { useMetronome, type MetronomeControls } from "./hooks/useMetronome";
+export {
+  usePlayAlong,
+  type PlayAlongControls,
+  type PlayAlongStartOptions,
+} from "./hooks/usePlayAlong";
 export {
   useConfirmedDetection,
   type UseConfirmedDetectionArgs,
@@ -71,6 +77,20 @@ export { PlotFigure, type LegendItem } from "./components/Plot";
 export { SpectrumPlot } from "./components/SpectrumPlot";
 export { TempoPlot } from "./components/TempoPlot";
 export { TimeSignalPlot } from "./components/TimeSignalPlot";
+
+// --- Rhythm -----------------------------------------------------------------
+
+export { PlayAlongLane, type PlayAlongLaneProps } from "./components/PlayAlongLane";
+export { BeatLights, type BeatLightsProps } from "./components/BeatLights";
+export {
+  LANE_GEOMETRY_DEFAULTS,
+  laneTarget,
+  targetState,
+  type LaneGeometry,
+  type LaneOnset,
+  type LaneTarget,
+  type LaneTargetState,
+} from "./ui/laneDraw";
 
 // --- Controls and chrome ----------------------------------------------------
 

@@ -192,6 +192,7 @@
   --al-viz-marker: rgba(127, 211, 184, 0.28); /* scale-note verticals, decorative */
   --al-viz-peak: #e4e0d6;
   --al-viz-danger: #f08e80;
+  --al-viz-onset: #ff5c5c;
 
   /* major vs minor: warm vs cool, always doubled by the word */
   --al-viz-mode-major: #e8a75c; /* 9.46:1 on bed */
@@ -286,6 +287,7 @@
   --al-viz-marker: rgba(15, 92, 78, 0.22);
   --al-viz-peak: #1b1a17;
   --al-viz-danger: #a32a1e;
+  --al-viz-onset: #d42a2a;
 
   --al-viz-mode-major: #9a4a10;
   --al-viz-mode-minor: #5e3e86;
@@ -380,6 +382,7 @@
     --al-viz-marker: rgba(15, 92, 78, 0.22);
     --al-viz-peak: #1b1a17;
     --al-viz-danger: #a32a1e;
+    --al-viz-onset: #d42a2a;
 
     --al-viz-mode-major: #9a4a10;
     --al-viz-mode-minor: #5e3e86;

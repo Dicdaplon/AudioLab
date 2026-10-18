@@ -27,6 +27,7 @@ import {
   type TimedOnset,
   type TimingBudget,
   timingInputFromMic,
+  type TimingReference,
 } from "@audiolab/core";
 
 import { useDisplayFramePeriod } from "./useDisplayFramePeriod";
@@ -51,6 +52,12 @@ export interface UseOnsetAnalysisOptions {
   onBatch?: (history: StreamHistory, analysedTime: number) => void;
   /** Budget for strummed chords (adds the strum spread). Default false. */
   strummed?: boolean;
+  /** What the player follows: a scrolling target ("visual") or a click ("audio"). Default "visual". */
+  reference?: TimingReference;
+  /** Speaker → microphone round trip measured from click echoes, in ms (audio reference). */
+  roundTripMs?: number | null;
+  /** Spread of that measurement, in ms. */
+  roundTripSpreadMs?: number;
 }
 
 export interface OnsetAnalysisState {
@@ -78,15 +85,29 @@ export function useOnsetAnalysis(
   mic: MicSource | null,
   options: UseOnsetAnalysisOptions = {},
 ): OnsetAnalysisState {
-  const { enabled = true, updatesPerSecond = 10, historySeconds = 3, strummed = false } = options;
+  const {
+    enabled = true,
+    updatesPerSecond = 10,
+    historySeconds = 3,
+    strummed = false,
+    reference = "visual",
+    roundTripMs = null,
+    roundTripSpreadMs,
+  } = options;
   const [state, setState] = useState<OnsetAnalysisState>(IDLE);
   const framePeriodMs = useDisplayFramePeriod(enabled && mic !== null);
 
   // Read at start (pipeline, batch size) or on every call (callbacks).
   const optionsRef = useRef(options);
   optionsRef.current = options;
-  const budgetInputRef = useRef({ framePeriodMs, strummed });
-  budgetInputRef.current = { framePeriodMs, strummed };
+  const budgetInputRef = useRef({
+    framePeriodMs,
+    strummed,
+    reference,
+    roundTripMs,
+    roundTripSpreadMs,
+  });
+  budgetInputRef.current = { framePeriodMs, strummed, reference, roundTripMs, roundTripSpreadMs };
 
   useEffect(() => {
     if (!mic || !enabled) {
@@ -99,12 +120,15 @@ export function useOnsetAnalysis(
     const micInput = timingInputFromMic(mic);
 
     const budgetOf = (snapshot: OnsetAnalysisSnapshot): TimingBudget => {
-      const { framePeriodMs: frame, strummed: strum } = budgetInputRef.current;
+      const b = budgetInputRef.current;
       return estimateTimingBudget({
         ...micInput,
-        displayFramePeriodMs: frame ?? undefined,
+        reference: b.reference,
+        measuredRoundTripMs: b.roundTripMs,
+        roundTripSpreadMs: b.roundTripSpreadMs,
+        displayFramePeriodMs: b.framePeriodMs ?? undefined,
         clockSpreadMs: snapshot.clock.batches > 4 ? snapshot.clock.offsetSpreadMs : undefined,
-        strummed: strum,
+        strummed: b.strummed,
       });
     };
 

@@ -1,0 +1,39 @@
+/* Play-along lane and beat lights (PlayAlongLane, BeatLights). */
+
+.al-lane {
+  display: block;
+  width: 100%;
+  height: 120px;
+  border: 1px solid var(--al-color-line);
+  border-radius: var(--al-r-2);
+}
+
+.al-beats {
+  display: flex;
+  gap: var(--al-sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.al-beats__light {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--al-color-line-strong);
+  background: var(--al-color-sunken);
+}
+
+.al-beats__light[data-downbeat] {
+  border-color: var(--al-color-ink-muted);
+}
+
+.al-beats__light[data-on] {
+  background: var(--al-color-signal);
+  border-color: var(--al-color-signal-strong);
+}
+
+.al-beats[data-count-in] .al-beats__light[data-on] {
+  background: var(--al-viz-threshold);
+  border-color: var(--al-viz-threshold);
+}
