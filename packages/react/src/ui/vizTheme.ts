@@ -36,6 +36,8 @@ export interface VizTheme {
   danger: string;
   /** Detected onsets on a play-along lane. */
   onset: string;
+  /** A verdict that went well (on time). */
+  good: string;
   modeMajor: string;
   modeMinor: string;
   emptyText: string;
@@ -62,6 +64,7 @@ export const DEFAULT_VIZ_THEME: VizTheme = {
   peak: "#e4e0d6",
   danger: "#f08e80",
   onset: "#ff5c5c",
+  good: "#74c88f",
   modeMajor: "#e8a75c",
   modeMinor: "#bfa8e8",
   emptyText: "#a8a297",
@@ -87,6 +90,7 @@ const COLOR_TOKENS: ReadonlyArray<[keyof VizTheme, string]> = [
   ["peak", "--al-viz-peak"],
   ["danger", "--al-viz-danger"],
   ["onset", "--al-viz-onset"],
+  ["good", "--al-viz-good"],
   ["modeMajor", "--al-viz-mode-major"],
   ["modeMinor", "--al-viz-mode-minor"],
   ["emptyText", "--al-viz-empty-text"],

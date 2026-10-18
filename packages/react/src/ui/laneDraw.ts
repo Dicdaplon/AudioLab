@@ -166,8 +166,8 @@ export function startLaneLoop(
 }
 
 const TARGET_COLOURS: Record<LaneTargetState, (theme: VizTheme) => string> = {
-  pending: (t) => t.signal,
-  onTime: (t) => t.modeMajor,
+  pending: (t) => t.peak,
+  onTime: (t) => t.good,
   early: (t) => t.threshold,
   late: (t) => t.trace2,
   missed: (t) => t.danger,

@@ -82,6 +82,7 @@ export { TimeSignalPlot } from "./components/TimeSignalPlot";
 
 export { PlayAlongLane, type PlayAlongLaneProps } from "./components/PlayAlongLane";
 export { BeatLights, type BeatLightsProps } from "./components/BeatLights";
+export { StaffNotation, type StaffDot, type StaffNotationProps } from "./components/StaffNotation";
 export {
   LANE_GEOMETRY_DEFAULTS,
   laneTarget,

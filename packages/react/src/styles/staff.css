@@ -1,0 +1,143 @@
+/* StaffNotation: a rhythm or a melody written as on a score. */
+
+.al-staff {
+  display: flex;
+  flex-direction: column;
+  gap: var(--al-sp-2);
+  min-width: 0;
+}
+
+.al-staff__system {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.al-staff__line,
+.al-staff__ledger {
+  stroke: var(--al-color-ink-muted);
+  stroke-width: 1.4;
+}
+
+.al-staff__bar {
+  stroke: var(--al-color-ink-muted);
+  stroke-width: 2;
+}
+
+.al-staff__clef text {
+  fill: var(--al-color-ink);
+  font-family: "Bravura", "Noto Music", "Segoe UI Symbol", "Apple Symbols", serif;
+  font-size: 68px;
+}
+
+.al-staff__clef .al-staff__clef-eight {
+  font-family: var(--al-font-voice);
+  font-size: 15px;
+}
+
+.al-staff__clef-percussion rect {
+  fill: var(--al-color-ink);
+}
+
+.al-staff__time text {
+  fill: var(--al-color-ink);
+  font-family: var(--al-font-voice);
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.al-staff__head {
+  fill: var(--al-color-ink);
+  stroke: var(--al-color-ink);
+  stroke-width: 1.5;
+  transition:
+    fill var(--al-dur-2) var(--al-ease-out),
+    stroke var(--al-dur-2) var(--al-ease-out);
+}
+
+.al-staff__head--hollow {
+  fill: var(--al-color-surface);
+  stroke-width: 3;
+}
+
+.al-staff__stem,
+.al-staff__flag {
+  stroke: var(--al-color-ink);
+  stroke-width: 2.2;
+  fill: none;
+}
+
+.al-staff__beam-bar,
+.al-staff__dot-value,
+.al-staff__rest-block,
+.al-staff__rest-short circle {
+  fill: var(--al-color-ink);
+}
+
+.al-staff__rest,
+.al-staff__rest-short line {
+  fill: none;
+  stroke: var(--al-color-ink);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+.al-staff__accidental {
+  fill: var(--al-color-ink);
+  font-size: 20px;
+}
+
+.al-staff__symbol {
+  fill: var(--al-color-ink);
+  font-family: var(--al-font-voice);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.al-staff__count {
+  fill: var(--al-color-ink-faint);
+  font-family: var(--al-font-ui);
+  font-size: 15px;
+}
+
+.al-staff__count--beat {
+  fill: var(--al-color-ink);
+  font-weight: 600;
+}
+
+/* Verdicts: the same colours as the lane. */
+.al-staff__note[data-state="onTime"] .al-staff__head,
+.al-staff__beam[data-state="onTime"] .al-staff__beam-bar {
+  fill: var(--al-viz-good);
+  stroke: var(--al-viz-good);
+}
+
+.al-staff__note[data-state="early"] .al-staff__head {
+  fill: var(--al-viz-threshold);
+  stroke: var(--al-viz-threshold);
+}
+
+.al-staff__note[data-state="late"] .al-staff__head {
+  fill: var(--al-viz-trace-2);
+  stroke: var(--al-viz-trace-2);
+}
+
+.al-staff__note[data-state="missed"] .al-staff__head {
+  fill: transparent;
+  stroke: var(--al-viz-danger);
+}
+
+.al-staff__cursor {
+  stroke: var(--al-viz-signal-strong);
+  stroke-width: 3;
+  opacity: 0;
+}
+
+.al-staff__dot {
+  fill: var(--al-viz-onset);
+}
+
+.al-staff__dot--echo {
+  fill: var(--al-color-ink-faint);
+}
