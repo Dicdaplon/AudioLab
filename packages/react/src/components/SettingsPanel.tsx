@@ -64,14 +64,14 @@ export const SettingsPanel = memo(function SettingsPanel({
       />
       <RangeField
         id="tol"
-        label="A note is present above"
+        label="Present above"
         min={0}
         max={1}
         step={0.05}
         value={settings.maxFilterTolerancy}
         onChange={(v) => update({ maxFilterTolerancy: v })}
         format={(v) => (v * 100).toFixed(0)}
-        unit="% of the loudest"
+        unit="% of loudest"
       />
       <details className="al-settings-more">
         <summary className="al-settings-more__summary">Fine tuning</summary>

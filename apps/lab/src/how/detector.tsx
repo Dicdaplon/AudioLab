@@ -156,7 +156,7 @@ export function SettingsHow() {
     <HowPanel
       compact
       topic="what the knobs change"
-      algorithm="“A note is present above”: how strong a note must be, next to the loudest one, to count. Under Fine tuning, the memory (how many recent readings set “the loudest”) and their mean or median. The cut line and the loudest note are shares of everything heard, not volumes."
+      algorithm="“Present above … % of loudest”: how strong a note must be, next to the loudest one, to count. Under Fine tuning, the memory (how many recent readings set “the loudest”) and their mean or median. The cut line and the loudest note are shares of everything heard, not volumes."
       limits="Turn it up and only the core notes remain; down, passing notes and ringing harmonics come in too."
       aside="The defaults (35 %, 3, mean) were picked by a grid search on my recordings. For 95 % of uses, leave them alone."
     >
