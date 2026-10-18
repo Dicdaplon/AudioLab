@@ -239,12 +239,12 @@ describe("App", () => {
     render(<App />);
     const topics: Record<string, string[]> = {
       "Chords & keys": [
-        "three answers, one question",
+        "how this page reads",
         "what the knobs change",
         "what a chroma is",
-        "the last 1 s, averaged",
-        "the last 8 s, averaged",
-        "the last 30 s, averaged",
+        "same notes, last 1 s",
+        "same notes, last 8 s",
+        "same notes, last 30 s",
         "ranking the chords",
         "ranking the keys",
         "ranking the keys",

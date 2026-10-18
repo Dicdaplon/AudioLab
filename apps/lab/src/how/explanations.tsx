@@ -262,17 +262,17 @@ export function SpectrumHow() {
           ]}
         />
       }
-      algorithm="A 16384-point FFT with a Blackman window (the browser's AnalyserNode), shown in dB. The noise floor is the median (or mean, or 80th percentile) of the bins up to 4 kHz; the slope is the local difference between neighbouring bins, in dB per Hz."
-      limits="2.9 Hz per bin is fine enough to separate low notes, but each reading spans 341 ms, so this view reacts slowly."
+      algorithm="Every third of a second I take the last 16384 samples and split them with an FFT into slots 2.9 Hz apart, drawn in dB. The dashed line is the typical level of all slots up to 4 kHz (their median): the room's hiss. Anything well above it is you."
+      limits="One note is not one peak but a comb: a low A shows at 110, 220, 330 Hz… And a third of a second per picture means this view reacts slowly."
       sources={[
         { label: "Cooley & Tukey, FFT, 1965" },
         { label: "Harris, windows for the DFT, Proc. IEEE 1978" },
       ]}
-      aside="Around a low E, two neighbouring notes are only 5 Hz apart. That is why the window has to be so long."
+      aside="This is the raw material of Chords & keys: its first window folds this picture into twelve notes."
     >
       <p>
-        Every sound is a stack of vibrations, slow ones and fast ones. The FFT is a prism: it splits
-        the sound into those vibrations and shows how strong each one is.
+        Every sound is a stack of vibrations. The FFT is a prism: it splits the sound into them. Low
+        pitches on the left, high on the right; the taller, the louder.
       </p>
     </HowPanel>
   );
@@ -298,14 +298,14 @@ export function TempoHow() {
           ]}
         />
       }
-      algorithm="RMS of 128-sample blocks, log, positive difference (the onset strength), a Butterworth lowpass at 8 Hz, 8 s kept, then an FFT on a BPM axis weighted by a prior centred on 120 BPM."
+      algorithm="Two windows, two steps. Onset strength: how much louder the sound just got (level of tiny blocks, only the rises kept, smoothed), one bump per attack. Beat spectrum: an FFT of those bumps over 8 s, read in BPM; regular bumps give one peak, and its position is the tempo (nudged toward 120 BPM when in doubt)."
       limits="Half and double tempo are easy to mix up; it needs a steady beat over eight seconds; the raw resolution is 7.5 BPM, refined by interpolation."
       sources={[{ label: "Ellis, Beat tracking by dynamic programming, JNMR 2007" }]}
       aside="The tempo isn't in the sound's spectrum at all: nothing audible vibrates at 2 Hz. It lives in how the loudness pulses."
     >
       <p>
-        I keep eight seconds of a single question, “did it just get louder?”, and look for the
-        rhythm of the answers. A steady beat shows up as one clear peak.
+        First I mark when the sound gets louder: that is the left window. Then I look at how
+        regularly those marks come back: that is the right one. A steady beat gives one clear peak.
       </p>
     </HowPanel>
   );

@@ -25,14 +25,14 @@ export function ReadoutsHow({ live, long }: DetectorHowOptions) {
   return (
     <HowPanel
       compact
-      topic="three answers, one question"
-      algorithm={`The same notes, averaged over three lengths: 1 s for the chord, ${live} s for the live key, ${long} s for the estimated key.`}
+      topic="how this page reads"
+      algorithm={`One chain, top to bottom. The first window turns the sound into 12 notes. The next three keep those same notes in memory for 1 s, ${live} s and ${long} s. Each memory feeds one answer: the chord (1 s), the live key (${live} s), the estimated key (${long} s). Presence, at the bottom, is a second road to the key: it counts which notes showed up, not how loud they were.`}
       limits="The percentage is a share, not a certainty: the scores of all candidates add up to 100. In silence they all tie and the name means nothing."
       aside="Notes are written with sharps only (A#, D#): I work on twelve sounds, not on spelled notes. A# major is B♭ major."
     >
       <p>
-        Short memory follows you, long memory is sure of itself. Here&apos;s the trick: when the
-        three agree, trust them. When they don&apos;t, the passage really is ambiguous.
+        Same notes, three memories: the short one follows you, the long one is sure of itself. When
+        the three answers agree, trust them. When they don&apos;t, the passage really is ambiguous.
       </p>
     </HowPanel>
   );
@@ -73,7 +73,7 @@ export function WindowHow({ seconds, use }: { seconds: number; use: string }) {
   return (
     <HowPanel
       compact
-      topic={`the last ${seconds} s, averaged`}
+      topic={`same notes, last ${seconds} s`}
       algorithm={`The mean of the last ${seconds * 10} chromas, scaled back to 1. Every reading weighs the same, loud or soft.`}
       limits="Silence and hiss count as much as a chord: stop playing and the picture slowly fades into noise."
     >
