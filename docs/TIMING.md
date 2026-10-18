@@ -344,6 +344,22 @@ with what they hear. Its median is `roundTripMs`; passed to the budget with
 the budget becomes `calibrated`. With headphones there is no echo: the
 budget uses the reported `outputLatency + baseLatency` and the assumed input.
 
+**A click that is not the SDK's.** The defaults fit the SDK's sine clicks. For a host's
+own metronome, two things change:
+
+- `clicks.times` lists the AudioContext time of every click that actually sounds. With
+  Tone.js, push the `time` argument of the callback that triggers the click (a
+  `Tone.Part` or `Transport.scheduleRepeat` callback): it already includes Tone's
+  `lookAhead` and is on the native context's clock. Drop entries older than a few
+  seconds.
+- `clicks.band` must hold the click's energy. A band-pass noise click (a clave at
+  2400 Hz, Q 2.4, has a −3 dB band of about 1.95–2.95 kHz) keeps only about half of its
+  energy in the default 2.3–4 kHz band, under the 0.6 threshold, so its echoes would
+  count as late notes. A band around the click, e.g. `[1700, 3400]`, holds about 0.7 of
+  it. **Not measured yet:** whether guitar attacks stay under 0.6 in that lower band (the
+  pick has energy there); check `run.onsets` (`echo` flags) on real takes, or keep
+  headphones, before relying on it.
+
 Which latency applies depends on what the player follows:
 
 | Reference                                     | Offset                                     |
@@ -449,6 +465,71 @@ function start() {
   }))}
 />;
 ```
+
+**Without React** (`attachPlayAlong`, `@audiolab/core/rhythm`): one analysis for the
+whole lesson, one run per exercise. The host owns the context, the microphone and the
+metronome (here a Tone.js clave); the SDK never closes them.
+
+```ts
+import * as Tone from "tone";
+import {
+  ClickEchoFilter,
+  estimateTimingBudget,
+  nativeAudioContext,
+  openMicrophone,
+  startOnsetAnalysis,
+  timingInputFromMic,
+} from "@audiolab/core";
+import {
+  attachPlayAlong,
+  toleranceFromUncertainty,
+  type ExpectedNote,
+} from "@audiolab/core/rhythm";
+
+await Tone.start();
+const context = nativeAudioContext(Tone.getContext().rawContext as AudioContext);
+const mic = await openMicrophone({ context });
+const analysis = await startOnsetAnalysis(context, mic.source, { historySeconds: 3 });
+const echoes = new ClickEchoFilter(); // keep it: the round trip carries over to the next run
+
+// The site's metronome: note the time of every click that sounds.
+const clickTimes: number[] = [];
+const part = new Tone.Part(
+  (time) => {
+    clave.trigger(time); // the host's own sound, bus and limiter
+    clickTimes.push(time);
+    while (clickTimes.length && clickTimes[0] < time - 4) clickTimes.shift();
+  },
+  beats.map((b) => b * Tone.Time("4n").toSeconds()),
+);
+
+function play(notes: ExpectedNote[], endTime: number) {
+  const budget = estimateTimingBudget({
+    ...timingInputFromMic(mic),
+    reference: "audio",
+    measuredRoundTripMs: echoes.roundTripMs,
+    roundTripSpreadMs: echoes.spreadMs,
+  });
+  const run = attachPlayAlong(analysis, notes, {
+    endTime,
+    tolerance: { onTimeMs: 100, windowMs: 300 }, // pass it: don't rely on defaults
+    offsetMs: budget.offsetMs,
+    adaptiveBias: !budget.calibrated,
+    clicks: { times: () => clickTimes, filter: echoes, band: [1700, 3400] },
+  });
+  run.subscribe((e) => {
+    if (e.type === "results") draw(run.results); // note by note: tier, deltaMs
+  });
+  return run; // run.finished resolves at endTime; run.finish() / run.stop() end it early
+}
+
+// notes: one per played beat, on the AudioContext clock, e.g.
+// const t0 = Tone.Transport.seconds…; notes = beats.map((b, i) => ({ id: i, time: start + b * spb }))
+```
+
+`offsetMs` is fixed when a run starts: the round trip measured during a run applies
+from the next one (or keep `adaptiveBias` on). The run has no timer: if the capture
+stops (suspended context, background tab) it waits; `finish()` ends it.
 
 For a written rhythm, collect `onset.time` values and call
 `fitPattern(beats, times)` after each onset; no budget is needed.

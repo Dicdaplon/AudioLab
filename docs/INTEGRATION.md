@@ -177,11 +177,15 @@ a context of its own:
 ```tsx
 "use client";
 import * as Tone from "tone";
+import { nativeAudioContext } from "@audiolab/core";
 import { useMicrophone, usePitch } from "@audiolab/react";
 
 export function Tuner() {
-  // Tone owns the context; the SDK only connects nodes to it.
-  const microphone = useMicrophone({ context: Tone.getContext().rawContext as AudioContext });
+  // Tone owns the context; the SDK only connects nodes to it. `rawContext` is
+  // standardized-audio-context's wrapper: give the SDK the native context.
+  const microphone = useMicrophone({
+    context: nativeAudioContext(Tone.getContext().rawContext as AudioContext),
+  });
   const { estimate } = usePitch(microphone.mic, { referenceA4: 442 });
   return (
     <button onClick={() => Tone.start().then(microphone.start)}>
@@ -190,6 +194,15 @@ export function Tuner() {
   );
 }
 ```
+
+**Tone.js: pass the native context.** `Tone.getContext().rawContext` is the wrapper of
+standardized-audio-context, not the browser's `AudioContext`. An `AudioWorkletNode`
+cannot be created on it, so the sample capture would fall back to polling an
+AnalyserNode: it works, but timestamps become estimates and rhythm grading loses its
+precision (`OnsetAnalysisSnapshot.exactTiming` turns false, and the console says it
+once). `nativeAudioContext(ctx)` unwraps it (or returns `ctx` when it is already
+native). Both run on the same clock: a `time` that Tone passes to a callback is a valid
+AudioContext time for the SDK. Create it after `Tone.start()`.
 
 Rules, enforced by `openMicrophone` and tested:
 
@@ -237,9 +250,16 @@ through a `TonalityEngine`. Nothing is rendered per frame: read `latest()` from 
 clock, or `subscribe()`.
 
 ```ts
-import { TonalityEngine, openMicrophone, startLiveAnalysis } from "@audiolab/core";
+import {
+  TonalityEngine,
+  nativeAudioContext,
+  openMicrophone,
+  startLiveAnalysis,
+} from "@audiolab/core";
 
-const mic = await openMicrophone({ context: Tone.getContext().rawContext as AudioContext });
+const mic = await openMicrophone({
+  context: nativeAudioContext(Tone.getContext().rawContext as AudioContext),
+});
 const engine = new TonalityEngine({ framesPerSecond: 10, chordQualities: ["maj", "min", "dom7"] });
 const live = startLiveAnalysis({ context: mic.context, source: mic.source, engine });
 
