@@ -195,6 +195,9 @@ keeping that threshold.
   `@audiolab/core/rhythm`: scrolling-note scoring with an adaptive bias, written
   rhythms graded at a free tempo, "right note / chord at that onset". See
   [docs/TIMING.md](docs/TIMING.md).
+- **How? sheets.** Under every feature, a discreet "How?" bar opens a miniature diagram and a
+  few lines: the idea, the algorithm, its limits, the paper it comes from
+  ([docs/HOW-SHEETS.md](docs/HOW-SHEETS.md)).
 - **Game engines as pure modules.** `@audiolab/core/games` holds the reducers, pools and
   confirmation logic of both games, keyed by pitch classes and chord references rather
   than labels, with a configurable Wolf Jumper (note pool, bonus chords, speeds, health).
