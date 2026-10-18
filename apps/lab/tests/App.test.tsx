@@ -394,7 +394,11 @@ describe("App", () => {
   it("shows the about page with a link to l’école du loup(é)", () => {
     render(<App />);
     fireEvent.click(screen.getByRole("tab", { name: "About" }));
-    expect(screen.getByRole("heading", { name: /research library/i })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: /last audio company standing/i })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "The loloupTech story" }).textContent).toContain(
+      "what came after 3",
+    );
+    expect(screen.getByRole("heading", { name: "What I was doing before 2045" })).toBeTruthy();
     const link = screen.getByRole("link", { name: "ecoleduloup.fr" });
     expect(link.getAttribute("href")).toBe("https://ecoleduloup.fr");
   });

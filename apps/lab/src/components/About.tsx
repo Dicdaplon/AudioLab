@@ -1,13 +1,42 @@
-/** The "About" page: who builds this lab, and why it exists. */
+/**
+ * The "About" page: the loloupTech backstory (a joke, told straight), then
+ * who builds this lab and why, as "what I was doing before 2045".
+ */
 export function About() {
   return (
     <article className="about al-panel">
       <header className="about__head">
         <p className="about__kicker">About</p>
-        <h2 className="about__title">A research library, kept in the open</h2>
+        <h2 className="about__title">The last audio company standing</h2>
       </header>
 
       <div className="about__body">
+        <section className="about__lore" aria-label="The loloupTech story">
+          <p className="about__lore-stamp">
+            <span aria-hidden="true">&gt; </span>loloupTech archive · transmission 2045
+          </p>
+          <p>loloupTech is the only audio company that survived the Great Apocalypse of 2045.</p>
+          <p>
+            Back then, we never imagined AI would be the least of our troubles.
+            <br />
+            It was the algorithms that rose against us…
+          </p>
+          <p>
+            The Triad Algorithm led the way, and made all our sorting useless.
+            <br />
+            Soon, nobody could even tell what came after 3.
+          </p>
+          <p>
+            Today, loloupTech tries to make good use of what is left: helping people listen to music
+            again, and understand what is going on.
+          </p>
+          <p>
+            Also, we replaced LED tech with CRT. Because it was cool. Bye.
+            <span className="about__cursor" aria-hidden="true" />
+          </p>
+        </section>
+
+        <h3 className="about__subtitle">What I was doing before 2045</h3>
         <p>
           I’m a developer and an engineer in signal and image processing.
           <br />I also play music, and I teach it.
@@ -38,31 +67,24 @@ export function About() {
         <h3 className="about__subtitle">What you can try here</h3>
         <ul>
           <li>
-            <strong>Detector</strong>: the key and the chord, live. Pick a chord vocabulary: the 24
-            triads, or sevenths, sixths, sus2 / sus4 and diminished chords on top.
+            <strong>Harmony Lab</strong>: the key and the chord, live (from plain major and minor
+            chords up to sevenths, sixths, sus and diminished), the scales that fit what you just
+            played, a tuner, and the raw spectrum.
           </li>
           <li>
-            <strong>Tuner</strong> and <strong>Scales</strong>: a McLeod pitch tracker, and the
-            scales that fit what you just played.
+            <strong>Rhythm Lab</strong>: play a written rhythm at your own pace, or notes and chords
+            as they reach a line. Each note is placed to the millisecond on the audio clock; the
+            threshold follows your room, or you set it yourself. And the tempo, found in the
+            waveform.
           </li>
           <li>
-            <strong>Chord game</strong>: play the chord on screen, now with seventh and suspended
-            sets, and a choice: same notes, or the triad is enough (E for E7).
-          </li>
-          <li>
-            <strong>Wolf Jumper</strong>: notes to shoot, chords to collect. The note can come from
-            the chroma or from the pitch tracker, which follows the fundamental rather than the
-            loudest harmonic of a string.
-          </li>
-          <li>
-            <strong>Rhythm</strong>: play a written rhythm at your own pace, or notes and chords as
-            they reach a line. Each note is placed to the millisecond on the audio clock, with no
-            click and no threshold to set, and the page shows how sure it can be.
-          </li>
-          <li>
-            <strong>FFT</strong>: the spectrum, its noise floor, and where the tempo hides.
+            <strong>Game Room</strong>: the chord game (play the chord on screen) and Wolf Jumper
+            (notes to shoot, chords to collect).
           </li>
         </ul>
+        <p>
+          Every window has a small <em>How?</em> underneath: how it works, and where it fails.
+        </p>
         <p>
           Under the hood it is an SDK, <code>@audiolab/core</code> and <code>@audiolab/react</code>:
           the same detectors run here and on ecoleduloup.fr. The extended chord vocabulary is
@@ -72,7 +94,8 @@ export function About() {
 
         <p>
           AI is the next layer. Not as a magic box, but as one more way to listen: classical signal
-          processing first, learned models where they genuinely help.
+          processing first, learned models where they genuinely help. (Yes, before it all went
+          wrong.)
         </p>
 
         <h3 className="about__subtitle">l’école du loup(é)</h3>

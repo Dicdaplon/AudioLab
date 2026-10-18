@@ -409,6 +409,57 @@ body {
   color: var(--al-color-ink-muted);
 }
 
+/* The backstory, as a transmission on the terminal: VT323 on the bed, the
+   accent for the stamp, a block cursor blinking at the end. */
+.about__lore {
+  margin: var(--al-sp-2) 0 var(--al-sp-6);
+  padding: var(--al-sp-4) var(--al-sp-5);
+  background: var(--al-color-bed);
+  border: 1px solid var(--al-color-line-strong);
+  border-left: 3px solid var(--al-color-accent);
+  font-family: var(--lab-font-terminal, var(--al-font-mono));
+  font-size: 1.375rem;
+  line-height: 1.35;
+  color: var(--al-color-ink);
+}
+
+.about__body .about__lore p {
+  margin: 0 0 var(--al-sp-3);
+}
+
+.about__body .about__lore p:last-child {
+  margin-bottom: 0;
+}
+
+.about__lore-stamp {
+  font-size: 1.125rem;
+  color: var(--al-color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.about__cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 1em;
+  margin-left: 0.2em;
+  vertical-align: -0.12em;
+  background: var(--al-color-accent);
+  animation: about-cursor 1.06s steps(1, end) infinite;
+}
+
+@keyframes about-cursor {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about__cursor {
+    animation: none;
+  }
+}
+
 /* --- Tuner ---------------------------------------------------------------- */
 
 .tuner {

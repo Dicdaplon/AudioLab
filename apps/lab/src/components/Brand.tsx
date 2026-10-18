@@ -44,7 +44,7 @@ export function Brand() {
         <span className="brand__word">
           loloup<span className="brand__tech">Tech</span>
         </span>
-        <span className="brand__tagline">Audio capsules · est. 2026</span>
+        <span className="brand__tagline">Audio capsules · survived 2045</span>
       </span>
       <span className="brand__no" aria-hidden="true">
         No.1
