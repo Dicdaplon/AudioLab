@@ -29,6 +29,7 @@ import {
   type TimingTier,
   type TimingTolerance,
 } from "./tolerance";
+import { scoreSigmaFor, timingScore } from "./score";
 import { timingStats, type TimingStats } from "./timingStats";
 
 export interface PatternFitOptions {
@@ -39,6 +40,8 @@ export interface PatternFitOptions {
   windowRatio?: number;
   /** Matched notes below which the fit is unreliable. Default 3. */
   minMatched?: number;
+  /** σ of the per-note score, in ms. Default: the tolerance's on-time edge scores 0.8. */
+  scoreSigmaMs?: number;
   /** Accepted tempo range, in BPM. Defaults 30–300. */
   minBpm?: number;
   maxBpm?: number;
@@ -54,6 +57,8 @@ export interface FittedNote {
   /** Same residual in beats. */
   residualBeats: number | null;
   tier: TimingTier;
+  /** Continuous score of the residual in [0, 1] (`timingScore`); 0 if missed. */
+  score: number;
 }
 
 export interface PatternFit {
@@ -232,6 +237,7 @@ export function fitPattern(
 
   const { line, pick } = best;
   const used = new Set(pick.filter((j) => j >= 0));
+  const sigma = options.scoreSigmaMs ?? scoreSigmaFor(tolerance);
   const notes: FittedNote[] = sortedBeats.map((beat, k) => {
     const expectedTime = line.a + line.b * beat;
     const j = pick[k];
@@ -243,6 +249,7 @@ export function fitPattern(
         residualMs: null,
         residualBeats: null,
         tier: "missed",
+        score: 0,
       };
     }
     const residual = sortedOnsets[j] - expectedTime;
@@ -253,6 +260,7 @@ export function fitPattern(
       residualMs: residual * 1000,
       residualBeats: residual / line.b,
       tier: classifyDelta(residual * 1000, tolerance),
+      score: timingScore(residual * 1000, sigma),
     };
   });
   return {

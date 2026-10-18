@@ -37,6 +37,7 @@
  */
 
 import { resolveConfig } from "../utils/resolveConfig";
+import { scoreSigmaFor, timingScore } from "./score";
 import { medianOf } from "./timingStats";
 import {
   TIMING_TOLERANCE_DEFAULTS,
@@ -76,6 +77,11 @@ export interface NoteResult {
   label: LabelStatus;
   /** Label reported for the matched onset, if any. */
   heardLabel: string | null;
+  /**
+   * Continuous timing score in [0, 1] (`timingScore` of `deltaMs`): null
+   * until the note is resolved, 0 when missed. Passes at `SCORE_PASS` (0.8).
+   */
+  score: number | null;
 }
 
 export interface TimingScorerConfig {
@@ -94,6 +100,11 @@ export interface TimingScorerConfig {
   maxBiasMs: number;
   /** Label comparison. Default strict equality. */
   labelMatches: (expected: string, heard: string) => boolean;
+  /**
+   * σ of the score's Gaussian, in ms. Default null: derived from the
+   * tolerance so that the on-time edge scores 0.8 (≈ 149.7 ms at ±100 ms).
+   */
+  scoreSigmaMs: number | null;
 }
 
 export const TIMING_SCORER_DEFAULTS: TimingScorerConfig = {
@@ -105,7 +116,15 @@ export const TIMING_SCORER_DEFAULTS: TimingScorerConfig = {
   minBiasSamples: 4,
   maxBiasMs: 250,
   labelMatches: (expected, heard) => expected === heard,
+  scoreSigmaMs: null,
 };
+
+/** The σ a scorer uses for its scores, in ms. */
+export function scorerSigmaMs(
+  config: Pick<TimingScorerConfig, "scoreSigmaMs" | "tolerance">,
+): number {
+  return config.scoreSigmaMs ?? scoreSigmaFor(config.tolerance);
+}
 
 export interface TimingScorerState {
   notes: readonly ExpectedNote[];
@@ -161,6 +180,7 @@ export function createTimingScorerState(
       deltaMs: null,
       label: n.label === undefined ? "none" : "pending",
       heardLabel: null,
+      score: null,
     })),
     candidates: sorted.map(() => null),
     rawDeltasMs: sorted.map(() => null),
@@ -251,7 +271,9 @@ function resolve(
   const results = [...state.results];
   const r = results[k];
   const tier = r.deltaMs === null ? "missed" : classifyDelta(r.deltaMs, config.tolerance);
-  results[k] = { ...r, resolved: true, tier };
+  const score =
+    tier === "missed" || r.deltaMs === null ? 0 : timingScore(r.deltaMs, scorerSigmaMs(config));
+  results[k] = { ...r, resolved: true, tier, score };
   let { biasMs, biasSamples } = state;
   const raw = state.rawDeltasMs[k];
   if (config.adaptiveBias && raw !== null) {

@@ -202,15 +202,16 @@ Everything below is exported from `@audiolab/core`; modules not re-exported from
 
 ### `@audiolab/core/rhythm`
 
-| Area      | Exports                                                                                                                                                                                        |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Scoring   | `TimingScorer` / `stepTimingScorer` / `createTimingScorerState` + `TIMING_SCORER_DEFAULTS` (timing × label, adaptive bias), `scoreTimings`                                                     |
-| Rhythm    | `fitPattern` (written rhythm at a free tempo → tempo, per-note residuals and tiers)                                                                                                            |
-| Tolerance | `toleranceFromUncertainty`, `classifyDelta`, `TIMING_TOLERANCE_DEFAULTS`                                                                                                                       |
-| Notation  | `eventsFromDurations` (durations, negative for a rest), `playedBeats`, `rhythmLength`, `figureOf` → `NoteFigure` (`id`: `FigureId`, a key), `beamGroups`, `staffStep`                          |
-| Session   | `attachPlayAlong` (a run on a live analysis, no React: `results`, `onsets`, `roundTripMs`, `biasMs`, `finished`, `subscribe`, `finish`, `stop`), `PlayAlongSession` (the pure engine under it) |
-| Labels    | `noteLabeler`, `chordLabeler` (what was played at an onset), `noteLabel` (the pitch-class key)                                                                                                 |
-| Stats     | `timingStats` (bias, jitter, drift), `medianOf`, `OnsetEvidence` (label observations → label per onset)                                                                                        |
+| Area      | Exports                                                                                                                                                                                              |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Scoring   | `TimingScorer` / `stepTimingScorer` / `createTimingScorerState` + `TIMING_SCORER_DEFAULTS` (timing × label, adaptive bias), `scoreTimings`                                                           |
+| Rhythm    | `fitPattern` (written rhythm at a free tempo → tempo, per-note residuals and tiers)                                                                                                                  |
+| Score     | `timingScore(deltaMs, sigmaMs)` (Gaussian, 0..1), `SCORE_PASS` (0.8), `sigmaForScore`, `scoreSigmaFor(tolerance)`, `scorerSigmaMs`; `NoteResult.score` and `FittedNote.score`, option `scoreSigmaMs` |
+| Tolerance | `toleranceFromUncertainty`, `classifyDelta`, `TIMING_TOLERANCE_DEFAULTS`                                                                                                                             |
+| Notation  | `eventsFromDurations` (durations, negative for a rest), `playedBeats`, `rhythmLength`, `figureOf` → `NoteFigure` (`id`: `FigureId`, a key), `beamGroups`, `staffStep`                                |
+| Session   | `attachPlayAlong` (a run on a live analysis, no React: `results`, `onsets`, `roundTripMs`, `biasMs`, `finished`, `subscribe`, `finish`, `stop`), `PlayAlongSession` (the pure engine under it)       |
+| Labels    | `noteLabeler`, `chordLabeler` (what was played at an onset), `noteLabel` (the pitch-class key)                                                                                                       |
+| Stats     | `timingStats` (bias, jitter, drift), `medianOf`, `OnsetEvidence` (label observations → label per onset)                                                                                              |
 
 ### `@audiolab/core/offline` (Node only)
 

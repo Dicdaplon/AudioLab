@@ -8,6 +8,7 @@
  * any other onset source.
  *
  *   tolerance       on-time / matching windows, widened to the chain's σ
+ *   score           a continuous Gaussian score per note, passing at 0.8
  *   timingScorer    live matching of onsets to notes (timing × label)
  *   patternFit      written rhythm at a free tempo (latency cancels)
  *   timingStats     bias, jitter, drift
@@ -28,8 +29,10 @@ export {
   type TimingTier,
   type TimingTolerance,
 } from "./tolerance";
+export { SCORE_PASS, scoreSigmaFor, sigmaForScore, timingScore } from "./score";
 export {
   TIMING_SCORER_DEFAULTS,
+  scorerSigmaMs,
   TimingScorer,
   createTimingScorerState,
   scoreTimings,
