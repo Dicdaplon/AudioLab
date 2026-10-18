@@ -1,6 +1,6 @@
 {
   "name": "@audiolab/core",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Framework-free audio analysis for the browser: key, chord and tempo detection on the Web Audio API, with hand-written DSP.",
   "keywords": [
     "audio",
