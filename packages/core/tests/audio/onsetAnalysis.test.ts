@@ -93,4 +93,31 @@ describe("startOnsetAnalysis", () => {
         .reportedInputLatencySeconds,
     ).toBeUndefined();
   });
+
+  it("keeps a sample history and calls batch listeners after the onsets", async () => {
+    const { FakeAudioContext } = makeFakeAudioContextClass();
+    const ctx = new FakeAudioContext() as unknown as AudioContext;
+    const analysis = await startOnsetAnalysis(ctx, source, { historySeconds: 2 });
+    expect(analysis.sampleRate).toBe(SR);
+    expect(analysis.history?.capacity).toBe(2 * SR);
+    const order: string[] = [];
+    analysis.subscribe(() => order.push("onset"));
+    const off = analysis.subscribeBatch((history, t) => {
+      order.push("batch");
+      expect(history).toBe(analysis.history);
+      expect(Number.isFinite(t)).toBe(true);
+    });
+    const { signal } = perform([{ time: 0.2, midi: 52 }], { seconds: 0.5, noiseRms: 0.001 });
+    for (let i = 0; i < signal.length; i += 512) {
+      worklet.nodes[0].emit({ samples: signal.slice(i, i + 512), startFrame: i });
+    }
+    expect(order.indexOf("onset")).toBeGreaterThan(-1);
+    expect(order[order.indexOf("onset") + 1]).toBe("batch"); // same batch, after its onset
+    expect(analysis.history!.range.to).toBe(signal.length);
+    off();
+    analysis.stop();
+    const none = await startOnsetAnalysis(ctx, source);
+    expect(none.history).toBeNull();
+    none.stop();
+  });
 });

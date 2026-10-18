@@ -46,12 +46,16 @@ setInterval(() => console.log(analyzer.analyze().estimate?.bpm, capture.method),
 ### Sharing the host's AudioContext
 
 A page must run a single `AudioContext`. Pass the host's (for Tone.js,
-`Tone.getContext().rawContext`) and, if you already have one, the `MediaStream`: the SDK
+`nativeAudioContext(Tone.getContext().rawContext)`) and, if you already have one, the `MediaStream`: the SDK
 resumes the context if it is suspended, never closes it, and never stops tracks it did
 not acquire. `mic.ownsContext` / `mic.ownsStream` say what `dispose()` will release.
 
 ```ts
-const mic = await openMicrophone({ context: Tone.getContext().rawContext as AudioContext });
+const mic = await openMicrophone({
+  // rawContext is standardized-audio-context's wrapper: unwrap it, or the
+  // sample capture loses its exact timing (see nativeAudioContext).
+  context: nativeAudioContext(Tone.getContext().rawContext as AudioContext),
+});
 // ... later, from the host's own teardown:
 await mic.dispose(); // disconnects the source, stops the SDK's tracks, leaves the context running
 ```
@@ -132,29 +136,35 @@ full loop (confirmation of noisy detections, display names).
 
 ```ts
 import {
+  estimateTimingBudget,
   openMicrophone,
   startOnsetAnalysis,
-  estimateTimingBudget,
   timingInputFromMic,
 } from "@audiolab/core";
-import { TimingScorer, toleranceFromUncertainty } from "@audiolab/core/rhythm";
+import { attachPlayAlong, toleranceFromUncertainty } from "@audiolab/core/rhythm";
 
-const mic = await openMicrophone();
-const analysis = await startOnsetAnalysis(mic.context, mic.source);
+const mic = await openMicrophone({ context }); // the host's (native) AudioContext
+const analysis = await startOnsetAnalysis(context, mic.source, { historySeconds: 3 });
 const budget = estimateTimingBudget(timingInputFromMic(mic));
 
-const now = analysis.clock.perfMsToContextTime(performance.now())!;
-const scorer = new TimingScorer(
-  [0, 1, 2, 3].map((i) => ({ id: i, time: now + 2 + i * 0.75 })),
+const t0 = context.currentTime + 2;
+const run = attachPlayAlong(
+  analysis,
+  [0, 1, 2, 3].map((i) => ({ id: i, time: t0 + i * 0.75 })),
   {
+    endTime: t0 + 3.4,
     tolerance: toleranceFromUncertainty(budget.uncertaintyMs),
     offsetMs: budget.offsetMs,
     adaptiveBias: true,
   },
 );
-analysis.subscribe((onset) => scorer.onset({ id: onset.id, time: onset.time }));
-setInterval(() => scorer.advance(analysis.latest().analysedTime), 50);
+run.subscribe((e) => e.type === "results" && console.log(run.results));
+const results = await run.finished; // tier and deltaMs per note
 ```
+
+No timer, no hidden state: the run follows the analysis' batches and detaches when it
+ends; the analysis and the context stay the host's. A complete example with a Tone.js
+metronome is in [docs/TIMING.md](../../docs/TIMING.md#7-using-it-in-an-exercise).
 
 Every stage is a separate pure module (`OnsetDetector`, `AdaptiveNoiseGate`,
 `AudioClockSync`, `estimateTimingBudget`, `fitPattern`…); algorithms, measured accuracy,
@@ -165,22 +175,22 @@ references and limits are in [docs/TIMING.md](../../docs/TIMING.md).
 Everything below is exported from `@audiolab/core`; modules not re-exported from
 `src/index.ts` are internal.
 
-| Area      | Exports                                                                                                                                                                                                                                                                                                                                                                                                        |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Engines   | `TonalityEngine` (per-frame chroma → key / chord / presence; `chordQualities` option), `startLiveAnalysis` (AnalyserNode polling loop: `latest`, `subscribe`, `stop`), `TempoAnalyzer` (onset envelope → beat spectrum → BPM), `emptyTonalityFrame`, their config and frame types                                                                                                                              |
-| Chroma    | `spectrumToChroma`, `dbSpectrumToMagnitude`, `averageChromas`, `l1Normalize`, `ChromaWindow`, `CHROMA_SIZE`                                                                                                                                                                                                                                                                                                    |
-| Detection | `detectKey`, `detectMajorKey`, `detectChord(chroma, { qualities, temperature, qualityBias })`, `detectKeyFromPresence`, `HighWaterMarkFilter`, `KEY_PROFILES`, `CHORD_TEMPLATES`, `CHORD_QUALITIES` / `TRIAD_QUALITIES` / `CHORD_QUALITY_INTERVALS` / `CHORD_QUALITY_BIAS`, `chordTemplates`, `chordPitchClasses`, `baseTriad`, `isChordQuality`, `keyName`, `keyShortName`, `chordName`, `relativeMajorTonic` |
-| Pitch     | `detectPitch` → `PitchEstimate` (frequency, midi, pitchClass, cents, clarity) or null, `PitchTracker` (push samples, `estimate`, `setReferenceA4`, `reset`), `PITCH_DEFAULTS`, `normalizedSquareDifference`, `frequencyToPitch`                                                                                                                                                                                |
-| Scales    | `matchScales` → `ScaleMatch[]` (scaleId, tonic, pitchClasses, score, missing, outside), `SCALES` (12 built-in `ScaleDefinition`s with stable ids), `SCALE_NAMES_EN`, `scalePitchClasses`                                                                                                                                                                                                                       |
-| Signal    | `fftMagnitude`, `fftInPlace`, `applyHannWindow`, `computeFftDb`, `periodicHannWindow`, `nextPow2`, `LowpassFilter` (4th-order Butterworth), `estimateNoiseFloor`, `spectrumSlopeDbPerHz`, `TimeRingBuffer`, `softmax`, `mean`, `median`, `argmax`, `clamp`                                                                                                                                                     |
-| Onsets    | `OnsetDetector` (samples + start frame → `OnsetEvent`: frame, time, strength, level, localized), its stages `SuperFluxOdf`, `OnlinePeakPicker`, `AttackEnvelope`; `OnsetPipeline` (detector + gate acceptance); `StreamHistory`, `noteAfterOnset` / `chordAfterOnset` (+ `noteReadyAt` / `chordReadyAt`)                                                                                                       |
-| Gate      | `AdaptiveNoiseGate` / `stepNoiseGate` + `NOISE_GATE_DEFAULTS` (learnt floor, hysteresis, hold, warm-up, `noisy`), `LevelFloorTracker` / `stepLevelFloor` (sliding minimum), `BandLevelMeter` (80 Hz high-pass, 10 ms levels)                                                                                                                                                                                   |
-| Timing    | `AudioClockSync` (context ↔ performance clock, delivery, startup, gaps), `estimateTimingBudget` / `combineTimingComponents` → `TimingBudget` (offset, σ, minimum tolerance), `looksLikeBluetooth`, `startOnsetAnalysis` (live loop: `latest`, `subscribe`, `stop`), `timingInputFromMic`                                                                                                                       |
-| Metronome | `startMetronome` (look-ahead clicks, count-in, `setSound`, `clickTimes`), `BeatGrid` + `beatTime` / `beatAt` / `beatsBetween` / `isDownbeat`, `clickBandShare`, `ClickEchoFilter` (echo vs note, measured round trip), `outputLatencySeconds`                                                                                                                                                                  |
-| Web Audio | `openMicrophone({ context?, stream?, constraints? })` → `MicSource` (`ownsContext`, `ownsStream`, `dispose()`), `checkMicrophoneSupport`, `MicrophoneError` / `toMicError` (stable error codes), `createAnalyser` + `readSpectrumDb`, `startSampleCapture` (AudioWorklet with AnalyserNode fallback), `SampleBatcher`                                                                                          |
-| Build     | `BUILD_INFO` (`version`, `commit` of the build)                                                                                                                                                                                                                                                                                                                                                                |
-| Settings  | `DEFAULT_DETECTOR_SETTINGS`, `DEFAULT_FFT_SETTINGS`, `ANALYSIS_DEFAULTS`, `ONSET_LOWPASS_RANGE`, `FFT_DISPLAY_MAX_HZ` and the `DetectorSettings` / `FftSettings` types                                                                                                                                                                                                                                         |
-| Notes     | `NOTE_NAMES`, `freqToMidi`, `midiToFreq`, `freqToPitchClass`, `pitchClassName`, `pitchClassFrequencies`, `A_MINOR_PENTATONIC_PITCH_CLASSES`                                                                                                                                                                                                                                                                    |
+| Area      | Exports                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Engines   | `TonalityEngine` (per-frame chroma → key / chord / presence; `chordQualities` option), `startLiveAnalysis` (AnalyserNode polling loop: `latest`, `subscribe`, `stop`), `TempoAnalyzer` (onset envelope → beat spectrum → BPM), `emptyTonalityFrame`, their config and frame types                                                                                                                                                   |
+| Chroma    | `spectrumToChroma`, `dbSpectrumToMagnitude`, `averageChromas`, `l1Normalize`, `ChromaWindow`, `CHROMA_SIZE`                                                                                                                                                                                                                                                                                                                         |
+| Detection | `detectKey`, `detectMajorKey`, `detectChord(chroma, { qualities, temperature, qualityBias })`, `detectKeyFromPresence`, `HighWaterMarkFilter`, `KEY_PROFILES`, `CHORD_TEMPLATES`, `CHORD_QUALITIES` / `TRIAD_QUALITIES` / `CHORD_QUALITY_INTERVALS` / `CHORD_QUALITY_BIAS`, `chordTemplates`, `chordPitchClasses`, `baseTriad`, `isChordQuality`, `keyName`, `keyShortName`, `chordName`, `relativeMajorTonic`                      |
+| Pitch     | `detectPitch` → `PitchEstimate` (frequency, midi, pitchClass, cents, clarity) or null, `PitchTracker` (push samples, `estimate`, `setReferenceA4`, `reset`), `PITCH_DEFAULTS`, `normalizedSquareDifference`, `frequencyToPitch`                                                                                                                                                                                                     |
+| Scales    | `matchScales` → `ScaleMatch[]` (scaleId, tonic, pitchClasses, score, missing, outside), `SCALES` (12 built-in `ScaleDefinition`s with stable ids), `SCALE_NAMES_EN`, `scalePitchClasses`                                                                                                                                                                                                                                            |
+| Signal    | `fftMagnitude`, `fftInPlace`, `applyHannWindow`, `computeFftDb`, `periodicHannWindow`, `nextPow2`, `LowpassFilter` (4th-order Butterworth), `estimateNoiseFloor`, `spectrumSlopeDbPerHz`, `TimeRingBuffer`, `softmax`, `mean`, `median`, `argmax`, `clamp`                                                                                                                                                                          |
+| Onsets    | `OnsetDetector` (samples + start frame → `OnsetEvent`: frame, time, strength, level, localized), its stages `SuperFluxOdf`, `OnlinePeakPicker`, `AttackEnvelope`; `OnsetPipeline` (detector + gate acceptance); `StreamHistory`, `noteAfterOnset` / `chordAfterOnset` (+ `noteReadyAt` / `chordReadyAt`)                                                                                                                            |
+| Gate      | `AdaptiveNoiseGate` / `stepNoiseGate` + `NOISE_GATE_DEFAULTS` (learnt floor, hysteresis, hold, warm-up, `noisy`), `LevelFloorTracker` / `stepLevelFloor` (sliding minimum), `BandLevelMeter` (80 Hz high-pass, 10 ms levels)                                                                                                                                                                                                        |
+| Timing    | `AudioClockSync` (context ↔ performance clock, delivery, startup, gaps), `estimateTimingBudget` / `combineTimingComponents` → `TimingBudget` (offset, σ, minimum tolerance), `looksLikeBluetooth`, `startOnsetAnalysis` (live loop: `latest`, `subscribe`, `subscribeBatch`, `stop`; `historySeconds` keeps a `StreamHistory`), `timingInputFromMic`, `nativeAudioContext` (unwraps a Tone.js / standardized-audio-context context) |
+| Metronome | `startMetronome` (look-ahead clicks, count-in, `setSound`, `clickTimes`), `BeatGrid` + `beatTime` / `beatAt` / `beatsBetween` / `isDownbeat`, `clickBandShare`, `ClickEchoFilter` (echo vs note, measured round trip), `outputLatencySeconds`                                                                                                                                                                                       |
+| Web Audio | `openMicrophone({ context?, stream?, constraints? })` → `MicSource` (`ownsContext`, `ownsStream`, `dispose()`), `checkMicrophoneSupport`, `MicrophoneError` / `toMicError` (stable error codes), `createAnalyser` + `readSpectrumDb`, `startSampleCapture` (AudioWorklet with AnalyserNode fallback), `SampleBatcher`                                                                                                               |
+| Build     | `BUILD_INFO` (`version`, `commit` of the build)                                                                                                                                                                                                                                                                                                                                                                                     |
+| Settings  | `DEFAULT_DETECTOR_SETTINGS`, `DEFAULT_FFT_SETTINGS`, `ANALYSIS_DEFAULTS`, `ONSET_LOWPASS_RANGE`, `FFT_DISPLAY_MAX_HZ` and the `DetectorSettings` / `FftSettings` types                                                                                                                                                                                                                                                              |
+| Notes     | `NOTE_NAMES`, `freqToMidi`, `midiToFreq`, `freqToPitchClass`, `pitchClassName`, `pitchClassFrequencies`, `A_MINOR_PENTATONIC_PITCH_CLASSES`                                                                                                                                                                                                                                                                                         |
 
 ### `@audiolab/core/games`
 
@@ -192,14 +202,15 @@ Everything below is exported from `@audiolab/core`; modules not re-exported from
 
 ### `@audiolab/core/rhythm`
 
-| Area      | Exports                                                                                                                                    |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Scoring   | `TimingScorer` / `stepTimingScorer` / `createTimingScorerState` + `TIMING_SCORER_DEFAULTS` (timing × label, adaptive bias), `scoreTimings` |
-| Rhythm    | `fitPattern` (written rhythm at a free tempo → tempo, per-note residuals and tiers)                                                        |
-| Tolerance | `toleranceFromUncertainty`, `classifyDelta`, `TIMING_TOLERANCE_DEFAULTS`                                                                   |
-| Notation  | `eventsFromDurations` (durations, negative for a rest), `playedBeats`, `rhythmLength`, `figureOf`, `beamGroups`, `figureName`, `staffStep` |
-| Session   | `PlayAlongSession` (onsets in; click echoes, scoring, labels, onsets to display out)                                                       |
-| Stats     | `timingStats` (bias, jitter, drift), `medianOf`, `OnsetEvidence` (label observations → label per onset)                                    |
+| Area      | Exports                                                                                                                                                                                        |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Scoring   | `TimingScorer` / `stepTimingScorer` / `createTimingScorerState` + `TIMING_SCORER_DEFAULTS` (timing × label, adaptive bias), `scoreTimings`                                                     |
+| Rhythm    | `fitPattern` (written rhythm at a free tempo → tempo, per-note residuals and tiers)                                                                                                            |
+| Tolerance | `toleranceFromUncertainty`, `classifyDelta`, `TIMING_TOLERANCE_DEFAULTS`                                                                                                                       |
+| Notation  | `eventsFromDurations` (durations, negative for a rest), `playedBeats`, `rhythmLength`, `figureOf` → `NoteFigure` (`id`: `FigureId`, a key), `beamGroups`, `staffStep`                          |
+| Session   | `attachPlayAlong` (a run on a live analysis, no React: `results`, `onsets`, `roundTripMs`, `biasMs`, `finished`, `subscribe`, `finish`, `stop`), `PlayAlongSession` (the pure engine under it) |
+| Labels    | `noteLabeler`, `chordLabeler` (what was played at an onset), `noteLabel` (the pitch-class key)                                                                                                 |
+| Stats     | `timingStats` (bias, jitter, drift), `medianOf`, `OnsetEvidence` (label observations → label per onset)                                                                                        |
 
 ### `@audiolab/core/offline` (Node only)
 

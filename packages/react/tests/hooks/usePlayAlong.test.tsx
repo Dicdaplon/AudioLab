@@ -53,4 +53,32 @@ describe("usePlayAlong", () => {
     expect(result.current.results![0].tier).toBe("missed");
     act(() => result.current.onBatch(silence(1), 9)); // no run: ignored
   });
+
+  it("ignores a replaced run and reports the measured round trip", () => {
+    const { result } = renderHook(() => usePlayAlong());
+    // A click scheduled at 0.9 s, heard 70 ms later.
+    const signal = new Float32Array(3 * SR);
+    const at = Math.round(0.97 * SR);
+    for (let i = 0; i < 0.03 * SR; i++) {
+      signal[at + i] = 0.2 * Math.exp(-i / (0.006 * SR)) * Math.sin((2 * Math.PI * 2640 * i) / SR);
+    }
+    const h = new StreamHistory(signal.length);
+    h.push(signal, 0);
+    act(() => result.current.onBatch(h, 0.1)); // a batch before any run
+    act(() => result.current.start([{ id: 0, time: 1 }], { sampleRate: SR, tolerance: TOL }, 2));
+    act(() =>
+      result.current.start(
+        [{ id: 0, time: 1.5 }],
+        { sampleRate: SR, tolerance: TOL, clickTimes: () => [0.9] },
+        2,
+      ),
+    );
+    act(() => {
+      result.current.onOnset({ id: 4, time: 0.97, frame: at });
+      result.current.onBatch(h, 1.2);
+    });
+    expect(result.current.roundTripMs).toBeCloseTo(70, 0);
+    expect(result.current.onsets()).toHaveLength(1);
+    expect(result.current.results![0].resolved).toBe(false);
+  });
 });

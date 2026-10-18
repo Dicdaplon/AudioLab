@@ -292,6 +292,7 @@ export {
   type Metronome,
   type MetronomeOptions,
 } from "./audio/metronome";
+export { nativeAudioContext } from "./audio/nativeContext";
 export {
   outputLatencySeconds,
   startOnsetAnalysis,
@@ -299,6 +300,7 @@ export {
   type OnsetAnalysis,
   type OnsetAnalysisOptions,
   type AnalysedBatchListener,
+  type BatchListener,
   type OnsetAnalysisSnapshot,
   type OnsetListener,
   type TimedOnset,

@@ -22,6 +22,7 @@
  * to the caller and are never touched.
  */
 
+import { StreamHistory } from "../analysis/onset/afterOnset";
 import { OnsetPipeline, type OnsetPipelineOptions } from "../analysis/onset/onsetPipeline";
 import type { OnsetEvent } from "../analysis/onset/onsetDetector";
 import type { NoiseGateState } from "../analysis/gate/noiseGate";
@@ -70,13 +71,27 @@ export type AnalysedBatchListener = (
   analysedTime: number,
 ) => void;
 
+/** After each captured batch, once its onsets were delivered to `subscribe`. */
+export type BatchListener = (history: StreamHistory | null, analysedTime: number) => void;
+
 export interface OnsetAnalysis {
   readonly method: CaptureMethod;
   readonly pipeline: OnsetPipeline;
   readonly clock: AudioClockSync;
+  readonly sampleRate: number;
+  /**
+   * The last `historySeconds` of samples, by stream frame, or null without
+   * that option. Pushed before the batch's onsets are delivered.
+   */
+  readonly history: StreamHistory | null;
   latest(): OnsetAnalysisSnapshot;
   /** Called for every accepted onset; returns an unsubscribe function. */
   subscribe(listener: OnsetListener): () => void;
+  /**
+   * Called after every batch, once its onsets were delivered, with the time
+   * up to which every onset is known (`attachPlayAlong` runs on it).
+   */
+  subscribeBatch(listener: BatchListener): () => void;
   /** Disconnect the capture. Idempotent. */
   stop(): void;
 }
@@ -92,6 +107,12 @@ export interface OnsetAnalysisOptions {
   onSamples?: AnalysedBatchListener;
   /** Try the AudioWorklet first. Default true. */
   preferWorklet?: boolean;
+  /**
+   * Keep this many seconds of samples in `history` (for the click echo check
+   * and the note / chord labels of a play-along). Default 0: no history.
+   * 3 s is plenty.
+   */
+  historySeconds?: number;
 }
 
 function nowMs(): number {
@@ -112,6 +133,10 @@ export async function startOnsetAnalysis(
   const clock = new AudioClockSync();
   const keep = Math.max(1, options.recentOnsets ?? 32);
   const listeners = new Set<OnsetListener>();
+  const batchListeners = new Set<BatchListener>();
+  const historySeconds = options.historySeconds ?? 0;
+  const history =
+    historySeconds > 0 ? new StreamHistory(Math.round(historySeconds * context.sampleRate)) : null;
   let recent: TimedOnset[] = [];
   let analysedTime = 0;
   let exactTiming = true;
@@ -121,6 +146,7 @@ export async function startOnsetAnalysis(
   clock.markStart(nowMs());
   const onBatch: SampleListener = (samples, info) => {
     if (stopped) return;
+    history?.push(samples, info.startFrame);
     clock.observeBatch({
       startFrame: info.startFrame,
       length: samples.length,
@@ -148,6 +174,13 @@ export async function startOnsetAnalysis(
       }
     }
     options.onSamples?.(samples, info, analysedTime);
+    for (const l of batchListeners) {
+      try {
+        l(history, analysedTime);
+      } catch (err) {
+        console.error(err);
+      }
+    }
   };
 
   const capture: SampleCapture = await startSampleCapture(context, source, onBatch, {
@@ -159,6 +192,8 @@ export async function startOnsetAnalysis(
     method: capture.method,
     pipeline,
     clock,
+    sampleRate: context.sampleRate,
+    history,
     latest: () => ({
       gate: pipeline.gate.state,
       recentOnsets: recent,
@@ -172,10 +207,15 @@ export async function startOnsetAnalysis(
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
+    subscribeBatch(listener) {
+      batchListeners.add(listener);
+      return () => batchListeners.delete(listener);
+    },
     stop() {
       if (stopped) return;
       stopped = true;
       listeners.clear();
+      batchListeners.clear();
       capture.stop();
     },
   };

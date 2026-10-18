@@ -1,9 +1,10 @@
 "use client";
 
 /**
- * A play-along exercise for React: one `PlayAlongSession` at a time, its
+ * A play-along exercise for React: `attachPlayAlong` (from
+ * `@audiolab/core/rhythm`) behind React state. One run at a time, its
  * results as state, its end detected, and the speaker → microphone round
- * trip measured from the metronome's echoes.
+ * trip measured from the metronome's echoes (kept across runs).
  *
  * Wire it to `useOnsetAnalysis`:
  *
@@ -19,17 +20,20 @@
  *
  * Always pass `clickTimes` when a metronome runs, even silent: it only lists
  * the clicks actually played, so turning the sound on mid-run stays safe.
+ * Without React, use `attachPlayAlong` on `startOnsetAnalysis` directly.
  */
 
 import { useCallback, useRef, useState } from "react";
 
-import { ClickEchoFilter, type StreamHistory } from "@audiolab/core";
+import { ClickEchoFilter, StreamHistory } from "@audiolab/core";
 import {
-  PlayAlongSession,
+  attachPlayAlong,
   type ExpectedNote,
   type NoteResult,
   type PlayAlongOnset,
   type PlayAlongOptions,
+  type PlayAlongRun,
+  type PlayAlongSource,
   type PlayedOnsetView,
 } from "@audiolab/core/rhythm";
 
@@ -63,13 +67,49 @@ export interface PlayAlongControls {
 }
 
 const NO_ONSETS: readonly PlayedOnsetView[] = [];
+/** Stands for the history until the first batch brings the real one. */
+const NO_HISTORY_YET = new StreamHistory(1);
+
+/** A `PlayAlongSource` fed by the hook's onOnset / onBatch callbacks. */
+function createSource(sampleRate: () => number) {
+  const onsetListeners = new Set<(onset: PlayAlongOnset) => void>();
+  const batchListeners = new Set<(history: StreamHistory | null, analysedTime: number) => void>();
+  let last: StreamHistory | null = null;
+  const source: PlayAlongSource = {
+    get sampleRate() {
+      return sampleRate();
+    },
+    get history() {
+      return last ?? NO_HISTORY_YET;
+    },
+    subscribe(l) {
+      onsetListeners.add(l);
+      return () => onsetListeners.delete(l);
+    },
+    subscribeBatch(l) {
+      batchListeners.add(l);
+      return () => batchListeners.delete(l);
+    },
+  };
+  return {
+    source,
+    onset(o: PlayAlongOnset) {
+      for (const l of onsetListeners) l(o);
+    },
+    batch(h: StreamHistory, t: number) {
+      last = h;
+      for (const l of batchListeners) l(h, t);
+    },
+  };
+}
 
 export function usePlayAlong(): PlayAlongControls {
-  const sessionRef = useRef<PlayAlongSession | null>(null);
-  const endRef = useRef(Infinity);
-  const activeRef = useRef(false);
+  const runRef = useRef<PlayAlongRun | null>(null);
   const echoRef = useRef<ClickEchoFilter | null>(null);
   echoRef.current ??= new ClickEchoFilter();
+  const sampleRateRef = useRef(48000);
+  const feedRef = useRef<ReturnType<typeof createSource> | null>(null);
+  feedRef.current ??= createSource(() => sampleRateRef.current);
   const [results, setResults] = useState<readonly NoteResult[] | null>(null);
   const [done, setDone] = useState(false);
   const [active, setActive] = useState(false);
@@ -80,17 +120,28 @@ export function usePlayAlong(): PlayAlongControls {
 
   const start = useCallback(
     (notes: readonly ExpectedNote[], options: PlayAlongStartOptions, endTime: number) => {
-      const { clickTimes, clickBand, ...rest } = options;
-      const session = new PlayAlongSession(notes, {
+      runRef.current?.stop();
+      const { clickTimes, clickBand, sampleRate, ...rest } = options;
+      sampleRateRef.current = sampleRate;
+      const run = attachPlayAlong(feedRef.current!.source, notes, {
         ...rest,
+        endTime,
         clicks: clickTimes
           ? { times: clickTimes, filter: echoRef.current!, band: clickBand }
           : undefined,
       });
-      sessionRef.current = session;
-      endRef.current = endTime;
-      activeRef.current = true;
-      setResults(session.results);
+      runRef.current = run;
+      run.subscribe((event) => {
+        if (runRef.current !== run) return;
+        if (event.type === "results") setResults([...run.results]);
+        if (event.type === "roundTrip") setRoundTrip({ ms: event.ms, spread: event.spreadMs });
+        if (event.type === "done") {
+          setResults([...event.results]);
+          setDone(true);
+          setActive(false);
+        }
+      });
+      setResults(run.results);
       setDone(false);
       setActive(true);
     },
@@ -98,35 +149,15 @@ export function usePlayAlong(): PlayAlongControls {
   );
 
   const stop = useCallback(() => {
-    const session = sessionRef.current;
-    if (!session || !activeRef.current) return;
-    activeRef.current = false;
-    session.finish();
-    setResults([...session.results]);
-    setDone(true);
-    setActive(false);
+    runRef.current?.finish();
   }, []);
 
-  const onOnset = useCallback((onset: PlayAlongOnset) => {
-    if (activeRef.current) sessionRef.current?.onset(onset);
-  }, []);
-
-  const onBatch = useCallback((history: StreamHistory, analysedTime: number) => {
-    const session = sessionRef.current;
-    if (!session || !activeRef.current) return;
-    if (session.update(history, analysedTime).length > 0) setResults([...session.results]);
-    const echo = echoRef.current!;
-    const ms = echo.roundTripMs;
-    setRoundTrip((prev) => (prev.ms === ms ? prev : { ms, spread: echo.spreadMs }));
-    if (analysedTime > endRef.current && session.done) {
-      activeRef.current = false;
-      setResults([...session.results]);
-      setDone(true);
-      setActive(false);
-    }
-  }, []);
-
-  const onsets = useCallback(() => sessionRef.current?.onsets ?? NO_ONSETS, []);
+  const onOnset = useCallback((onset: PlayAlongOnset) => feedRef.current!.onset(onset), []);
+  const onBatch = useCallback(
+    (history: StreamHistory, analysedTime: number) => feedRef.current!.batch(history, analysedTime),
+    [],
+  );
+  const onsets = useCallback(() => runRef.current?.onsets ?? NO_ONSETS, []);
 
   return {
     start,

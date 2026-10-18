@@ -13,6 +13,7 @@
  *   timingStats     bias, jitter, drift
  *   onsetEvidence   which note / chord was played at each onset
  *   notation        rhythms as durations, figures, beams, staff steps
+ *   playAlongRun    attachPlayAlong: a run on a live onset analysis, no React
  *   playAlong       a whole play-along exercise: queue, click echoes,
  *                   scoring, labels, onsets to display
  *
@@ -52,15 +53,25 @@ export {
   type PlayAlongOptions,
   type PlayedOnsetView,
 } from "./playAlong";
+export {
+  PlayAlongStoppedError,
+  attachPlayAlong,
+  type PlayAlongEvent,
+  type PlayAlongRun,
+  type PlayAlongRunOptions,
+  type PlayAlongRunState,
+  type PlayAlongSource,
+} from "./playAlongRun";
 export { chordLabeler, noteLabel, noteLabeler } from "./labelers";
 export {
   beamGroups,
   eventsFromDurations,
-  figureName,
   figureOf,
   playedBeats,
   rhythmLength,
   staffStep,
+  type FigureBase,
+  type FigureId,
   type NoteFigure,
   type RhythmEvent,
 } from "./notation";

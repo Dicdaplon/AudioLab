@@ -132,6 +132,11 @@ export class PlayAlongSession {
     return this.echoFilter?.roundTripMs ?? null;
   }
 
+  /** Spread of the round-trip measurements, in ms. */
+  get roundTripSpreadMs(): number {
+    return this.echoFilter?.spreadMs ?? 0;
+  }
+
   /** Queue an onset; it is graded on the next `update`. */
   onset(onset: PlayAlongOnset): void {
     this.queue.push(onset);
