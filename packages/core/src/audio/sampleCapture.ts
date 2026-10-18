@@ -77,8 +77,9 @@ export async function startSampleCapture(
   if (preferWorklet && context.audioWorklet && typeof AudioWorkletNode === "function") {
     try {
       return await startWorkletCapture(context, source, onSamples, options.batchSize);
-    } catch {
+    } catch (err) {
       // Module failed to load or the node could not be created: fall back.
+      warnFallbackOnce(err);
     }
   }
   return startAnalyserCapture(context, source, onSamples, options);
@@ -99,6 +100,23 @@ function loadCaptureModule(context: AudioContext): Promise<void> {
     moduleLoads.set(context, load);
   }
   return load;
+}
+
+let warned = false;
+
+/**
+ * One console warning per page when the worklet path fails: the capture
+ * still works, but with estimated timing. The usual cause is a wrapped
+ * context (Tone.js): pass `nativeAudioContext(ctx)` instead.
+ */
+function warnFallbackOnce(err: unknown): void {
+  if (warned || typeof console === "undefined") return;
+  warned = true;
+  console.warn(
+    "[audiolab] AudioWorklet capture unavailable, falling back to AnalyserNode polling (timing estimated). " +
+      "With Tone.js, pass nativeAudioContext(Tone.getContext().rawContext).",
+    err,
+  );
 }
 
 function nowMs(): number {

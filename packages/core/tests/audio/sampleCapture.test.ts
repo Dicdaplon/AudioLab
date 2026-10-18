@@ -145,6 +145,8 @@ describe("startSampleCapture", () => {
   let nodes: FakeWorkletNode[];
 
   beforeEach(() => {
+    // The fallback tests trigger the one-time worklet warning on purpose.
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
     worklet = installFakeAudioWorkletNode();
     nodes = worklet.nodes;
     vi.useFakeTimers();

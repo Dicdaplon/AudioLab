@@ -173,6 +173,7 @@ describe("usePitch", () => {
   });
 
   it("stays idle when the capture cannot start", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined); // the expected fallback warning
     const context = fakes.instances[0];
     context.audioWorklet!.addModule.mockRejectedValue(new Error("no worklet"));
     context.createAnalyser.mockImplementation(() => {
