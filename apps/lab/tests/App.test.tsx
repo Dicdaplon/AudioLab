@@ -149,13 +149,17 @@ describe("App", () => {
       screen.getByRole("heading", { name: title }).closest("section") as HTMLElement;
     const play = () => panel("Play in time");
     expect(screen.getByLabelText("Rhythm", { selector: "select" })).toBeTruthy();
-    expect(play().textContent).toMatch(/play this rhythm at your own pace/i);
+    expect(play().textContent).toMatch(/Start the microphone first/);
+    fireEvent.change(screen.getByLabelText("Exercise"), { target: { value: "written" } });
+    expect(play().textContent).toMatch(/play the rhythm/i);
 
     fireEvent.change(screen.getByLabelText("Exercise"), { target: { value: "notes" } });
     expect(play().textContent).toMatch(/Start the microphone first/);
     fireEvent.change(screen.getByLabelText("Exercise"), { target: { value: "chords" } });
     expect(screen.getByRole("button", { name: "Start" })).toHaveProperty("disabled", true);
-    expect(play().textContent).not.toMatch(/frame|onset|latency|probability|chroma|flux|dB|ms\b/i);
+    expect(play().textContent).not.toMatch(
+      /frame|onset|latency|probability|chroma|flux|\bdB\b|\bms\b/i,
+    );
 
     // The diagnostics are where the numbers live.
     expect(panel("Timing").textContent).toMatch(/Reaction delay/);

@@ -5,6 +5,8 @@ import { Panel } from "@audiolab/react";
 const COMPONENT_LABELS: Record<string, string> = {
   input: "Microphone → audio thread",
   display: "Screen (draw → seen)",
+  output: "Audio out → speaker",
+  roundTrip: "Speaker → microphone (measured from the click)",
   clock: "Audio ↔ page clock",
   detector: "Onset detector",
   strum: "Strum spread",

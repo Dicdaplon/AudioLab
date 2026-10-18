@@ -5,6 +5,12 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
+/** Imports @audiolab/core never makes (React, Node built-ins). */
+const CORE_PATTERNS = [
+  { group: ["react", "react-dom", "react/*", "react-dom/*"], message: "core is React-free" },
+  { group: ["node:*"], message: "Node built-ins belong to the offline subpath" },
+];
+
 export default tseslint.config(
   { ignores: ["**/dist", "**/coverage", "node_modules", ".claude"] },
   {
@@ -33,23 +39,29 @@ export default tseslint.config(
   },
   {
     // @audiolab/core is framework-free: no React, and no Node built-ins
-    // outside the `offline` subpath (browser bundles must stay clean).
+    // outside the `offline` subpath (browser bundles must stay clean). The
+    // main entry never imports the `rhythm` subpath (rhythm may use pure
+    // core modules, not the other way round).
     files: ["packages/core/src/**/*.ts"],
-    ignores: ["packages/core/src/offline/**"],
+    ignores: ["packages/core/src/offline/**", "packages/core/src/rhythm/**"],
     rules: {
       "no-restricted-imports": [
         "error",
         {
           patterns: [
+            ...CORE_PATTERNS,
             {
-              group: ["react", "react-dom", "react/*", "react-dom/*"],
-              message: "core is React-free",
+              group: ["**/rhythm", "**/rhythm/*", "./rhythm", "./rhythm/*"],
+              message: "the main entry must not import the rhythm subpath",
             },
-            { group: ["node:*"], message: "Node built-ins belong to the offline subpath" },
           ],
         },
       ],
     },
+  },
+  {
+    files: ["packages/core/src/rhythm/**/*.ts"],
+    rules: { "no-restricted-imports": ["error", { patterns: CORE_PATTERNS }] },
   },
   prettier,
 );

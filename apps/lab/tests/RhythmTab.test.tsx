@@ -5,6 +5,7 @@ import {
   StreamHistory,
   estimateTimingBudget,
   initialNoiseGateState,
+  type Metronome,
   type MicSource,
   type OnsetAnalysis,
   type OnsetAnalysisSnapshot,
@@ -24,13 +25,39 @@ const hook: { state: OnsetAnalysisState; options: UseOnsetAnalysisOptions | null
   options: null,
 };
 
+const metronomes: Metronome[] = [];
+
 vi.mock("@audiolab/react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@audiolab/react")>();
+  const actualReact = await import("react");
   return {
     ...actual,
     useOnsetAnalysis: (_mic: unknown, options: UseOnsetAnalysisOptions) => {
       hook.options = options;
       return hook.state;
+    },
+    useMetronome: () => {
+      const [metronome, setMetronome] = actualReact.useState<Metronome | null>(null);
+      const [sound, setSound] = actualReact.useState(true);
+      return {
+        metronome,
+        sound,
+        setSound,
+        start: (o: { bpm: number; sound?: boolean }) => {
+          // Beat 0 one bar after "now" (10 s on the mocked clock).
+          const m = {
+            grid: { startTime: 10 + (4 * 60) / o.bpm, bpm: o.bpm, beatsPerBar: 4 },
+            clickTimes: [] as number[],
+            sound: o.sound ?? true,
+            setSound: vi.fn(),
+            stop: vi.fn(),
+          } as unknown as Metronome;
+          metronomes.push(m);
+          setMetronome(m);
+          return m;
+        },
+        stop: () => setMetronome(null),
+      };
     },
   };
 });
@@ -84,6 +111,13 @@ function onset(id: number, time: number): TimedOnset {
 }
 
 const mic = { context: { sampleRate: SR } } as unknown as MicSource;
+
+/** Silent samples: the echo check and the labels need audio after each onset. */
+function silentHistory(seconds: number): StreamHistory {
+  const h = new StreamHistory(seconds * SR);
+  h.push(new Float32Array(seconds * SR), 0);
+  return h;
+}
 const panel = (title: string) =>
   screen.getByRole("heading", { name: title }).closest("section") as HTMLElement;
 
@@ -100,7 +134,7 @@ describe("RhythmTab", () => {
       captureMethod: "worklet",
       budget: estimateTimingBudget(),
       analysis,
-      history: new StreamHistory(SR),
+      history: silentHistory(40),
     };
   });
 
@@ -133,51 +167,122 @@ describe("RhythmTab", () => {
     }
   });
 
-  it("grades a written rhythm played at a free tempo", () => {
+  /** Turn the click off (no echo check: onsets go straight to the scorer). */
+  const silence = () => fireEvent.click(screen.getByRole("switch", { name: "Click sound" }));
+  const offset = () => hook.state.budget!.offsetMs / 1000;
+  const batch = (time: number) => act(() => hook.options!.onBatch!(hook.state.history!, time));
+
+  it("runs the rhythm lane on the metronome and grades each mark", () => {
+    render(<RhythmTab mic={mic} running />);
+    silence();
+    fireEvent.click(screen.getByRole("button", { name: "Start" }));
+    const m = metronomes.at(-1)!;
+    expect(m.grid.bpm).toBe(70);
+    expect(panel("Play in time").textContent).toMatch(/Listen to the count-in/);
+    // "Two eighths on beat 3", played twice: 20 marks, all on time.
+    const beats = [0, 1, 2, 2.5, 3, 4, 5, 6, 6.5, 7];
+    const all = [...beats, ...beats.map((b) => b + 8)];
+    act(() => {
+      all.forEach((b, i) =>
+        hook.options!.onOnset!(
+          onset(i, m.grid.startTime + (b * 60) / 70 + offset()),
+          hook.state.history!,
+        ),
+      );
+    });
+    batch(m.grid.startTime + (17 * 60) / 70);
+    expect(panel("Play in time").textContent).toMatch(/20 of 20 on time./);
+    expect(screen.getByRole("button", { name: "Again" })).toBeTruthy();
+  });
+
+  it("stops a lane run on demand and changes rhythm", () => {
     render(<RhythmTab mic={mic} running />);
     fireEvent.click(screen.getByRole("button", { name: "Start" }));
-    const beats = [0, 1, 2, 2.5, 3, 4, 5, 6, 6.5, 7]; // "Two eighths on beat 3"
+    fireEvent.click(screen.getByRole("button", { name: "Stop" }));
+    fireEvent.change(screen.getByLabelText("Rhythm", { selector: "select" }), {
+      target: { value: "rests" },
+    });
+    expect(screen.getByRole("button", { name: "Again" })).toBeTruthy();
+  });
+
+  it("keeps the click's echoes out of the grade", () => {
+    // A history long enough for the echo check, all silence: onsets are notes.
+    hook.state = {
+      ...hook.state,
+      history: (() => {
+        const h = new StreamHistory(SR * 20);
+        h.push(new Float32Array(SR * 20), 0);
+        return h;
+      })(),
+    };
+    render(<RhythmTab mic={mic} running />);
+    expect(screen.getByText(/the page tells the click from your playing/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Start" }));
+    const m = metronomes.at(-1)!;
+    act(() => hook.options!.onOnset!(onset(0, m.grid.startTime + offset()), hook.state.history!));
+    batch(m.grid.startTime + 0.5);
+    expect(panel("Play in time").textContent).toMatch(/On time./);
+  });
+
+  it("grades a written rhythm on the metronome, with a dot per note heard", () => {
+    render(<RhythmTab mic={mic} running />);
+    fireEvent.change(screen.getByLabelText("Exercise"), { target: { value: "written" } });
+    silence();
+    expect(screen.getAllByText("&", { selector: ".rhythm__count li" })).toHaveLength(8);
+    fireEvent.click(screen.getByRole("button", { name: "Start" }));
+    const m = metronomes.at(-1)!;
+    const beats = [0, 1, 2, 2.5, 3, 4, 5, 6, 6.5, 7];
+    act(() => {
+      beats.forEach((b, i) =>
+        hook.options!.onOnset!(
+          onset(i, m.grid.startTime + (b * 60) / 70 + offset()),
+          hook.state.history!,
+        ),
+      );
+    });
+    batch(m.grid.startTime + (9 * 60) / 70);
+    expect(panel("Play in time").textContent).toMatch(/10 of 10 notes in time./);
+    expect(document.querySelectorAll(".rhythm__dot")).toHaveLength(10);
+    expect(document.querySelectorAll('.rhythm__note[data-tier="onTime"]')).toHaveLength(10);
+  });
+
+  it("grades a written rhythm at my own pace", () => {
+    render(<RhythmTab mic={mic} running />);
+    fireEvent.change(screen.getByLabelText("Exercise"), { target: { value: "written" } });
+    fireEvent.click(screen.getByRole("switch", { name: /My own pace/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Start" }));
+    const beats = [0, 1, 2, 2.5, 3, 4, 5, 6, 6.5, 7];
     act(() => {
       beats.forEach((b, i) => hook.options!.onOnset!(onset(i, 20 + b * 0.7), hook.state.history!));
     });
     expect(panel("Play in time").textContent).toMatch(/Listening… 10 of 10 notes/);
-    // Silence after the last note ends the take.
-    act(() => hook.options!.onBatch!(hook.state.history!, 20 + 7 * 0.7 + 3));
+    batch(20 + 7 * 0.7 + 3);
     expect(panel("Play in time").textContent).toMatch(
       /10 of 10 notes in time, at about 86 BPM. Steady./,
     );
-    expect(document.querySelectorAll('.rhythm__note[data-tier="onTime"]')).toHaveLength(10);
-    expect(screen.getByRole("button", { name: "Again" })).toBeTruthy();
-  });
-
-  it("stops a take on demand and changes rhythm", () => {
-    render(<RhythmTab mic={mic} running />);
-    fireEvent.click(screen.getByRole("button", { name: "Start" }));
+    fireEvent.click(screen.getByRole("button", { name: "Again" }));
     fireEvent.click(screen.getByRole("button", { name: "Stop" }));
     expect(panel("Play in time").textContent).toMatch(/Not enough notes heard/);
-    fireEvent.change(screen.getByLabelText("Rhythm", { selector: "select" }), {
-      target: { value: "quarters" },
-    });
-    expect(screen.getByRole("button", { name: "Start" })).toBeTruthy();
   });
 
   it("grades scrolling notes on timing and on the note played", () => {
+    // Silent samples: the note played is "unclear" once its audio is in.
+    const h = new StreamHistory(SR * 40);
+    h.push(new Float32Array(SR * 40), 0);
+    hook.state = { ...hook.state, history: h };
     render(<RhythmTab mic={mic} running />);
     fireEvent.change(screen.getByLabelText("Exercise"), { target: { value: "notes" } });
+    silence();
     fireEvent.click(screen.getByRole("button", { name: "Start" }));
-    // Start at t = 10 s, first note at 13 s, 66 BPM. The budget offset is
-    // subtracted, so play each note that much late; the first is on time.
-    const offset = hook.state.budget!.offsetMs / 1000;
-    act(() => hook.options!.onOnset!(onset(0, 13 + offset), hook.state.history!));
-    // No sound in the history: the note is "unclear" once its label is due.
-    act(() => hook.options!.onBatch!(hook.state.history!, 13.2));
-    expect(panel("Play in time").textContent).toMatch(/On time/);
-    // The rest is never played: once the analysed time passes, all missed.
-    act(() => hook.options!.onBatch!(hook.state.history!, 60));
+    const m = metronomes.at(-1)!;
+    act(() => hook.options!.onOnset!(onset(0, m.grid.startTime + offset()), hook.state.history!));
+    batch(m.grid.startTime + 0.3);
+    expect(panel("Play in time").textContent).toMatch(/On time, note unclear/);
+    batch(m.grid.startTime + 30);
     expect(panel("Play in time").textContent).toMatch(/1 of 12 on time, 0 right notes./);
   });
 
-  it("asks for the microphone before a scrolling exercise", () => {
+  it("asks for the microphone first", () => {
     render(<RhythmTab mic={null} running={false} onStart={vi.fn()} />);
     fireEvent.change(screen.getByLabelText("Exercise"), { target: { value: "chords" } });
     expect(panel("Play in time").textContent).toMatch(/Start the microphone first/);
