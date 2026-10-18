@@ -142,18 +142,19 @@ describe("App", () => {
 
   it("offers the chord vocabulary, the match policy and the note source where they apply", () => {
     render(<App />);
-    const vocabulary = screen.getByLabelText("Chord vocabulary") as HTMLSelectElement;
+    const vocabulary = screen.getByLabelText("Chords it knows") as HTMLSelectElement;
     expect(vocabulary.value).toBe("triads");
+    expect(document.body.textContent).toContain("A C7 is read as C.");
     expect(screen.queryByLabelText("A chord counts when")).toBeNull();
 
     open("Chord game");
     const pools = () =>
       Array.from((screen.getByLabelText("Chord set") as HTMLSelectElement).options, (o) => o.value);
     expect(pools()).not.toContain("open-sevenths");
-    fireEvent.change(screen.getByLabelText("Chord vocabulary"), { target: { value: "sevenths" } });
+    fireEvent.change(screen.getByLabelText("Chords it knows"), { target: { value: "sevenths" } });
     expect(pools()).toContain("open-sevenths");
     expect(pools()).not.toContain("suspended");
-    fireEvent.change(screen.getByLabelText("Chord vocabulary"), { target: { value: "all" } });
+    fireEvent.change(screen.getByLabelText("Chords it knows"), { target: { value: "all" } });
     expect(pools()).toContain("suspended");
     fireEvent.change(screen.getByLabelText("A chord counts when"), { target: { value: "triad" } });
     expect(screen.getByText(/The plain chord counts too/)).toBeTruthy();
@@ -203,6 +204,13 @@ describe("App", () => {
     // The diagnostics are where the numbers live.
     expect(panel("Timing").textContent).toMatch(/Reaction delay/);
     expect(panel("Listening").textContent).toMatch(/Waiting for the microphone/);
+    // The threshold follows the room unless set by hand.
+    expect(screen.queryByRole("slider", { name: "Count a note above" })).toBeNull();
+    fireEvent.click(screen.getByRole("switch", { name: "Set the threshold myself" }));
+    expect(screen.getByRole("slider", { name: "Count a note above" })).toHaveProperty(
+      "value",
+      "-50",
+    );
   });
 
   it("offers a How? sheet under every feature", () => {

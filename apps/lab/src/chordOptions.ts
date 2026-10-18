@@ -10,14 +10,23 @@ import { DEFAULT_CHORD_GAME_POOLS, type ChordGamePool } from "@audiolab/react";
 export type Vocabulary = "triads" | "sevenths" | "all";
 
 export const VOCABULARIES: Readonly<
-  Record<Vocabulary, { label: string; qualities: readonly ChordQuality[] }>
+  Record<Vocabulary, { label: string; hint: string; qualities: readonly ChordQuality[] }>
 > = {
-  triads: { label: "Major and minor triads", qualities: TRIAD_QUALITIES },
+  triads: {
+    label: "Major and minor only (C, Am…)",
+    hint: "The safest: 24 chords to choose from. A C7 is read as C.",
+    qualities: TRIAD_QUALITIES,
+  },
   sevenths: {
-    label: "Triads and sevenths (7, maj7, m7)",
+    label: "Add the sevenths (C7, Cmaj7, Am7)",
+    hint: "More names, a little more hesitation: Am7 and C6 share their notes.",
     qualities: ["maj", "min", "dom7", "maj7", "min7"],
   },
-  all: { label: "Every quality (7ths, 6ths, sus, dim)", qualities: CHORD_QUALITIES },
+  all: {
+    label: "Every chord type (6, sus, dim too)",
+    hint: "The richest, and the most hesitant: chords that share notes get one name.",
+    qualities: CHORD_QUALITIES,
+  },
 };
 
 /**

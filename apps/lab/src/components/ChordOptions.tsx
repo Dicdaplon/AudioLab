@@ -27,7 +27,7 @@ export function ChordOptions({
     <Panel className="lab-options">
       <SelectField
         id="chord-vocabulary"
-        label="Chord vocabulary"
+        label="Chords it knows"
         value={vocabulary}
         onChange={(v) => onVocabularyChange(v as Vocabulary)}
       >
@@ -37,6 +37,7 @@ export function ChordOptions({
           </option>
         ))}
       </SelectField>
+      <p className="al-hint lab-options__hint">{VOCABULARIES[vocabulary].hint}</p>
 
       {accept !== undefined && onAcceptChange && (
         <SelectField
