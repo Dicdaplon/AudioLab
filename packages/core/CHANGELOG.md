@@ -1,5 +1,81 @@
 # @audiolab/core
 
+## 0.3.0
+
+### Minor Changes
+
+- 3fa85f0: - `useTonality` takes `chordQualities`.
+  - `ChordGame` takes `pools` (`ChordGamePool[]`, default `DEFAULT_CHORD_GAME_POOLS`) and
+    `accept` (`"exact"` or `"triad"`).
+  - `WolfJumper` takes `pitch` and the new detection options (`noteSource`, `chordAccept`).
+  - The lab shows them: a chord vocabulary choice (triads, sevenths, every quality), seventh
+    and suspended chord sets in the chord game, the match policy, and the note source of
+    Wolf Jumper.
+- 4231e7f: Play-along without React, and Tone.js contexts.
+
+  - `attachPlayAlong(analysis, notes, { endTime, … })` in `@audiolab/core/rhythm` runs a whole
+    exercise on a live onset analysis: `results`, `onsets`, `roundTripMs`, `biasMs`, a `finished`
+    promise, `subscribe` (results, round trip, done), `finish()` and `stop()`. No timer; it
+    detaches when it ends. `usePlayAlong` now runs on it.
+  - `startOnsetAnalysis` takes `historySeconds` (keeps a `StreamHistory`, exposed as `history`),
+    exposes `sampleRate` and `subscribeBatch` (after each batch, once its onsets are delivered).
+  - `nativeAudioContext(ctx)` unwraps Tone.js' standardized-audio-context wrapper. On the wrapper
+    the AudioWorklet capture cannot start and fell back silently to estimated timing;
+    `startSampleCapture` now warns once when that happens.
+  - Notation gives keys, not labels: `NoteFigure.id` (`FigureId`: "whole" … "sixteenth"); the
+    English names moved to `@audiolab/react` (`FIGURE_NAMES_EN`, `figureLabel`, `StaffNotation figureWords`).
+
+- 09dc20c: Onset timing, an adaptive noise gate, a latency budget and rhythm scoring.
+
+  - Captured batches carry their AudioContext frame (`SampleBatchInfo`, second argument of
+    the sample listener); the batch size is an option; the worklet loads once per context.
+  - `OnsetDetector` (SuperFlux, online peak picking, attack localisation), `OnsetPipeline`,
+    `AdaptiveNoiseGate` / `stepNoiseGate`, `LevelFloorTracker`, `BandLevelMeter`,
+    `AudioClockSync`, `estimateTimingBudget`, `startOnsetAnalysis`, `StreamHistory`,
+    `noteAfterOnset` / `chordAfterOnset`.
+  - New subpath `@audiolab/core/rhythm`: `TimingScorer`, `fitPattern`,
+    `toleranceFromUncertainty`, `timingStats`, `OnsetEvidence`.
+  - `WolfJumperDetector` takes `gate: "adaptive"`; the `WolfJumper` component gates
+    automatically by default (`gate: "manual"` for the slider).
+  - Metronome and play-along: `startMetronome` (look-ahead clicks on the audio clock, one-bar
+    count-in), `BeatGrid` helpers, `clickBandShare` and `ClickEchoFilter` (the click heard by
+    the microphone is not a note, and its delay measures the round trip), timing budget
+    `reference: "audio"`, and `PlayAlongSession` in `@audiolab/core/rhythm`.
+  - Labels for play-along: `noteLabeler`, `chordLabeler`, `noteLabel` (stable keys: pitch class
+    string, `chordKey`). `outputLatencySeconds`, `TimingReference`, `spectralRise`,
+    `METRONOME_DEFAULTS`, `CLICK_BAND_HZ`; `timingInputFromMic` accepts the context (output latency).
+  - React: `useOnsetAnalysis` (options `reference`, `roundTripMs`), `useDisplayFramePeriod`,
+    `useMetronome` (reactive `sound`), `usePlayAlong` (session lifecycle, end detection, measured
+    round trip), `PlayAlongLane` (tolerance band, beat lines, a dot per detected onset, early /
+    late / missed colours, a ring for a wrong note), `BeatLights` (translatable labels),
+    `laneTarget`, `targetState`, `LANE_GEOMETRY_DEFAULTS`. `styles.css` adds the `.al-lane` and
+    `.al-beats` classes and the `--al-viz-onset` token.
+  - Use the same version of `@audiolab/core` and `@audiolab/react`: classes such as
+    `StreamHistory` are shared between them.
+  - Behaviour changes: `SampleListener` now receives a second argument (`SampleBatchInfo`);
+    callbacks written with one parameter keep working, code that _calls_ a listener must pass
+    it. `WolfJumper` gates automatically by default; pass `gate="manual"` for the old slider.
+  - The lab has a Rhythm tab: written rhythm, scrolling notes and chords, the automatic
+    gate and the latency budget.
+
+- 3c15b8b: - Scores: `StaffNotation` (react) writes a rhythm on a one-line staff, or notes on a treble staff
+  with the guitar 8, with chord symbols, the count, verdict colours, a live cursor and red dots;
+  `@audiolab/core/rhythm` adds the notation helpers (`eventsFromDurations`, `figureOf`, `beamGroups`,
+  `staffStep`…). `styles.css` adds the `.al-staff` classes and the `--al-viz-good` token.
+  - The default timing tolerance doubles to ±100 ms on time and ±300 ms window: ±50 / ±150 ms
+    felt too strict in play-testing. Verdict colours: on time is green, early amber, late violet.
+  - The lab writes every rhythm exercise above its lane, as on a score, and the rhythms gained
+    rests, half notes and sixteenths.
+
+### Patch Changes
+
+- f5e842b: Wolf Jumper on the low guitar strings: the chroma note source reads E2, F2, G2 and A2 as
+  their fifth (the 3rd harmonic is louder than the fundamental a small microphone keeps),
+  so the enemy survives. The lab now reads notes with the pitch tracker
+  (`noteSource: "pitch"`), and a wound-string test pins both behaviours.
+- 5635382: The games speak to players: "Play the chord and hold it until the bar fills", "Too
+  quiet", no frame counts or scores in the hints and status lines.
+
 ## 0.2.0
 
 ### Minor Changes
