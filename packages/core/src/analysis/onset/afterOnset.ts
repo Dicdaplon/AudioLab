@@ -154,3 +154,79 @@ export function chordAfterOnset(
   const chroma = spectrumToChroma(magnitude, { sampleRate, minFreq, maxFreq });
   return detectChord(chroma, chordOptions);
 }
+
+export interface ClickBandOptions {
+  /** Band of the click, in Hz. Default 2300–4000 (`CLICK_BAND_HZ`, the metronome's clicks). */
+  band?: readonly [number, number];
+  /** Length of the compared segments, in ms (rounded up to a power of two). Default 10 (≈ 11 ms at 48 kHz). */
+  windowMs?: number;
+}
+
+export interface SpectralRise {
+  /** Share of the new energy that lies in the band, in [0, 1]. */
+  bandShare: number;
+  /** Total energy after vs before (80 Hz – 10 kHz), in dB: > 0 when something starts. */
+  riseDb: number;
+}
+
+const DEFAULT_CLICK_BAND: readonly [number, number] = [2300, 4000];
+
+/**
+ * What appears at a frame: the power spectrum of the `windowMs` after it,
+ * compared with the one just before. Only the increase counts, so a note
+ * already ringing does not dilute it. Null when the samples are missing.
+ */
+export function spectralRise(
+  history: StreamHistory,
+  frame: number,
+  sampleRate: number,
+  options: ClickBandOptions = {},
+): SpectralRise | null {
+  const [lo, hi] = options.band ?? DEFAULT_CLICK_BAND;
+  const length = clickWindowLength(sampleRate, options.windowMs);
+  const before = history.read(frame - length, length);
+  const after = history.read(frame, length);
+  if (!before || !after) return null;
+  const pb = computeFftDb(before, sampleRate, { fftSize: length }).magnitude;
+  const pa = computeFftDb(after, sampleRate, { fftSize: length }).magnitude;
+  const binHz = sampleRate / length;
+  let inBand = 0;
+  let rise = 0;
+  let energyBefore = 0;
+  let energyAfter = 0;
+  for (let k = 1; k < pa.length; k++) {
+    const f = k * binHz;
+    if (f < 80 || f > 10000) continue;
+    const a = pa[k] * pa[k];
+    const b = pb[k] * pb[k];
+    energyBefore += b;
+    energyAfter += a;
+    const r = Math.max(0, a - b);
+    rise += r;
+    if (f >= lo && f <= hi) inBand += r;
+  }
+  return {
+    bandShare: rise > 0 ? inBand / rise : 0,
+    riseDb: 10 * Math.log10((energyAfter + 1e-20) / (energyBefore + 1e-20)),
+  };
+}
+
+/** Samples in each compared segment of `spectralRise`. */
+export function clickWindowLength(sampleRate: number, windowMs = 10): number {
+  return nextPow2(Math.round((windowMs / 1000) * sampleRate));
+}
+
+/**
+ * Share of the energy that appears at an onset which lies in a narrow band:
+ * close to 1 for a metronome click picked up by the microphone (a sine
+ * burst), low for a guitar attack (broadband, even over a ringing note).
+ * Null when the samples are not available.
+ */
+export function clickBandShare(
+  history: StreamHistory,
+  onsetFrame: number,
+  sampleRate: number,
+  options: ClickBandOptions = {},
+): number | null {
+  return spectralRise(history, onsetFrame, sampleRate, options)?.bandShare ?? null;
+}

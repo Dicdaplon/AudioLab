@@ -183,10 +183,11 @@ export async function startOnsetAnalysis(
 
 /**
  * What the microphone session tells the timing budget: the input latency
- * the browser reports (if any) and the device label (to spot Bluetooth).
+ * the browser reports (if any), the device label (to spot Bluetooth) and,
+ * given the context, its reported output latency (for an audible click).
  */
 export function timingInputFromMic(
-  mic: Pick<MicSource, "trackSettings" | "stream">,
+  mic: Pick<MicSource, "trackSettings" | "stream"> & { context?: BaseAudioContext },
 ): TimingBudgetInput {
   const settings = mic.trackSettings as MediaTrackSettings & { latency?: number };
   const label = mic.stream.getAudioTracks?.()[0]?.label;
@@ -194,5 +195,16 @@ export function timingInputFromMic(
     reportedInputLatencySeconds:
       typeof settings.latency === "number" ? settings.latency : undefined,
     deviceLabel: label || undefined,
+    reportedOutputLatencySeconds: mic.context ? outputLatencySeconds(mic.context) : undefined,
   };
+}
+
+/**
+ * Output latency the browser reports for a context (`outputLatency` +
+ * `baseLatency`), in s, or undefined when it reports none.
+ */
+export function outputLatencySeconds(context: BaseAudioContext): number | undefined {
+  const c = context as BaseAudioContext & { outputLatency?: number; baseLatency?: number };
+  const total = (c.outputLatency ?? 0) + (c.baseLatency ?? 0);
+  return total > 0 ? total : undefined;
 }

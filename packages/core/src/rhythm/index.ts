@@ -12,6 +12,11 @@
  *   patternFit      written rhythm at a free tempo (latency cancels)
  *   timingStats     bias, jitter, drift
  *   onsetEvidence   which note / chord was played at each onset
+ *   playAlong       a whole play-along exercise: queue, click echoes,
+ *                   scoring, labels, onsets to display
+ *
+ * It uses a few pure modules of the core tree (click echo filter, sample
+ * history); the main entry never imports this subpath.
  */
 
 export {
@@ -38,6 +43,15 @@ export {
 } from "./timingScorer";
 export { fitPattern, type FittedNote, type PatternFit, type PatternFitOptions } from "./patternFit";
 export { medianOf, timingStats, type TimingSample, type TimingStats } from "./timingStats";
+export {
+  PlayAlongSession,
+  type OnsetLabeler,
+  type PlayAlongClicks,
+  type PlayAlongOnset,
+  type PlayAlongOptions,
+  type PlayedOnsetView,
+} from "./playAlong";
+export { chordLabeler, noteLabel, noteLabeler } from "./labelers";
 export {
   OnsetEvidence,
   type LabelObservation,

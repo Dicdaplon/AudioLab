@@ -148,6 +148,11 @@ export {
 } from "./analysis/onset/onsetPipeline";
 export {
   StreamHistory,
+  clickBandShare,
+  clickWindowLength,
+  spectralRise,
+  type ClickBandOptions,
+  type SpectralRise,
   chordAfterOnset,
   chordReadyAt,
   noteAfterOnset,
@@ -191,6 +196,24 @@ export {
   type ClockSyncStats,
 } from "./timing/clockSync";
 export {
+  beatAt,
+  beatDuration,
+  beatTime,
+  beatsBetween,
+  isDownbeat,
+  type BeatGrid,
+} from "./timing/beatGrid";
+export {
+  CLICK_BAND_HZ,
+  CLICK_ECHO_DEFAULTS,
+  ClickEchoFilter,
+  type ClickEchoConfig,
+  type ClickEchoVerdict,
+} from "./timing/clickEcho";
+export {
+  ASSUMED_OUTPUT_LATENCY_MS,
+  ASSUMED_OUTPUT_UNCERTAINTY_MS,
+  type TimingReference,
   ASSUMED_INPUT_LATENCY_MS,
   ASSUMED_INPUT_UNCERTAINTY_MS,
   BLUETOOTH_INPUT_LATENCY_MS,
@@ -262,6 +285,15 @@ export {
   type SampleListener,
 } from "./audio/sampleCapture";
 export {
+  ACCENT_CLICK_HZ,
+  CLICK_HZ,
+  METRONOME_DEFAULTS,
+  startMetronome,
+  type Metronome,
+  type MetronomeOptions,
+} from "./audio/metronome";
+export {
+  outputLatencySeconds,
   startOnsetAnalysis,
   timingInputFromMic,
   type OnsetAnalysis,
