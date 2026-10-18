@@ -34,8 +34,9 @@ Alongside this, I give music lessons and run a collective of musicians. That is 
 improvisation and listening: [ecoleduloup.fr](https://ecoleduloup.fr) (in French).
 These packages are meant to power its interactive exercises.
 
-_Naming: **AudioLab** is the repository and its packages; **loup(e)** (“magnifier”) is the
-name of the lab and of its design system, Loupe, after l’école du loup(é)._
+_Naming: **AudioLab** is the repository and its packages; **loloupTech** is the lab's name, a
+nod to l’école du loup(é); **Loupe** (“magnifier”) is the design system, and its opt-in
+pixel skin and pixel plots (`al-pixel`, `--al-viz-pixel`) are what give the lab its look._
 
 ## Packages
 
