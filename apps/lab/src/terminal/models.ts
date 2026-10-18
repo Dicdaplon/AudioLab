@@ -11,7 +11,11 @@ export interface TerminalModel {
   label: string;
   /** Approximate download, for the picker. */
   size: string;
-  /** Weights to load on WebGPU (needs shader-f16 for the f16 ones) and on WebAssembly. */
+  /**
+   * Weights to load on WebGPU (needs shader-f16 for the f16 ones) and on
+   * WebAssembly. q4f16 printed garbage on WebGPU for some of these (16-bit
+   * overflow); they take q4, 32-bit maths on 4-bit weights.
+   */
   dtype: { webgpu: string; wasm: string };
   /**
    * A plain conversation model with no instructions slot: it gets the turns
@@ -28,12 +32,6 @@ export const TERMINAL_MODELS: readonly TerminalModel[] = [
     dtype: { webgpu: "q4f16", wasm: "q8" },
   },
   {
-    id: "onnx-community/Minueza-2-96M-Instruct-Variant-10-ONNX",
-    label: "LT-96 · corrupted memory banks",
-    size: "96 MB",
-    dtype: { webgpu: "q4f16", wasm: "q8" },
-  },
-  {
     id: "onnx-community/Falcon-H1-Tiny-90M-Instruct-ONNX",
     label: "LT-90H · experimental hybrid",
     size: "137 MB",
@@ -43,7 +41,7 @@ export const TERMINAL_MODELS: readonly TerminalModel[] = [
     id: "onnx-community/SmolLM2-135M-humanized-ONNX",
     label: "LT-135H · thinks it is human",
     size: "136 MB",
-    dtype: { webgpu: "q4f16", wasm: "q8" },
+    dtype: { webgpu: "q4", wasm: "q8" },
   },
   {
     id: "HuggingFaceTB/SmolLM2-360M-Instruct",
@@ -67,7 +65,7 @@ export const TERMINAL_MODELS: readonly TerminalModel[] = [
   {
     id: "onnx-community/Qwen2.5-0.5B-Instruct",
     label: "LT-500 · almost sane (desktop)",
-    size: "512 MB",
-    dtype: { webgpu: "q4f16", wasm: "q8" },
+    size: "512–786 MB",
+    dtype: { webgpu: "q4", wasm: "q8" },
   },
 ];
