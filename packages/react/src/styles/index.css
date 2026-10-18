@@ -14,3 +14,6 @@
 @import "./staff.css";
 @import "./sketch.css";
 @import "./how.css";
+/* Last: the opt-in pixel skin overrides the partials above at equal
+   specificity, so it must come after them. */
+@import "./pixel.css";

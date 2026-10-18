@@ -1,5 +1,7 @@
 /* =========================================================================
-   Loupe — design tokens.
+   Loupe — design tokens. The design system of loloupTech, house style
+   "Capsule": the night bed, the ember accent and the moss signal, plus an
+   opt-in pixel skin (pixel.css: `al-pixel` on any ancestor of the root).
 
    Every token lives on the `.loupe` root class (rendered by <LoupeRoot>),
    never on :root, so nothing leaks into a host page. Two layers:
@@ -61,6 +63,13 @@
   --al-font-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --al-font-mono: "IBM Plex Mono", ui-monospace, Consolas, "SF Mono", monospace;
   --al-font-voice: "Source Serif 4", Georgia, "Times New Roman", serif;
+  /* Pixel faces, for the brand and a few display labels; never body text,
+     never a number that is read. They are not in fonts.css (the SDK's
+     optional peers stay the three faces above): a host that wants them
+     loads Pixelify Sans and Silkscreen itself, as the lab does, otherwise
+     they fall back to the mono. */
+  --al-font-pixel: "Pixelify Sans", "IBM Plex Mono", ui-monospace, monospace;
+  --al-font-pixel-micro: "Silkscreen", "Pixelify Sans", ui-monospace, monospace;
 
   /* Fluid between 360 and 1280 px, root 16 px (px min → max). */
   --al-step--3: clamp(0.656rem, 0.644rem + 0.054vw, 0.6875rem); /* 10.5 → 11   axis ticks */
@@ -91,7 +100,9 @@
   --al-sp-9: 6rem;
   --al-sp-10: 8rem;
 
-  /* --- Radii: machined, not upholstered. The pill is reserved for the LED. --- */
+  /* --- Radii: machined, not upholstered. The pill is reserved for capsules
+     (the LED, the lab's brand badge and sub-tabs). Under the pixel skin the
+     same radii become square notches (corner-shape: notch). --- */
   --al-r-1: 2px;
   --al-r-2: 4px;
   --al-r-3: 8px;
@@ -168,7 +179,7 @@
   --al-shadow-2: 0 0 0 1px var(--al-color-line-strong);
 
   /* Chevron of the native select (one per theme: currentColor cannot be used in a data URI). */
-  --al-select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.al-w3.al-org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23a8a297' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+  --al-select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23a8a297' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
 
   /* =======================================================================
      Data-viz tokens. LITERAL COLOURS ONLY in this block: the canvas code
@@ -269,7 +280,7 @@
   --al-shadow-1: 0 1px 2px rgba(27, 26, 23, 0.05), 0 2px 8px rgba(27, 26, 23, 0.05);
   --al-shadow-2: 0 4px 12px rgba(27, 26, 23, 0.08), 0 12px 32px rgba(27, 26, 23, 0.1);
 
-  --al-select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.al-w3.al-org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23595349' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+  --al-select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23595349' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
 
   --al-viz-bed: #fffdf8;
   --al-viz-grid: #e8e2d6;
@@ -365,7 +376,7 @@
     --al-shadow-1: 0 1px 2px rgba(27, 26, 23, 0.05), 0 2px 8px rgba(27, 26, 23, 0.05);
     --al-shadow-2: 0 4px 12px rgba(27, 26, 23, 0.08), 0 12px 32px rgba(27, 26, 23, 0.1);
 
-    --al-select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.al-w3.al-org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23595349' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+    --al-select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23595349' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
 
     --al-viz-bed: #fffdf8;
     --al-viz-grid: #e8e2d6;

@@ -1,0 +1,208 @@
+/* =========================================================================
+   Pixel skin: the "Capsule" flavour of Loupe, as worn by loloupTech.
+
+   Opt-in: put the class `al-pixel` on any ancestor of the Loupe root (the
+   lab puts it on <body>). Without it nothing here applies, so a host that
+   only wants the plain system sees no change. Every rule sits under
+   :where(.al-pixel), which adds no specificity: this file is imported last
+   and wins over the partials by order alone, and a host class still wins
+   over it.
+
+   The rules of the game:
+   - Pixels are a frame, never the content. Corners, bullets, the LED, the
+     chevrons and the motion of toys go 8-bit; text stays in Plex, plots
+     and every measured number stay exactly as they are.
+   - Corners are square notches cut by `corner-shape: notch` at the radii
+     the plain system already uses, so the border follows the step. A
+     browser without corner-shape keeps the plain rounded corners.
+   - Toys move in steps (steps()), data moves linearly or not at all.
+   - Colours are the tokens: the skin adds no colour of its own.
+   ========================================================================= */
+
+/* --- Notched corners ------------------------------------------------------ */
+
+@supports (corner-shape: notch) {
+  :where(.al-pixel) :is(.al-panel, .al-readout, .al-rail-details, .al-game__controls),
+  :where(.al-pixel) :is(.al-scene-viewport, .al-overlay__card) {
+    corner-shape: notch;
+    border-radius: 6px;
+  }
+
+  :where(.al-pixel) :is(.al-btn, .al-select, .al-stat, .al-notice, .al-scene__bonus) {
+    corner-shape: notch;
+    border-radius: 3px;
+  }
+
+  /* Inside the settings disclosure only the bottom corners are cut. */
+  :where(.al-pixel) .al-rail-details__body .al-panel {
+    border-radius: 0 0 6px 6px;
+  }
+
+  /* The notes of Wolf Jumper: an octagon, the coin of every 8-bit game.
+     The letter on it stays in the mono. */
+  :where(.al-pixel) .al-scene__note {
+    corner-shape: bevel;
+    border-radius: 30%;
+  }
+}
+
+/* Small parts that were softly rounded become square: they are pixels.
+   (Pseudo-elements cannot sit inside :is(), and a vendor pseudo unknown to
+   one engine voids its whole selector list: one rule each.) */
+:where(.al-pixel) :is(.al-chip, .al-segments__seg, .al-meter__track, .al-meter__fill),
+:where(.al-pixel) .al-switch__track,
+:where(.al-pixel) .al-switch__track::after,
+:where(.al-pixel) .al-badge::before {
+  border-radius: 0;
+}
+
+:where(.al-pixel) .al-slider::-webkit-slider-runnable-track,
+:where(.al-pixel) .al-slider::-webkit-slider-thumb {
+  border-radius: 0;
+}
+
+:where(.al-pixel) .al-slider::-moz-range-track,
+:where(.al-pixel) .al-slider::-moz-range-progress,
+:where(.al-pixel) .al-slider::-moz-range-thumb {
+  border-radius: 0;
+}
+
+/* The switch snaps in two frames instead of sliding. */
+:where(.al-pixel) .al-switch__track,
+:where(.al-pixel) .al-switch__track::after {
+  transition-timing-function: steps(2, jump-end);
+}
+
+/* --- The LED --------------------------------------------------------------
+   A square pixel that blinks on/off (two frames) instead of breathing. The
+   pill moves to the brand capsule. */
+
+:where(.al-pixel) .al-badge--live::before {
+  border-radius: 0;
+}
+
+:where(.al-pixel) .al-badge--live[data-state="live"]::before {
+  animation-timing-function: steps(1, jump-end);
+}
+
+/* --- Panel titles: an ember pixel before each one -----------------------
+   It hangs in the panel's padding, so the title keeps its width and its
+   left edge (narrow chroma panels do not rewrap). */
+
+:where(.al-pixel) .al-panel__title {
+  position: relative;
+}
+
+:where(.al-pixel) .al-panel__title::before {
+  content: "";
+  position: absolute;
+  left: -12px;
+  top: calc(0.5lh - 3px);
+  width: 6px;
+  height: 6px;
+  background: var(--al-color-accent);
+}
+
+/* --- Pixel chevrons ------------------------------------------------------
+   The select arrow is five 2-px blocks laid as a V. One grey works on both
+   themes (≥ 3.7:1 on either surface, a UI mark, not text). */
+
+:where(.al-pixel) .al-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='%238a8376' shape-rendering='crispEdges'%3E%3Cpath d='M3 6h2v2H3zM11 6h2v2h-2zM5 8h2v2H5zM9 8h2v2H9zM7 10h2v2H7z'/%3E%3C/svg%3E");
+}
+
+/* The settings disclosure: a stepped triangle drawn with box-shadows, one
+   2-px block and seven copies of it. Rotates in one frame. */
+:where(.al-pixel) .al-rail-details__summary::before {
+  width: 2px;
+  height: 2px;
+  margin: 0 6px 0 2px;
+  border: 0;
+  background: currentColor;
+  color: var(--al-color-ink-muted);
+  box-shadow:
+    0 -4px,
+    0 -2px,
+    0 2px,
+    0 4px,
+    2px -2px,
+    2px 0,
+    2px 2px,
+    4px 0;
+  transition-timing-function: steps(1, jump-end);
+}
+
+/* --- The separator: two rows of blocks -------------------------------- */
+
+:where(.al-pixel) .al-beat::before,
+:where(.al-pixel) .al-beat::after {
+  height: 4px;
+  background: repeating-linear-gradient(
+    to right,
+    var(--al-color-line-strong) 0 4px,
+    transparent 4px 6px
+  );
+}
+
+:where(.al-pixel) .al-beat::before {
+  width: 40px;
+}
+
+:where(.al-pixel) .al-beat::after {
+  width: 22px;
+  left: 6px;
+  top: 6px;
+  background: repeating-linear-gradient(
+    to right,
+    var(--al-color-accent) 0 4px,
+    transparent 4px 6px
+  );
+}
+
+/* --- Games ----------------------------------------------------------------
+   The stage is a toy, so it may play the console: a checkered ground, a
+   wolf that gallops in three frames, a title card in the pixel face. */
+
+:where(.al-pixel) .al-scene__ground {
+  border-top: 2px dashed var(--al-color-line-strong);
+  background: repeating-conic-gradient(var(--al-color-sunken) 0 25%, var(--al-color-bed) 0 50%) 0
+    0 / 8px 8px;
+}
+
+:where(.al-pixel) .al-scene__runner {
+  animation-timing-function: steps(2, jump-end);
+}
+
+:where(.al-pixel) :is(.al-scene__note, .al-scene__bonus) {
+  transition-timing-function: steps(3, jump-end);
+}
+
+:where(.al-pixel) .al-scene__runner[data-shield]::before {
+  border-style: dashed;
+  border-radius: 0;
+}
+
+:where(.al-pixel) .al-overlay__title {
+  font-family: var(--al-font-pixel);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+:where(.al-pixel) .al-scene__bonus-short {
+  font-family: var(--al-font-pixel-micro);
+  font-size: 8px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+/* The chord game's hit: the success colour flashes in two frames. */
+:where(.al-pixel) .al-readout--target,
+:where(.al-pixel) .al-readout--target .al-readout__value {
+  transition-timing-function: steps(2, jump-end);
+}
+
+/* --- Sketches: the bars of the How? diagrams land on whole pixels ------- */
+
+:where(.al-pixel) :is(.al-sketch__bar, .al-sketch__track, .al-sketch__band, .al-sketch__fill) {
+  shape-rendering: crispEdges;
+}
