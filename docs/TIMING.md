@@ -267,7 +267,7 @@ Pure logic over `{ time }` objects; no Web Audio.
 ### 5.1 Tolerance
 
 `|Δ| ≤ onTimeMs` → on time; up to `windowMs` → early / late; no onset → missed.
-Defaults ±50 / ±150 ms, between rhythm-game "good" windows (±70–100 ms)
+Defaults ±100 / ±300 ms (play-tested: ±50 / ±150 ms felt too strict for learners), above rhythm-game "good" windows (±70–100 ms)
 and the chain's own precision. `toleranceFromUncertainty(σ)` widens them to
 2σ / 3σ: a window narrower than the measurement would grade the
 microphone, not the player.
@@ -369,7 +369,19 @@ list out.
   before or after its target.
 - `done` is true once every note is graded and labelled.
 
-### 6.4 `PlayAlongLane`
+### 6.4 Written as on a score
+
+An exercise is written as durations in beats, a negative one for a rest
+(`eventsFromDurations([1, 1, 0.5, 0.5, -1])`): the notes to play are
+`playedBeats`, placed on the metronome grid with `beatTime`. `StaffNotation`
+draws the same events as a score, above the lane: a one-line rhythm staff
+(figures, dots, beams per beat, rests, the count "1 & 2 & …" underneath), or
+a treble staff with the guitar 8 when pitches are given, chord symbols on
+top. Time is proportional, so the notes sit above their beats; the cursor and
+the red dots move without re-rendering, and each note takes its verdict
+colour.
+
+### 6.5 `PlayAlongLane`
 
 A canvas lane: targets travel right to left and reach the hit line at their
 time; the band around the line is the tolerance (`toleranceFromUncertainty`
