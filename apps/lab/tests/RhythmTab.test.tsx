@@ -192,6 +192,8 @@ describe("RhythmTab", () => {
     });
     batch(m.grid.startTime + (17 * 60) / 70);
     expect(panel("Play in time").textContent).toMatch(/20 of 20 on time./);
+    // The rhythm is written above the lane, as on a score.
+    expect(panel("Play in time").querySelectorAll(".al-staff__note")).toHaveLength(20);
     expect(screen.getByRole("button", { name: "Again" })).toBeTruthy();
   });
 
@@ -228,7 +230,7 @@ describe("RhythmTab", () => {
     render(<RhythmTab mic={mic} running />);
     fireEvent.change(screen.getByLabelText("Exercise"), { target: { value: "written" } });
     silence();
-    expect(screen.getAllByText("&", { selector: ".rhythm__count li" })).toHaveLength(8);
+    expect(screen.getAllByText("&", { selector: ".al-staff__count" })).toHaveLength(8);
     fireEvent.click(screen.getByRole("button", { name: "Start" }));
     const m = metronomes.at(-1)!;
     const beats = [0, 1, 2, 2.5, 3, 4, 5, 6, 6.5, 7];
@@ -242,8 +244,7 @@ describe("RhythmTab", () => {
     });
     batch(m.grid.startTime + (9 * 60) / 70);
     expect(panel("Play in time").textContent).toMatch(/10 of 10 notes in time./);
-    expect(document.querySelectorAll(".rhythm__dot")).toHaveLength(10);
-    expect(document.querySelectorAll('.rhythm__note[data-tier="onTime"]')).toHaveLength(10);
+    expect(document.querySelectorAll('.al-staff__note[data-state="onTime"]')).toHaveLength(10);
   });
 
   it("grades a written rhythm at my own pace", () => {
@@ -280,6 +281,8 @@ describe("RhythmTab", () => {
     expect(panel("Play in time").textContent).toMatch(/On time, note unclear/);
     batch(m.grid.startTime + 30);
     expect(panel("Play in time").textContent).toMatch(/1 of 12 on time, 0 right notes./);
+    // Open strings on a five-line treble staff.
+    expect(panel("Play in time").querySelectorAll(".al-staff__line")).toHaveLength(5);
   });
 
   it("asks for the microphone first", () => {

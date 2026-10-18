@@ -1,40 +1,36 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { beatAt, beatTime, type BeatGrid } from "@audiolab/core";
 import {
   fitPattern,
+  playedBeats,
+  rhythmLength,
   toleranceFromUncertainty,
   type PatternFit,
   type TimingTier,
 } from "@audiolab/core/rhythm";
-import { SelectField, Switch } from "@audiolab/react";
+import { SelectField, StaffNotation, Switch, type StaffDot } from "@audiolab/react";
 
 import type { ExerciseEnv } from "./env";
-import { BEATS_PER_BAR, PATTERN_BARS, RHYTHM_PATTERNS, countLabel } from "./exercises";
+import { BEATS_PER_BAR, RHYTHM_PATTERNS, patternEvents } from "./exercises";
 import { useOnsetBus } from "./onsetBus";
+import { staffStates } from "./staffState";
 
-const TOTAL_BEATS = BEATS_PER_BAR * PATTERN_BARS;
 /** Silence that ends a free-tempo take once a few notes were played, in seconds. */
 const END_SILENCE_SECONDS = 2.5;
 
-const TIER_TEXT: Record<TimingTier, string> = {
-  onTime: "in time",
-  early: "early",
-  late: "late",
-  missed: "missed",
-};
-
-const left = (beat: number) => `${(beat / TOTAL_BEATS) * 100}%`;
-
 /**
- * A written rhythm, two bars counted "1 & 2 & …". With the metronome: a
- * one-bar count-in, a cursor that moves along the bars, each note graded
- * against the beat. At your own pace: no metronome, the rhythm is graded
- * against your own steady tempo. Red dots show when each note was heard.
+ * A written rhythm, two bars on a staff counted "1 & 2 & …". With the
+ * metronome: a one-bar count-in, a cursor that moves along the bars, each
+ * note graded against the beat. At your own pace: no metronome, the rhythm
+ * is graded against your own steady tempo. Red dots show when each note was
+ * heard.
  */
 export function WrittenRhythm({ env }: { env: ExerciseEnv }) {
   const { bus, play, budget, sampleRate, running, now, bpm, metronome } = env;
-  const [patternId, setPatternId] = useState(RHYTHM_PATTERNS[1].id);
+  const [patternId, setPatternId] = useState(RHYTHM_PATTERNS[2].id);
   const pattern = RHYTHM_PATTERNS.find((p) => p.id === patternId) ?? RHYTHM_PATTERNS[0];
+  const events = useMemo(() => patternEvents(pattern), [pattern]);
+  const beats = useMemo(() => playedBeats(events), [events]);
   const [ownPace, setOwnPace] = useState(false);
   const grid: BeatGrid | null = metronome.metronome?.grid ?? null;
   // The grid of the last take, kept for its verdicts once the metronome stops.
@@ -45,8 +41,8 @@ export function WrittenRhythm({ env }: { env: ExerciseEnv }) {
   const [freeDone, setFreeDone] = useState(false);
   const freeRef = useRef<number[] | null>(null);
   const fit: PatternFit | null = useMemo(
-    () => (freeOnsets && freeOnsets.length >= 2 ? fitPattern(pattern.beats, freeOnsets) : null),
-    [freeOnsets, pattern],
+    () => (freeOnsets && freeOnsets.length >= 2 ? fitPattern(beats, freeOnsets) : null),
+    [freeOnsets, beats],
   );
   const endFree = () => {
     freeRef.current = null;
@@ -57,7 +53,7 @@ export function WrittenRhythm({ env }: { env: ExerciseEnv }) {
       if (!freeRef.current) return;
       freeRef.current = [...freeRef.current, onset.time];
       setFreeOnsets(freeRef.current);
-      if (freeRef.current.length >= pattern.beats.length + 3) endFree();
+      if (freeRef.current.length >= beats.length + 3) endFree();
     },
     onBatch: (_h, analysedTime) => {
       const list = freeRef.current;
@@ -103,7 +99,7 @@ export function WrittenRhythm({ env }: { env: ExerciseEnv }) {
     if (!m) return;
     setTakeGrid(m.grid);
     play.start(
-      pattern.beats.map((b, i) => ({ id: i, time: beatTime(m.grid, b) })),
+      beats.map((b, i) => ({ id: i, time: beatTime(m.grid, b) })),
       {
         sampleRate,
         tolerance: toleranceFromUncertainty(budget.uncertaintyMs),
@@ -111,30 +107,18 @@ export function WrittenRhythm({ env }: { env: ExerciseEnv }) {
         adaptiveBias: !budget.calibrated,
         clickTimes: () => m.clickTimes,
       },
-      beatTime(m.grid, TOTAL_BEATS),
+      beatTime(m.grid, rhythmLength(events)),
     );
   };
 
-  // Moving cursor over the bars.
-  const scoreRef = useRef<HTMLOListElement>(null);
-  useEffect(() => {
-    const el = scoreRef.current;
-    if (!el || !grid || typeof requestAnimationFrame !== "function") return;
-    let handle = 0;
-    const frame = () => {
-      const t = now();
-      const beat = t === null ? -1 : beatAt(grid, t);
-      el.style.setProperty("--cursor", left(Math.min(TOTAL_BEATS, Math.max(0, beat))));
-      el.dataset.cursor = beat >= 0 && beat <= TOTAL_BEATS ? "on" : "off";
-      handle = requestAnimationFrame(frame);
-    };
-    handle = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(handle);
+  const cursor = useCallback(() => {
+    const t = now();
+    return grid && t !== null ? beatAt(grid, t) : null;
   }, [grid, now]);
 
   // Verdicts and dots of the current mode.
-  let tiers: (TimingTier | undefined)[] = [];
-  let dots: { beat: number; echo: boolean }[] = [];
+  let states: (TimingTier | undefined)[] = [];
+  let dotList: StaffDot[] = [];
   let playing = false;
   let message = ownPace
     ? "Play this rhythm at your own steady pace. The first notes set the tempo."
@@ -145,16 +129,17 @@ export function WrittenRhythm({ env }: { env: ExerciseEnv }) {
       fit && playing
         ? Math.max(...fit.notes.filter((n) => n.onsetTime !== null).map((n) => n.beat), -1)
         : Infinity;
-    tiers = pattern.beats.map((_, i) => {
-      const n = fit?.notes[i];
+    let k = 0;
+    states = events.map((e) => {
+      if (e.rest) return undefined;
+      const n = fit?.notes[k++];
       return n && n.beat <= lastHeard ? n.tier : undefined;
     });
     if (fit) {
       const spb = 60 / fit.tempoBpm;
-      dots = (freeOnsets ?? []).map((t) => ({ beat: (t - fit.startTime) / spb, echo: false }));
+      dotList = (freeOnsets ?? []).map((t) => ({ beat: (t - fit.startTime) / spb }));
     }
-    if (playing)
-      message = `Listening… ${freeOnsets?.length ?? 0} of ${pattern.beats.length} notes.`;
+    if (playing) message = `Listening… ${freeOnsets?.length ?? 0} of ${beats.length} notes.`;
     else if (freeDone && fit) {
       const inTime = fit.notes.filter((n) => n.tier === "onTime").length;
       message = `${inTime} of ${fit.notes.length} notes in time, at about ${Math.round(fit.tempoBpm)} BPM. ${
@@ -164,9 +149,9 @@ export function WrittenRhythm({ env }: { env: ExerciseEnv }) {
   } else {
     const results = play.results;
     playing = play.active;
-    tiers = (results ?? []).map((r) => (r.resolved ? (r.tier ?? undefined) : undefined));
+    states = staffStates(events, results).map((s) => (s === "pending" ? undefined : s));
     if (takeGrid && results) {
-      dots = play.onsets().map((o) => ({ beat: beatAt(takeGrid, o.time), echo: o.echo }));
+      dotList = play.onsets().map((o) => ({ beat: beatAt(takeGrid, o.time), echo: o.echo }));
     }
     if (play.done && results) {
       const inTime = results.filter((r) => r.tier === "onTime").length;
@@ -174,6 +159,9 @@ export function WrittenRhythm({ env }: { env: ExerciseEnv }) {
     }
   }
   if (!running) message = "Start the microphone, then play the rhythm.";
+  const dotsRef = useRef(dotList);
+  dotsRef.current = dotList;
+  const dots = useCallback(() => dotsRef.current, []);
 
   return (
     <div className="rhythm__exercise">
@@ -213,60 +201,15 @@ export function WrittenRhythm({ env }: { env: ExerciseEnv }) {
         </button>
       </div>
 
-      <div className="rhythm__sheet">
-        <ol
-          className="rhythm__score"
-          ref={scoreRef}
-          aria-label={`${pattern.name}, two bars of 4/4`}
-        >
-          {pattern.beats.map((beat, i) => (
-            <li
-              key={beat}
-              className="rhythm__note"
-              data-tier={tiers[i]}
-              style={{ left: left(beat) }}
-              title={tiers[i] ? TIER_TEXT[tiers[i]!] : undefined}
-            >
-              <span className="al-visually-hidden">
-                {countLabel(beat * 2)}
-                {tiers[i] ? `: ${TIER_TEXT[tiers[i]!]}` : ""}
-              </span>
-            </li>
-          ))}
-          {Array.from({ length: TOTAL_BEATS + 1 }, (_, b) => (
-            <li
-              key={`beat-${b}`}
-              className="rhythm__beat"
-              data-bar={b % BEATS_PER_BAR === 0 ? "" : undefined}
-              style={{ left: left(b) }}
-              aria-hidden="true"
-            />
-          ))}
-          {dots
-            .filter((d) => d.beat > -0.5 && d.beat < TOTAL_BEATS + 0.5)
-            .map((d, i) => (
-              <li
-                key={`dot-${i}`}
-                className="rhythm__dot"
-                data-echo={d.echo ? "" : undefined}
-                style={{ left: left(d.beat) }}
-                aria-hidden="true"
-              />
-            ))}
-          <li className="rhythm__cursor" aria-hidden="true" />
-        </ol>
-        <ol className="rhythm__count" aria-hidden="true">
-          {Array.from({ length: TOTAL_BEATS * 2 }, (_, slot) => (
-            <li
-              key={slot}
-              style={{ left: left(slot / 2) }}
-              data-beat={slot % 2 === 0 ? "" : undefined}
-            >
-              {countLabel(slot)}
-            </li>
-          ))}
-        </ol>
-      </div>
+      <StaffNotation
+        className="rhythm__written"
+        events={events}
+        states={states}
+        cursor={ownPace ? undefined : cursor}
+        dots={dots}
+        count
+        label={`${pattern.name}, two bars of 4/4`}
+      />
       <p className="rhythm__legend">Red dot: when your note was heard.</p>
       <p className="rhythm__message" role="status">
         {message}

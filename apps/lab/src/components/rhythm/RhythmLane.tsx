@@ -1,26 +1,45 @@
-import { useState } from "react";
-import { beatTime } from "@audiolab/core";
-import { medianOf, toleranceFromUncertainty } from "@audiolab/core/rhythm";
-import { PlayAlongLane, SelectField, laneTarget } from "@audiolab/react";
+import { useCallback, useMemo, useState } from "react";
+import { beatAt, beatTime, type BeatGrid } from "@audiolab/core";
+import {
+  medianOf,
+  playedBeats,
+  rhythmLength,
+  toleranceFromUncertainty,
+} from "@audiolab/core/rhythm";
+import { PlayAlongLane, SelectField, StaffNotation, laneTarget } from "@audiolab/react";
 
 import { VERDICT_TEXT, type ExerciseEnv } from "./env";
-import { RHYTHM_PATTERNS, repeatPattern } from "./exercises";
+import { RHYTHM_PATTERNS, patternEvents } from "./exercises";
+import { staffStates } from "./staffState";
 
-/** A rhythm scrolls to the line: play (or tap) each mark as it reaches it. */
+/** A rhythm scrolls to the line, written above as on a score: play each mark as it reaches the line. */
 export function RhythmLane({ env }: { env: ExerciseEnv }) {
   const { play, budget, sampleRate, running, now, bpm, metronome } = env;
-  const [patternId, setPatternId] = useState(RHYTHM_PATTERNS[1].id);
+  const [patternId, setPatternId] = useState(RHYTHM_PATTERNS[2].id);
   const pattern = RHYTHM_PATTERNS.find((p) => p.id === patternId) ?? RHYTHM_PATTERNS[0];
+  const events = useMemo(() => patternEvents(pattern, 2), [pattern]);
   const tolerance = budget ? toleranceFromUncertainty(budget.uncertaintyMs) : null;
+  // The grid of the current (or last) run, kept once the metronome stops.
+  const [runGrid, setRunGrid] = useState<BeatGrid | null>(null);
   const grid = metronome.metronome?.grid ?? null;
+
+  const cursor = useCallback(() => {
+    const t = now();
+    return grid && t !== null ? beatAt(grid, t) : null;
+  }, [grid, now]);
+  const dots = useCallback(
+    () =>
+      runGrid ? play.onsets().map((o) => ({ beat: beatAt(runGrid, o.time), echo: o.echo })) : [],
+    [runGrid, play],
+  );
 
   const start = () => {
     if (!budget) return;
     const m = metronome.start({ bpm, beatsPerBar: 4, sound: metronome.sound });
     if (!m) return;
-    const beats = repeatPattern(pattern.beats, 2);
+    setRunGrid(m.grid);
     play.start(
-      beats.map((b, i) => ({ id: i, time: beatTime(m.grid, b) })),
+      playedBeats(events).map((b, i) => ({ id: i, time: beatTime(m.grid, b) })),
       {
         sampleRate,
         tolerance: toleranceFromUncertainty(budget.uncertaintyMs),
@@ -29,7 +48,7 @@ export function RhythmLane({ env }: { env: ExerciseEnv }) {
         adaptiveBias: !budget.calibrated,
         clickTimes: () => m.clickTimes,
       },
-      beatTime(m.grid, beats[beats.length - 1] + 1),
+      beatTime(m.grid, rhythmLength(events) + 0.5),
     );
   };
 
@@ -40,7 +59,7 @@ export function RhythmLane({ env }: { env: ExerciseEnv }) {
 
   const results = play.results;
   let message =
-    "Play each mark as it reaches the line. Muted strums or taps on the guitar are fine.";
+    "Play each note as it reaches the line. Muted strums or taps on the guitar are fine.";
   if (!running) message = "Start the microphone first.";
   else if (play.active && results && !results.some((r) => r.resolved)) {
     message = "Listen to the count-in, then play from the next bar.";
@@ -85,6 +104,14 @@ export function RhythmLane({ env }: { env: ExerciseEnv }) {
           {play.active ? "Stop" : results ? "Again" : "Start"}
         </button>
       </div>
+      <StaffNotation
+        events={events}
+        states={staffStates(events, results)}
+        cursor={cursor}
+        dots={dots}
+        count
+        label={`${pattern.name}, played twice`}
+      />
       <PlayAlongLane
         now={now}
         grid={grid}

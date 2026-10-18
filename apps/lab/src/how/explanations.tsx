@@ -371,7 +371,7 @@ export function LatencyHow() {
               wide: true,
               caption: "on-time band",
             },
-            { sketch: <SketchLabel text="±50 ms" sub="never below 2σ" />, caption: "tolerance" },
+            { sketch: <SketchLabel text="±100 ms" sub="never below 2σ" />, caption: "tolerance" },
           ]}
         />
       }

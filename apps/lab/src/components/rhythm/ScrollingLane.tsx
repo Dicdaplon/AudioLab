@@ -1,37 +1,57 @@
-import { beatTime, chordName, pitchClassName } from "@audiolab/core";
+import { useCallback, useState } from "react";
+import { beatAt, beatTime, chordName, pitchClassName, type BeatGrid } from "@audiolab/core";
 import { chordKey } from "@audiolab/core/games";
 import {
   chordLabeler,
   noteLabel,
   noteLabeler,
+  rhythmLength,
   toleranceFromUncertainty,
 } from "@audiolab/core/rhythm";
-import { PlayAlongLane, laneTarget } from "@audiolab/react";
+import { PlayAlongLane, StaffNotation, laneTarget } from "@audiolab/react";
 
 import { VERDICT_TEXT, type ExerciseEnv } from "./env";
 import { SCROLL_SEQUENCES, type ScrollMode } from "./exercises";
+import { staffStates } from "./staffState";
 
-/** Notes (or chords) scroll to the line; each is graded on timing and on what was played. */
+/**
+ * Notes (or chords) scroll to the line, written above as on a score; each
+ * is graded on timing and on what was played.
+ */
 export function ScrollingLane({ mode, env }: { mode: ScrollMode; env: ExerciseEnv }) {
   const { play, budget, sampleRate, running, now, bpm, metronome } = env;
   const sequence = SCROLL_SEQUENCES[mode];
+  const { events } = sequence;
   const noun = mode === "notes" ? "note" : "chord";
   const grid = metronome.metronome?.grid ?? null;
+  const [runGrid, setRunGrid] = useState<BeatGrid | null>(null);
   const tolerance = budget ? toleranceFromUncertainty(budget.uncertaintyMs) : null;
-  const names = sequence.steps.map((step) =>
-    step.chord ? chordName(step.chord.root, step.chord.quality) : pitchClassName(step.note!),
+  const names = events.map((_, i) =>
+    sequence.chords
+      ? chordName(sequence.chords[i].root, sequence.chords[i].quality)
+      : pitchClassName(sequence.midi![i] % 12),
+  );
+
+  const cursor = useCallback(() => {
+    const t = now();
+    return grid && t !== null ? beatAt(grid, t) : null;
+  }, [grid, now]);
+  const dots = useCallback(
+    () =>
+      runGrid ? play.onsets().map((o) => ({ beat: beatAt(runGrid, o.time), echo: o.echo })) : [],
+    [runGrid, play],
   );
 
   const start = () => {
     if (!budget) return;
     const m = metronome.start({ bpm, beatsPerBar: 4, sound: metronome.sound });
     if (!m) return;
-    const lastBeat = sequence.steps[sequence.steps.length - 1].beat;
+    setRunGrid(m.grid);
     play.start(
-      sequence.steps.map((step, i) => ({
+      events.map((e, i) => ({
         id: i,
-        time: beatTime(m.grid, step.beat),
-        label: step.chord ? chordKey(step.chord) : noteLabel(step.note!),
+        time: beatTime(m.grid, e.beat),
+        label: sequence.chords ? chordKey(sequence.chords[i]) : noteLabel(sequence.midi![i]),
       })),
       {
         sampleRate,
@@ -41,7 +61,7 @@ export function ScrollingLane({ mode, env }: { mode: ScrollMode; env: ExerciseEn
         labeler: mode === "notes" ? noteLabeler(sampleRate) : chordLabeler(sampleRate),
         clickTimes: () => m.clickTimes,
       },
-      beatTime(m.grid, lastBeat + 1),
+      beatTime(m.grid, rhythmLength(events)),
     );
   };
 
@@ -86,6 +106,16 @@ export function ScrollingLane({ mode, env }: { mode: ScrollMode; env: ExerciseEn
           {play.active ? "Stop" : results ? "Again" : "Start"}
         </button>
       </div>
+      <StaffNotation
+        events={events}
+        pitches={sequence.midi}
+        symbols={sequence.chords ? names : undefined}
+        states={staffStates(events, results)}
+        cursor={cursor}
+        dots={dots}
+        barsPerLine={mode === "notes" ? 3 : 4}
+        label={mode === "notes" ? `Open strings: ${names.join(" ")}` : `Chords: ${names.join(" ")}`}
+      />
       <PlayAlongLane
         now={now}
         grid={grid}
