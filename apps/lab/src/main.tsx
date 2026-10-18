@@ -5,6 +5,7 @@ import "@audiolab/react/styles.css";
 import "./styles/app.css";
 import "./styles/pixel-data.css";
 import "./styles/crt.css";
+import "./styles/terminal.css";
 import App from "./App";
 
 const rootEl = document.getElementById("root");

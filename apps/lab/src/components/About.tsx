@@ -1,6 +1,9 @@
+import { TerminalLauncher } from "../terminal/TerminalLauncher";
+
 /**
- * The "About" page: the loloupTech backstory (a joke, told straight), then
- * who builds this lab and why, as "what I was doing before 2045".
+ * The "About" page: the loloupTech backstory (a joke, told straight) and
+ * the offer to boot the conversational terminal, then who builds this lab
+ * and why, as "what I was doing before 2045".
  */
 export function About() {
   return (
@@ -30,10 +33,8 @@ export function About() {
             Today, loloupTech tries to make good use of what is left: helping people listen to music
             again, and understand what is going on.
           </p>
-          <p>
-            Also, we replaced LED tech with CRT. Because it was cool. Bye.
-            <span className="about__cursor" aria-hidden="true" />
-          </p>
+          <p>Also, we replaced LED tech with CRT. Because it was cool. Bye.</p>
+          <TerminalLauncher />
         </section>
 
         <h3 className="about__subtitle">What I was doing before 2045</h3>

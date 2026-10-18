@@ -399,6 +399,11 @@ describe("App", () => {
       "what came after 3",
     );
     expect(screen.getByRole("heading", { name: "What I was doing before 2045" })).toBeTruthy();
+    // The terminal AI is only offered: nothing loads until it is asked for.
+    expect(
+      screen.getByRole("button", { name: /launch the conversational terminal/i }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Conversational terminal" })).toBeNull();
     const link = screen.getByRole("link", { name: "ecoleduloup.fr" });
     expect(link.getAttribute("href")).toBe("https://ecoleduloup.fr");
   });

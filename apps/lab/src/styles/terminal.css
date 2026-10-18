@@ -1,0 +1,160 @@
+/* The conversational terminal on the About page: the launch line at the end
+   of the transmission, then the terminal itself, in the transmission's
+   VT323 on the bed. */
+
+.about__launch {
+  display: block;
+  width: 100%;
+  margin: var(--al-sp-3) 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: var(--al-color-accent);
+  cursor: pointer;
+}
+
+.about__launch::after {
+  content: "";
+  display: inline-block;
+  width: 0.55em;
+  height: 1em;
+  margin-left: 0.3em;
+  vertical-align: -0.12em;
+  background: var(--al-color-accent);
+  animation: about-cursor 1.06s steps(1, end) infinite;
+}
+
+.about__launch kbd {
+  font: inherit;
+  color: var(--al-color-ink-muted);
+}
+
+.about__launch:hover kbd,
+.about__launch:focus-visible kbd {
+  color: var(--al-color-ink);
+}
+
+.about__launch:focus-visible {
+  outline: 2px solid var(--al-color-focus);
+  outline-offset: 4px;
+}
+
+.lt-term {
+  display: grid;
+  gap: var(--al-sp-2);
+  margin-top: var(--al-sp-4);
+  padding-top: var(--al-sp-3);
+  border-top: 1px dashed var(--al-color-line-strong);
+}
+
+.lt-term__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--al-sp-2) var(--al-sp-4);
+  font-size: 1.125rem;
+  color: var(--al-color-accent);
+  text-transform: uppercase;
+}
+
+.lt-term__model {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--al-sp-2);
+}
+
+.lt-term__model select {
+  max-width: 100%;
+  padding: 2px var(--al-sp-2);
+  border: 1px solid var(--al-color-line-strong);
+  border-radius: 0;
+  background: var(--al-color-canvas);
+  color: var(--al-color-ink);
+  font: inherit;
+  font-size: 1rem;
+  text-transform: none;
+}
+
+.lt-term__status {
+  margin: 0;
+  font-size: 1.125rem;
+  color: var(--al-color-signal);
+  overflow-wrap: anywhere;
+}
+
+.lt-term__log {
+  display: grid;
+  gap: var(--al-sp-2);
+  max-height: 22rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.about__body .lt-term__line {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.lt-term__line--you {
+  color: var(--al-color-ink-muted);
+}
+
+.lt-term__line--ai {
+  color: var(--al-color-signal-strong);
+}
+
+.lt-term__prompt {
+  display: flex;
+  align-items: center;
+  gap: var(--al-sp-2);
+  color: var(--al-color-accent);
+}
+
+.lt-term__prompt input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--al-sp-1) 0;
+  border: 0;
+  border-bottom: 1px solid var(--al-color-line-strong);
+  background: transparent;
+  color: var(--al-color-ink);
+  font: inherit;
+  /* 16 px minimum: iOS would zoom the page on focus below that. */
+  font-size: max(1rem, 1em);
+}
+
+.lt-term__prompt input:focus {
+  outline: none;
+  border-bottom-color: var(--al-color-accent);
+}
+
+.lt-term__prompt input:disabled {
+  opacity: 0.6;
+}
+
+.about__body .lt-term__note {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--al-color-ink-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about__launch::after {
+    animation: none;
+  }
+}
+
+/* The timeline, one entry at a time while the core boots. */
+.about__body .lt-term__fact {
+  margin: 0;
+  min-height: 2.7em;
+  color: var(--al-color-ink-muted);
+}
+
+.lt-term__year {
+  color: var(--al-color-accent);
+}
