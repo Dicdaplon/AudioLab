@@ -1,0 +1,132 @@
+/* Sketch: miniature diagrams (SketchChain and the Sketch* primitives). */
+
+.al-sketch {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.al-sketch__axis {
+  stroke: var(--al-viz-grid-strong);
+  stroke-width: 1;
+}
+
+.al-sketch__line {
+  fill: none;
+  stroke: var(--al-viz-signal);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.al-sketch__threshold {
+  fill: none;
+  stroke: var(--al-viz-threshold);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 3;
+}
+
+.al-sketch__bar {
+  fill: var(--al-viz-grid-strong);
+}
+
+.al-sketch__bar--on {
+  fill: var(--al-viz-signal);
+}
+
+.al-sketch__mark {
+  fill: var(--al-viz-threshold);
+}
+
+.al-sketch__dot {
+  fill: var(--al-viz-onset);
+}
+
+.al-sketch__band {
+  fill: var(--al-viz-marker);
+}
+
+.al-sketch__hit {
+  stroke: var(--al-viz-signal-strong);
+  stroke-width: 2;
+}
+
+.al-sketch__floor {
+  stroke: var(--al-viz-noise-floor);
+  stroke-width: 2;
+}
+
+.al-sketch__track {
+  fill: var(--al-viz-bed);
+  stroke: var(--al-viz-grid-strong);
+}
+
+.al-sketch__fill {
+  fill: var(--al-viz-signal);
+  opacity: 0.8;
+}
+
+.al-sketch__tick {
+  fill: var(--al-viz-axis-label);
+  font-family: var(--al-font-mono);
+  font-size: 7px;
+}
+
+.al-sketch__big {
+  fill: var(--al-color-ink);
+  font-family: var(--al-font-voice);
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.al-sketch__sub {
+  fill: var(--al-viz-axis-label);
+  font-family: var(--al-font-ui);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+}
+
+.al-sketch-chain {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--al-sp-2) 0;
+  margin: 0;
+}
+
+.al-sketch-chain__step {
+  display: flex;
+  align-items: center;
+  flex: 1 1 110px;
+  min-width: 96px;
+  max-width: 170px;
+}
+
+.al-sketch-chain__step--wide {
+  flex: 2 1 200px;
+  max-width: 300px;
+}
+
+.al-sketch-chain__arrow {
+  padding: 0 var(--al-sp-2);
+  margin-bottom: 1.2em;
+  color: var(--al-color-ink-faint);
+  font-size: var(--al-step-0);
+}
+
+.al-sketch-chain__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--al-sp-1);
+  flex: 1;
+  min-width: 0;
+}
+
+.al-sketch-chain__caption {
+  font-size: var(--al-step--2);
+  color: var(--al-color-ink-muted);
+  text-align: center;
+}

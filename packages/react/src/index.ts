@@ -92,6 +92,28 @@ export {
   type LaneTargetState,
 } from "./ui/laneDraw";
 
+// --- Explanations ------------------------------------------------------------
+
+export { HowPanel, type HowPanelProps, type HowSource } from "./components/HowPanel";
+export {
+  Sketch,
+  SketchBars,
+  SketchChain,
+  SketchCurve,
+  SketchLabel,
+  SketchMeter,
+  SketchTimeline,
+  SketchWave,
+  type SketchBarsProps,
+  type SketchChainItem,
+  type SketchChainProps,
+  type SketchCurveProps,
+  type SketchLabelProps,
+  type SketchMeterProps,
+  type SketchTimelineProps,
+  type SketchWaveProps,
+} from "./sketch/Sketch";
+
 // --- Controls and chrome ----------------------------------------------------
 
 export { RangeField, SelectField, Switch } from "./components/Field";

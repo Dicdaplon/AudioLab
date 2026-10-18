@@ -1,0 +1,123 @@
+/* "How?" disclosure (HowPanel): a quiet line that opens into a small sheet. */
+
+.al-how {
+  min-width: 0;
+  border-top: 1px dashed var(--al-color-line-strong);
+  color: var(--al-color-ink-muted);
+}
+
+.al-how__bar {
+  display: flex;
+  align-items: baseline;
+  gap: var(--al-sp-3);
+  padding: var(--al-sp-3) var(--al-sp-1);
+  cursor: pointer;
+  list-style: none;
+  border-radius: var(--al-r-1);
+  transition: color var(--al-dur-2) var(--al-ease-out);
+}
+
+.al-how__bar::-webkit-details-marker {
+  display: none;
+}
+
+.al-how__bar:hover,
+.al-how[open] .al-how__bar {
+  color: var(--al-color-ink);
+}
+
+.al-how__bar:focus-visible {
+  outline: 2px solid var(--al-color-focus);
+  outline-offset: 2px;
+}
+
+.al-how__title {
+  font-family: var(--al-font-voice);
+  font-style: italic;
+  font-size: var(--al-step-1);
+  font-weight: 600;
+  color: var(--al-color-accent);
+}
+
+.al-how__topic {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--al-step--1);
+}
+
+.al-how__chevron {
+  width: 8px;
+  height: 8px;
+  margin-right: var(--al-sp-2);
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform var(--al-dur-2) var(--al-ease-out);
+  align-self: center;
+}
+
+.al-how[open] .al-how__chevron {
+  transform: rotate(45deg);
+}
+
+.al-how__sheet {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--al-sp-5);
+  padding: var(--al-sp-2) var(--al-sp-1) var(--al-sp-5);
+}
+
+@media (min-width: 880px) {
+  .al-how__sheet {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.al-how__diagram {
+  padding: var(--al-sp-4);
+  background: var(--al-color-bed);
+  border: 1px solid var(--al-color-line);
+  border-radius: var(--al-r-2);
+}
+
+.al-how__lead {
+  font-size: var(--al-step-0);
+  line-height: 1.6;
+  color: var(--al-color-ink);
+  max-width: 62ch;
+}
+
+.al-how__lead p {
+  margin: 0 0 var(--al-sp-2);
+}
+
+.al-how__facts {
+  display: grid;
+  gap: var(--al-sp-3);
+  margin: var(--al-sp-4) 0 0;
+}
+
+.al-how__fact {
+  display: grid;
+  gap: var(--al-sp-1);
+}
+
+.al-how__fact dd {
+  margin: 0;
+  font-size: var(--al-step--1);
+  line-height: 1.5;
+  max-width: 62ch;
+}
+
+.al-how__fact a {
+  color: var(--al-color-link);
+  text-underline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .al-how__chevron,
+  .al-how__bar {
+    transition: none;
+  }
+}
