@@ -24,12 +24,12 @@ import { useEffect, useRef } from "react";
 
 import {
   beamGroups,
-  figureName,
   figureOf,
   staffStep,
   type NoteFigure,
   type RhythmEvent,
 } from "@audiolab/core/rhythm";
+import { FIGURE_WORDS_EN, figureLabel, type FigureWords } from "../ui/figureNames";
 import type { LaneTargetState } from "../ui/laneDraw";
 
 const BEAT = 100;
@@ -69,6 +69,8 @@ export interface StaffNotationProps {
   dots?: () => readonly StaffDot[];
   /** Accessible name. Default: the figures, in order. */
   label?: string;
+  /** Words for the default accessible name. Default English. */
+  figureWords?: FigureWords;
   className?: string;
 }
 
@@ -142,6 +144,7 @@ export function StaffNotation({
   cursor,
   dots,
   label,
+  figureWords = FIGURE_WORDS_EN,
   className,
 }: StaffNotationProps) {
   const fiveLine = pitches !== undefined;
@@ -184,7 +187,8 @@ export function StaffNotation({
     for (const i of g) placed[i].up = ups * 2 >= g.length;
   }
 
-  const name = label ?? events.map((e) => figureName(figureOf(e.duration), e.rest)).join(", ");
+  const name =
+    label ?? events.map((e) => figureLabel(figureOf(e.duration), e.rest, figureWords)).join(", ");
 
   // Live cursor and dots, drawn imperatively.
   const svgRefs = useRef<(SVGSVGElement | null)[]>([]);

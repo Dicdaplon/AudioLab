@@ -4,7 +4,6 @@ import { describe, expect, it } from "vitest";
 import {
   beamGroups,
   eventsFromDurations,
-  figureName,
   figureOf,
   playedBeats,
   rhythmLength,
@@ -34,8 +33,9 @@ describe("rhythm notation", () => {
     expect(figureOf(0.25)).toMatchObject({ base: 0.25, flags: 2 });
     expect(figureOf(0.75)).toMatchObject({ base: 0.5, dotted: true });
     expect(figureOf(1.2)).toMatchObject({ base: 1, dotted: false }); // no figure: the one below
-    expect(figureName(figureOf(1.5), false)).toBe("dotted quarter");
-    expect(figureName(figureOf(0.5), true)).toBe("eighth rest");
+    expect(figureOf(1.5).id).toBe("quarter");
+    expect(figureOf(0.25).id).toBe("sixteenth");
+    expect(figureOf(4).id).toBe("whole");
   });
 
   it("beams eighths and sixteenths inside a beat, never across one or over a rest", () => {

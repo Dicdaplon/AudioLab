@@ -25,9 +25,17 @@ export interface RhythmEvent {
   rest: boolean;
 }
 
+/** Base value of a figure, in beats. */
+export type FigureBase = 4 | 2 | 1 | 0.5 | 0.25;
+
+/** Stable id of a figure value (a key, not a label: the host names it). */
+export type FigureId = "whole" | "half" | "quarter" | "eighth" | "sixteenth";
+
 export interface NoteFigure {
   /** Base value in beats: 4, 2, 1, 0.5 or 0.25. */
-  base: number;
+  base: FigureBase;
+  /** Its id ("quarter"…); with `dotted` and a rest flag it says the whole figure. */
+  id: FigureId;
   dotted: boolean;
   /** Flags or beams: 0 for a quarter and longer, 1 for an eighth, 2 for a sixteenth. */
   flags: number;
@@ -37,7 +45,14 @@ export interface NoteFigure {
   stem: boolean;
 }
 
-const BASES = [4, 2, 1, 0.5, 0.25];
+const BASES: readonly FigureBase[] = [4, 2, 1, 0.5, 0.25];
+const IDS: Record<FigureBase, FigureId> = {
+  4: "whole",
+  2: "half",
+  1: "quarter",
+  0.5: "eighth",
+  0.25: "sixteenth",
+};
 
 /** Events from durations (negative = rest), starting at `startBeat`. */
 export function eventsFromDurations(durations: readonly number[], startBeat = 0): RhythmEvent[] {
@@ -61,8 +76,9 @@ export function rhythmLength(events: readonly RhythmEvent[]): number {
 
 /** The figure that writes a duration. */
 export function figureOf(duration: number): NoteFigure {
-  const make = (base: number, dotted: boolean): NoteFigure => ({
+  const make = (base: FigureBase, dotted: boolean): NoteFigure => ({
     base,
+    id: IDS[base],
     dotted,
     flags: base >= 1 ? 0 : base === 0.5 ? 1 : 2,
     hollow: base >= 2,
@@ -96,19 +112,6 @@ export function beamGroups(events: readonly RhythmEvent[]): number[][] {
     else groups.push([i]);
   });
   return groups;
-}
-
-/** "quarter", "dotted eighth rest"… for screen readers. */
-export function figureName(figure: NoteFigure, rest: boolean): string {
-  const names: Record<number, string> = {
-    4: "whole",
-    2: "half",
-    1: "quarter",
-    0.5: "eighth",
-    0.25: "sixteenth",
-  };
-  const name = `${names[figure.base] ?? "note"}${rest ? " rest" : ""}`;
-  return figure.dotted ? `dotted ${name}` : name;
 }
 
 /** Written position of a MIDI note on a staff: diatonic step (C0 = 0) and sharp. */
