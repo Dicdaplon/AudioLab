@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, type ReactNode } from "react";
 
 import {
   type DetectorSettings,
@@ -20,6 +20,8 @@ interface SettingsPanelProps {
   /** Colour the chroma bars by pitch class instead of magnitude. */
   colourByPitch: boolean;
   onColourByPitchChange: (value: boolean) => void;
+  /** A compact "How?" sheet; it replaces the technical hint. */
+  how?: ReactNode;
 }
 
 export const SettingsPanel = memo(function SettingsPanel({
@@ -29,13 +31,14 @@ export const SettingsPanel = memo(function SettingsPanel({
   lastPeak = 0,
   colourByPitch,
   onColourByPitchChange,
+  how,
 }: SettingsPanelProps) {
   const update = (patch: Partial<DetectorSettings>): void => {
     onChange({ ...settings, ...patch });
   };
 
   return (
-    <Panel title="Settings" className="al-panel--settings" as="section">
+    <Panel title="Settings" className="al-panel--settings" as="section" how={how}>
       <RangeField
         id="live-sec"
         label="Live window"
@@ -101,11 +104,13 @@ export const SettingsPanel = memo(function SettingsPanel({
         Colour chroma bars by pitch class
       </Switch>
 
-      <p className="al-hint">
-        The presence filter keeps only the chroma bins above a fraction (the tolerance) of the
-        recent peaks; the memory sets how many peaks are averaged. The threshold follows how
-        concentrated the chroma is, not how loud the signal is.
-      </p>
+      {!how && (
+        <p className="al-hint">
+          The presence filter keeps only the chroma bins above a fraction (the tolerance) of the
+          recent peaks; the memory sets how many peaks are averaged. The threshold follows how
+          concentrated the chroma is, not how loud the signal is.
+        </p>
+      )}
     </Panel>
   );
 });

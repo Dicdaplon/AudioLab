@@ -11,10 +11,12 @@ interface PanelProps {
   className?: string;
   as?: "div" | "section";
   children: ReactNode;
+  /** A compact "How?" sheet (HowPanel with `compact`) closing the panel. */
+  how?: ReactNode;
 }
 
 /** The surface every block of the lab sits on. */
-export function Panel({ title, meta, className, as: Tag = "div", children }: PanelProps) {
+export function Panel({ title, meta, className, as: Tag = "div", children, how }: PanelProps) {
   return (
     <Tag className={className ? `al-panel ${className}` : "al-panel"}>
       {(title || meta) && (
@@ -24,6 +26,7 @@ export function Panel({ title, meta, className, as: Tag = "div", children }: Pan
         </div>
       )}
       {children}
+      {how && <div className="al-panel__how">{how}</div>}
     </Tag>
   );
 }

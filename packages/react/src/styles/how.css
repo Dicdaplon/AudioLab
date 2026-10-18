@@ -121,3 +121,56 @@
     transition: none;
   }
 }
+
+/* --- Compact: the small sheet at the foot of a panel (a detector window,
+   a list). One column, quieter bar, the sheet never wider than the panel. --- */
+
+.al-panel__how {
+  margin-top: var(--al-sp-3);
+}
+
+.al-detector__hero-how {
+  grid-column: 1 / -1;
+}
+
+.al-how--compact .al-how__bar {
+  gap: var(--al-sp-2);
+  padding: var(--al-sp-2) 0 0;
+}
+
+.al-how--compact .al-how__title {
+  font-size: var(--al-step-0);
+}
+
+.al-how--compact .al-how__topic {
+  font-size: var(--al-step--2);
+}
+
+.al-how--compact .al-how__sheet {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--al-sp-3);
+  padding: var(--al-sp-3) 0 var(--al-sp-2);
+}
+
+.al-how--compact .al-how__diagram {
+  padding: var(--al-sp-2) var(--al-sp-3);
+}
+
+.al-how--compact .al-how__lead {
+  font-size: var(--al-step--1);
+  line-height: 1.55;
+}
+
+.al-how--compact .al-how__facts {
+  gap: var(--al-sp-2);
+  margin-top: var(--al-sp-3);
+}
+
+.al-how--compact .al-how__fact dd {
+  font-size: var(--al-step--2);
+}
+
+/* Inside a bed panel the dashed rule sits on the bed, not the surface. */
+.al-panel--bed .al-how--compact {
+  border-top-color: var(--al-color-line);
+}

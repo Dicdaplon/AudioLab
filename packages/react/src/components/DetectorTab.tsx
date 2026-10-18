@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import {
   ANALYSIS_DEFAULTS,
   type ChordScore,
@@ -31,12 +32,32 @@ export interface DetectorData {
   filterLastPeak: number;
 }
 
+/**
+ * Compact "How?" sheets for the detector's windows, one slot per panel.
+ * The words belong to the host (see the lab's explanations); a panel with a
+ * sheet drops its technical hint.
+ */
+export interface DetectorHow {
+  /** Under the three readouts: why three answers. */
+  readouts?: ReactNode;
+  instantChroma?: ReactNode;
+  chordChroma?: ReactNode;
+  liveChroma?: ReactNode;
+  tonalityChroma?: ReactNode;
+  chords?: ReactNode;
+  liveKeys?: ReactNode;
+  keys?: ReactNode;
+  presence?: ReactNode;
+  settings?: ReactNode;
+}
+
 interface DetectorTabProps {
   data: DetectorData;
   settings: DetectorSettings;
   onSettingsChange: (settings: DetectorSettings) => void;
   colourByPitch: boolean;
   onColourByPitchChange: (value: boolean) => void;
+  how?: DetectorHow;
 }
 
 function KeyReadout({ label, meta, keys }: { label: string; meta: string; keys: KeyScore[] }) {
@@ -61,6 +82,7 @@ export function DetectorTab({
   onSettingsChange,
   colourByPitch,
   onColourByPitchChange,
+  how = {},
 }: DetectorTabProps) {
   const chordWindow = ANALYSIS_DEFAULTS.chordWindowSeconds;
   const live = settings.liveAcquisitionSeconds;
@@ -80,6 +102,7 @@ export function DetectorTab({
         />
         <KeyReadout label="Live key" meta={`${live} s`} keys={data.liveKeys} />
         <KeyReadout label="Estimated key" meta={`${long} s`} keys={data.tonalityKeys} />
+        {how.readouts && <div className="al-detector__hero-how">{how.readouts}</div>}
       </div>
 
       <div className="al-detector__settings">
@@ -91,6 +114,7 @@ export function DetectorTab({
             lastPeak={data.filterLastPeak}
             colourByPitch={colourByPitch}
             onColourByPitchChange={onColourByPitchChange}
+            how={how.settings}
           />
         </SettingsRail>
       </div>
@@ -100,40 +124,46 @@ export function DetectorTab({
           title="Instantaneous chroma"
           chroma={data.instantaneousChroma}
           colourByPitch={colourByPitch}
+          how={how.instantChroma}
         />
         <ChromaView
           title="Chord window"
           meta={`${chordWindow} s`}
           chroma={data.chordChroma}
           colourByPitch={colourByPitch}
+          how={how.chordChroma}
         />
         <ChromaView
           title="Live window"
           meta={`${live} s`}
           chroma={data.liveAcquisitionChroma}
           colourByPitch={colourByPitch}
+          how={how.liveChroma}
         />
         <ChromaView
           title="Tonality window"
           meta={`${long} s`}
           chroma={data.tonalityAcquisitionChroma}
           colourByPitch={colourByPitch}
+          how={how.tonalityChroma}
         />
       </div>
 
       <div className="al-detector__lists">
-        <ChordView chords={data.chords} windowSeconds={chordWindow} topN={6} />
+        <ChordView chords={data.chords} windowSeconds={chordWindow} topN={6} how={how.chords} />
         <KeyProbabilities
           title="Live key candidates"
           keys={data.liveKeys}
           windowSeconds={live}
           topN={5}
+          how={how.liveKeys}
         />
         <KeyProbabilities
           title="Key candidates"
           keys={data.tonalityKeys}
           windowSeconds={long}
           topN={5}
+          how={how.keys}
         />
       </div>
 
@@ -147,6 +177,7 @@ export function DetectorTab({
         tonalitySeconds={long}
         topN={6}
         colourByPitch={colourByPitch}
+        how={how.presence}
       />
     </div>
   );

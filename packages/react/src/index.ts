@@ -65,7 +65,7 @@ export { ChromaView } from "./components/ChromaView";
 export { ChordView } from "./components/ChordView";
 export { KeyProbabilities } from "./components/KeyProbabilities";
 export { ToneBaseTonalityView } from "./components/ToneBaseTonalityView";
-export { DetectorTab, type DetectorData } from "./components/DetectorTab";
+export { DetectorTab, type DetectorData, type DetectorHow } from "./components/DetectorTab";
 export { SettingsPanel } from "./components/SettingsPanel";
 export { FftSettingsPanel } from "./components/FftSettingsPanel";
 export { SettingsRail } from "./components/SettingsRail";

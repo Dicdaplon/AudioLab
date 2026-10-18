@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { KeyScore } from "@audiolab/core";
 import { keyRows } from "../ui/rankRows";
 import { Panel } from "./Panel";
@@ -10,23 +11,33 @@ interface KeyProbabilitiesProps {
   windowSeconds: number;
   /** How many ranked keys to list. Default 12. */
   topN?: number;
+  /** A compact "How?" sheet; it replaces the technical hint. */
+  how?: ReactNode;
   /** Panel title, e.g. "Live key candidates". */
   title: string;
 }
 
 /** Ranked key candidates of one acquisition window. */
-export function KeyProbabilities({ keys, windowSeconds, topN = 12, title }: KeyProbabilitiesProps) {
+export function KeyProbabilities({
+  keys,
+  windowSeconds,
+  topN = 12,
+  title,
+  how,
+}: KeyProbabilitiesProps) {
   return (
-    <Panel title={title} meta={`${windowSeconds} s`}>
+    <Panel title={title} meta={`${windowSeconds} s`} how={how}>
       {keys.length === 0 ? (
         <p className="al-waiting">Waiting for signal…</p>
       ) : (
         <RankList rows={keyRows(keys, topN)} label={title} />
       )}
-      <p className="al-hint">
-        Top {topN} of 24 candidate keys (12 major + 12 minor), ranked by probability (softmax over
-        the Pearson correlation <code>r</code> with the Krumhansl-Schmuckler profiles).
-      </p>
+      {!how && (
+        <p className="al-hint">
+          Top {topN} of 24 candidate keys (12 major + 12 minor), ranked by probability (softmax over
+          the Pearson correlation <code>r</code> with the Krumhansl-Schmuckler profiles).
+        </p>
+      )}
     </Panel>
   );
 }

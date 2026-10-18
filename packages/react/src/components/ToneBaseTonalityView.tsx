@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { KeyScore } from "@audiolab/core";
 import { keyRows, splitKeyName } from "../ui/rankRows";
 import { ChromaBars } from "./ChromaBars";
@@ -21,6 +22,8 @@ interface ToneBaseTonalityViewProps {
   topN?: number;
   colourByPitch?: boolean;
   className?: string;
+  /** A compact "How?" sheet; it replaces the technical hint. */
+  how?: ReactNode;
 }
 
 /**
@@ -37,6 +40,7 @@ export function ToneBaseTonalityView({
   topN = 5,
   colourByPitch,
   className,
+  how,
 }: ToneBaseTonalityViewProps) {
   const top = keys[0];
   const topName = top ? splitKeyName(top.name) : null;
@@ -47,6 +51,7 @@ export function ToneBaseTonalityView({
       meta={`${liveSeconds} s → ${tonalitySeconds} s`}
       as="section"
       className={className}
+      how={how}
     >
       <div className="al-tonebase__bars">
         <figure className="al-chroma-figure">
@@ -95,10 +100,12 @@ export function ToneBaseTonalityView({
         )}
       </div>
 
-      <p className="al-hint">
-        Top {topN} of 24 candidates — Krumhansl-Schmuckler correlation on the presence histogram
-        (which notes were there), not on the energy.
-      </p>
+      {!how && (
+        <p className="al-hint">
+          Top {topN} of 24 candidates — Krumhansl-Schmuckler correlation on the presence histogram
+          (which notes were there), not on the energy.
+        </p>
+      )}
     </Panel>
   );
 }

@@ -6,6 +6,9 @@
  * open, a small sheet: the idea, then the algorithm, its limits, where it
  * comes from, and one thing worth knowing.
  *
+ * `compact` is the small version that closes a panel (one window of the
+ * detector, a list): a smaller bar, one column, the diagram optional.
+ *
  * A native <details>, so it opens without JavaScript and is accessible by
  * default. Keep the text short: the lead is two or three sentences, each
  * field one or two.
@@ -36,6 +39,8 @@ export interface HowPanelProps {
   aside?: ReactNode;
   /** Start open. Default false. */
   defaultOpen?: boolean;
+  /** The small version, for the foot of a panel. Default false. */
+  compact?: boolean;
   /** Heading of the closed bar. Default "How?". */
   title?: string;
   className?: string;
@@ -51,13 +56,12 @@ export function HowPanel({
   aside,
   title = "How?",
   defaultOpen = false,
+  compact = false,
   className,
 }: HowPanelProps) {
+  const classes = ["al-how", compact && "al-how--compact", className].filter(Boolean).join(" ");
   return (
-    <details
-      className={className ? `al-how ${className}` : "al-how"}
-      open={defaultOpen || undefined}
-    >
+    <details className={classes} open={defaultOpen || undefined}>
       <summary className="al-how__bar">
         <span className="al-how__title">{title}</span>
         <span className="al-how__topic">{topic}</span>
