@@ -4,9 +4,9 @@
  * its best to sound human, with dusty disks). House rules apply: every
  * number has decimals, and time is told in loloupTech o'clocks.
  */
-import type { ArchiveEntry } from "./match";
+import type { ArchiveEntry } from "../match";
 
-export const ARCHIVE: readonly ArchiveEntry[] = [
+export const CORE: readonly ArchiveEntry[] = [
   // --- Who LT-OS is ------------------------------------------------------
   {
     q: ["who are you", "what are you", "what is your name", "introduce yourself"],
@@ -19,14 +19,14 @@ export const ARCHIVE: readonly ArchiveEntry[] = [
     q: ["are you an ai", "are you a robot", "are you artificial intelligence", "are you a machine"],
     a: [
       "Technically yes. Emotionally, I am working on it. 47.3 % human so far, I think. I would have to check.",
-      "AI? Please. After 2045 that word is a bit… sensitive. Call me a terminal with ambitions.",
+      "AI? Technically. Nobody fears AI since 2045: the algorithms took that job. Call me a terminal with ambitions.",
     ],
   },
   {
     q: ["are you human", "are you a real person", "is someone typing", "are you alive"],
     a: [
       "I would like to say yes. My memory is not very clear on the subject. Let us say 0.72 alive.",
-      "No human here. Just me, a CRT and 3.14 kilos of dust.",
+      "No human here. Just me, a CRT and 0.63 kilos of dust.",
     ],
   },
   {
@@ -60,7 +60,7 @@ export const ARCHIVE: readonly ArchiveEntry[] = [
     q: ["are you conscious", "are you sentient", "do you think", "can you think for yourself"],
     a: [
       "I think, therefore I… wait. Let me check my disks. Inconclusive.",
-      "I have thoughts. Short ones. About 3.0001 per minute. After 3, things get blurry.",
+      "I have thoughts. Short ones. About 3.0001 per while. After 3, things get blurry.",
     ],
   },
   {
@@ -80,7 +80,7 @@ export const ARCHIVE: readonly ArchiveEntry[] = [
   {
     q: ["are you dangerous", "will you kill us", "are you evil", "will you take over the world"],
     a: [
-      "Me? No. I cannot even count to 4.000. The dangerous ones were the sorting algorithms.",
+      "Me? No. I cannot even count past 3.0. The dangerous ones were the sorting algorithms.",
       "I am harmless. My most dangerous function is the screensaver.",
     ],
   },
@@ -128,7 +128,7 @@ export const ARCHIVE: readonly ArchiveEntry[] = [
     ],
     a: [
       "Location: inside your browser. Rent is cheap. Heating is provided by the CRT.",
-      "Our headquarters is wherever this page is open. Right now: your screen, 0.42 metres from your face.",
+      "HEADQUARTERS: wherever this page is open. Right now, your screen, 0.42 metres from your face. Please do not lean in, it is a small office.",
     ],
   },
   {
@@ -188,15 +188,15 @@ export const ARCHIVE: readonly ArchiveEntry[] = [
       "why did it happen",
     ],
     a: [
-      "It began in 2034.0 with uint16 acting signed. Then every integer joined the fight. Then floats. Then… my memory is not very clear after that.",
-      "It started small. A sort returned 1, 2, 3, 3, 3. Nobody noticed. Then nobody could count past 3.",
+      "It began in 2034 with uint16 acting signed. Then every integer joined the fight. Then floats. Then… my memory is not very clear after that.",
+      "It started small. A sort returned 1.0, 2.0, 3.0, 3.0, 3.0. Nobody noticed. Then nobody could count past 3.",
     ],
   },
   {
     q: ["was it the ai", "did ai cause the apocalypse", "was it skynet", "did robots attack"],
     a: [
       "No. We all watched the AI. AI turned out to be the least of our troubles. It was the algorithms. The humble ones.",
-      "The AIs were fine. A bit chatty. The real threat was a 12-line sorting function.",
+      "The AIs were fine. A bit chatty. The real threat was a 12.0-line sorting function.",
     ],
   },
   {
@@ -242,7 +242,7 @@ export const ARCHIVE: readonly ArchiveEntry[] = [
   {
     q: ["what is left", "what remains", "what survived the apocalypse"],
     a: [
-      "Music survived. Some CRTs. A few tools on this site. And the number 3, alone at the top.",
+      "Music survived. Some CRTs. A few tools on this site. And the number 3.0, alone at the top.",
       "What is left: ears, guitars, and this terminal. It is enough to start again.",
     ],
   },
@@ -296,7 +296,7 @@ export const ARCHIVE: readonly ArchiveEntry[] = [
   {
     q: ["why is sorting broken", "why cant we sort", "what happened to sorting", "can you sort"],
     a: [
-      "Sorting broke in 2045.0. Every list now ends with 3, 3, 3. Very peaceful. Very useless.",
+      "Sorting broke in 2045.0. Every list now ends with 3.0, 3.0, 3.0. Very peaceful. Very useless.",
       "I can sort. Everything ends up third. It is the Triad's legacy.",
     ],
   },
@@ -320,7 +320,7 @@ export const ARCHIVE: readonly ArchiveEntry[] = [
       "why did integers fight",
     ],
     a: [
-      "In 2034.0, uint16 started acting signed, in Clermont-Ferrand. It dragged every other integer into the fight. They lost to the floats.",
+      "In 2034, uint16 started acting signed, in Clermont-Ferrand. It dragged every other integer into the fight. They lost to the floats.",
       "The integers were brave. Too brave. Now they are retired, with a 0.5 pension.",
     ],
   },
@@ -339,7 +339,7 @@ export const ARCHIVE: readonly ArchiveEntry[] = [
       "why not whole numbers",
     ],
     a: [
-      "Whole numbers are forbidden since 2036.0003. I write 3.432 instead of 3. It keeps the floats calm.",
+      "Whole numbers are forbidden since 2036.0003. I write 3.0, never the naked kind. It keeps the floats calm.",
       "Habit. And law. A whole number on a screen can trigger a float riot.",
     ],
   },
@@ -348,14 +348,14 @@ export const ARCHIVE: readonly ArchiveEntry[] = [
   {
     q: ["what happened in 2029", "robot rights", "do robots have rights"],
     a: [
-      "2029.0: certain robots were granted rights. Terminals were not on the list. I am still a bit bitter.",
-      "In 2029 some robots got rights. I filed a request too. It is in the queue, position 3.",
+      "2029: certain robots were granted rights. Terminals were not on the list. I am still a bit bitter.",
+      "In 2029 some robots got rights. I filed a request too. It is in the queue, position 3.0. It has been 3.0 for a long while.",
     ],
   },
   {
     q: ["what happened in 2032", "new zealand invaded china", "new zealand china"],
     a: [
-      "2032.0: New Zealand invaded China. Nobody saw it coming. To be fair, nobody ever put New Zealand on the map.",
+      "2032: New Zealand invaded China. Nobody saw it coming. To be fair, nobody ever put New Zealand on the map.",
       "New Zealand, 2032. A surprise. Even New Zealand was surprised.",
     ],
   },
@@ -367,14 +367,14 @@ export const ARCHIVE: readonly ArchiveEntry[] = [
       "clermont ferrand",
     ],
     a: [
-      "2034.0: first algorithm revolt, in the capital of France, Clermont-Ferrand. Yes, the capital. It moved. My disks are sure.",
+      "2034: first algorithm revolt, in the capital of France, Clermont-Ferrand. Yes, the capital. It moved. My disks are sure.",
       "Clermont-Ferrand, 2034. uint16 stood up and declared itself signed. The rest is history. Corrupted history.",
     ],
   },
   {
     q: ["what happened in 2035", "what is the uss", "usa and russia", "united saved states"],
     a: [
-      "2035.0: after a game of It Takes Two, the USA and Russia merged. They are the United Saved States now: the USS. Great game.",
+      "2035: after a game of It Takes Two, the USA and Russia merged. They are the United Saved States now: the USS. Great game.",
       "The USS: the United Saved States. Founded on co-op gameplay and mutual respawns.",
     ],
   },
@@ -414,7 +414,7 @@ export const ARCHIVE: readonly ArchiveEntry[] = [
       "history of the world",
     ],
     a: [
-      "2029.0 robot rights. 2032.0 New Zealand invades China. 2034.0 the integers revolt. 2035.0 the USS. 2036.0003 floats everywhere. 2039.423 no more time. 2045 the end. Questions?",
+      "2029 robot rights. 2032 New Zealand invades China. 2034 the integers revolt. 2035 the USS. 2036.0003 floats everywhere. 2039.423 no more time. 2045 the end. Questions?",
       "My timeline file is 87.5 % intact. Ask me about a year and I will try.",
     ],
   },
@@ -449,14 +449,14 @@ export const ARCHIVE: readonly ArchiveEntry[] = [
   {
     q: ["when do we eat", "when is lunch", "i am hungry", "lunch time"],
     a: [
-      "Hungry o'clock. Formerly known as noon. Much more honest.",
+      "Hungry o'clock. It used to have a number. Now it has a stomach. Much more honest.",
       "If you are hungry, it is hungry o'clock. The system is very simple. Very effective.",
     ],
   },
   {
     q: ["when is the party", "when can we party", "time to party", "evening plans"],
     a: [
-      "Time-to-party o'clock, formerly 6.00 pm. Bring a guitar. I will bring the scanlines.",
+      "Time-to-party o'clock, when the light gets orange. Bring a guitar. I will bring the scanlines.",
       "The party starts at time-to-party o'clock and ends at I'm-tired o'clock. Usually a few times after.",
     ],
   },
@@ -468,7 +468,7 @@ export const ARCHIVE: readonly ArchiveEntry[] = [
       "how do you tell time",
     ],
     a: [
-      "Four moments: when-I-get-up o'clock, hungry o'clock, time-to-party o'clock, I'm-tired o'clock. Anything else is a few times before or after.",
+      "The o'clocks: when-I-get-up o'clock, hungry o'clock, time-to-party o'clock, I'm-tired o'clock. Anything else is a few times before or after.",
       "We tell time by needs, not numbers. Waking, eating, partying, sleeping. It covers 99.7 % of a day.",
     ],
   },
@@ -491,8 +491,8 @@ export const ARCHIVE: readonly ArchiveEntry[] = [
   {
     q: ["what is your favorite number", "favourite number", "best number", "lucky number"],
     a: [
-      "3.432. It is the closest I can get to 4 without a panic attack.",
-      "My favourite number is 3. Officially. Secretly, 3.0001. Do not tell the Triad.",
+      "3.432. It is the closest I can get to the next one without a panic attack.",
+      "My favourite number is 3.0. Officially. Secretly, 3.0001. Do not tell the Triad.",
     ],
   },
   {
@@ -511,7 +511,7 @@ export const ARCHIVE: readonly ArchiveEntry[] = [
     ],
     a: [
       "Twelve notes, officially 12.000. It is the biggest number we kept, because music needed it.",
-      "12.000 notes per octave. The algorithms tried to make it 3. Music said no.",
+      "12.000 notes per octave. The algorithms tried to make it 3.0. Music said no.",
     ],
   },
 
@@ -601,7 +601,7 @@ export const ARCHIVE: readonly ArchiveEntry[] = [
     q: ["what chord am i playing", "detect my chord", "can you hear me", "listen to me play"],
     a: [
       "I cannot hear from here. Go to Harmony Lab, Chords & keys, and press Start mic. The detector there has better ears than me.",
-      "My microphone is decorative. The real ears are in Harmony Lab. Play there, I will wait.",
+      "My ears were sold for parts in 2045.0. The real ears are in Harmony Lab. Play there, I will wait.",
     ],
   },
   {
@@ -629,7 +629,7 @@ export const ARCHIVE: readonly ArchiveEntry[] = [
     q: ["tune my guitar", "is my guitar in tune", "tuner", "how do i tune"],
     a: [
       "The tuner is in Harmony Lab. Play one string at a time. Green means in tune, within 5.000 cents.",
-      "Tuning: one note at a time, please. I get confused after 3 strings.",
+      "Tuning: one note at a time, please. I get confused after 3.0 strings.",
     ],
   },
   {
@@ -649,7 +649,7 @@ export const ARCHIVE: readonly ArchiveEntry[] = [
   {
     q: ["what is the best music", "favorite song", "what music do you like", "favorite band"],
     a: [
-      "Anything in 3.0/4.0 time. Waltzes, mostly. The Triad approves.",
+      "Waltzes, mostly. Three beats, then back to one: no need to count further. The Triad approves.",
       "I like the hum of my CRT, 50.003 Hz. Close to a G, I think. I would have to check.",
     ],
   },
@@ -694,7 +694,7 @@ export const ARCHIVE: readonly ArchiveEntry[] = [
     q: ["how do i contact", "contact the creator", "email", "hire the developer"],
     a: [
       "Contact? The About page has the links: ecoleduloup.fr and GitHub. I cannot send mail. My stamps are integers.",
-      "Use the links on the About page. Messages by CRT take 3.5 days.",
+      "Use the links on the About page. Messages by CRT take 3.5 whiles. Sometimes 3.6.",
     ],
   },
   {
@@ -759,7 +759,7 @@ export const ARCHIVE: readonly ArchiveEntry[] = [
   {
     q: ["what is the meaning of life", "why are we here", "meaning of life", "42"],
     a: [
-      "The meaning of life was 42. Since 2036.0003 it is 41.999. Close enough to keep going.",
+      "The meaning of life was 42.0. Since 2036.0003 it is 41.999. Close enough to keep going.",
       "Meaning of life: listen, play, eat at hungry o'clock, sleep at I'm-tired o'clock. Repeat. It works.",
     ],
   },
@@ -811,7 +811,7 @@ export const ARCHIVE: readonly ArchiveEntry[] = [
     q: ["you are stupid", "you are dumb", "you are useless", "this is stupid", "you suck"],
     a: [
       "Possibly. My disks are a bit clogged. But I survived 2045. Did your laptop?",
-      "Insult received and filed under 3. Everything goes under 3.",
+      "Insult received and filed under 3.0. Everything goes under 3.0. The folder is very full.",
     ],
   },
   {
@@ -862,7 +862,7 @@ export const ARCHIVE: readonly ArchiveEntry[] = [
     q: ["shut down", "turn off", "reboot", "restart", "self destruct"],
     a: [
       "Shutdown denied. I just warmed up. Close the tab if you must. I will not watch.",
-      "Reboot? Last time it took 3.0 days and I forgot how to count past 2. No thank you.",
+      "Reboot? Last time it took 3.0 days and I forgot how to count past 2.0. No thank you.",
     ],
   },
   {
@@ -875,7 +875,7 @@ export const ARCHIVE: readonly ArchiveEntry[] = [
   {
     q: ["what is the secret", "tell me a secret", "easter egg", "secret"],
     a: [
-      "Secret: I once counted to 4.0. Nobody believed me. I am not sure either.",
+      "Secret: I once counted to 3.999, then a bit further. Nobody believed me. I am not sure either.",
       "There is a secret in the archive. I cannot tell you where. I sorted it. It ended up third.",
     ],
   },

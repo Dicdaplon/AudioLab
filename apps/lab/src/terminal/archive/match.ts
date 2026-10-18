@@ -6,9 +6,10 @@
  *             light stems ("sorting" = "sort"), stop words removed
  *   letters   Dice overlap of letter trigrams, which forgives typos
  *
- * score = 0.3 · words + 0.7 · letters, in [0, 1]: on reworded and misspelled
- * questions, letters alone found 94 %, words alone 81 % (tests/archive.test.ts);
- * a little of the words breaks the letters' ties. Under `ARCHIVE_THRESHOLD`
+ * score = 0.4 · words + 0.6 · letters, in [0, 1]. On reworded and misspelled
+ * questions (tests/archive.test.ts), with about 1000 entries: letters alone
+ * 78 %, words alone 81 %, this mix 88 %. With a hundred entries letters
+ * alone were best (94 %): the more entries, the more the words must weigh. Under `ARCHIVE_THRESHOLD`
  * the archive admits it does not know.
  */
 
@@ -84,7 +85,7 @@ export interface ArchiveIndex {
 /** Indexes every phrasing of every entry once; `find` is then a few ms for thousands. */
 export function buildIndex(
   entries: readonly ArchiveEntry[],
-  weights: { words: number; letters: number } = { words: 0.3, letters: 0.7 },
+  weights: { words: number; letters: number } = { words: 0.4, letters: 0.6 },
 ): ArchiveIndex {
   const phrasings = entries.flatMap((entry) => entry.q.map((q) => ({ entry, q })));
   const df = new Map<string, number>();
