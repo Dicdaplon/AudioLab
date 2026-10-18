@@ -191,7 +191,7 @@ describe("RhythmTab", () => {
       );
     });
     batch(m.grid.startTime + (17 * 60) / 70);
-    expect(panel("Play in time").textContent).toMatch(/20 of 20 on time./);
+    expect(panel("Play in time").textContent).toMatch(/Score 100\/100: 20 of 20 on time./);
     // The rhythm is written above the lane, as on a score.
     expect(panel("Play in time").querySelectorAll(".al-staff__note")).toHaveLength(20);
     expect(screen.getByRole("button", { name: "Again" })).toBeTruthy();

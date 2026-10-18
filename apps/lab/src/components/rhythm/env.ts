@@ -26,3 +26,9 @@ export const VERDICT_TEXT: Record<string, string> = {
   late: "Late",
   missed: "Missed",
 };
+
+/** Mean score of the notes, out of 100 (each note scores 0..1, a missed one 0). */
+export function scoreOutOf100(scores: readonly (number | null)[]): number {
+  if (scores.length === 0) return 0;
+  return Math.round((100 * scores.reduce<number>((s, v) => s + (v ?? 0), 0)) / scores.length);
+}

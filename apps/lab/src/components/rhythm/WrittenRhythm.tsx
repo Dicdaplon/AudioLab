@@ -10,7 +10,7 @@ import {
 } from "@audiolab/core/rhythm";
 import { SelectField, StaffNotation, Switch, type StaffDot } from "@audiolab/react";
 
-import type { ExerciseEnv } from "./env";
+import { scoreOutOf100, type ExerciseEnv } from "./env";
 import { BEATS_PER_BAR, RHYTHM_PATTERNS, patternEvents } from "./exercises";
 import { useOnsetBus } from "./onsetBus";
 import { staffStates } from "./staffState";
@@ -142,7 +142,7 @@ export function WrittenRhythm({ env }: { env: ExerciseEnv }) {
     if (playing) message = `Listening… ${freeOnsets?.length ?? 0} of ${beats.length} notes.`;
     else if (freeDone && fit) {
       const inTime = fit.notes.filter((n) => n.tier === "onTime").length;
-      message = `${inTime} of ${fit.notes.length} notes in time, at about ${Math.round(fit.tempoBpm)} BPM. ${
+      message = `Score ${scoreOutOf100(fit.notes.map((n) => n.score))}/100: ${inTime} of ${fit.notes.length} notes in time, at about ${Math.round(fit.tempoBpm)} BPM. ${
         fit.stats.jitterMs < 35 ? "Steady." : "A bit uneven: try it slower."
       }`;
     } else if (freeDone) message = "Not enough notes heard. Try again.";
@@ -155,7 +155,7 @@ export function WrittenRhythm({ env }: { env: ExerciseEnv }) {
     }
     if (play.done && results) {
       const inTime = results.filter((r) => r.tier === "onTime").length;
-      message = `${inTime} of ${results.length} notes in time.`;
+      message = `Score ${scoreOutOf100(results.map((r) => r.score))}/100: ${inTime} of ${results.length} notes in time.`;
     }
   }
   if (!running) message = "Start the microphone, then play the rhythm.";
