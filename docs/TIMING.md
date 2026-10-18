@@ -272,6 +272,22 @@ and the chain's own precision. `toleranceFromUncertainty(σ)` widens them to
 2σ / 3σ: a window narrower than the measurement would grade the
 microphone, not the player.
 
+### 5.1b A continuous score per note
+
+On top of the tiers, every resolved note gets `score` in [0, 1], a Gaussian of its
+corrected offset (latency and bias removed, the same as `deltaMs`):
+
+```
+score = timingScore(Δ, σ) = exp(−Δ² / (2σ²))      missed → 0, unresolved → null
+```
+
+A note passes from `SCORE_PASS` = 0.8. By default σ is derived from the tolerance so
+that the on-time edge scores exactly 0.8 (`scoreSigmaFor(tolerance)`:
+σ = onTimeMs / √(2·ln 1.25), **≈ 149.7 ms at ±100 ms**), so the `onTime` tier and
+"score ≥ 0.8" agree. Set `scoreSigmaMs` to change the curve; `sigmaForScore(80, 0.8)`
+gives the σ for "0.8 at ±80 ms" (≈ 119.8 ms). `fitPattern` scores each note on its
+residual the same way (option `scoreSigmaMs`). The tiers do not change.
+
 ### 5.2 Scrolling notes and chords: `TimingScorer`
 
 Each expected note accepts onsets within ±wₖ, wₖ = min(windowMs, ½ · gap to
