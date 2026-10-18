@@ -1,19 +1,30 @@
 /**
- * The conversational terminal: boots a small model in a Web Worker, then
- * answers in the voice of LT-OS, scars included (see `glitch`). Loaded only
- * when a visitor asks for it, so nothing here weighs on the rest of the lab.
+ * The conversational terminal. It first asks which core to run:
+ *
+ *   [1] ARCHIVE  hand-written answers, picked by resemblance (see
+ *                archive/match): instant, nothing to download
+ *   [2] NEURAL   a tiny language model in a Web Worker: a download, then
+ *                free-wheeling answers
+ *
+ * Either way the replies come out in the voice of LT-OS, scars included
+ * (see `glitch`). Loaded only when a visitor asks, so nothing here weighs
+ * on the rest of the lab; the worker exists only for the neural core.
  */
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
+import { ARCHIVE, UNKNOWN } from "./archive/entries";
+import { ARCHIVE_THRESHOLD, buildIndex } from "./archive/match";
 import type { ChatMessage, WorkerIn, WorkerOut } from "./chat.worker";
 import { glitch } from "./glitch";
-import { TERMINAL_MODELS, type TerminalModel } from "./models";
-import { HISTORY_TURNS, SYSTEM_PROMPT } from "./persona";
+import { NEURAL_MODEL } from "./models";
+import { EXAMPLES, HISTORY_TURNS, SYSTEM_PROMPT } from "./persona";
 import { TIMELINE } from "./timeline";
+
+type Core = "archive" | "neural";
 
 type Status =
   | { kind: "booting"; loaded: number; total: number }
-  | { kind: "ready"; device: string }
+  | { kind: "ready" }
   | { kind: "thinking" }
   | { kind: "error"; message: string };
 
@@ -37,19 +48,71 @@ const FACT_EVERY_MS = 10_000;
 /** Share of characters scarred in a reply: a few per answer, still readable. */
 const GLITCH_RATE = 0.015;
 
+/** The archive "types" its answer at this pace, like an old terminal. */
+const TYPE_MS_PER_CHAR = 18;
+
+const pick = <T,>(items: readonly T[]): T => items[Math.floor(Math.random() * items.length)];
+
 export default function TerminalChat() {
-  const worker = useRef<Worker | null>(null);
-  const device = useRef("wasm");
-  const [model, setModel] = useState<TerminalModel>(TERMINAL_MODELS[0]);
-  const [status, setStatus] = useState<Status>({ kind: "booting", loaded: 0, total: 0 });
+  const [core, setCore] = useState<Core | null>(null);
+  const [status, setStatus] = useState<Status>({ kind: "ready" });
   const [lines, setLines] = useState<Line[]>([]);
   const [draft, setDraft] = useState("");
+  const [fact, setFact] = useState(0);
+  const worker = useRef<Worker | null>(null);
+  const device = useRef("");
   const input = useRef<HTMLInputElement>(null);
   const log = useRef<HTMLDivElement>(null);
-  const [fact, setFact] = useState(0);
+  const index = useMemo(() => buildIndex(ARCHIVE), []);
   const booting = status.kind === "booting";
 
-  // The archive reads its timeline aloud while the core boots.
+  // 1 or 2 picks the core, as on the screen.
+  useEffect(() => {
+    if (core) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "1") setCore("archive");
+      else if (event.key === "2") setCore("neural");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [core]);
+
+  // The archive is ready at once; the neural core boots its model in a worker.
+  useEffect(() => {
+    if (core === "archive") {
+      setStatus({ kind: "ready" });
+      input.current?.focus();
+      return;
+    }
+    if (core !== "neural") return;
+    setStatus({ kind: "booting", loaded: 0, total: 0 });
+    const w = new Worker(new URL("./chat.worker.ts", import.meta.url), { type: "module" });
+    worker.current = w;
+    w.onmessage = (event: MessageEvent<WorkerOut>) => {
+      const message = event.data;
+      if (message.type === "progress")
+        setStatus({ kind: "booting", loaded: message.loaded, total: message.total });
+      else if (message.type === "ready") {
+        device.current = message.device;
+        setStatus({ kind: "ready" });
+        input.current?.focus();
+      } else if (message.type === "token")
+        setLines((all) => {
+          const last = all[all.length - 1];
+          return [...all.slice(0, -1), { ...last, text: last.text + message.text }];
+        });
+      else if (message.type === "done") setStatus({ kind: "ready" });
+      else if (message.type === "error") setStatus({ kind: "error", message: message.message });
+    };
+    const load: WorkerIn = { type: "load", model: NEURAL_MODEL };
+    w.postMessage(load);
+    return () => {
+      w.terminate();
+      worker.current = null;
+    };
+  }, [core]);
+
+  // The timeline is read out while the neural core boots.
   useEffect(() => {
     if (!booting) return;
     const timer = window.setInterval(
@@ -59,79 +122,76 @@ export default function TerminalChat() {
     return () => window.clearInterval(timer);
   }, [booting]);
 
-  // One worker for the terminal's life; it boots the chosen model.
-  useEffect(() => {
-    const w = new Worker(new URL("./chat.worker.ts", import.meta.url), { type: "module" });
-    worker.current = w;
-    w.onmessage = (event: MessageEvent<WorkerOut>) => {
-      const message = event.data;
-      if (message.type === "progress")
-        setStatus({ kind: "booting", loaded: message.loaded, total: message.total });
-      else if (message.type === "ready") {
-        device.current = message.device;
-        setStatus({ kind: "ready", device: message.device });
-        input.current?.focus();
-      } else if (message.type === "token")
-        setLines((all) => {
-          const last = all[all.length - 1];
-          return [...all.slice(0, -1), { ...last, text: last.text + message.text }];
-        });
-      else if (message.type === "done") setStatus({ kind: "ready", device: device.current });
-      else if (message.type === "error") setStatus({ kind: "error", message: message.message });
-    };
-    return () => w.terminate();
-  }, []);
-
-  useEffect(() => {
-    setStatus({ kind: "booting", loaded: 0, total: 0 });
-    const message: WorkerIn = { type: "load", model };
-    worker.current?.postMessage(message);
-  }, [model]);
-
   useEffect(() => {
     log.current?.scrollTo({ top: log.current.scrollHeight });
   }, [lines]);
 
+  /** Types the archive's answer out, a few characters at a time. */
+  const typeOut = (text: string) => {
+    let shown = 0;
+    const timer = window.setInterval(() => {
+      shown = Math.min(text.length, shown + 2);
+      setLines((all) => [...all.slice(0, -1), { from: "ai", text: text.slice(0, shown) }]);
+      if (shown >= text.length) {
+        window.clearInterval(timer);
+        setStatus({ kind: "ready" });
+        input.current?.focus();
+      }
+    }, TYPE_MS_PER_CHAR * 2);
+  };
+
   const send = (event: FormEvent) => {
     event.preventDefault();
     const question = draft.trim();
-    if (!question || status.kind !== "ready") return;
+    if (!question || status.kind !== "ready" || !core) return;
+    setLines((all) => [...all, { from: "you", text: question }, { from: "ai", text: "" }]);
+    setDraft("");
+    setStatus({ kind: "thinking" });
+
+    if (core === "archive") {
+      const match = index.find(question);
+      const answer =
+        match && match.score >= ARCHIVE_THRESHOLD ? pick(match.entry.a) : pick(UNKNOWN);
+      typeOut(answer);
+      return;
+    }
+
     const history: ChatMessage[] = lines.slice(-HISTORY_TURNS * 2).map((l) => ({
       role: l.from === "you" ? "user" : "assistant",
       content: l.text,
     }));
     const messages: ChatMessage[] = [
       { role: "system", content: SYSTEM_PROMPT },
+      ...EXAMPLES,
       ...history,
       { role: "user", content: question },
     ];
-    setLines((all) => [...all, { from: "you", text: question }, { from: "ai", text: "" }]);
-    setDraft("");
-    setStatus({ kind: "thinking" });
-    const message: WorkerIn = { type: "generate", messages };
-    worker.current?.postMessage(message);
+    const generate: WorkerIn = { type: "generate", messages };
+    worker.current?.postMessage(generate);
   };
+
+  if (!core)
+    return (
+      <section className="lt-term" aria-label="Conversational terminal">
+        <p className="lt-term__head">LT-OS v0.45 · select a core</p>
+        <div className="lt-term__choices">
+          <button type="button" className="lt-term__choice" onClick={() => setCore("archive")}>
+            <kbd>[1]</kbd> ARCHIVE: hand-written memory, instant, nothing to download.
+          </button>
+          <button type="button" className="lt-term__choice" onClick={() => setCore("neural")}>
+            <kbd>[2]</kbd> NEURAL CORE: a tiny AI, {NEURAL_MODEL.size} to download. Unhinged.
+          </button>
+        </div>
+      </section>
+    );
 
   return (
     <section className="lt-term" aria-label="Conversational terminal">
       <div className="lt-term__head">
-        <span>LT-OS v0.45</span>
-        <label className="lt-term__model">
-          <span>core</span>
-          <select
-            value={model.id}
-            disabled={status.kind === "thinking"}
-            onChange={(e) =>
-              setModel(TERMINAL_MODELS.find((m) => m.id === e.target.value) ?? TERMINAL_MODELS[0])
-            }
-          >
-            {TERMINAL_MODELS.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.label} · {m.size}
-              </option>
-            ))}
-          </select>
-        </label>
+        <span>LT-OS v0.45 · {core === "archive" ? "archive core" : NEURAL_MODEL.label}</span>
+        <button type="button" className="lt-term__switch" onClick={() => setCore(null)}>
+          change core
+        </button>
       </div>
 
       <p className="lt-term__status" role="status">
@@ -139,7 +199,10 @@ export default function TerminalChat() {
           (status.total > 0
             ? `BOOTING CORE ${bar(status.loaded / status.total)} ${megabytes(status.loaded)} / ${megabytes(status.total)}`
             : "BOOTING CORE… contacting the archive")}
-        {status.kind === "ready" && `CORE ONLINE (${status.device.toUpperCase()}). Ask away.`}
+        {status.kind === "ready" &&
+          (core === "archive"
+            ? "ARCHIVE ONLINE. Ask away."
+            : `CORE ONLINE (${device.current.toUpperCase()}). Ask away.`)}
         {status.kind === "thinking" && "PROCESSING…"}
         {status.kind === "error" && `CORE FAILURE: ${status.message}`}
       </p>
@@ -172,8 +235,9 @@ export default function TerminalChat() {
       </form>
 
       <p className="lt-term__note">
-        Runs on your device; nothing is sent anywhere. The first boot downloads the core, then your
-        browser keeps it. It makes things up.
+        {core === "archive"
+          ? "Hand-written answers, matched to your question by resemblance. Runs on your device."
+          : "Runs on your device; nothing is sent anywhere. The first boot downloads the core, then your browser keeps it. It makes things up."}
       </p>
     </section>
   );

@@ -111,11 +111,11 @@ async function generate(messages: ChatMessage[]) {
   await generator(
     input as never,
     {
-      max_new_tokens: 96,
+      max_new_tokens: 80,
       do_sample: true,
-      temperature: 0.8,
+      temperature: 0.5,
       top_p: 0.9,
-      repetition_penalty: 1.2,
+      repetition_penalty: 1.15,
       return_full_text: false,
       streamer,
     } as never,

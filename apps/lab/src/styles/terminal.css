@@ -158,3 +158,43 @@
 .lt-term__year {
   color: var(--al-color-accent);
 }
+
+/* The core picker: two lines to press, 1 or 2. */
+.lt-term__choices {
+  display: grid;
+  gap: var(--al-sp-2);
+}
+
+.lt-term__choice,
+.lt-term__switch {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: var(--al-color-ink);
+  cursor: pointer;
+}
+
+.lt-term__choice kbd {
+  font: inherit;
+  color: var(--al-color-accent);
+}
+
+.lt-term__choice:hover,
+.lt-term__choice:focus-visible {
+  color: var(--al-color-signal-strong);
+}
+
+.lt-term__switch {
+  font-size: 1rem;
+  color: var(--al-color-ink-muted);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.lt-term__choice:focus-visible,
+.lt-term__switch:focus-visible {
+  outline: 2px solid var(--al-color-focus);
+  outline-offset: 3px;
+}

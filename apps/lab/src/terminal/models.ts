@@ -1,20 +1,20 @@
 /**
- * The small models the terminal can boot, all run in the browser by
- * transformers.js (WebGPU when there is one, WebAssembly otherwise). Every
- * repo below was checked for its ONNX files; sizes are the download of the
- * WebAssembly weights, the heavier case. The first one is the default.
+ * The neural core: the lightest model that still writes sentences, run in
+ * the browser by transformers.js (WebGPU when there is one, WebAssembly
+ * otherwise). Heavier ones (LFM2-700M, Gemma 3 1B, Llama 3.2 1B…) were
+ * tried: more coherent, still off-script, and 0.5–1.1 GB to download.
  */
 export interface TerminalModel {
   /** Hugging Face repo id. */
   id: string;
-  /** Shown in the picker. */
+  /** Shown in the terminal's head. */
   label: string;
-  /** Approximate download, for the picker. */
+  /** Approximate download. */
   size: string;
   /**
    * Weights to load on WebGPU (needs shader-f16 for the f16 ones) and on
-   * WebAssembly. q4f16 printed garbage on WebGPU for some of these (16-bit
-   * overflow); they take q4, 32-bit maths on 4-bit weights.
+   * WebAssembly. q4f16 printed garbage on WebGPU for some models (16-bit
+   * overflow); those take q4, 32-bit maths on 4-bit weights.
    */
   dtype: { webgpu: string; wasm: string };
   /**
@@ -24,48 +24,9 @@ export interface TerminalModel {
   plain?: boolean;
 }
 
-export const TERMINAL_MODELS: readonly TerminalModel[] = [
-  {
-    id: "HuggingFaceTB/SmolLM2-135M-Instruct",
-    label: "LT-135 · barely awake",
-    size: "137 MB",
-    dtype: { webgpu: "q4f16", wasm: "q8" },
-  },
-  {
-    id: "onnx-community/Falcon-H1-Tiny-90M-Instruct-ONNX",
-    label: "LT-90H · experimental hybrid",
-    size: "137 MB",
-    dtype: { webgpu: "q4f16", wasm: "q4" },
-  },
-  {
-    id: "onnx-community/SmolLM2-135M-humanized-ONNX",
-    label: "LT-135H · thinks it is human",
-    size: "136 MB",
-    dtype: { webgpu: "q4", wasm: "q8" },
-  },
-  {
-    id: "HuggingFaceTB/SmolLM2-360M-Instruct",
-    label: "LT-360 · half awake",
-    size: "365 MB",
-    dtype: { webgpu: "q4f16", wasm: "q8" },
-  },
-  {
-    id: "onnx-community/gemma-3-270m-it-ONNX",
-    label: "LT-270G · terse",
-    size: "343 MB",
-    dtype: { webgpu: "q4f16", wasm: "q4" },
-  },
-  {
-    id: "onnx-community/DialoGPT-medium-Rick-from-RickAndMorty-ONNX",
-    label: "LT-C137 · rogue core, ignores orders",
-    size: "412 MB",
-    dtype: { webgpu: "q8", wasm: "q8" },
-    plain: true,
-  },
-  {
-    id: "onnx-community/Qwen2.5-0.5B-Instruct",
-    label: "LT-500 · almost sane (desktop)",
-    size: "512–786 MB",
-    dtype: { webgpu: "q4", wasm: "q8" },
-  },
-];
+export const NEURAL_MODEL: TerminalModel = {
+  id: "HuggingFaceTB/SmolLM2-135M-Instruct",
+  label: "neural core LT-135",
+  size: "137 MB",
+  dtype: { webgpu: "q4f16", wasm: "q8" },
+};
