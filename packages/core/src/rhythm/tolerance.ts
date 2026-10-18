@@ -6,7 +6,9 @@
  *   onTimeMs < |Δ| ≤ windowMs   → "early" / "late"
  *   no onset within windowMs    → "missed"
  *
- * Learner-friendly defaults (onTime ±50 ms, window ±150 ms) sit between
+ * Learner-friendly defaults (onTime ±100 ms, window ±300 ms), set after
+ * play-testing: the ±50 / ±150 ms of rhythm games felt too strict for
+ * learners on a laptop microphone. They sit above
  * the "good" windows of rhythm games (±70–100 ms) and the precision the
  * chain reaches in a browser (±10–25 ms after correction). A window
  * narrower than the chain's own uncertainty would grade the microphone,
@@ -24,8 +26,8 @@ export interface TimingTolerance {
 }
 
 export const TIMING_TOLERANCE_DEFAULTS: TimingTolerance = {
-  onTimeMs: 50,
-  windowMs: 150,
+  onTimeMs: 100,
+  windowMs: 300,
 };
 
 /**

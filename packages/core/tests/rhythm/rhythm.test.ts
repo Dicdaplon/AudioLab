@@ -32,10 +32,11 @@ describe("tolerance", () => {
   });
 
   it("never grades finer than the measurement chain", () => {
-    expect(toleranceFromUncertainty(10)).toEqual({ onTimeMs: 50, windowMs: 150 });
-    const wide = toleranceFromUncertainty(60); // Bluetooth-like
-    expect(wide.onTimeMs).toBe(120);
-    expect(wide.windowMs).toBe(180);
+    expect(toleranceFromUncertainty(10)).toEqual({ onTimeMs: 100, windowMs: 300 });
+    const wide = toleranceFromUncertainty(70); // Bluetooth-like
+    expect(wide.onTimeMs).toBe(140);
+    expect(wide.windowMs).toBe(300);
+    expect(toleranceFromUncertainty(120)).toEqual({ onTimeMs: 240, windowMs: 360 });
   });
 });
 

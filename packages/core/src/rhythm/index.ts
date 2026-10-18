@@ -12,6 +12,7 @@
  *   patternFit      written rhythm at a free tempo (latency cancels)
  *   timingStats     bias, jitter, drift
  *   onsetEvidence   which note / chord was played at each onset
+ *   notation        rhythms as durations, figures, beams, staff steps
  *   playAlong       a whole play-along exercise: queue, click echoes,
  *                   scoring, labels, onsets to display
  *
@@ -52,6 +53,17 @@ export {
   type PlayedOnsetView,
 } from "./playAlong";
 export { chordLabeler, noteLabel, noteLabeler } from "./labelers";
+export {
+  beamGroups,
+  eventsFromDurations,
+  figureName,
+  figureOf,
+  playedBeats,
+  rhythmLength,
+  staffStep,
+  type NoteFigure,
+  type RhythmEvent,
+} from "./notation";
 export {
   OnsetEvidence,
   type LabelObservation,

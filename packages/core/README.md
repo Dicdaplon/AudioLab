@@ -197,6 +197,7 @@ Everything below is exported from `@audiolab/core`; modules not re-exported from
 | Scoring   | `TimingScorer` / `stepTimingScorer` / `createTimingScorerState` + `TIMING_SCORER_DEFAULTS` (timing × label, adaptive bias), `scoreTimings` |
 | Rhythm    | `fitPattern` (written rhythm at a free tempo → tempo, per-note residuals and tiers)                                                        |
 | Tolerance | `toleranceFromUncertainty`, `classifyDelta`, `TIMING_TOLERANCE_DEFAULTS`                                                                   |
+| Notation  | `eventsFromDurations` (durations, negative for a rest), `playedBeats`, `rhythmLength`, `figureOf`, `beamGroups`, `figureName`, `staffStep` |
 | Session   | `PlayAlongSession` (onsets in; click echoes, scoring, labels, onsets to display out)                                                       |
 | Stats     | `timingStats` (bias, jitter, drift), `medianOf`, `OnsetEvidence` (label observations → label per onset)                                    |
 
