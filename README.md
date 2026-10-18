@@ -1,4 +1,4 @@
-# AudioLab
+# AudioLab · a loloupTech lab
 
 **Real-time audio analysis in the browser, as a reusable SDK: key, chord and pitch
 detection (a tuner), scale matching, spectrum and noise floor, tempo estimation and two

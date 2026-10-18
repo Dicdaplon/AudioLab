@@ -46,7 +46,7 @@ export function ChordOptions({
           onChange={(v) => onAcceptChange(v as ChordAcceptPolicy)}
         >
           <option value="exact">it has the same notes</option>
-          <option value="triad">the plain chord is enough (E for E7)</option>
+          <option value="triad">the plain chord is enough (E for E7, and back)</option>
         </SelectField>
       )}
 

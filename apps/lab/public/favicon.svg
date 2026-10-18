@@ -1,7 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-  <!-- loup(e): the sign. Two strokes of lengths 3 and 2, the second offset
-       and in the accent. The dark bed keeps it legible on any tab bar. -->
-  <rect width="32" height="32" rx="6" fill="#0d110f"/>
-  <rect x="5" y="11" width="22" height="3.5" rx="1.75" fill="#e4e0d6"/>
-  <rect x="8" y="18.5" width="15" height="3.5" rx="1.75" fill="#e8a75c"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" shape-rendering="crispEdges">
+  <!-- loloupTech: the wolf capsule on a 16 × 16 grid, two screen pixels per
+       cell. Chalk half, ember half, bed-coloured eyes, a push button on top.
+       The dark bed with notched corners keeps it legible on any tab bar. -->
+  <path fill="#0d110f" d="M2 0h28v2h2v28h-2v2H2v-2H0V2h2z"/>
+  <g transform="translate(0 1) scale(2)">
+    <path fill="#e4e0d6" d="M3 2h1v1h1v1h1v1h2v1H3zM2 6h6v1H2zM1 7h7v4H1zM2 11h6v1H2zM3 12h5v1H3z"/>
+    <path fill="#e8a75c" d="M12 2h1v4H8V5h2V4h1V3h1zM8 6h6v1H8zM8 7h7v4H8zM8 11h6v1H8zM8 12h5v1H8z"/>
+    <path fill="#0d110f" d="M5 8h1v1H5zM10 8h1v1h-1z"/>
+    <path fill="#a8a297" d="M7 4h2v1H7z"/>
+  </g>
 </svg>

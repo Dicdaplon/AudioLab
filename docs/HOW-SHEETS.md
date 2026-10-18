@@ -11,6 +11,7 @@ site built on the SDK) gets its sheet the same way.
 | Piece            | What it is                                                                                                                                                                                 |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `HowPanel`       | The disclosure: `topic`, `diagram`, the lead as children, then `algorithm`, `limits`, `sources`, `aside`. A native `<details>`; `defaultOpen` and `title` (e.g. "Comment ?") are optional. |
+| `compact`        | The small `HowPanel` that closes one panel: smaller bar, one column, diagram optional. `Panel`, the detector views and `FftTab` take it through a `how` prop.                              |
 | `SketchChain`    | Sketches in a row joined by arrows, each with a caption; wraps on narrow screens. `wide: true` gives a step more room.                                                                     |
 | `SketchWave`     | A waveform: `sine`, `pluck` (attack then decay), `noise`, `click`.                                                                                                                         |
 | `SketchBars`     | Bars: a spectrum, a chroma, a histogram; `highlight`, a dashed `threshold`, tiny `labels`.                                                                                                 |
@@ -61,7 +62,10 @@ English):
 1. Write the sheet in `apps/lab/src/how/explanations.tsx` (or the host's own
    module) with the shape above.
 2. Place it under the feature: inside the feature's panel, or in a
-   `<div className="lab-how">` after an SDK component.
+   `<div className="lab-how">` after an SDK component. A small window of a page
+   (one chroma, one list) gets a `compact` sheet through its `how` prop: the
+   lead in one or two sentences, the algorithm and the limits, nothing more.
+   The detector's are in `apps/lab/src/how/detector.tsx`.
 3. Add its topic to the "offers a How? sheet under every feature" test in
    `apps/lab/tests/App.test.tsx`.
 4. Look at it open, in both themes and in a narrow column, before shipping.

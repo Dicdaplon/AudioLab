@@ -206,12 +206,17 @@ verdicts but never moves notes; see [TIMING.md](TIMING.md).
 tokens from that element with `getComputedStyle` (canvas code cannot use `var()`) and
 re-reads them when `<html data-theme>` or the OS preference changes.
 
-`App.tsx` (lab) holds the active tab and the settings (`DetectorSettings`,
+`App.tsx` (lab) groups the pages into three rooms plus About (Harmony Lab: chords &
+keys, scales, tuner, spectrum; Rhythm Lab: play along, tempo; Game Room: chord game,
+Wolf Jumper), one tab row per room, the page kept in the URL hash (`#jumper`). It holds
+the active page and the settings (`DetectorSettings`,
 `FftSettings` from core), calls `useMicrophone` and `useTonality`, and passes slices of
 the `TonalityFrame` down:
 
-- **Detector tab:** chroma bars (instantaneous, 1 s, live, tonality), chord ranking, two
-  key rankings, presence view, and the settings panel.
+- **Chords & keys (`DetectorTab`):** chroma bars (instantaneous, 1 s, live, tonality),
+  chord ranking, two key rankings, presence view, and the settings panel. Each window
+  takes a compact "How?" sheet through the `how` prop (`DetectorHow`); a panel with a
+  sheet drops its technical hint.
 - **Tuner tab (lab):** `usePitch` → note, octave, cents meter, frequency, clarity, A4.
 - **Scales tab (lab):** `matchScales(presenceHistogram)` → ranked scales with their
   missing and outside notes, above an adjustable presence threshold.
@@ -230,8 +235,9 @@ the `TonalityFrame` down:
   health...), held in a small external store so only the scene re-renders at display
   rate. Notes are pitch classes and bonus chords are `{ root, quality }`; the sprites
   name them with `pitchClassName` / `chordName`.
-- **FFT tab:** spectrum plot with noise floor, slope and pentatonic overlays; onset
-  envelope and beat spectrum from `useTempoAnalysis`.
+- **Spectrum and Tempo (`FftTab` with `view`):** spectrum plot with noise floor, slope
+  and pentatonic overlays; onset envelope and beat spectrum from `useTempoAnalysis`,
+  which only runs while the tempo half is shown.
 - **Rhythm tab (lab):** `useOnsetAnalysis` + `usePlayAlong` + `useMetronome` run four
   exercises on a metronome (rhythm lane, written rhythm with a free-tempo option graded by
   `fitPattern`, scrolling notes and chords) drawn by `PlayAlongLane` / `BeatLights`, the

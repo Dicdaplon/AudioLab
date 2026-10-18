@@ -70,7 +70,7 @@ export function ScalesTab({
             />
           </figure>
           <figure className="al-chroma-figure">
-            <figcaption className="al-surtitre">Counted as played (≥ threshold)</figcaption>
+            <figcaption className="al-surtitre">Counted as played (above the threshold)</figcaption>
             <ChromaBars
               values={played}
               max={1}

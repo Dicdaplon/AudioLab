@@ -1,18 +1,33 @@
 /* =========================================================================
-   Lab shell: document defaults, top bar (brand · tabs · transport), main
-   container and tab panels. Components and tokens come from
-   @audiolab/react/styles.css.
+   Lab shell: document defaults, top bar (brand · rooms · transport), the
+   sub-tab row, main container and tab panels. Components and tokens come
+   from @audiolab/react/styles.css; the page wears its pixel skin
+   (`al-pixel` on <body>, see index.html).
    ========================================================================= */
+
+/* The two pixel faces of loloupTech, self-hosted like the Plex faces. They
+   dress the brand, the room tabs and a few kickers; nothing that is read at
+   length. Pixelify Sans has a real lowercase (the wordmark needs it);
+   Silkscreen is drawn for 8 px and only used at 8 or 16. */
+@import "@fontsource/pixelify-sans/latin-500.css";
+@import "@fontsource/pixelify-sans/latin-600.css";
+@import "@fontsource/silkscreen/latin-400.css";
 
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 
+/* The canvas carries a faint pixel grid: one 2-px dot every 24 px, a
+   neutral grey at 14 % that reads on night and on paper alike. Panels cover
+   it with solid surfaces; the few transparent tiles (stats) show it at a
+   level far below any text contrast. */
 body {
   margin: 0;
   min-height: 100dvh;
-  background: var(--al-color-canvas);
+  background-color: var(--al-color-canvas);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' shape-rendering='crispEdges'%3E%3Crect width='2' height='2' fill='%23808080' fill-opacity='0.14'/%3E%3C/svg%3E");
+  background-attachment: fixed;
   transition: background-color var(--al-dur-3) var(--al-ease-out);
 }
 
@@ -66,7 +81,9 @@ body {
   padding-block: var(--al-sp-1);
 }
 
-@media (min-width: 720px) {
+/* One row once brand, four rooms in the pixel face and the transport fit
+   side by side (about 1090 px); below, the rooms take their own row. */
+@media (min-width: 1120px) {
   .topbar__inner {
     grid-template-columns: auto 1fr auto;
     grid-template-areas: "brand tabs transport";
@@ -78,18 +95,85 @@ body {
   }
 }
 
+/* --- Rooms and sub-tabs ---------------------------------------------------
+   The room tabs of the top bar speak in the pixel face, the arcade menu of
+   the lab; four short names, 16 px, so it stays legible. The selected room
+   gets a notched ember block instead of a flat underline. */
+
+.topbar .al-tab {
+  position: relative;
+  font-family: var(--al-font-pixel);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.topbar .al-tab[aria-selected="true"] {
+  box-shadow: none;
+}
+
+.topbar .al-tab[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  left: var(--al-sp-2);
+  right: var(--al-sp-2);
+  bottom: 0;
+  height: 4px;
+  background: var(--al-color-accent);
+  border-radius: 2px 2px 0 0;
+  corner-shape: notch;
+}
+
+/* The pages of a room: a lighter, smaller row of capsules under the bar.
+   Plex, not pixels: these names are longer and read more often. The
+   selected page is a filled capsule (accent on accent-subtle: 7.59:1 dark ·
+   5.06:1 light); the others are quiet text that fills on hover. */
+.lab-subtabs {
+  border-bottom: 1px solid var(--al-color-line);
+  padding-bottom: var(--al-sp-3);
+}
+
+.lab-subtabs .al-tabs {
+  gap: var(--al-sp-2);
+  padding-block: 2px; /* room for the focus ring */
+}
+
+.lab-subtabs .al-tab {
+  height: 32px;
+  padding: 0 var(--al-sp-4);
+  border: 1px solid transparent;
+  border-radius: var(--al-r-pill);
+  font-size: var(--al-step--1);
+}
+
+.lab-subtabs .al-tab:hover {
+  border-color: var(--al-color-line-strong);
+  background: transparent;
+}
+
+.lab-subtabs .al-tab[aria-selected="true"] {
+  border-color: var(--al-color-accent);
+  background: var(--al-color-accent-subtle);
+  color: var(--al-color-accent);
+  box-shadow: none;
+}
+
+.lab-subtabs .al-tab:focus-visible {
+  outline-offset: 2px;
+}
+
 /* --- Brand --------------------------------------------------------------- */
 
+/* loloupTech: the wolf capsule, the wordmark in Pixelify Sans with "Tech"
+   in the accent, a corporate tagline in Silkscreen and a capsule serial
+   ("No.1") in the only pill of the bar. The tagline and the serial are
+   decoration (aria-hidden); the link's name is in its aria-label. */
 .brand {
   display: inline-flex;
   align-items: center;
   gap: var(--al-sp-2);
   color: var(--al-color-ink);
   text-decoration: none;
-  font-family: var(--al-font-voice);
-  font-size: var(--al-step-1);
-  font-weight: 600;
-  letter-spacing: -0.01em;
   line-height: 1;
   border-radius: var(--al-r-1);
 }
@@ -98,8 +182,77 @@ body {
   color: var(--al-color-ink);
 }
 
-.brand__e {
+.brand__text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.brand__word {
+  font-family: var(--al-font-pixel);
+  font-size: 1.3125rem; /* 21 px: Pixelify's pixel lands near whole pixels */
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.brand__tech {
   color: var(--al-color-accent);
+}
+
+/* Silkscreen at its native 8 px. Muted ink: 7.0:1 dark · 6.8:1 light. */
+.brand__tagline {
+  display: none;
+  font-family: var(--al-font-pixel-micro);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--al-color-ink-muted);
+}
+
+/* The serial on a capsule: a pill split in two, like the mark. */
+.brand__no {
+  display: none;
+  align-self: center;
+  padding: 3px 7px 3px 6px;
+  border: 1px solid var(--al-color-accent);
+  border-radius: var(--al-r-pill);
+  background: linear-gradient(to right, transparent 50%, var(--al-color-accent-subtle) 50%);
+  font-family: var(--al-font-pixel-micro);
+  font-size: 8px;
+  line-height: 1;
+  color: var(--al-color-accent);
+}
+
+/* The serial shows where the bar has room: while the rooms sit on their own
+   row (480 to 1119 px) and on wide screens. Between 1120 and 1200 px the
+   rooms share the row with the brand and the transport. */
+@media (min-width: 480px) and (max-width: 1119px), (min-width: 1200px) {
+  .brand__no {
+    display: inline-block;
+  }
+}
+
+/* Phones: the bar also holds the LED, the mic and the theme. The mark drops
+   to 24 px and the word to 17 px so the whole bar fits in 360 px. */
+@media (max-width: 479px) {
+  .brand {
+    gap: 6px;
+  }
+
+  .brand .mark {
+    width: 24px;
+    height: 24px;
+  }
+
+  .brand__word {
+    font-size: 1.0625rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .brand__tagline {
+    display: block;
+  }
 }
 
 .mark {
@@ -108,6 +261,14 @@ body {
 
 .mark__accent {
   fill: var(--al-color-accent);
+}
+
+.mark__eye {
+  fill: var(--al-color-canvas);
+}
+
+.mark__button {
+  fill: var(--al-color-ink-muted);
 }
 
 /* Under 480 px the bar cannot hold the brand, the LED, three buttons and
@@ -169,6 +330,14 @@ body {
   outline: none;
 }
 
+/* The page of a room: same rhythm as a tab panel. */
+.lab-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--al-sp-5);
+  min-width: 0;
+}
+
 /* --- Detection options (chord vocabulary, match policy, note source) ----- */
 
 .lab-options {
@@ -184,10 +353,13 @@ body {
   gap: var(--al-sp-5);
 }
 
+/* The kicker is a label stamped on the capsule: Silkscreen at 16 px (two
+   screen pixels per font pixel). */
 .about__kicker {
   margin: 0 0 var(--al-sp-2);
-  font-size: var(--al-step--2);
-  letter-spacing: var(--al-tracking-caps);
+  font-family: var(--al-font-pixel-micro);
+  font-size: 1rem;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--al-color-ink-muted);
 }

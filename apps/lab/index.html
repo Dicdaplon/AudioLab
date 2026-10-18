@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>loup(e) — audio lab</title>
+    <title>loloupTech — audio lab</title>
     <meta
       name="description"
-      content="Browser-based audio analysis lab: live key and chord detection, spectrum analysis and ear-training games."
+      content="loloupTech audio lab: live key and chord detection, spectrum and rhythm analysis, and ear-training games, all in the browser."
     />
     <meta name="color-scheme" content="dark light" />
     <meta name="theme-color" content="#0d110f" media="(prefers-color-scheme: dark)" />
@@ -27,8 +27,9 @@
   </head>
   <!-- `loupe` on <body> gives the whole document the design tokens (page
        background, colour scheme) without touching the root font size; the
-       app also mounts a <LoupeRoot>, like any other consumer of the SDK. -->
-  <body class="loupe">
+       app also mounts a <LoupeRoot>, like any other consumer of the SDK.
+       `al-pixel` opts the whole page into the pixel skin (pixel.css). -->
+  <body class="loupe al-pixel">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

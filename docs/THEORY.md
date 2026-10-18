@@ -238,13 +238,17 @@ $\ell_n$ sums to 1, the peak measures how concentrated the chroma is: a flat chr
 (noise) lets every bin through, silence lets none through. The median option is more
 robust to a single transient peak.
 
-| Setting (UI)         | Symbol   | Range       | Default |
-| -------------------- | -------- | ----------- | ------- |
-| Live acquisition     | —        | 1–30 s      | 8 s     |
-| Tonality acquisition | —        | 5–120 s     | 30 s    |
-| Max filter tolerancy | $\alpha$ | 0–1         | 0.35    |
-| Max memory           | $M$      | 2–15 frames | 3       |
-| Peak aggregator      | agg      | mean/median | mean    |
+| Setting (UI)    | Symbol   | Range       | Default |
+| --------------- | -------- | ----------- | ------- |
+| Live window     | —        | 1–30 s      | 8 s     |
+| Tonality window | —        | 5–120 s     | 30 s    |
+| Peak tolerance  | $\alpha$ | 0–1         | 0.35    |
+| Peak memory     | $M$      | 2–15 frames | 3       |
+| Peak aggregator | agg      | mean/median | mean    |
+
+In the code these are `maxFilterTolerancy`, `maxFilterMemory` and `maxFilterMode` (the
+high-water-mark filter). Not to be confused with the SuperFlux max filter of the onset
+detector, which runs across frequency bands.
 
 The defaults come from `npm run sweep` (`scripts/parameterSweep.ts`), a grid search
 scored against the known keys and chord grids of the sample recordings.
@@ -509,8 +513,9 @@ of section 5 do that.
 - **Near-silence.** Windows are level-invariant, so quiet noise between notes still
   counts. Gating frames below a `signalLevelDb` threshold would stop near-silence from
   diluting the chord window.
-- **Vocabulary.** Triads only; sevenths, sus, diminished and augmented chords would need
-  more templates. Alternative key profiles (Temperley, harmonic minor) could be compared.
+- **Vocabulary.** Triads by default; 7, maj7, m7, 6, m6, sus2, sus4, dim and m7b5 are
+  opt-in (`chordQualities`). Augmented, dim7 and extensions have no template, and chords
+  with the same notes (C6 / Am7) get one name, rooted on the loudest pitch class. Alternative key profiles (Temperley, harmonic minor) could be compared.
 - **Tempo.** Octave disambiguation (autocorrelation or harmonic sum), and a beat-phase
   tracker for a visual metronome. Note-level timing (onsets, latency, rhythm scoring)
   has its own document: [TIMING.md](TIMING.md).

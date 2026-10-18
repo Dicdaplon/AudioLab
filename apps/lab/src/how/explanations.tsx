@@ -44,7 +44,7 @@ export function KeyHow() {
             { sketch: <SketchWave kind="pluck" />, caption: "what you play" },
             {
               sketch: <SketchBars values={C_MAJOR} highlight={[0, 4, 7]} labels={NOTES} />,
-              caption: "12 notes, 8 s and 30 s",
+              caption: "12 notes, short and long",
             },
             { sketch: <SketchLabel text="C" sub="major" />, caption: "best of 24 keys" },
           ]}
@@ -159,10 +159,10 @@ export function ScalesHow() {
           ]}
         />
       }
-      algorithm="A presence histogram: over 30 s, how often each note stands out of the chroma. Every scale on every tonic is ranked: the ones holding every note played first, then the fewest notes you skipped, then the share of what you played inside."
-      limits="Relative scales share their notes and tie (C major pentatonic and A minor pentatonic). One passing note outside the scale is enough to push it down."
+      algorithm="The notes you played come from the presence histogram (a note counts when it was there more than a quarter of the time). Twelve known scales are tried on all twelve tonics: major, natural, harmonic and melodic minor, the five other modes (dorian to locrian), both pentatonics and the blues. The ranking: fewest notes outside first, then fewest notes skipped, then the share of what you played inside."
+      limits="Modes of the same notes tie: play all of C major and C major, A minor, D dorian… all show complete, in list order. Picking home is the key's job, not this list's. The percentage is a summary; the order comes from the rule above, so a lower % can sit higher."
       sources={[{ label: "No paper: a plain inclusion ranking written for this lab" }]}
-      aside="Ranking by inclusion first means a scale is never picked for being close. It has to contain what you played."
+      aside="Ranking by inclusion first means a scale is never picked for being close. It has to contain what you played: one stray note is enough to push it down."
     >
       <p>
         I write down which notes you really played, over half a minute, then try every scale on
@@ -262,7 +262,7 @@ export function SpectrumHow() {
           ]}
         />
       }
-      algorithm="A 16384-point FFT with a Blackman window (the browser's AnalyserNode), shown in dB. The noise floor is the median (or mean, or 80th percentile) of the bins; the slope is a straight-line fit in dB per Hz."
+      algorithm="A 16384-point FFT with a Blackman window (the browser's AnalyserNode), shown in dB. The noise floor is the median (or mean, or 80th percentile) of the bins up to 4 kHz; the slope is the local difference between neighbouring bins, in dB per Hz."
       limits="2.9 Hz per bin is fine enough to separate low notes, but each reading spans 341 ms, so this view reacts slowly."
       sources={[
         { label: "Cooley & Tukey, FFT, 1965" },
