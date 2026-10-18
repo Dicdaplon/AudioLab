@@ -8,6 +8,7 @@
 
 import { beatsBetween, beatTime, isDownbeat, type BeatGrid } from "@audiolab/core";
 import type { NoteResult, TimingTier, TimingTolerance } from "@audiolab/core/rhythm";
+import { cellOf, crisp, deviceCell, pixelDisc, snap, stroke } from "./canvasPlot";
 import type { VizTheme } from "./vizTheme";
 
 export interface LaneGeometry {
@@ -65,6 +66,12 @@ export function drawLane(
   const xOf = (time: number, at: number) => hitX + (time - at) * pxPerSecond;
   ctx.fillStyle = theme.bed;
   ctx.fillRect(0, 0, width, height);
+  if (cellOf(theme) > 1) {
+    // Whole device pixels per cell, so every cell has the same size on screen.
+    const c = deviceCell(cellOf(theme), window.devicePixelRatio || 1);
+    drawPixelLane(ctx, width, height, scene, theme, geometry, c);
+    return;
+  }
 
   // Beat and bar lines.
   if (scene.grid) {
@@ -189,4 +196,92 @@ export function laneTarget(
     state: targetState(result),
     wrongLabel: result.label === "wrong",
   };
+}
+
+/**
+ * The lane in pixel mode: the same scene on a grid of cells. Lines are one
+ * cell wide, targets are pixel discs (taps are block columns), onsets are
+ * small discs. Unlike the plots, the lane keeps a full-resolution backing
+ * store and only snaps its geometry to the cells: the names in the targets
+ * ("Am" vs "AM") need a face with a lowercase, sharp at 13 px.
+ */
+function drawPixelLane(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  scene: LaneScene,
+  theme: VizTheme,
+  geometry: LaneGeometry,
+  c: number,
+): void {
+  const { now } = scene;
+  const { hitX, pxPerSecond, targetRadius } = geometry;
+  const xOf = (time: number) => hitX + (time - now) * pxPerSecond;
+  const hit = snap(hitX, c);
+
+  if (scene.grid) {
+    const from = now - hitX / pxPerSecond;
+    const to = now + (width - hitX) / pxPerSecond;
+    for (const b of beatsBetween(scene.grid, from, to)) {
+      const x = snap(xOf(beatTime(scene.grid, b)), c);
+      const bar = isDownbeat(scene.grid, b);
+      ctx.fillStyle = bar ? theme.gridStrong : theme.grid;
+      ctx.fillRect(x, 0, bar ? 2 * c : c, height);
+    }
+  }
+
+  if (scene.tolerance) {
+    const w = snap((scene.tolerance.windowMs / 1000) * pxPerSecond, c);
+    const o = snap((scene.tolerance.onTimeMs / 1000) * pxPerSecond, c);
+    ctx.fillStyle = theme.marker;
+    ctx.globalAlpha = 0.5;
+    ctx.fillRect(hit - w, 0, 2 * w + c, height);
+    ctx.globalAlpha = 1;
+    ctx.fillRect(hit - o, 0, 2 * o + c, height);
+  }
+  stroke(ctx, theme.signalStrong, 2, c);
+  ctx.beginPath();
+  ctx.moveTo(crisp(hitX, c), 0);
+  ctx.lineTo(crisp(hitX, c), height);
+  ctx.stroke();
+
+  const mid = snap(height / 2, c);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = `600 13px ${theme.fontUi}`;
+  for (const t of scene.targets) {
+    const x = xOf(t.time);
+    if (x < -30 || x > width + 30) continue;
+    const colour = TARGET_COLOURS[t.state](theme);
+    const alpha = t.state === "pending" ? 1 : 0.6;
+    if (t.label) {
+      if (t.wrongLabel) {
+        ctx.fillStyle = theme.danger;
+        pixelDisc(ctx, x, mid, targetRadius + 4, c);
+        ctx.fillStyle = theme.bed;
+        pixelDisc(ctx, x, mid, targetRadius + 1, c);
+      }
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = colour;
+      pixelDisc(ctx, x, mid, targetRadius, c);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = theme.bed;
+      ctx.fillText(t.label, snap(x, c), mid);
+    } else {
+      // A tap: a block column, two cells wide, cut in four.
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = colour;
+      const x0 = snap(x, c) - 2 * c;
+      for (let k = 0; k < 4; k++) ctx.fillRect(x0, mid - 22 + k * 12, 4 * c, 10);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  for (const o of scene.onsets) {
+    const x = xOf(o.time);
+    if (x < -10 || x > width + 10) continue;
+    ctx.fillStyle = o.echo ? theme.axis : theme.onset;
+    if (o.echo) ctx.fillRect(snap(x, c) - c, snap(height - 10, c) - c, 2 * c, 2 * c);
+    else pixelDisc(ctx, x, mid + 30, 6, c);
+  }
 }

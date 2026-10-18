@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 
 import {
+  cellOf,
   drawAxes,
   drawBed,
   drawEmpty,
@@ -13,6 +14,7 @@ import {
   plotFrame,
   prepareCanvas,
   setTickFont,
+  snap,
 } from "../ui/canvasPlot";
 import { usePlotWidth } from "../ui/usePlotWidth";
 import { useVizTheme } from "../ui/vizTheme";
@@ -50,7 +52,9 @@ export function TimeSignalPlot({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = prepareCanvas(canvas, width, height);
+    // Pixel mode (opt-in token): cells instead of pixels, see canvasPlot.ts.
+    const c = cellOf(t);
+    const ctx = prepareCanvas(canvas, width, height, c);
     if (!ctx) return;
     const frame = plotFrame(width, height, t);
 
@@ -66,8 +70,8 @@ export function TimeSignalPlot({
 
     // Amplitude grid (integer counter: never loops on a zero range) and the zero line.
     const ticks = axisTicks(range, 5);
-    drawHorizontalGrid(ctx, frame, ticks.filter((v) => v !== 0).map(yOf), t.grid);
-    drawHorizontalGrid(ctx, frame, [yOf(0)], t.gridStrong);
+    drawHorizontalGrid(ctx, frame, ticks.filter((v) => v !== 0).map(yOf), t.grid, c);
+    drawHorizontalGrid(ctx, frame, [yOf(0)], t.gridStrong, c);
 
     // Time grid.
     const durationSeconds = signal.length / sampleRate;
@@ -76,13 +80,27 @@ export function TimeSignalPlot({
     const timeTicks: number[] = [];
     for (let i = 0; i <= timeTickCount; i++) timeTicks.push(i * timeStep);
     const xOfTime = (s: number) => frame.left + (s / durationSeconds) * frame.plotWidth;
-    drawVerticalGrid(ctx, frame, timeTicks.slice(1).map(xOfTime), t.grid);
+    drawVerticalGrid(ctx, frame, timeTicks.slice(1).map(xOfTime), t.grid, c);
 
-    drawAxes(ctx, frame, t);
+    drawAxes(ctx, frame, t, c);
 
     setTickFont(ctx, t);
     for (const v of ticks) labelY(ctx, frame, yOf(v), v.toFixed(2));
     for (const s of timeTicks) labelX(ctx, frame, xOfTime(s), `${s.toFixed(1)}s`);
+
+    if (c > 1) {
+      // Pixel mode: one min/max pair per cell column, drawn as a run of cells.
+      const left = snap(frame.left, c) + c;
+      const cols = Math.min(signal.length, Math.floor((frame.right - left) / c));
+      const { min, max } = decimateMinMax(signal, cols);
+      ctx.fillStyle = t.signal;
+      for (let k = 0; k < cols; k++) {
+        const top = snap(yOf(max[k]), c);
+        const bottom = snap(yOf(min[k]), c);
+        ctx.fillRect(left + k * c, top, c, Math.max(c, bottom - top + c));
+      }
+      return;
+    }
 
     // Signal: one min/max pair per pixel column.
     const columns = Math.min(signal.length, Math.floor(frame.plotWidth));

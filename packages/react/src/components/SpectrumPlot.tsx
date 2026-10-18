@@ -8,11 +8,15 @@ import {
   spectrumSlopeDbPerHz,
 } from "@audiolab/core";
 import {
+  cellOf,
   crisp,
+  dash,
   drawAxes,
   drawBed,
   drawEmpty,
   drawHorizontalGrid,
+  drawPixelTrace,
+  drawStepped,
   drawVerticalGrid,
   formatHz,
   formatSigned,
@@ -22,6 +26,8 @@ import {
   plotFrame,
   prepareCanvas,
   setTickFont,
+  stepColumns,
+  stroke,
 } from "../ui/canvasPlot";
 import { usePlotWidth } from "../ui/usePlotWidth";
 import { useVizTheme } from "../ui/vizTheme";
@@ -75,7 +81,9 @@ export function SpectrumPlot({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = prepareCanvas(canvas, width, height);
+    // Pixel mode (opt-in token): cells instead of pixels, see canvasPlot.ts.
+    const c = cellOf(t);
+    const ctx = prepareCanvas(canvas, width, height, c);
     if (!ctx) return;
     const frame = plotFrame(width, height, t);
 
@@ -112,8 +120,8 @@ export function SpectrumPlot({
     // dB grid: minor lines every 10 dB, the 0 dB line stronger.
     const dbTicks: number[] = [];
     for (let db = Math.ceil(minDb / 10) * 10; db <= maxDb; db += 10) dbTicks.push(db);
-    drawHorizontalGrid(ctx, frame, dbTicks.filter((db) => db !== 0).map(yOfDb), t.grid);
-    if (dbTicks.includes(0)) drawHorizontalGrid(ctx, frame, [yOfDb(0)], t.gridStrong);
+    drawHorizontalGrid(ctx, frame, dbTicks.filter((db) => db !== 0).map(yOfDb), t.grid, c);
+    if (dbTicks.includes(0)) drawHorizontalGrid(ctx, frame, [yOfDb(0)], t.gridStrong, c);
 
     // Frequency grid.
     const freqSpan = displayMaxFreq - minFreqHz;
@@ -143,9 +151,10 @@ export function SpectrumPlot({
       frame,
       freqTicks.filter((_, i) => i % labelEvery === 0).map((f) => xOfBin(f / binHz)),
       t.grid,
+      c,
     );
 
-    drawAxes(ctx, frame, t);
+    drawAxes(ctx, frame, t, c);
 
     setTickFont(ctx, t);
     for (const db of dbTicks) labelY(ctx, frame, yOfDb(db), formatSigned(db));
@@ -155,8 +164,7 @@ export function SpectrumPlot({
 
     // Reference notes (A minor pentatonic), behind the trace.
     if (showScaleNotes) {
-      ctx.strokeStyle = t.marker;
-      ctx.lineWidth = 1;
+      stroke(ctx, t.marker, 1, c);
       for (const freq of pitchClassFrequencies(
         A_MINOR_PENTATONIC_PITCH_CLASSES,
         minFreqHz,
@@ -164,7 +172,7 @@ export function SpectrumPlot({
       )) {
         const bin = freq / binHz;
         if (bin < minBinIdx || bin > maxBinIdx) continue;
-        const x = crisp(xOfBin(bin));
+        const x = crisp(xOfBin(bin), c);
         ctx.beginPath();
         ctx.moveTo(x, frame.top);
         ctx.lineTo(x, frame.bottom);
@@ -177,24 +185,41 @@ export function SpectrumPlot({
       const db = spectrumDb[k];
       return Number.isFinite(db) ? yOfDb(db) : frame.bottom;
     };
-    ctx.fillStyle = t.signalFill;
-    ctx.beginPath();
-    ctx.moveTo(xOfBin(minBinIdx), frame.bottom);
-    for (let k = minBinIdx; k <= maxBinIdx; k++) ctx.lineTo(xOfBin(k), yOfBinSafe(k));
-    ctx.lineTo(xOfBin(maxBinIdx), frame.bottom);
-    ctx.closePath();
-    ctx.fill();
+    if (c > 1) {
+      // Pixel mode: an 8-bit equaliser, one column per few bins, cut into blocks.
+      const columns = stepColumns(
+        maxBinIdx - minBinIdx + 1,
+        (i) => xOfBin(minBinIdx + i),
+        (i) => yOfBinSafe(minBinIdx + i),
+        frame,
+        c,
+      );
+      drawStepped(ctx, frame, columns, c, {
+        body: t.signal,
+        cap: t.signalStrong,
+        bodyAlpha: 0.55,
+        segment: 2,
+      });
+    } else {
+      ctx.fillStyle = t.signalFill;
+      ctx.beginPath();
+      ctx.moveTo(xOfBin(minBinIdx), frame.bottom);
+      for (let k = minBinIdx; k <= maxBinIdx; k++) ctx.lineTo(xOfBin(k), yOfBinSafe(k));
+      ctx.lineTo(xOfBin(maxBinIdx), frame.bottom);
+      ctx.closePath();
+      ctx.fill();
 
-    ctx.strokeStyle = t.signal;
-    ctx.lineWidth = 1.5;
-    ctx.lineJoin = "round";
-    ctx.beginPath();
-    for (let k = minBinIdx; k <= maxBinIdx; k++) {
-      const y = yOfBinSafe(k);
-      if (k === minBinIdx) ctx.moveTo(xOfBin(k), y);
-      else ctx.lineTo(xOfBin(k), y);
+      ctx.strokeStyle = t.signal;
+      ctx.lineWidth = 1.5;
+      ctx.lineJoin = "round";
+      ctx.beginPath();
+      for (let k = minBinIdx; k <= maxBinIdx; k++) {
+        const y = yOfBinSafe(k);
+        if (k === minBinIdx) ctx.moveTo(xOfBin(k), y);
+        else ctx.lineTo(xOfBin(k), y);
+      }
+      ctx.stroke();
     }
-    ctx.stroke();
 
     // Slope overlay (dB/Hz), same bin range, centred on the plot's mid-height.
     if (showSlope) {
@@ -206,26 +231,41 @@ export function SpectrumPlot({
       const scale = slopeMax > 0 ? frame.plotHeight / (2 * slopeMax) : 0;
       const midY = frame.bottom - frame.plotHeight / 2;
 
-      ctx.save();
-      ctx.globalAlpha = 0.85;
-      ctx.strokeStyle = t.trace2;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      for (let k = minBinIdx; k <= maxBinIdx; k++) {
-        const y = midY - slope[k] * scale;
-        if (k === minBinIdx) ctx.moveTo(xOfBin(k), y);
-        else ctx.lineTo(xOfBin(k), y);
+      if (c > 1) {
+        // A line of cells, sampled at each cell column.
+        const binOfX = (x: number) =>
+          minBinIdx + ((x - frame.left) / frame.plotWidth) * numBinsDisplay;
+        drawPixelTrace(
+          ctx,
+          frame,
+          (x) => {
+            const k = Math.min(maxBinIdx, Math.max(minBinIdx, Math.round(binOfX(x))));
+            return midY - slope[k] * scale;
+          },
+          t.trace2,
+          c,
+        );
+      } else {
+        ctx.save();
+        ctx.globalAlpha = 0.85;
+        ctx.strokeStyle = t.trace2;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let k = minBinIdx; k <= maxBinIdx; k++) {
+          const y = midY - slope[k] * scale;
+          if (k === minBinIdx) ctx.moveTo(xOfBin(k), y);
+          else ctx.lineTo(xOfBin(k), y);
+        }
+        ctx.stroke();
+        ctx.restore();
       }
-      ctx.stroke();
-      ctx.restore();
     }
 
     // Noise floor: dashed, labelled at its right end.
     if (Number.isFinite(noiseFloorDb)) {
-      const y = crisp(yOfDb(noiseFloorDb));
-      ctx.strokeStyle = t.noiseFloor;
-      ctx.setLineDash([4, 4]);
-      ctx.lineWidth = 1;
+      const y = crisp(yOfDb(noiseFloorDb), c);
+      stroke(ctx, t.noiseFloor, 1, c);
+      dash(ctx, [4, 4], c);
       ctx.beginPath();
       ctx.moveTo(frame.left, y);
       ctx.lineTo(frame.right, y);
@@ -240,7 +280,7 @@ export function SpectrumPlot({
         t,
         `floor ${formatSigned(noiseFloorDb, 1)} dB`,
         frame.right - 4,
-        y - 3,
+        y - (c > 1 ? 2 * c : 3),
         t.axisLabel,
       );
     }

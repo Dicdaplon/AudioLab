@@ -46,6 +46,18 @@ export interface VizTheme {
   /** Tick label size in CSS px. */
   tickPx: number;
   pad: PlotPadding;
+  /**
+   * Pixel-art cell size in CSS px, from the optional `--al-viz-pixel` token.
+   * 0 (the default), 1 or unset: plots draw as usual. 2 or more: each plot
+   * draws on a grid of square cells of that size, scaled up without
+   * smoothing (stepped columns, pixel traces, block text).
+   */
+  pixel?: number;
+  /**
+   * Canvas font family for tick and empty-state text, from the optional
+   * `--al-plot-font` token. Unset: the mono (`fontMono`).
+   */
+  plotFont?: string;
 }
 
 export const DEFAULT_VIZ_THEME: VizTheme = {
@@ -72,6 +84,7 @@ export const DEFAULT_VIZ_THEME: VizTheme = {
   fontUi: '"IBM Plex Sans", system-ui, sans-serif',
   tickPx: 11,
   pad: { top: 10, right: 12, bottom: 28, left: 44 },
+  pixel: 0,
 };
 
 const COLOR_TOKENS: ReadonlyArray<[keyof VizTheme, string]> = [
@@ -116,6 +129,11 @@ export function readVizTheme(el: Element = document.documentElement): VizTheme {
     if (value) (theme as unknown as Record<string, string>)[key] = value;
   }
   theme.tickPx = num("--al-plot-font-size", DEFAULT_VIZ_THEME.tickPx);
+  // Optional opt-ins (see tokens.css): no token, no change.
+  const pixel = num("--al-viz-pixel", 0);
+  theme.pixel = pixel > 1 ? pixel : 0;
+  const plotFont = read("--al-plot-font");
+  if (plotFont) theme.plotFont = plotFont;
   theme.pad = {
     top: num("--al-plot-pad-top", DEFAULT_VIZ_THEME.pad.top),
     right: num("--al-plot-pad-right", DEFAULT_VIZ_THEME.pad.right),
@@ -131,6 +149,8 @@ function sameTheme(a: VizTheme, b: VizTheme): boolean {
     if (a[key] !== b[key]) return false;
   }
   return (
+    (a.pixel ?? 0) === (b.pixel ?? 0) &&
+    a.plotFont === b.plotFont &&
     a.pad.top === b.pad.top &&
     a.pad.right === b.pad.right &&
     a.pad.bottom === b.pad.bottom &&
@@ -140,6 +160,9 @@ function sameTheme(a: VizTheme, b: VizTheme): boolean {
 
 /** Canvas font string for tick labels. */
 export function tickFont(theme: VizTheme): string {
+  // A pixel face has one weight: asking for 500 would not change it, but
+  // keep the plain string byte-identical when no plot font is set.
+  if (theme.plotFont) return `400 ${theme.tickPx}px ${theme.plotFont}, ${theme.fontMono}`;
   return `500 ${theme.tickPx}px ${theme.fontMono}`;
 }
 
@@ -178,9 +201,17 @@ export function useVizTheme(): VizTheme {
         : [];
     for (const media of queries) media.addEventListener?.("change", refresh);
 
+    // A plot font (--al-plot-font) is often a web font that arrives after the
+    // first draw: hand the plots a fresh object once fonts load so they redraw
+    // with it. Without a plot font the theme object is kept (no redraw).
+    const fonts = typeof document !== "undefined" ? document.fonts : undefined;
+    const onFonts = () => setTheme((prev) => (prev.plotFont ? { ...prev } : prev));
+    fonts?.addEventListener?.("loadingdone", onFonts);
+
     return () => {
       observer?.disconnect();
       for (const media of queries) media.removeEventListener?.("change", refresh);
+      fonts?.removeEventListener?.("loadingdone", onFonts);
     };
   }, [root]);
 

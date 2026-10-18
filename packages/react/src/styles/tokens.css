@@ -125,6 +125,16 @@
   --al-plot-pad-bottom: 28;
   --al-plot-pad-left: 44;
   --al-plot-font-size: 11;
+  /* Optional, NOT declared here (unset = off), set by a host that wants
+     pixel-art plots, e.g. `.my-root.loupe { --al-viz-pixel: 2; }`:
+       --al-viz-pixel  cell size in CSS px (0, 1 or unset: off). The canvas
+                       plots and the play-along lane draw on a grid of square
+                       cells: stepped equaliser columns, lines of cells,
+                       dotted grids, image-rendering: pixelated.
+       --al-plot-font  canvas font family for ticks and the empty state
+                       (unset: --al-font-mono). A pixel face wants a size
+                       that is a multiple of its design grid, e.g. Silkscreen
+                       at --al-plot-font-size: 16 with a cell of 2. */
 
   /* --- Motion: hover/focus ease; live values move linearly or not at all --- */
   --al-dur-1: 120ms;
