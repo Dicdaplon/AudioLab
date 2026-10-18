@@ -45,6 +45,8 @@ import {
 } from "./how/explanations";
 import { detectorHow } from "./how/detectorHow";
 import { ChordOptions } from "./components/ChordOptions";
+import { CrtOverlay, CrtToggle } from "./components/CrtOverlay";
+import { useCrt } from "./crt";
 import { Brand } from "./components/Brand";
 import { RhythmTab } from "./components/rhythm/RhythmTab";
 import { ScalesTab } from "./components/ScalesTab";
@@ -101,7 +103,12 @@ export default function App() {
     "game-room": "game",
     about: "about",
   });
+  // Flips on every page change so the CSS entry animation replays without
+  // remounting the page (crt.css, .lab-page[data-enter]).
+  const [enter, setEnter] = useState<"a" | "b">("a");
+  const [crt, setCrt] = useCrt();
   const openPage = (next: Tab) => {
+    if (next !== tab) setEnter((e) => (e === "a" ? "b" : "a"));
     setTab(next);
     setLastPage((last) => ({ ...last, [groupOf(next)]: next }));
   };
@@ -166,6 +173,7 @@ export default function App() {
               onReset={tonality.reset}
             />
             <ThemeToggle />
+            <CrtToggle on={crt} onChange={setCrt} />
           </div>
         </div>
       </header>
@@ -195,6 +203,7 @@ export default function App() {
           )}
           <div
             className="lab-page"
+            data-enter={enter}
             {...(PAGES[group].length > 1 && {
               role: "tabpanel",
               id: panelId(tab),
@@ -316,6 +325,7 @@ export default function App() {
           </div>
         </section>
       </main>
+      <CrtOverlay on={crt} />
     </LoupeRoot>
   );
 }

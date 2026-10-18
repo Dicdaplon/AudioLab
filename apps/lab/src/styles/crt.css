@@ -1,0 +1,349 @@
+/* =========================================================================
+   CRT: a touch of old semi-analog screen over loloupTech. Lab only.
+
+   A fixed, inert layer (components/CrtOverlay.tsx) carries the glass:
+   static scanlines, a slow rolling band, a vignette and rounded corners.
+   The page itself gets a phosphor glow on its lit parts (values, titles,
+   the selected room) and a one-pixel red/cyan fringe on the brand and the
+   big titles only. Nothing here touches a canvas or a container of one:
+   the layer is a sibling of the page, it animates opacity and transform
+   only, and it uses no blend mode and no filter.
+
+   On/off: <html data-crt="on|off"> (localStorage "crt", default on).
+   Never under prefers-contrast: more or forced colours; nothing moves
+   under prefers-reduced-motion.
+   ========================================================================= */
+
+/* --- Glass tokens, per theme --------------------------------------------
+   Dark: an amber-tinted night monitor. Light: a paper-white office monitor,
+   the same effects at a third of the strength. */
+
+:root {
+  --crt-scan: rgba(0, 0, 0, 0.18);
+  --crt-roll: rgba(232, 167, 92, 0.045);
+  --crt-vignette: rgba(0, 0, 0, 0.42);
+  --crt-bezel: #050706;
+  --crt-glow: 0 0 0.3em color-mix(in srgb, currentColor 45%, transparent);
+  --crt-glow-soft: 0 0 4px color-mix(in srgb, currentColor 30%, transparent);
+  --crt-fringe: -1px 0 rgba(255, 64, 64, 0.5), 1px 0 rgba(64, 210, 255, 0.45);
+}
+
+:root[data-theme="light"] {
+  --crt-scan: rgba(60, 48, 30, 0.06);
+  --crt-roll: rgba(154, 74, 16, 0.03);
+  --crt-vignette: rgba(80, 64, 40, 0.16);
+  --crt-bezel: #cfc7b6;
+  --crt-glow: 0 0 0 transparent;
+  --crt-glow-soft: 0 0 0 transparent;
+  --crt-fringe: -1px 0 rgba(220, 40, 40, 0.28), 1px 0 rgba(0, 150, 200, 0.28);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --crt-scan: rgba(60, 48, 30, 0.06);
+    --crt-roll: rgba(154, 74, 16, 0.03);
+    --crt-vignette: rgba(80, 64, 40, 0.16);
+    --crt-bezel: #cfc7b6;
+    --crt-glow: 0 0 0 transparent;
+    --crt-glow-soft: 0 0 0 transparent;
+    --crt-fringe: -1px 0 rgba(220, 40, 40, 0.28), 1px 0 rgba(0, 150, 200, 0.28);
+  }
+}
+
+/* Scanlines darken a third of the rows: the muted ink is lifted a little
+   so text keeps its ratio on those rows too. Night: #b8b2a7 on the surface
+   8.44:1, 5.97:1 on a scanline row (the plain #a8a297 would drop to 5.03).
+   Paper: #524c42 on the surface 8.21:1, 7.57:1 on a scanline row. The two
+   primitives belong to one theme each, so one override serves both. */
+:root:not([data-crt="off"]) .loupe {
+  --al-p-chalk-muted: #b8b2a7;
+  --al-p-ink-muted: #524c42;
+}
+
+/* --- The layer -------------------------------------------------------- */
+
+.crt {
+  position: fixed;
+  inset: 0;
+  z-index: 40; /* over the sticky top bar (10), under nothing interactive */
+  pointer-events: none;
+  overflow: hidden;
+}
+
+:root[data-crt="off"] .crt {
+  display: none;
+}
+
+.crt > * {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* One dark row in three (1 px on, 2 px off), plain alpha. A faint flicker
+   breathes through them: opacity only, a few frames a second. */
+.crt__scan {
+  background: repeating-linear-gradient(to bottom, var(--crt-scan) 0 1px, transparent 1px 3px);
+  animation: crt-flicker 5s steps(1, jump-end) infinite;
+}
+
+@keyframes crt-flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  41% {
+    opacity: 0.86;
+  }
+  43% {
+    opacity: 1;
+  }
+  77% {
+    opacity: 0.92;
+  }
+  78% {
+    opacity: 1;
+  }
+}
+
+/* The band of a badly synced screen, rolling down every 9 s. */
+.crt__roll {
+  inset: auto 0 auto 0;
+  top: 0;
+  height: 22vh;
+  background: linear-gradient(to bottom, transparent, var(--crt-roll) 50%, transparent);
+  transform: translateY(-25vh);
+  animation: crt-roll 9s linear infinite;
+  will-change: transform;
+}
+
+@keyframes crt-roll {
+  to {
+    transform: translateY(105vh);
+  }
+}
+
+/* Curved glass: the corners are rounded by the bezel (an outer shadow that
+   follows the radius), the edges sink into a vignette. */
+.crt__glass {
+  border-radius: 22px / 18px;
+  background: radial-gradient(
+    ellipse 130% 120% at 50% 45%,
+    transparent 58%,
+    var(--crt-vignette) 100%
+  );
+  box-shadow:
+    0 0 0 40px var(--crt-bezel),
+    inset 0 0 6px 1px var(--crt-bezel),
+    inset 0 0 80px var(--crt-vignette);
+}
+
+/* --- Power-on, once per session ----------------------------------------
+   The screen is dark; a line of light runs out from the centre, then opens
+   to the full height and the picture comes up. 0.9 s, clicks go through. */
+
+.crt__boot {
+  background: var(--al-color-canvas);
+  animation: crt-boot-screen 900ms linear both;
+}
+
+.crt__boot::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(50% - 1px);
+  height: 2px;
+  background: var(--al-color-accent);
+  box-shadow: 0 0 12px 2px var(--al-color-accent);
+  transform: scaleX(0);
+  animation: crt-boot-line 900ms steps(12, jump-end) both;
+}
+
+@keyframes crt-boot-screen {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  80%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes crt-boot-line {
+  0% {
+    transform: scaleX(0.01);
+    opacity: 1;
+  }
+  35% {
+    transform: scaleX(1) scaleY(1);
+    opacity: 1;
+  }
+  60% {
+    transform: scaleX(1) scaleY(260);
+    opacity: 0.5;
+  }
+  75%,
+  100% {
+    transform: scaleX(1) scaleY(260);
+    opacity: 0;
+  }
+}
+
+/* --- Phosphor on the page ----------------------------------------------
+   The lit parts glow a little in their own colour (night only: the paper
+   monitor has no glow). */
+
+:root:not([data-crt="off"])
+  .shell
+  :is(
+    .al-readout__value,
+    .al-stat__value,
+    .al-ranklist__name,
+    .al-chroma__label,
+    .topbar .al-tab[aria-selected="true"]
+  ) {
+  text-shadow: var(--crt-glow);
+}
+
+/* Small Plex text glows less, so it stays sharp. */
+:root:not([data-crt="off"])
+  .shell
+  :is(.al-panel__title, .al-plot__title, .lab-subtabs .al-tab[aria-selected="true"]) {
+  text-shadow: var(--crt-glow-soft);
+}
+
+/* The fringe of a misconverged gun: brand and big titles only. */
+:root:not([data-crt="off"]) .shell :is(.brand__word, .about__title, .al-overlay__title) {
+  text-shadow: var(--crt-fringe), var(--crt-glow);
+}
+
+/* --- The switch in the top bar ------------------------------------------
+   A tiny screen: a frame in the muted ink, its glass lit in the accent when
+   the effect is on. Phones keep the icon and give the word to screen
+   readers, like the other buttons of the bar. */
+
+.lab-crt-toggle {
+  gap: var(--al-sp-2);
+}
+
+.lab-crt-toggle__screen {
+  position: relative;
+  flex: none;
+  width: 14px;
+  height: 11px;
+  border: 2px solid var(--al-color-ink-muted);
+  border-bottom-width: 3px;
+}
+
+.lab-crt-toggle__screen::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  background: var(--al-color-line-strong);
+}
+
+.lab-crt-toggle[aria-pressed="true"] .lab-crt-toggle__screen::after {
+  background: var(--al-color-accent);
+  box-shadow: 0 0 4px var(--al-color-accent);
+}
+
+@media (max-width: 479px) {
+  .topbar .lab-crt-toggle__word {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .topbar .lab-crt-toggle {
+    padding-inline: var(--al-sp-2);
+  }
+
+  .topbar .topbar__transport {
+    gap: var(--al-sp-1);
+  }
+}
+
+/* The smallest phones (360 px): the switch is one button more than the bar
+   was drawn for, so the icon buttons and the mic button give up some air. */
+@media (max-width: 379px) {
+  .topbar :is(.al-btn--quiet, .al-theme-toggle, .lab-crt-toggle) {
+    padding-inline: 6px;
+  }
+
+  .topbar .al-btn--touch {
+    padding-inline: var(--al-sp-2);
+  }
+}
+
+/* --- Page change: a short channel flip ---------------------------------- */
+
+.lab-page[data-enter="a"] {
+  animation: lab-page-in-a 160ms steps(4, jump-end);
+}
+
+.lab-page[data-enter="b"] {
+  animation: lab-page-in-b 160ms steps(4, jump-end);
+}
+
+@keyframes lab-page-in-a {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@keyframes lab-page-in-b {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* --- Opt-outs ----------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .crt__scan,
+  .lab-page[data-enter] {
+    animation: none;
+  }
+
+  .crt__roll,
+  .crt__boot {
+    display: none;
+  }
+}
+
+@media (prefers-contrast: more), (forced-colors: active) {
+  .crt,
+  .lab-crt-toggle {
+    display: none;
+  }
+
+  :root
+    .shell
+    :is(
+      .al-readout__value,
+      .al-stat__value,
+      .al-panel__title,
+      .al-plot__title,
+      .al-tab,
+      .brand__word,
+      .about__title,
+      .al-overlay__title
+    ) {
+    text-shadow: none;
+  }
+}
+
+@media print {
+  .crt,
+  .lab-crt-toggle {
+    display: none;
+  }
+}

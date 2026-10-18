@@ -166,6 +166,28 @@ describe("App", () => {
     expect((screen.getByLabelText("Note detection") as HTMLSelectElement).value).toBe("chroma");
   });
 
+  it("switches the CRT screen effect, remembers it, and keeps it out of reach of clicks", () => {
+    render(<App />);
+    const toggle = screen.getByRole("button", { name: /CRT screen effect/ });
+    expect(toggle.getAttribute("aria-pressed")).toBe("true");
+    expect(document.documentElement.dataset.crt).toBe("on");
+    const layer = document.querySelector(".crt") as HTMLElement;
+    expect(layer.getAttribute("aria-hidden")).toBe("true");
+    expect(layer.textContent).toBe("");
+
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-pressed")).toBe("false");
+    expect(document.documentElement.dataset.crt).toBe("off");
+    expect(localStorage.getItem("crt")).toBe("off");
+    expect(document.querySelector(".crt")).toBeNull();
+
+    cleanup();
+    render(<App />);
+    expect(
+      screen.getByRole("button", { name: /CRT screen effect/ }).getAttribute("aria-pressed"),
+    ).toBe("false");
+  });
+
   it("speaks to players, not to the detector", () => {
     render(<App />);
     for (const tab of ["Chord game", "Wolf Jumper"]) {

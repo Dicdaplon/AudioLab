@@ -19,6 +19,9 @@
         try {
           var t = localStorage.getItem("theme");
           if (t === "dark" || t === "light") document.documentElement.dataset.theme = t;
+          // The CRT layer (components/CrtOverlay.tsx): on unless switched off.
+          document.documentElement.dataset.crt =
+            localStorage.getItem("crt") === "off" ? "off" : "on";
         } catch (e) {
           /* storage blocked: the stylesheet follows the OS preference */
         }
@@ -30,6 +33,60 @@
        app also mounts a <LoupeRoot>, like any other consumer of the SDK.
        `al-pixel` opts the whole page into the pixel skin (pixel.css). -->
   <body class="loupe al-pixel">
+    <!-- Lab-only SVG filters: resample the ink wolf of Wolf Jumper on a 3-px
+         grid. The drawing is laid on the bed, its ink thickened (night: the
+         light ink grows by dilate; paper: the dark ink grows by erode), one
+         sample is taken per block and grown back to a square, then cut by
+         the equally pixelated silhouette. pixel-data.css applies them;
+         engines without SVG filters on HTML keep the linework. -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true" focusable="false">
+      <filter
+        id="lab-pixelate-night"
+        x="0"
+        y="0"
+        width="100%"
+        height="100%"
+        color-interpolation-filters="sRGB"
+      >
+        <feFlood class="lab-pixelate__bed" result="bed" />
+        <feMerge result="opaque">
+          <feMergeNode in="bed" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+        <feMorphology in="opaque" operator="dilate" radius="0.7" result="thick" />
+        <feFlood x="1" y="1" width="1" height="1" flood-color="#000" />
+        <feComposite width="3" height="3" />
+        <feTile result="grid" />
+        <feComposite in="thick" in2="grid" operator="in" />
+        <feMorphology operator="dilate" radius="1" result="blocks" />
+        <feComposite in="SourceAlpha" in2="grid" operator="in" />
+        <feMorphology operator="dilate" radius="1" result="shape" />
+        <feComposite in="blocks" in2="shape" operator="in" />
+      </filter>
+      <filter
+        id="lab-pixelate-paper"
+        x="0"
+        y="0"
+        width="100%"
+        height="100%"
+        color-interpolation-filters="sRGB"
+      >
+        <feFlood class="lab-pixelate__bed" result="bed" />
+        <feMerge result="opaque">
+          <feMergeNode in="bed" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+        <feMorphology in="opaque" operator="erode" radius="0.7" result="thick" />
+        <feFlood x="1" y="1" width="1" height="1" flood-color="#000" />
+        <feComposite width="3" height="3" />
+        <feTile result="grid" />
+        <feComposite in="thick" in2="grid" operator="in" />
+        <feMorphology operator="dilate" radius="1" result="blocks" />
+        <feComposite in="SourceAlpha" in2="grid" operator="in" />
+        <feMorphology operator="dilate" radius="1" result="shape" />
+        <feComposite in="blocks" in2="shape" operator="in" />
+      </filter>
+    </svg>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

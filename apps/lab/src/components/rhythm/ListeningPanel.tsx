@@ -129,25 +129,29 @@ function OnsetStrip({ snapshot, analysis }: ListeningPanelProps) {
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx || typeof requestAnimationFrame !== "function") return;
     let handle = 0;
+    // The lab draws its plots in pixel mode (--al-viz-pixel): one backing
+    // pixel per cell, whole device pixels per cell, scaled up unsmoothed.
+    const pixel = (theme.pixel ?? 0) > 1 ? (theme.pixel as number) : 1;
+    canvas.style.imageRendering = pixel > 1 ? "pixelated" : "";
+    const snap = (v: number) => Math.floor(v / pixel) * pixel;
     const draw = () => {
       const dpr = window.devicePixelRatio || 1;
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
-      if (canvas.width !== Math.round(width * dpr)) canvas.width = Math.round(width * dpr);
-      if (canvas.height !== Math.round(height * dpr)) canvas.height = Math.round(height * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const unit = pixel > 1 ? Math.max(1, Math.round(pixel * dpr)) / dpr : 1 / dpr;
+      const w = Math.ceil(width / unit);
+      const h = Math.ceil(height / unit);
+      if (canvas.width !== w) canvas.width = w;
+      if (canvas.height !== h) canvas.height = h;
+      ctx.setTransform(1 / unit, 0, 0, 1 / unit, 0, 0);
       ctx.fillStyle = theme.bed;
       ctx.fillRect(0, 0, width, height);
 
       const now = analysis?.clock.perfMsToContextTime(performance.now()) ?? null;
-      ctx.strokeStyle = theme.grid;
-      ctx.lineWidth = 1;
+      ctx.fillStyle = theme.grid;
       for (let s = 1; s < STRIP_SECONDS; s++) {
-        const x = Math.round(width - (s / STRIP_SECONDS) * width) + 0.5;
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, height);
-        ctx.stroke();
+        const x = snap(Math.round(width - (s / STRIP_SECONDS) * width));
+        ctx.fillRect(x, 0, pixel, height);
       }
       const onsets = snapshotRef.current?.recentOnsets ?? [];
       if (now !== null) {
@@ -155,13 +159,15 @@ function OnsetStrip({ snapshot, analysis }: ListeningPanelProps) {
           const age = now - o.time;
           if (age < 0 || age > STRIP_SECONDS) continue;
           const x = width - (age / STRIP_SECONDS) * width;
-          const h = Math.max(6, fraction(o.levelDb) * (height - 8));
+          const h = snap(Math.max(6, fraction(o.levelDb) * (height - 8)));
           ctx.fillStyle = o.localized ? theme.signalStrong : theme.threshold;
-          ctx.fillRect(x - 1.5, height - h, 3, h);
+          ctx.fillRect(snap(x - 1.5), height - h, Math.max(3, 2 * pixel), h);
         }
       } else {
         ctx.fillStyle = theme.emptyText;
-        ctx.font = `12px ${theme.fontUi}`;
+        ctx.font = theme.plotFont
+          ? `${theme.tickPx}px ${theme.plotFont}, ${theme.fontMono}`
+          : `12px ${theme.fontUi}`;
         ctx.fillText("Waiting for signal…", 8, height / 2 + 4);
       }
       handle = requestAnimationFrame(draw);
