@@ -35,8 +35,9 @@ flowchart LR
 
 Each package has one main entry (`src/index.ts`) that is the public API; core adds three
 subpaths, `@audiolab/core/games` (the pure game engines, browser-safe),
-`@audiolab/core/rhythm` (pure rhythm assessment over plain `{ time }` objects; it
-imports nothing from the main entry, and the main entry never imports it) and
+`@audiolab/core/rhythm` (pure rhythm assessment over plain `{ time }` objects; it uses
+a few pure core modules, such as the sample history and the click echo filter, but the
+main entry never imports it, which ESLint enforces) and
 `@audiolab/core/offline` (Node only). Everything not re-exported from an entry is
 internal. Workspace consumers resolve the packages through the
 `audiolab-source` export condition (TypeScript `customConditions`, Vite / Vitest
@@ -54,10 +55,10 @@ build of the lab and external consumers use the `dist` built by tsup.
 | Engines      | `core/src/analysis/engine/`          | DSP modules                         | none               | Node                  |
 | Onsets, gate | `core/src/analysis/onset/`, `gate/`  | fft, chroma, pitch, chord detection | none               | Node (synthetic)      |
 | Timing       | `core/src/timing/`                   | nothing                             | none               | Node                  |
-| Rhythm       | `core/src/rhythm/`                   | nothing outside `rhythm/`           | none               | Node                  |
+| Rhythm       | `core/src/rhythm/`                   | pure onset / timing modules         | none               | Node                  |
 | Offline      | `core/src/offline/`                  | engines, DSP, `audio-decode`        | none (Node only)   | Node, samples         |
 | Settings     | `core/src/config/`                   | DSP (types and defaults)            | none               | Node                  |
-| Audio        | `core/src/audio/`                    | nothing else in core                | Web Audio, media   | Node + fake Web Audio |
+| Audio        | `core/src/audio/`                    | DSP and timing (pure)               | Web Audio, media   | Node + fake Web Audio |
 | Game engines | `core/src/games/`                    | chord templates, chroma size        | none               | Node                  |
 | Hooks        | `react/src/hooks/`                   | core                                | via `audio`        | jsdom                 |
 | UI helpers   | `react/src/ui/`                      | core (types), React                 | canvas, matchMedia | jsdom                 |
@@ -231,8 +232,9 @@ the `TonalityFrame` down:
   name them with `pitchClassName` / `chordName`.
 - **FFT tab:** spectrum plot with noise floor, slope and pentatonic overlays; onset
   envelope and beat spectrum from `useTempoAnalysis`.
-- **Rhythm tab (lab):** `useOnsetAnalysis` feeds three exercises (a written rhythm graded
-  by `fitPattern`, notes and chords scrolling to a line graded by `TimingScorer`), the
+- **Rhythm tab (lab):** `useOnsetAnalysis` + `usePlayAlong` + `useMetronome` run four
+  exercises on a metronome (rhythm lane, written rhythm with a free-tempo option graded by
+  `fitPattern`, scrolling notes and chords) drawn by `PlayAlongLane` / `BeatLights`, the
   automatic gate with an onset timeline, and the latency budget.
 
 Plots are drawn on `<canvas>` with helpers from `ui/plotMath.ts`; long signals are

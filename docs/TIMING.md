@@ -22,8 +22,13 @@ The tools are separate modules; each can be used on its own.
 | Windows from the chain's precision        | `toleranceFromUncertainty`, `classifyDelta`                                  | `@audiolab/core/rhythm` |
 | Bias, jitter, drift                       | `timingStats`                                                                | `@audiolab/core/rhythm` |
 | React                                     | `useOnsetAnalysis`, `useDisplayFramePeriod`                                  | `@audiolab/react`       |
+| A steady beat, a metronome                | `beatTime`, `beatAt`, `beatsBetween` (`BeatGrid`), `startMetronome`          | `@audiolab/core`        |
+| Tell the click from the playing           | `clickBandShare`, `ClickEchoFilter` (also measures the round trip)           | `@audiolab/core`        |
+| A whole play-along exercise               | `PlayAlongSession`                                                           | `@audiolab/core/rhythm` |
+| Draw it                                   | `PlayAlongLane`, `BeatLights`, `targetState`; `useMetronome`                 | `@audiolab/react`       |
 
-The lab's **Rhythm** tab shows all of it, live: the three exercises, the
+The lab's **Rhythm** tab shows all of it, live: four exercises (rhythm lane,
+written rhythm, scrolling notes, scrolling chords) on a metronome, the
 automatic gate with an onset timeline, and the latency budget.
 
 ## 1. The clock: one sample-exact timeline
@@ -304,62 +309,151 @@ matched notes the fit is flagged unreliable.
 `timingStats`: bias = median Δ, jitter = IQR / 1.349 (σ for normal
 offsets), drift = Theil–Sen slope of Δ over time (ms per second).
 
-## 6. Using it in an exercise
+## 6. Metronome and play-along
+
+### 6.1 Metronome
+
+`startMetronome(context, { bpm, beatsPerBar, sound })` schedules its clicks on
+the AudioContext clock with the look-ahead pattern (a 25 ms timer schedules
+the next 150 ms with `OscillatorNode.start(time)`), so a busy main thread
+never makes a click late; a main thread blocked longer than 150 ms, or a
+background tab whose timers the browser slows down, drops the clicks it could
+not schedule (silence, never a late click). Beat 0 comes one bar after the start: the first
+bar is the count-in. Its `grid` (`BeatGrid`) places the notes of an
+exercise written in beats (`beatTime(grid, 2.5)` is the "and" of beat 3), and
+the beat and bar lines of a display. With `sound: false` the grid runs
+silently, for a visual metronome (`BeatLights`).
+
+### 6.2 The click in the microphone
+
+Without headphones the microphone hears the click. The click is a 30 ms
+sine burst at 2640 Hz (3520 Hz on the downbeat), high where a guitar has
+little new energy. `clickBandShare` compares the spectrum just after an onset
+with the one just before: a click puts most of its _new_ energy in the
+2.3–4 kHz band (over 0.8 in the tests, even over a ringing string), a guitar
+attack spreads it (under 0.4). `ClickEchoFilter` calls an onset the click's
+echo when it follows a scheduled click within 400 ms and its band share is
+at least 0.6; a strum played on the beat merges with the echo into one
+broadband onset and stays a note.
+
+Each echo is also a free **loopback measurement**: the delay from the
+scheduled click to its detection is the whole round trip (output buffers,
+speaker, air, microphone, input buffers), the offset of a player who plays
+with what they hear. Its median is `roundTripMs`; passed to the budget with
+`reference: "audio"`, it replaces the assumed output and input latencies, and
+the budget becomes `calibrated`. With headphones there is no echo: the
+budget uses the reported `outputLatency + baseLatency` and the assumed input.
+
+Which latency applies depends on what the player follows:
+
+| Reference                                     | Offset                                     |
+| --------------------------------------------- | ------------------------------------------ |
+| `"visual"` (a scrolling target, `BeatLights`) | input + display                            |
+| `"audio"` (an audible click)                  | input + output, or the measured round trip |
+
+### 6.3 `PlayAlongSession`
+
+One exercise run, pure: expected notes in, onsets in, results and a display
+list out.
+
+- `onset(o)` queues an onset; `update(history, analysedTime)` processes the
+  queue once the samples just after each onset are captured, drops the
+  click's echoes (`clicks` option), grades the rest with a `TimingScorer`,
+  names what was played with an `OnsetLabeler` once its audio is in
+  (`labeler` option: `noteAfterOnset` / `chordAfterOnset`), then advances. The
+  scorer advances only with an empty queue, so a note is never closed before
+  its onset is in.
+- `onsets` lists every onset with its played time (latency and learnt bias
+  removed) and an `echo` flag: this is what `PlayAlongLane` draws as red
+  (notes) and grey (clicks) dots, so the player sees whether each note came
+  before or after its target.
+- `done` is true once every note is graded and labelled.
+
+### 6.4 `PlayAlongLane`
+
+A canvas lane: targets travel right to left and reach the hit line at their
+time; the band around the line is the tolerance (`toleranceFromUncertainty`
+of the budget: darker for on time, lighter for still early / late); beat and
+bar lines follow the grid; dots show the detected onsets. It redraws on
+every animation frame from `now()` and `onsets()` and only re-renders when its
+`targets` change. `targetState(result)` maps a `NoteResult` to a lane colour.
+
+## 7. Using it in an exercise
 
 ```tsx
-import { useOnsetAnalysis } from "@audiolab/react";
-import { chordAfterOnset, chordReadyAt } from "@audiolab/core";
+import { beatTime, chordAfterOnset, chordReadyAt, ClickEchoFilter } from "@audiolab/core";
 import { chordKey } from "@audiolab/core/games";
-import { TimingScorer, toleranceFromUncertainty } from "@audiolab/core/rhythm";
+import { PlayAlongSession, toleranceFromUncertainty } from "@audiolab/core/rhythm";
+import { PlayAlongLane, targetState, useMetronome, useOnsetAnalysis } from "@audiolab/react";
 
-// notes: [{ id, time /* AudioContext s */, label: chordKey(chord) }]
-const scorerRef = useRef<TimingScorer | null>(null);
-const pending = useRef<{ id: number; frame: number; readyAt: number }[]>([]);
+const echo = useMemo(() => new ClickEchoFilter(), []); // keeps the round trip across runs
+const metronome = useMetronome(mic?.context ?? null);
+const session = useRef<PlayAlongSession | null>(null);
+const [results, setResults] = useState<readonly NoteResult[]>([]);
 
 const { analysis, budget } = useOnsetAnalysis(mic, {
   strummed: true,
-  onOnset: (onset) => {
-    scorerRef.current?.onset({ id: onset.id, time: onset.time });
-    pending.current.push({
-      id: onset.id,
-      frame: onset.frame,
-      readyAt: chordReadyAt(onset.frame, sr),
-    });
-  },
+  reference: "audio",
+  roundTripMs: echo.roundTripMs,
+  onOnset: (onset) => session.current?.onset(onset),
   onBatch: (history, analysedTime) => {
-    const scorer = scorerRef.current;
-    if (!scorer) return;
-    pending.current = pending.current.filter((p) => {
-      if (p.readyAt > history.range.to) return true;
-      const best = chordAfterOnset(history, p.frame, sr)[0];
-      scorer.label(p.id, best ? chordKey(best) : null);
-      return false;
-    });
-    scorer.advance(analysedTime);
+    const s = session.current;
+    if (s && s.update(history, analysedTime).length > 0) setResults([...s.results]);
   },
 });
+const now = () => analysis?.clock.perfMsToContextTime(performance.now()) ?? null;
 
-// At start: targets on the audio clock, tolerance and offset from the budget.
-const now = analysis!.clock.perfMsToContextTime(performance.now())!;
-scorerRef.current = new TimingScorer(notesFrom(now + 3), {
-  tolerance: toleranceFromUncertainty(budget!.uncertaintyMs),
-  offsetMs: budget!.offsetMs,
-  adaptiveBias: true,
-});
+function start() {
+  const m = metronome.start({ bpm: 80, sound: true }); // one-bar count-in
+  if (!m || !budget) return;
+  session.current = new PlayAlongSession(
+    chords.map((c, i) => ({ id: i, time: beatTime(m.grid, i * 2), label: chordKey(c) })),
+    {
+      sampleRate: mic.context.sampleRate,
+      tolerance: toleranceFromUncertainty(budget.uncertaintyMs),
+      offsetMs: budget.offsetMs,
+      adaptiveBias: !budget.calibrated,
+      clicks: { times: () => m.clickTimes, filter: echo },
+      labeler: {
+        readyAt: (frame) => chordReadyAt(frame, mic.context.sampleRate),
+        label: (history, frame) => {
+          const best = chordAfterOnset(history, frame, mic.context.sampleRate)[0];
+          return best ? chordKey(best) : null;
+        },
+      },
+    },
+  );
+}
 
-// In the rAF loop: x = hitX + (note.time − perfMsToContextTime(performance.now())) · speed
+<PlayAlongLane
+  now={now}
+  grid={metronome.metronome?.grid}
+  tolerance={budget && toleranceFromUncertainty(budget.uncertaintyMs)}
+  onsets={() => session.current?.onsets ?? []}
+  targets={results.map((r, i) => ({
+    time: r.expectedTime,
+    label: names[i],
+    state: targetState(r),
+  }))}
+/>;
 ```
 
 For a written rhythm, collect `onset.time` values and call
 `fitPattern(beats, times)` after each onset; no budget is needed.
 
-## 7. Limits
+## 8. Limits
 
-- **No absolute calibration without a sound.** The input latency is
-  assumed or reported; `adaptiveBias` corrects a constant error but cannot
-  tell latency from a steady rush. Saying "you rush by 30 ms" against a
-  scrolling target is not reliable; saying it within a written rhythm
-  (`fitPattern` residuals) is.
+- **Absolute calibration needs the click in the microphone.** With an
+  audible metronome and no headphones, the click's echo measures the round
+  trip and "you rush by 30 ms" is meaningful. With headphones or a visual
+  reference, the input latency is assumed or reported; `adaptiveBias`
+  corrects a constant error but cannot tell latency from a steady rush.
+  Within a written rhythm at a free tempo (`fitPattern` residuals) the
+  latency cancels anyway.
+- **Click echo heuristics**: a click over a very loud strum may not be
+  recognised (the strum's broadband rise dominates) and then counts as the
+  player's onset if no note was played; a guitar with strong 2.3–4 kHz
+  content could in principle look like a click. Headphones remove both.
 - **Quiet after loud**: a note 10–15 dB below a still-ringing one may be
   missed; hammer-ons, pull-offs and slides often have no attack at all.
   A pitch-change detector would be the next step (not done).
@@ -373,12 +467,13 @@ For a written rhythm, collect `onset.time` values and call
   combine window and the moving-average threshold limit false onsets.
 - **Background tabs** throttle the page, not the worklet: timestamps stay
   exact, feedback stalls.
-- **Bluetooth output** delays what the player hears by 150–300 ms; it only
-  matters if the exercise plays sound (these exercises do not).
+- **Bluetooth output** delays the click by 150–300 ms. With the click in the
+  microphone the round trip measures it; with Bluetooth headphones there is
+  no echo, and the reported `outputLatency` may or may not include it.
 - **Synthetic numbers**: the accuracy table comes from synthetic plucks;
   measure on labelled recordings before quoting real-world figures.
 
-## 8. References
+## 9. References
 
 - J. P. Bello, L. Daudet, S. Abdallah, C. Duxbury, M. Davies, M. Sandler,
   "A tutorial on onset detection in music signals", IEEE Trans. Speech and

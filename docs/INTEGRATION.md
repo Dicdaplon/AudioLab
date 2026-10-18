@@ -228,7 +228,7 @@ history to name what was played (`noteAfterOnset`, `chordAfterOnset`) and the se
 `@audiolab/core/rhythm` (tolerance from `toleranceFromUncertainty(budget.uncertaintyMs)`,
 `offsetMs: budget.offsetMs`, `adaptiveBias: true`), and a written rhythm played without a
 click with `fitPattern(beats, onsetTimes)`. The full recipe, the measured accuracy and
-the limits are in [TIMING.md](TIMING.md#6-using-it-in-an-exercise). The Wolf Jumper
+the limits are in [TIMING.md](TIMING.md#7-using-it-in-an-exercise). The Wolf Jumper
 detector takes `gate: "adaptive"` so no learner has a threshold to set.
 
 **Live loop.** `startLiveAnalysis` is the analysis loop of `useTonality` without React:
