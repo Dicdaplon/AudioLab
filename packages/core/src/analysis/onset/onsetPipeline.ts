@@ -30,6 +30,11 @@ export interface OnsetPipelineOptions extends OnsetDetectorOptions {
   gate?: Partial<NoiseGateConfig>;
   /** Margin above the floor for an onset to count, in dB. Default 6. */
   onsetMarginDb?: number;
+  /**
+   * A threshold set by hand, in dBFS, instead of floor + margin. Default
+   * null (automatic). Can also be changed later on `manualThresholdDb`.
+   */
+  manualThresholdDb?: number | null;
 }
 
 export interface OnsetPipelineResult {
@@ -46,6 +51,12 @@ export class OnsetPipeline {
   readonly meter: BandLevelMeter;
   readonly gate: AdaptiveNoiseGate;
   readonly onsetMarginDb: number;
+  /**
+   * The level an onset must reach, set by hand (dBFS), or null for the
+   * automatic threshold (floor + `onsetMarginDb`). Takes effect at the
+   * next push; the gate keeps learning the floor either way.
+   */
+  manualThresholdDb: number | null;
   /** Recent band levels (end frame, dB), long enough to cover a decision delay. */
   private readonly levels: { endFrame: number; levelDb: number }[] = [];
   private accepted = 0;
@@ -56,6 +67,12 @@ export class OnsetPipeline {
     this.meter = new BandLevelMeter({ ...options.level, sampleRate: options.sampleRate });
     this.gate = new AdaptiveNoiseGate(options.gate);
     this.onsetMarginDb = options.onsetMarginDb ?? 6;
+    this.manualThresholdDb = options.manualThresholdDb ?? null;
+  }
+
+  /** The level an onset must reach now, in dBFS: by hand, or floor + margin. */
+  get onsetThresholdDb(): number {
+    return this.manualThresholdDb ?? this.gate.state.floorDb + this.onsetMarginDb;
   }
 
   get sampleRate(): number {
@@ -89,7 +106,7 @@ export class OnsetPipeline {
     const candidates = this.detector.push(samples, startFrame);
     if (candidates.length === 0) return { onsets: NONE, gate: this.gate.state };
 
-    const threshold = this.gate.state.floorDb + this.onsetMarginDb;
+    const threshold = this.onsetThresholdDb;
     const onsets: OnsetEvent[] = [];
     for (const c of candidates) {
       if (this.levelAround(c) >= threshold) {

@@ -206,4 +206,23 @@ describe("OnsetPipeline", () => {
     expect(run(6)).toEqual({ accepted: 6, rejected: 0 });
     expect(run(25)).toEqual({ accepted: 0, rejected: 6 });
   });
+
+  it("uses a threshold set by hand instead of the learnt one, and can go back", () => {
+    const hits = Array.from({ length: 6 }, (_, i) => ({
+      time: 9 + i * 0.5,
+      midi: 64,
+      amplitude: 0.04,
+    }));
+    const { signal } = performance(hits, { seconds: 12.5, noiseRms: 0.006 });
+    const run = (manualThresholdDb: number | null) => {
+      const pipeline = new OnsetPipeline({ sampleRate: SR, manualThresholdDb });
+      pushChunks(signal, (c, f) => pipeline.push(c, f).onsets);
+      return pipeline;
+    };
+    expect(run(-80).counts).toEqual({ accepted: 6, rejected: 0 });
+    expect(run(-5).counts).toEqual({ accepted: 0, rejected: 6 });
+    const auto = run(-5);
+    auto.manualThresholdDb = null;
+    expect(auto.onsetThresholdDb).toBeCloseTo(auto.gate.state.floorDb + 6, 6);
+  });
 });

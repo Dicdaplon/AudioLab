@@ -542,3 +542,34 @@
   width: 6px;
   height: 12px;
 }
+
+/* Settings that most people never touch, folded under the main ones. */
+.al-settings-more {
+  display: grid;
+  gap: var(--al-sp-3);
+  border-top: 1px dashed var(--al-color-line);
+  padding-top: var(--al-sp-2);
+}
+
+.al-settings-more[open] {
+  padding-bottom: var(--al-sp-2);
+}
+
+.al-settings-more__summary {
+  cursor: pointer;
+  font-size: var(--al-step--1);
+  color: var(--al-color-ink-muted);
+}
+
+.al-settings-more__summary:hover {
+  color: var(--al-color-ink);
+}
+
+.al-settings-more__summary:focus-visible {
+  outline: 2px solid var(--al-color-focus);
+  outline-offset: 2px;
+}
+
+.al-settings-more > :not(summary) {
+  margin-top: var(--al-sp-2);
+}

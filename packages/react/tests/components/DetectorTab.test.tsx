@@ -80,7 +80,7 @@ describe("DetectorTab", () => {
     expect(screen.getByRole("group", { name: "Chord" }).textContent).toContain("G");
     expect(screen.getAllByRole("list", { name: /candidates/i }).length).toBeGreaterThanOrEqual(3);
     expect(view.container.querySelector(".al-chroma")?.getAttribute("data-colour")).toBe("pitch");
-    expect(screen.getByText("0.1234")).toBeTruthy();
+    expect(screen.getByText("12.3 %")).toBeTruthy();
   });
 
   it("forwards settings and colour changes", () => {

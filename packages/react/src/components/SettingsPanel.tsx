@@ -24,6 +24,9 @@ interface SettingsPanelProps {
   how?: ReactNode;
 }
 
+/** A share of the chroma as a percentage, or a dash before any sound. */
+const share = (v: number) => (v > 0 ? `${(v * 100).toFixed(1)} %` : "—");
+
 export const SettingsPanel = memo(function SettingsPanel({
   settings,
   onChange,
@@ -61,44 +64,47 @@ export const SettingsPanel = memo(function SettingsPanel({
       />
       <RangeField
         id="tol"
-        label="Peak tolerance"
+        label="A note is present above"
         min={0}
         max={1}
         step={0.05}
         value={settings.maxFilterTolerancy}
         onChange={(v) => update({ maxFilterTolerancy: v })}
         format={(v) => (v * 100).toFixed(0)}
-        unit="%"
+        unit="% of the loudest"
       />
-      <RangeField
-        id="mem"
-        label="Peak memory"
-        min={HIGH_WATER_MARK_MEMORY_MIN}
-        max={HIGH_WATER_MARK_MEMORY_MAX}
-        step={1}
-        value={settings.maxFilterMemory}
-        onChange={(v) => update({ maxFilterMemory: v })}
-      />
-      <SelectField
-        id="mode"
-        label="Peak aggregator"
-        value={settings.maxFilterMode}
-        onChange={(v) => update({ maxFilterMode: v === "median" ? "median" : "mean" })}
-      >
-        <option value="mean">Mean (default)</option>
-        <option value="median">Median (more robust)</option>
-      </SelectField>
+      <details className="al-settings-more">
+        <summary className="al-settings-more__summary">Fine tuning</summary>
+        <RangeField
+          id="mem"
+          label="Peak memory"
+          min={HIGH_WATER_MARK_MEMORY_MIN}
+          max={HIGH_WATER_MARK_MEMORY_MAX}
+          step={1}
+          value={settings.maxFilterMemory}
+          onChange={(v) => update({ maxFilterMemory: v })}
+        />
+        <SelectField
+          id="mode"
+          label="Peak aggregator"
+          value={settings.maxFilterMode}
+          onChange={(v) => update({ maxFilterMode: v === "median" ? "median" : "mean" })}
+        >
+          <option value="mean">Mean (default)</option>
+          <option value="median">Median (more robust)</option>
+        </SelectField>
 
-      <dl className="al-stat-grid al-stat-grid--2">
-        <div className="al-stat">
-          <dt className="al-stat__label">Current threshold</dt>
-          <dd className="al-stat__value">{currentThreshold.toFixed(4)}</dd>
-        </div>
-        <div className="al-stat">
-          <dt className="al-stat__label">Last peak</dt>
-          <dd className="al-stat__value">{lastPeak.toFixed(4)}</dd>
-        </div>
-      </dl>
+        <dl className="al-stat-grid al-stat-grid--2">
+          <div className="al-stat">
+            <dt className="al-stat__label">Cut line</dt>
+            <dd className="al-stat__value">{share(currentThreshold)}</dd>
+          </div>
+          <div className="al-stat">
+            <dt className="al-stat__label">Loudest note</dt>
+            <dd className="al-stat__value">{share(lastPeak)}</dd>
+          </div>
+        </dl>
+      </details>
 
       <Switch id="colour-by-pitch" checked={colourByPitch} onChange={onColourByPitchChange}>
         Colour chroma bars by pitch class
@@ -106,9 +112,9 @@ export const SettingsPanel = memo(function SettingsPanel({
 
       {!how && (
         <p className="al-hint">
-          The presence filter keeps only the chroma bins above a fraction (the tolerance) of the
-          recent peaks; the memory sets how many peaks are averaged. The threshold follows how
-          concentrated the chroma is, not how loud the signal is.
+          A note counts as present when it holds at least this share of the loudest note (averaged
+          over the last few readings, see Fine tuning). The cut line and the loudest note are shares
+          of everything heard, not volumes.
         </p>
       )}
     </Panel>
