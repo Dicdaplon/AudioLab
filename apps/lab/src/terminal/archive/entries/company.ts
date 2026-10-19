@@ -250,6 +250,8 @@ export const COMPANY: readonly ArchiveEntry[] = [
       "can i take lessons",
       "sign up for lessons",
       "music courses",
+      "do you teach piano",
+      "piano lessons",
     ],
     a: [
       "Lessons live at ecoleduloup.fr, in French. Theory, improvisation, listening. Fewer rules, more links between things. Bring your ears.",
@@ -420,6 +422,8 @@ export const COMPANY: readonly ArchiveEntry[] = [
       "are you recording me",
       "do you record my voice",
       "is my audio saved",
+      "does the mic stay private",
+      "is my audio private",
     ],
     a: [
       "No. The sound is analysed live in your browser and thrown away. Nothing is saved, nothing is sent. Your out-of-tune notes are safe with nobody.",
@@ -449,6 +453,7 @@ export const COMPANY: readonly ArchiveEntry[] = [
       "why does the site ask for my microphone",
       "why do you need my mic",
       "microphone permission",
+      "why does it need my microphone",
     ],
     a: [
       "The tools listen to you play. To listen, they need ears. Your mic is the ears. You can say no, but then the lab is very quiet.",
@@ -461,6 +466,11 @@ export const COMPANY: readonly ArchiveEntry[] = [
       "microphone not working",
       "start mic does nothing",
       "no sound detected",
+      "le micro marche pas",
+      "le micro ne marche pas",
+      "le micro fonctionne pas",
+      "ca capte rien",
+      "il entend rien",
     ],
     a: [
       "Check that your browser has mic permission, that the right input is selected, and that you pressed Start mic in the top bar. Then play a bit louder.",
@@ -475,7 +485,7 @@ export const COMPANY: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["do you have a microphone", "can you hear me right now", "are you listening to me"],
+    q: ["can you hear me right now", "are you listening to me"],
     a: [
       "I have no microphone. I read what you type, that is all. The ears are in Harmony Lab, Rhythm Lab and the Game Room.",
       "I am deaf. Proudly. The other rooms do the listening. I do the remembering.",
@@ -498,21 +508,41 @@ export const COMPANY: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["what is harmony lab", "harmony lab", "what is in harmony lab"],
+    q: [
+      "what is harmony lab",
+      "harmony lab",
+      "what is in harmony lab",
+      "cest quoi harmony lab",
+      "trouver mes accords",
+    ],
     a: [
       "Harmony Lab: Chords & keys, Scales, Tuner and Spectrum. The key and the chord, live, from plain major and minor up to sevenths, sus and diminished.",
       "Harmony Lab listens to what you play and names it. The chord, the key, the scales that fit. It is the most talkative room. After me.",
     ],
   },
   {
-    q: ["what is rhythm lab", "rhythm lab", "what is in rhythm lab"],
+    q: [
+      "what is rhythm lab",
+      "rhythm lab",
+      "what is in rhythm lab",
+      "cest quoi rhythm lab",
+      "travailler mon rythme",
+      "metronome",
+    ],
     a: [
       "Rhythm Lab: Play along and Tempo. Each note is placed to the millisecond on the audio clock. The only room where time is still allowed.",
       "Rhythm Lab checks your timing and finds the tempo in the waveform. It has a special permit for clocks. I am a bit jealous.",
     ],
   },
   {
-    q: ["what is the game room", "game room", "what is in the game room"],
+    q: [
+      "what is the game room",
+      "game room",
+      "what is in the game room",
+      "cest quoi la salle de jeux",
+      "il y a des jeux",
+      "je veux jouer",
+    ],
     a: [
       "Game Room: the chord game, where you play the chord on screen, and Wolf Jumper, notes to shoot, chords to collect.",
       "The fun room. Same ears as the labs, but with points. Points are numbers. The game keeps them very gently.",
@@ -547,14 +577,27 @@ export const COMPANY: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["what is the tuner page", "where is the tuner", "where do i tune"],
+    q: [
+      "what is the tuner page",
+      "where is the tuner",
+      "where do i tune",
+      "cest quoi un accordeur",
+      "ou est laccordeur",
+      "accorder ma guitare",
+      "je veux maccorder",
+    ],
     a: [
       "The tuner is in Harmony Lab, the third page. Play one note at a time and watch it settle.",
       "Harmony Lab, Tuner. One string at a time. If you play 3.0 strings together, it gets confused. Like me.",
     ],
   },
   {
-    q: ["what is play along", "play along page", "how does play along work"],
+    q: [
+      "what is play along",
+      "play along page",
+      "how does play along work",
+      "how does the rhythm exercise work",
+    ],
     a: [
       "Play along, in Rhythm Lab: play a written rhythm at your own pace, or notes and chords as they reach a line. It tells you how close you were.",
       "Notes come towards a line. You play them when they arrive. It measures you to the millisecond. No pressure.",
@@ -571,7 +614,7 @@ export const COMPANY: readonly ArchiveEntry[] = [
     q: ["how do i play wolf jumper", "wolf jumper rules", "how does wolf jumper work"],
     a: [
       "Wolf Jumper: notes to shoot, chords to collect. Play the right note and the wolf jumps. Play the chord and he grabs it.",
-      "Press Start mic, pick a level, play what the screen asks. The wolf does the jumping. You do the music.",
+      "Press Start mic and play what the screen asks: a note to shoot, a chord to collect. The wolf does the jumping. You do the music.",
     ],
   },
   {
@@ -622,12 +665,7 @@ export const COMPANY: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: [
-      "does it work on mobile",
-      "can i use my phone",
-      "does it work on a tablet",
-      "mobile version",
-    ],
+    q: ["can i use my phone", "does it work on a tablet", "mobile version"],
     a: [
       "It works in a modern browser with a microphone, phones included. The screen is smaller, the wolf is just as brave.",
       "Mobile: yes, if your browser gives the page a mic. Hold the phone near the instrument. Not too near. Wolves bite.",
@@ -704,7 +742,15 @@ export const COMPANY: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["what language is this written in", "what tech stack", "what framework", "typescript"],
+    q: [
+      "what language is this written in",
+      "what tech stack",
+      "what framework",
+      "typescript",
+      "what stack is this built with",
+      "what is this built with",
+      "tech stack",
+    ],
     a: [
       "TypeScript and React, my disks say. The audio runs on the browser's own sound engine. No CRT library, sadly. That part is CSS.",
       "Written in TypeScript. Even my answers are a TypeScript file. I am very typed. Strongly, even.",

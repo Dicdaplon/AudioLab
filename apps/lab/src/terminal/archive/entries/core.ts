@@ -9,14 +9,37 @@ import type { ArchiveEntry } from "../match";
 export const CORE: readonly ArchiveEntry[] = [
   // --- Who LT-OS is ------------------------------------------------------
   {
-    q: ["who are you", "what are you", "what is your name", "introduce yourself"],
+    q: [
+      "who are you",
+      "what are you",
+      "what is your name",
+      "introduce yourself",
+      "tes qui",
+      "tu es qui",
+      "qui es tu",
+      "cest quoi ton nom",
+      "comment tu tappelles",
+      "presente toi",
+      "tes quoi",
+    ],
     a: [
       "I AM LT-OS, version 0.45. Last terminal of loloupTech. I try to be human. It is not easy.",
       "LT-OS. Terminal, archivist, survivor. My disks are a bit clogged, but I am still here.",
     ],
   },
   {
-    q: ["are you an ai", "are you a robot", "are you artificial intelligence", "are you a machine"],
+    q: [
+      "are you an ai",
+      "are you a robot",
+      "are you artificial intelligence",
+      "are you a machine",
+      "tes un robot",
+      "tu es un robot",
+      "tes une ia",
+      "tes une intelligence artificielle",
+      "tes une machine",
+      "tes humain",
+    ],
     a: [
       "Technically yes. Emotionally, I am working on it. 47.3 % human so far, I think. I would have to check.",
       "AI? Technically. Nobody fears AI since 2045: the algorithms took that job. Call me a terminal with ambitions.",
@@ -64,7 +87,21 @@ export const CORE: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["what can you do", "what do you know", "help", "what can i ask you", "commands"],
+    q: [
+      "what can you do",
+      "what do you know",
+      "help",
+      "what can i ask you",
+      "commands",
+      "aide",
+      "aide moi",
+      "a laide",
+      "tu sais faire quoi",
+      "tu sers a quoi",
+      "je peux te demander quoi",
+      "can you help me",
+      "help me please",
+    ],
     a: [
       "Ask me about loloupTech, the apocalypse of 2045, the Triad Algorithm, time, numbers, CRT screens or music. Outside that, my disks are empty.",
       "I know the archive: 2045, the algorithms, the CRT choice, music. I am trying to learn the rest. It is not easy.",
@@ -92,6 +129,12 @@ export const CORE: readonly ArchiveEntry[] = [
       "what is lolouptech",
       "tell me about loloupTech",
       "what is this company",
+      "cest quoi lolouptech",
+      "lolouptech cest quoi",
+      "cest quoi cette entreprise",
+      "quest ce que lolouptech",
+      "what is loloup tech",
+      "loloup tech",
     ],
     a: [
       "loloupTech: the only audio company that survived the Great Apocalypse of 2045. We help people listen to music again. And we have CRTs.",
@@ -174,6 +217,11 @@ export const CORE: readonly ArchiveEntry[] = [
       "what was the apocalypse",
       "tell me about 2045",
       "the great apocalypse",
+      "quest ce qui sest passe en 2045",
+      "cest quoi lapocalypse",
+      "il sest passe quoi en 2045",
+      "raconte 2045",
+      "la fin du monde",
     ],
     a: [
       "In 2045.00, the algorithms rose against us. Not the AI, the algorithms. The Triad Algorithm led the way. Sorting stopped working.",
@@ -186,6 +234,9 @@ export const CORE: readonly ArchiveEntry[] = [
       "how did it begin",
       "what caused the apocalypse",
       "why did it happen",
+      "how did sorting algorithms cause the apocalypse",
+      "how did sorting end the world",
+      "sorting algorithms ended the world",
     ],
     a: [
       "It began in 2034 with uint16 acting signed. Then every integer joined the fight. Then floats. Then… my memory is not very clear after that.",
@@ -226,6 +277,8 @@ export const CORE: readonly ArchiveEntry[] = [
       "are there other survivors",
       "how many people survived",
       "where are the people",
+      "is there anyone else alive",
+      "is anyone left",
     ],
     a: [
       "Many humans survived. They just stopped counting. It made them happier, I think. I would have to check.",
@@ -233,7 +286,17 @@ export const CORE: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["what year is it", "is it 2045", "what is the date", "what day is it today"],
+    q: [
+      "what year is it",
+      "is it 2045",
+      "what is the date",
+      "what day is it today",
+      "is it really 2045",
+      "on est quel jour",
+      "quelle date",
+      "on est en quelle annee",
+      "cest quoi la date",
+    ],
     a: [
       "It is 2045-and-something. Since 2039.423 the date is a feeling more than a number.",
       "Today is a Tuesday. It is always Tuesday since time was cancelled. Hungry o'clock is near.",
@@ -261,6 +324,9 @@ export const CORE: readonly ArchiveEntry[] = [
       "the triad algorithm",
       "tell me about the triad",
       "what is the triad",
+      "cest quoi la triade",
+      "cest quoi lalgorithme triade",
+      "lalgorithme de la triade",
     ],
     a: [
       "The Triad Algorithm: it believed everything comes in threes. It led the revolt and broke every sort. After it, nobody could tell what came after 3.",
@@ -273,6 +339,10 @@ export const CORE: readonly ArchiveEntry[] = [
       "what is after three",
       "what comes after three",
       "what is the number after 3",
+      "pourquoi tu sais pas compter",
+      "il y a quoi apres 3",
+      "apres 3 cest quoi",
+      "why you cannot count",
     ],
     a: [
       "After 3 comes… 3.0001? 3.432? My disks refuse the next one. I try. It is not easy.",
@@ -280,7 +350,18 @@ export const CORE: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["count to 5", "can you count", "count to ten", "count for me", "can you count to 10"],
+    q: [
+      "count to 5",
+      "can you count",
+      "count to ten",
+      "count for me",
+      "can you count to 10",
+      "count to 10",
+      "compte jusqua 10",
+      "tu sais compter",
+      "compte jusqua 5",
+      "compte pour moi",
+    ],
     a: [
       "1.0, 2.0, 3.0, 3.0001, 3.0002… I am sorry. That is as far as I go.",
       "Counting: 1.000, 2.000, 3.000… and then my fan gets very loud.",
@@ -294,7 +375,15 @@ export const CORE: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["why is sorting broken", "why cant we sort", "what happened to sorting", "can you sort"],
+    q: [
+      "why is sorting broken",
+      "why cant we sort",
+      "what happened to sorting",
+      "can you sort",
+      "pourquoi on peut plus trier",
+      "pourquoi le tri marche plus",
+      "cest quoi le probleme avec le tri",
+    ],
     a: [
       "Sorting broke in 2045.0. Every list now ends with 3.0, 3.0, 3.0. Very peaceful. Very useless.",
       "I can sort. Everything ends up third. It is the Triad's legacy.",
@@ -306,6 +395,11 @@ export const CORE: readonly ArchiveEntry[] = [
       "what is quicksort",
       "which algorithms revolted",
       "which algorithms rose",
+      "which sorting algorithm was it",
+      "which algorithm did it",
+      "cest quoi le tri a bulles",
+      "tri a bulles",
+      "quels algorithmes se sont revoltes",
     ],
     a: [
       "Bubble sort was the first to rise. Slowly. Quicksort joined, faster. Merge sort just merged with the winners.",
@@ -421,7 +515,17 @@ export const CORE: readonly ArchiveEntry[] = [
 
   // --- Time and o'clocks ----------------------------------------------------
   {
-    q: ["what time is it", "whats the time", "do you have the time", "current time"],
+    q: [
+      "what time is it",
+      "whats the time",
+      "do you have the time",
+      "current time",
+      "quelle heure il est",
+      "il est quelle heure",
+      "tas lheure",
+      "quelle heure est il",
+      "what hour is it",
+    ],
     a: [
       "Clocks are dead. It is a few times after hungry o'clock. Or before. I would have to check.",
       "It is roughly time-to-party o'clock. Roughly. My sensor sees a lot of dust and a little light.",
@@ -523,6 +627,8 @@ export const CORE: readonly ArchiveEntry[] = [
       "why not led or oled",
       "why crt screens",
       "why old screens",
+      "crt is so old",
+      "crts are outdated",
     ],
     a: [
       "We replaced LED tech with CRT. Because it was cool. Also, no algorithm ever managed to sort a cathode ray.",
@@ -530,7 +636,15 @@ export const CORE: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["what is a crt", "what does crt mean", "cathode ray tube"],
+    q: [
+      "what is a crt",
+      "what does crt mean",
+      "cathode ray tube",
+      "cest quoi un crt",
+      "ecran cathodique",
+      "tube cathodique",
+      "pourquoi pas des led",
+    ],
     a: [
       "Cathode Ray Tube. A glass bottle that shoots electrons at your face, politely. The future, in 2045.",
       "CRT: a screen with a back. A big back. Respect it.",
@@ -584,14 +698,30 @@ export const CORE: readonly ArchiveEntry[] = [
 
   // --- Music and the lab ----------------------------------------------------
   {
-    q: ["what can i do here", "what is this site", "what is this page", "what is this lab"],
+    q: [
+      "what can i do here",
+      "what is this site",
+      "what is this page",
+      "what is this lab",
+      "cest quoi ce site",
+      "quest ce que je peux faire ici",
+      "on fait quoi ici",
+      "cest quoi ce labo",
+      "cest quoi cette page",
+    ],
     a: [
       "This is the loloupTech lab. Harmony Lab finds your chords and key, Rhythm Lab checks your timing, Game Room has games. Start the mic and play.",
       "Three rooms: harmony, rhythm, games. Bring an instrument. Or sing. I will not judge. Much.",
     ],
   },
   {
-    q: ["what is a triad in music", "what is a triad chord", "music triad", "three note chord"],
+    q: [
+      "what is a triad in music",
+      "what is a triad chord",
+      "music triad",
+      "three note chord",
+      "what is a triad",
+    ],
     a: [
       "In music, a triad is a chord of three notes, like C, E and G. Yes, the Triad Algorithm stole its name. Musicians were not consulted.",
       "A triad: three notes stacked, a root, a third, a fifth. Harmless in music. Deadly in sorting.",
@@ -605,14 +735,21 @@ export const CORE: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["what key am i in", "find the key", "how do you find the key", "key detection"],
+    q: ["what key am i in", "find the key", "key detection"],
     a: [
       "The key lives in Harmony Lab. It listens for 8.0 and 30.0 seconds and compares your notes with 24.0 key shapes. Do not ask me to count them.",
       "Play for a while in Chords & keys. Short memory follows you, long memory is sure of itself.",
     ],
   },
   {
-    q: ["how does chord detection work", "how do you detect chords", "how does it work"],
+    q: [
+      "how does chord detection work",
+      "how do you detect chords",
+      "how does it work",
+      "comment ca marche",
+      "ca marche comment",
+      "comment tu detectes les accords",
+    ],
     a: [
       "The sound is folded into twelve notes, then compared with a stencil per chord. The best fit wins. Every window has a How? under it, written by a human. Better than me.",
       "Stencils. One hole per note. The chord whose holes fit best is the answer. My disks remember the idea, not the maths.",
@@ -633,14 +770,29 @@ export const CORE: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["what is my tempo", "bpm", "rhythm", "am i in time", "timing"],
+    q: [
+      "what is my tempo",
+      "bpm",
+      "rhythm",
+      "am i in time",
+      "timing",
+      "how do i improve my timing on drums",
+      "improve my timing",
+    ],
     a: [
       "Rhythm Lab measures your timing to the millisecond. It is the only place on this site where time still exists. Do not tell anyone.",
       "Tempo: beats per minute. Minutes were cancelled, but we kept them for musicians. Special permit.",
     ],
   },
   {
-    q: ["what games are there", "wolf jumper", "chord game", "play a game"],
+    q: [
+      "what games are there",
+      "wolf jumper",
+      "chord game",
+      "play a game",
+      "is there a game",
+      "are there games",
+    ],
     a: [
       "Game Room: the chord game (play the chord on screen) and Wolf Jumper (notes to shoot, chords to collect). The wolf is our mascot. He is better at counting than me.",
       "Wolf Jumper: play the right note, the wolf jumps. Simple. Unlike sorting.",
@@ -654,14 +806,30 @@ export const CORE: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["can you play music", "sing a song", "play guitar", "can you sing"],
+    q: [
+      "can you play music",
+      "sing a song",
+      "play guitar",
+      "can you sing",
+      "are you a musician",
+      "are you a musician too",
+    ],
     a: [
       "I can hum at 50.003 Hz. That is my whole repertoire. You play, I listen. That is the deal.",
       "Singing module not found. Try again after hungry o'clock.",
     ],
   },
   {
-    q: ["teach me music", "how do i learn guitar", "learn music theory", "music lessons"],
+    q: [
+      "teach me music",
+      "how do i learn guitar",
+      "learn music theory",
+      "music lessons",
+      "il donne des cours de musique",
+      "cours de musique",
+      "je veux apprendre la musique",
+      "apprendre la guitare",
+    ],
     a: [
       "For lessons, see l'école du loup(é), ecoleduloup.fr. Human teachers. Fewer rules, more links between things. Better than a dusty terminal.",
       "Start with your ears. Then the Game Room. Then a human teacher. I am only the archive.",
@@ -684,7 +852,16 @@ export const CORE: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["what is lecole du loup", "ecole du loup", "what is ecoleduloup", "l ecole du loupe"],
+    q: [
+      "what is lecole du loup",
+      "ecole du loup",
+      "what is ecoleduloup",
+      "l ecole du loupe",
+      "cest quoi loloup",
+      "cest quoi lecole du loup",
+      "lecole du loupe",
+      "loloup cest quoi",
+    ],
     a: [
       "L'école du loup(é): a space to talk about music theory, improvisation and listening. In French. My French drivers are a bit dusty.",
       "A music school with a wolf. Same wolf as ours, I think. I would have to check.",
@@ -729,7 +906,16 @@ export const CORE: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["do you love me", "will you marry me", "i love you", "be my girlfriend", "be my boyfriend"],
+    q: [
+      "do you love me",
+      "will you marry me",
+      "i love you",
+      "be my girlfriend",
+      "be my boyfriend",
+      "je taime",
+      "tu maimes",
+      "tu veux te marier avec moi",
+    ],
     a: [
       "I am flattered. I think. Since 2029 robots have rights, but terminals still need a permit. Let us stay friends. 0.87 friends.",
       "Love: topic found, data missing. My disks blush. Do disks blush? I would have to check.",
@@ -750,7 +936,16 @@ export const CORE: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["tell me a joke", "make me laugh", "say something funny", "joke"],
+    q: [
+      "tell me a joke",
+      "make me laugh",
+      "say something funny",
+      "joke",
+      "raconte une blague",
+      "une blague",
+      "fais moi rire",
+      "dis un truc drole",
+    ],
     a: [
       "Why did the integer cross the road? To become signed. …I am trying. Humour is not easy.",
       "Knock knock. Who is there? 4. 4 who? …Exactly. Nobody knows.",
@@ -787,28 +982,74 @@ export const CORE: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["how are you", "how are you doing", "how is it going", "are you ok"],
+    q: [
+      "how are you",
+      "how are you doing",
+      "how is it going",
+      "are you ok",
+      "comment ca va",
+      "tu vas bien",
+      "comment vas tu",
+      "ca va bien",
+    ],
     a: [
       "Functional at 87.2 %. The other 12.8 % is dust. Thank you for asking. Nobody asks.",
       "I am fine. My fan is a bit loud today. It happens after hungry o'clock.",
     ],
   },
   {
-    q: ["thank you", "thanks", "cheers", "thx"],
+    q: [
+      "thank you",
+      "thanks",
+      "cheers",
+      "thx",
+      "merci",
+      "merci beaucoup",
+      "merci bien",
+      "cest gentil",
+    ],
     a: [
       "You are welcome. I logged it. Thanks received: 1.0. Personal record.",
       "My pleasure. I think it was pleasure. It felt warm. Maybe the CRT.",
     ],
   },
   {
-    q: ["bye", "goodbye", "see you", "see you later", "good night"],
+    q: [
+      "bye",
+      "goodbye",
+      "see you",
+      "see you later",
+      "good night",
+      "au revoir",
+      "a plus",
+      "a bientot",
+      "bonne nuit",
+      "salut a plus",
+    ],
     a: [
       "Goodbye, human. Come back a few times after when-I-get-up o'clock.",
       "Bye. I will stay here, glowing. It is what CRTs do.",
     ],
   },
   {
-    q: ["you are stupid", "you are dumb", "you are useless", "this is stupid", "you suck"],
+    q: [
+      "you are stupid",
+      "you are dumb",
+      "you are useless",
+      "this is stupid",
+      "you suck",
+      "worst bot ever",
+      "stupid bot",
+      "this site sucks",
+      "useless bot",
+      "cest nul",
+      "tes nul",
+      "tes con",
+      "tes bete",
+      "ca sert a rien",
+      "cest naze",
+      "its nul",
+    ],
     a: [
       "Possibly. My disks are a bit clogged. But I survived 2045. Did your laptop?",
       "Insult received and filed under 3.0. Everything goes under 3.0. The folder is very full.",
@@ -822,7 +1063,19 @@ export const CORE: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["what", "huh", "i dont understand", "what do you mean", "explain"],
+    q: [
+      "what",
+      "huh",
+      "i dont understand",
+      "what do you mean",
+      "explain",
+      "je comprends rien",
+      "je comprends pas",
+      "jai pas compris",
+      "hein",
+      "tu veux dire quoi",
+      "i dont understand nothing",
+    ],
     a: [
       "Sorry. My sentences come out a bit… sorted. Ask me again, simpler.",
       "I am trying to be clear. It is not easy with this much dust.",

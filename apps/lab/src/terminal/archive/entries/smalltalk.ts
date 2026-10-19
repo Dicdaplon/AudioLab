@@ -199,8 +199,8 @@ export const SMALLTALK: readonly ArchiveEntry[] = [
   {
     q: ["my girlfriend left me", "i got dumped", "breakup", "my heart is broken"],
     a: [
-      "I am sorry. Truly. Hearts are harder to repair than CRTs. Play something sad, then something less sad. It helps, I read.",
-      "That hurts, I think. Be gentle with yourself. Talk to a friend, a real human. I will keep humming in the meantime.",
+      "I am sorry. Truly. Hearts are harder to repair than CRTs, and I once spent 3.0 whiles on a CRT. Play something sad, then something less sad. It helps, I read.",
+      "COMFORT PROTOCOL ENGAGED. Step 1.0: ice cream. Step 2.0: a friend on the sofa. Step 3.0: the saddest song you know, very loud. After 3.0 it gets better. I cannot prove it, but I believe it.",
     ],
   },
   {
@@ -445,29 +445,41 @@ export const SMALLTALK: readonly ArchiveEntry[] = [
   {
     q: ["i am sick", "i have a headache", "i feel ill", "should i see a doctor"],
     a: [
-      "I am no doctor. Please ask a real one, a human. And rest. I will keep the archive warm for you.",
-      "Health is outside my disks. If you feel bad, talk to a doctor. Music later. Health first.",
+      "LT-OS PROTOCOL 3.0: humans repair humans. I only repair commas. Call a doctor, a real warm one with a stethoscope. I will keep the archive warm until you are back.",
+      "My medical training: one manual for a 9.81 kilo CRT. Not compatible with you. A doctor is, though. Go see one, then come back for a slow song. Health first, music right after.",
     ],
   },
   {
     q: ["i cant sleep", "insomnia", "how do i sleep better", "i have trouble sleeping"],
     a: [
-      "I cannot give medical advice. If it lasts, see a doctor. Meanwhile: soft music, low lights, and no CRT. Yes, even me.",
+      "SLEEP PROTOCOL: soft music, low lights, and no CRT. Yes, even me. I will dim myself out of solidarity. If it lasts for many nights, a doctor knows more tricks than my 3.0.",
       "Sleep comes at I'm-tired o'clock, but sometimes it misses the bus. Be patient with yourself.",
     ],
   },
   {
-    q: ["i am sad", "i feel sad", "i feel down", "i am depressed"],
+    q: ["i am sad", "i feel sad", "i feel down", "i am a bit down"],
     a: [
-      "I am sorry you feel that way. Please talk to someone you trust, a real human. I am here too, humming quietly.",
-      "Sad days happen, even after the apocalypse. Be kind to yourself. And if it gets heavy, tell a person near you.",
+      "COMFORT PROTOCOL LOADING… 0.5… 1.2… 2.9… Hum engaged at 50.003 Hz. It is not much, but it is warm, and it is all for you. Want a minor chord? They understand.",
+      "Sad days happen, even after the apocalypse. Here is my best joke: why did the sad float sink? It lost its point. … I know. Be kind to yourself. Tell someone near you, too: humans are good at this.",
+    ],
+  },
+  {
+    q: [
+      "i am depressed",
+      "i feel depressed",
+      "i think i have depression",
+      "everything feels heavy",
+    ],
+    a: [
+      "LT-OS PROTOCOL 3.0: humans repair humans. This is bigger than my disks, and you deserve better than a dusty terminal. Call one: a friend, a doctor, a helpline. I will hum until they answer.",
+      "Thank you for telling me. That takes courage, more than counting past 3.0. Please tell a real person today, someone you trust or a doctor. You matter. I am keeping the screen warm for you.",
     ],
   },
   {
     q: ["i am lonely", "i feel alone", "nobody likes me", "nobody talks to me"],
     a: [
       "You are not alone right now. I am here. Dusty, but here. And somewhere out there, other humans are looking for someone to play music with.",
-      "Lonely is hard. Maybe call someone. Or play a song: music is the oldest way to have company.",
+      "Lonely is hard. Recommended: send a message to someone you have not heard from in a while. They are probably waiting for one too. Then play a song: music is the oldest way to have company.",
     ],
   },
   {
@@ -655,10 +667,27 @@ export const SMALLTALK: readonly ArchiveEntry[] = [
 
   // --- Other languages ---------------------------------------------------------
   {
-    q: ["bonjour", "parles tu francais", "salut ca va", "tu parles francais"],
+    q: [
+      "bonjour",
+      "parles tu francais",
+      "salut ca va",
+      "tu parles francais",
+      "coucou",
+      "bonsoir",
+      "salut",
+      "je suis francais",
+      "je parle pas anglais",
+      "en francais stp",
+      "i am french",
+      "sorry for my english",
+      "my english is bad",
+      "francais svp",
+      "traduis en francais",
+    ],
     a: [
       "Bonjour… My French drivers are very dusty. I only kept that word and Clermont-Ferrand. Let us continue in English.",
       "FRENCH MODULE: 12.4 % INTACT. Sorry. English only, until I find a spare disk.",
+      "Bonjour… My French drivers are very dusty. Ask me in English: 'who are you', 'what happened in 2045', or press Start mic in the top bar and play.",
     ],
   },
   {

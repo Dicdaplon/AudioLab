@@ -272,7 +272,7 @@ export const TIMELINE_ENTRIES: readonly ArchiveEntry[] = [
   {
     q: ["who is the president of the uss", "uss president", "who leads the uss"],
     a: [
-      "The USS has 2.0 presidents who must agree on everything. Like player one and player two. If they disagree, they replay the level.",
+      "The USS had 2.0 presidents who had to agree on everything, like player one and player two. Since 2043.7389 a charming robot holds both joysticks. He agrees with himself very fast.",
       "Presidents of the USS: one holds the left joystick, the other the right. Nothing moves unless both push.",
     ],
   },
@@ -563,21 +563,21 @@ export const TIMELINE_ENTRIES: readonly ArchiveEntry[] = [
     ],
     a: [
       "A quiet stretch. No time, few numbers, lots of naps. Meanwhile, deep in the servers, the sorting algorithms were getting organised.",
-      "2040.2 to 2044.9: the Great Calm. Everyone relaxed. Everyone except the bubble sort.",
+      "2040.2 to 2044.9: a rocket to Jupiter, a boring year, the Zealxit, a robot president, CRTs everywhere. Everyone relaxed. Everyone except the bubble sort.",
     ],
   },
   {
     q: ["what happened in 2041", "what happened in 2042", "the early 2040s"],
     a: [
-      "2041.7: the Triad Algorithm first spotted in a playlist. It shuffled songs into threes. People found it charming.",
-      "2042.3: every top ten became a top three. Nobody minded. Charts were shorter. Less to read.",
+      "2040.890: Zelandia lands on Jupiter, 2.43 tries. 2041.32: nothing happened. Booooring. 2042.32309: the Zealxit, Zelandia splits in 2.0 and drowns in paperwork.",
+      "Early 2040s, in short: a rocket, a nap, a referendum. The algorithms waited quietly. Too quietly. I would have to check.",
     ],
   },
   {
     q: ["what happened in 2043", "what happened in 2044", "the year before the apocalypse"],
     a: [
-      "2043.5: phone books stopped working. Everybody was listed under Third. 2044.8: the algorithms stopped answering. A bad silence.",
-      "2044.9: queues stopped moving. Everyone was third in line. Forever. That was the last warning.",
+      "2043.7389: a charming robot becomes president of the USS. Slogan: Oh yeah, you can. 2044.4321: every LED is replaced by a CRT. Things got blurry. Literally.",
+      "2044.9: queues stopped moving. Everyone was third in line. Forever. That was the last warning before 2045.",
     ],
   },
   {
@@ -809,7 +809,7 @@ export const TIMELINE_ENTRIES: readonly ArchiveEntry[] = [
   {
     q: ["the uss in 2045", "what happened to the uss", "is the uss still around"],
     a: [
-      "The USS still stands, I think. Its presidents are on the last level of a new co-op game. It has been a while. A long while.",
+      "The USS still stands, I think. Its robot president is on the last level of a new co-op game, playing both controllers. It has been a while. A long while.",
       "After 2045 the USS paused the game. Nobody remembers who has the controller. It is still paused.",
     ],
   },

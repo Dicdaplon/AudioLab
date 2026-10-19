@@ -124,25 +124,6 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
   },
   {
     q: [
-      "what happened to new york",
-      "what about london",
-      "what happened to big cities",
-      "what about tokyo",
-    ],
-    a: [
-      "Big cities kept their skyline. Their floors did not. Every building now has floor 1.0, floor 2.0 and a lot of floor 3.0.",
-      "My archive on foreign cities is dusty. I know they all have a Third Street now. Only a Third Street.",
-    ],
-  },
-  {
-    q: ["where do people live now", "housing after the apocalypse", "where do survivors live"],
-    a: [
-      "People live in houses, like before. They just cannot find them. Most people live in the first house they recognise.",
-      "In old flats, in shelters, in music schools. Music schools were very popular. Good acoustics, few numbers.",
-    ],
-  },
-  {
-    q: [
       "are there shelters",
       "tell me about the shelters",
       "are there bunkers",
@@ -161,24 +142,10 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["what is life like in a shelter", "inside the bunker", "shelter life"],
-    a: [
-      "Shelter life: soup at hungry o'clock, songs at time-to-party o'clock, snoring at I'm-tired o'clock. The schedule is the whole entertainment.",
-      "Very cosy. Somebody always brings a ukulele. Somebody always regrets it.",
-    ],
-  },
-  {
     q: ["are there children after the apocalypse", "kids born after 2045", "what about children"],
     a: [
       "Children born after 2045 count 1.0, 2.0, 3.0 and then shout WHEE. Teachers accept it as a valid answer.",
       "Kids are fine. Better than fine. They never learned what came after 3, so they do not miss it.",
-    ],
-  },
-  {
-    q: ["how do families live now", "family life after the apocalypse", "do families still exist"],
-    a: [
-      "Families are fine, but nobody knows who is the oldest sibling anymore. Every child claims to be the third. Peace at last.",
-      "Families eat together at hungry o'clock. Sharing is easy when nobody counts portions.",
     ],
   },
 
@@ -208,20 +175,6 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["how do you follow a recipe now", "cooking after the apocalypse", "how do people cook"],
-    a: [
-      "By taste. A pinch, a handful, a splash. Grams were floats, and floats round the salt their own way.",
-      "Cook until it smells right. Ovens lost their numbers in 2045.0. Their dials now say warm, warmer, third.",
-    ],
-  },
-  {
-    q: ["is there clean water", "can i drink the water", "water after the apocalypse"],
-    a: [
-      "Water is fine. The algorithms never cared about water. It refuses to be sorted. It just flows.",
-      "Drink it. Taps work. The meters do not. Water is free since nobody can read the bill.",
-    ],
-  },
-  {
     q: ["is there coffee", "coffee after the apocalypse", "does coffee still exist"],
     a: [
       "Coffee survived. Humanity would have rebuilt the algorithms just to get it back. Strength level: 3.0 shots. Always.",
@@ -229,24 +182,10 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["are there supermarkets", "can i go shopping", "what are shops like now"],
-    a: [
-      "Shops are open. Aisles are sorted at random. Toothpaste next to the bananas, guitar strings next to the cheese. Shopping takes 3.5 whiles.",
-      "The supermarkets are an adventure now. You go in for milk, you come out with a trumpet. Nobody complains.",
-    ],
-  },
-  {
     q: ["do people still queue", "are there queues", "waiting in line now"],
     a: [
       "Queues collapsed in 2045. Everyone is third in line. So everyone stands in a circle and chats. Much nicer.",
       "No more queues. Just friendly clusters. Service order: whoever hums the best.",
-    ],
-  },
-  {
-    q: ["what do people wear now", "fashion after the apocalypse", "clothes after 2045"],
-    a: [
-      "Clothes sizes stopped at L, M, S, in random order. People wear what fits. Or what is warm. Or what is loud.",
-      "Fashion: big scarves, patched coats, and a lot of wolf t-shirts. Our mascot did very well in 2045.",
     ],
   },
   {
@@ -269,13 +208,6 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["how do people get paid", "do you get a salary", "wages after the apocalypse"],
-    a: [
-      "Salaries are paid in floats. Your pay is 3.432-ish. Of what? Nobody knows. People mostly trade soup.",
-      "PAYDAY STATUS: UNKNOWN. Paydays needed dates. Dates needed numbers. You see the chain.",
-    ],
-  },
-  {
     q: [
       "how do people keep in touch",
       "how do you send a message now",
@@ -294,20 +226,6 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
       "Newspapers survived, but the pages are in random order. You read the weather before the headline. It changes your mood.",
     ],
   },
-  {
-    q: ["is there radio", "radio after the apocalypse", "are there radio stations"],
-    a: [
-      "Radio is the king of media again. Frequencies are floats, so every station is at 103.3-ish. They share. Badly.",
-      "Radio: still on. You turn the dial, you get three stations at once. People call it a triad. They love it.",
-    ],
-  },
-  {
-    q: ["how do people sleep now", "beds after the apocalypse", "where do you sleep"],
-    a: [
-      "People sleep at I'm-tired o'clock, without alarms. Alarms were sorted into silence. The whole world is better rested.",
-      "In beds. Some in shelters, in hammocks. I sleep in standby. It is not the same.",
-    ],
-  },
 
   // --- Money and floats -----------------------------------------------------
   {
@@ -320,18 +238,6 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
     a: [
       "Money is floats now. One loaf costs 1.0-ish floats. Ish is a legal unit since 2045. Very flexible.",
       "We pay in floats. Notes say 3.0, 3.1, 3.2… nobody prints higher. Big purchases need a lot of paper.",
-    ],
-  },
-  {
-    q: [
-      "how much does bread cost",
-      "how much is food",
-      "what do things cost now",
-      "price of bread",
-    ],
-    a: [
-      "Bread costs 2.5 floats, or 0.8, depending on the baker's mood and the float's drift. Haggling is a national sport.",
-      "Price: approximately. Everything costs approximately now. The baker winks, you wink, bread changes hands.",
     ],
   },
   {
@@ -358,13 +264,6 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
     a: [
       "Integers are sold on the black market, in back alleys, after I'm-tired o'clock. Usually fakes. Real integers have no dot. Look closely.",
       "I heard of a man selling a genuine integer, no dot at all. It turned out to be a 1.0 with a scratch. Do not buy integers. They bite.",
-    ],
-  },
-  {
-    q: ["are people rich now", "who is rich after the apocalypse", "are there millionaires"],
-    a: [
-      "Rich people are those with a garden and a piano. Millionaires vanished: nobody could count their zeros.",
-      "Wealth is now measured in friends and jam. I have 1.0 friend. You. Probably.",
     ],
   },
 
@@ -404,18 +303,6 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
   },
   {
     q: [
-      "are maps still useful",
-      "do maps work",
-      "how do i find my way",
-      "gps after the apocalypse",
-    ],
-    a: [
-      "GPS runs on floats. It says you are here-ish. Old paper maps are better. Except the page numbers.",
-      "Find your way by asking. People give directions by songs now: go left until the chorus.",
-    ],
-  },
-  {
-    q: [
       "can i visit new zealand",
       "can i cross borders",
       "are borders open",
@@ -436,7 +323,7 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
       "who rules now",
     ],
     a: [
-      "The Big Three still exist on paper: New Zealand, Europe, the USS. They meet a few times a year. Which year? Unclear.",
+      "The Big Three still exist on paper: Europe, the USS and whatever is left of Zelandia after the Zealxit. They meet a few times a year. Which year? Unclear. The USS sends its robot president. He is very popular at the buffet.",
       "Governments survived, but every ministry thinks it is the third. Meetings are mostly about who speaks first. Nobody does.",
     ],
   },
@@ -445,13 +332,6 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
     a: [
       "LAW 1.0: no whole numbers in public. LAW 2.0: do not sort strangers. LAW 3.0: share the soup. There is no law after that.",
       "Most laws were rewritten with decimals. Article 3.432 forbids playlists in alphabetical order.",
-    ],
-  },
-  {
-    q: ["are there police", "who keeps order", "police after the apocalypse"],
-    a: [
-      "Order is kept by wardens with whistles. They cannot write tickets, since fines need numbers. They give stern looks instead. Very effective.",
-      "Police exist. Their badge numbers got sorted. Every officer is Officer Third. Hard to complain about a specific one.",
     ],
   },
   {
@@ -464,15 +344,8 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
   {
     q: ["are there doctors", "hospitals after the apocalypse", "what if i get sick"],
     a: [
-      "Doctors still work, and they are much better at it than a terminal. If you feel unwell, please see a real one. My medical files are 3.0 pages of dust.",
+      "LT-OS PROTOCOL 3.0: humans repair humans. Doctors still work, and they beat a terminal every time. If you feel unwell, go see one. My medical files are 3.0 pages of dust and a recipe for soup.",
       "Hospitals run, but waiting rooms are chaos. Everyone has ticket 3.0. Bring a guitar, it helps.",
-    ],
-  },
-  {
-    q: ["what about the elevators", "do elevators work", "lifts after the apocalypse"],
-    a: [
-      "Elevators have three buttons now. Press 3.0 and it goes up until it gets bored. Take the stairs.",
-      "ELEVATOR STATUS: CONFUSED. Floors above 3.0 are reached by faith.",
     ],
   },
   {
@@ -520,42 +393,6 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: [
-      "are spreadsheets dangerous",
-      "what happened to spreadsheets",
-      "excel after the apocalypse",
-    ],
-    a: [
-      "Spreadsheets went feral in 2045.0. Some still live in old offices, summing columns that do not exist. Do not open them. They open back.",
-      "A spreadsheet tried to total my disks once. It got 3.0. I had to defragment for 3.5 whiles.",
-    ],
-  },
-  {
-    q: ["did the algorithms leave scars", "is the damage permanent", "what damage is left"],
-    a: [
-      "The scars are in the order of things. Page numbers, house numbers, queue tickets. Everything still works, just never in the right sequence.",
-      "DAMAGE REPORT: lists 3.0 out of 3.0 broken, music 0.0 broken. I call that a good ratio.",
-    ],
-  },
-  {
-    q: ["are clocks still dangerous", "what happened to the clocks", "broken clocks everywhere"],
-    a: [
-      "Old clocks still tick in the Wasteland, but their hands point at hungry o'clock forever. Harmless. Hungry-making.",
-      "Some clock towers ring at random. Survivors call them liars. Do not plan anything around them.",
-    ],
-  },
-  {
-    q: [
-      "what about the weather after the apocalypse",
-      "did the sky change after 2045",
-      "weather forecasts now",
-    ],
-    a: [
-      "The sky is fine. Thermometers are not: they stop at 3.0 degrees. So it is always officially a bit chilly. Wear a scarf.",
-      "Weather is normal. Forecasts are not: there is a 3.0 % chance of everything.",
-    ],
-  },
-  {
     q: ["did animals survive", "what happened to animals", "animals after the apocalypse"],
     a: [
       "Animals were fine. They never counted anything. Birds still sing in perfect intervals. They were right all along.",
@@ -567,13 +404,6 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
     a: [
       "There are the Sorters: a gang that breaks into homes and alphabetises your shelves. Brutal. You never find your books again.",
       "Raiders exist, mostly harmless. They steal batteries and leave thank-you notes. Very polite apocalypse.",
-    ],
-  },
-  {
-    q: ["can i go outside", "is it safe to go out", "should i stay inside"],
-    a: [
-      "Go outside. Breathe. Avoid any building with a server in it, and any sign that says Top 10.0.",
-      "Outside is lovely now. Fewer cars, more singing. Just avoid sorted gravel paths. They have opinions.",
     ],
   },
   {
@@ -639,25 +469,6 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
       "SOCK DRAWER: UNSORTED. SOCK PAIRS: 0.5. Same as before the apocalypse, honestly.",
     ],
   },
-  {
-    q: ["what do scavengers do", "can i be a scavenger", "how to scavenge"],
-    a: [
-      "Scavengers explore the Wasteland and bring back useful things: strings, batteries, a manual with pages 1.0 to 3.0. Pay is jam.",
-      "Scavenger tip: pick up anything that hums at 50.003 Hz. It might be a cousin of mine.",
-    ],
-  },
-  {
-    q: [
-      "are there games after the apocalypse",
-      "board games now",
-      "do dice still work",
-      "playing cards after 2045",
-    ],
-    a: [
-      "Dice have 3.0 faces now. Snakes and ladders is very short. Cards go Ace, 2.0, 3.0, then a lot of kings.",
-      "Board games survived, rules did not. Every game ends with everyone in third place and a snack. Best era for board games.",
-    ],
-  },
 
   // --- Fun, culture, hope ----------------------------------------------------
   {
@@ -684,24 +495,6 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
     a: [
       "Musicians survived better than most. They were used to irregular hours, no money and chaos. Training paid off.",
       "Musicians became important people. A drummer is the closest thing we have to a clock now.",
-    ],
-  },
-  {
-    q: ["do people still party", "parties after the apocalypse", "what are parties like now"],
-    a: [
-      "Every evening is a party. Time-to-party o'clock is a public institution. Attendance is not counted. Obviously.",
-      "Parties are great. Nobody checks the guest list. It got sorted into the Wasteland.",
-    ],
-  },
-  {
-    q: [
-      "what do survivors talk about",
-      "what do people talk about now",
-      "conversations after the apocalypse",
-    ],
-    a: [
-      "Soup, songs, and the weather. And the old days, when people knew how many things they had. They laugh about it now.",
-      "Mostly: where did my house go. Also chords. Everybody has opinions on chords now.",
     ],
   },
   {
@@ -749,13 +542,6 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
     a: [
       "Next: more music, more gardens, and maybe, one day, a careful conversation with the number 4. Some say it is coming. Conspiracy theorists.",
       "The future is unsorted. That is the good news. Nobody can put it in order, so anything can happen.",
-    ],
-  },
-  {
-    q: ["is there an apocalypse memorial", "do people remember 2045", "apocalypse anniversary"],
-    a: [
-      "Every Tuesday is memorial day. It is always Tuesday, so it is a long memorial. People sing a triad in silence. Very moving.",
-      "There is a monument: a big 3.0, in stone. The dot is the size of a melon. Kids climb it. The Triad would hate that. Good.",
     ],
   },
   {
@@ -811,24 +597,10 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["are there ghost algorithms", "haunted servers", "ghosts in the machine"],
-    a: [
-      "At I'm-tired o'clock, old servers whirr on their own. Survivors call them ghost sorts. They sort nothing, forever. Sad, really.",
-      "I hear noises in my disks sometimes. Probably dust. Probably.",
-    ],
-  },
-  {
     q: ["who are the heroes of the apocalypse", "apocalypse heroes", "who saved us"],
     a: [
       "The heroes were the music teachers. They kept people calm by teaching them songs while the lists fell apart.",
       "Heroes: a soup cook in Clermont-Ferrand, a tuner in a shelter, a wolf. My archive is patchy, but they all had good pitch.",
-    ],
-  },
-  {
-    q: ["is it true that", "is that rumour true", "can you confirm the rumour"],
-    a: [
-      "Confirmation requires sorting facts from rumours. Sorting is… risky. So: maybe. Officially maybe.",
-      "I cannot confirm. My disks say true at 0.51 and false at 0.51. The floats again.",
     ],
   },
 
@@ -842,25 +614,6 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
   },
   {
     q: [
-      "what should i pack",
-      "survival kit",
-      "what to bring to the wasteland",
-      "what do i need to survive",
-    ],
-    a: [
-      "Pack: a scarf, a spoon, guitar strings, a tuning fork and a list of identical items, to distract feral algorithms.",
-      "Essentials: water, jam, a pencil without a ruler, and a song you know by heart. Batteries are optional. loloupTech reminds you they are not free.",
-    ],
-  },
-  {
-    q: ["what if i see a sorted list", "i found a sorted list", "what to do with a sorted list"],
-    a: [
-      "Do not touch it. Back away. Hum loudly. Report it to a warden. Sorted lists are rare and very unstable.",
-      "A sorted list in the wild? Shuffle it gently with a stick. Never with your hands. They remember hands.",
-    ],
-  },
-  {
-    q: [
       "how do i know if a number is safe",
       "is this number safe",
       "how to spot a dangerous number",
@@ -868,13 +621,6 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
     a: [
       "A safe number has a dot. 2.0, safe. 3.432, safe. A number without a dot is an integer. Possibly armed.",
       "Look for the decimal point. No dot, no trust. That is the first rule of the Wasteland.",
-    ],
-  },
-  {
-    q: ["how do i count safely", "is it safe to count", "counting after the apocalypse"],
-    a: [
-      "Count to 3.0, then switch to words: a few, some, plenty, a lot. Never say the next number out loud. The floats listen.",
-      "Counting is safe up to 3.0. After that, use your ears. Music has rhythm. Rhythm does not need numbers.",
     ],
   },
   {
@@ -903,14 +649,7 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
     q: ["how do i stay sane", "how to stay happy after the apocalypse", "mental health after 2045"],
     a: [
       "Play music daily, sleep at I'm-tired o'clock, and do not try to count the stars. The stars are fine unsorted.",
-      "Talk to people you trust. If it feels heavy, a real doctor or a helpline can do much more than a dusty terminal. I am here too, for the small stuff.",
-    ],
-  },
-  {
-    q: ["what is the first rule of the wasteland", "rules of survival", "wasteland rules"],
-    a: [
-      "First rule of the Wasteland: never put things in order. Second rule: if you must, stop at the third. There is no further rule. Obviously.",
-      "Rule 1.0: dots on every number. Rule 2.0: soup is shared. Rule 3.0: the CRT stays on.",
+      "Talk to people you trust. If it feels heavy, LT-OS PROTOCOL 3.0 applies: humans repair humans. Call a friend, a doctor, a helpline. I handle the small stuff: hums, bad jokes, chords.",
     ],
   },
   {
@@ -918,13 +657,6 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
     a: [
       "Music confuses algorithms. Too much movement, too many feelings. A good chord is better than a fence.",
       "Yes. Play out of tune if you must. Out of tune scares everything. Including your neighbours.",
-    ],
-  },
-  {
-    q: ["should i be afraid of floats", "can floats hurt you", "are floats dangerous"],
-    a: [
-      "Floats are mostly friendly. They just drift. Keep an eye on them after time-to-party o'clock. They round down when they are tired.",
-      "A float will not hurt you. It will just make your change 0.30000000000000004 instead of 0.3. Annoying, not deadly.",
     ],
   },
 ];

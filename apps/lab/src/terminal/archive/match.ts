@@ -7,8 +7,8 @@
  *   letters   Dice overlap of letter trigrams, which forgives typos
  *
  * score = 0.4 · words + 0.6 · letters, in [0, 1]. On reworded and misspelled
- * questions (tests/archive.test.ts), with about 1000 entries: letters alone
- * 78 %, words alone 81 %, this mix 88 %. With a hundred entries letters
+ * questions (tests/archive.test.ts), with about 5000 entries: letters alone
+ * 69 %, words alone 63 %, this mix 84 %. With a hundred entries letters
  * alone were best (94 %): the more entries, the more the words must weigh. Under `ARCHIVE_THRESHOLD`
  * the archive admits it does not know.
  */
@@ -71,18 +71,23 @@ function trigrams(text: string): Set<string> {
   return out;
 }
 
+/** A phrasing, for the postings: its entry, the norm of its word weights, its trigram count. */
 interface Indexed {
   entry: ArchiveEntry;
-  vector: Map<string, number>;
   norm: number;
-  grams: Set<string>;
+  grams: number;
 }
 
 export interface ArchiveIndex {
   find(question: string): ArchiveMatch | null;
 }
 
-/** Indexes every phrasing of every entry once; `find` is then a few ms for thousands. */
+/**
+ * Indexes every phrasing of every entry once. A search then walks inverted
+ * lists (which phrasings hold this trigram, this word) and scores only the
+ * phrasings that share something with the question: well under 1 ms for 16 000.
+ * Phrasings sharing nothing would score 0; ties go to the earlier phrasing.
+ */
 export function buildIndex(
   entries: readonly ArchiveEntry[],
   weights: { words: number; letters: number } = { words: 0.4, letters: 0.6 },
@@ -101,27 +106,67 @@ export function buildIndex(
     return { vector: v, norm: Math.sqrt(n) };
   };
 
-  const indexed: Indexed[] = phrasings.map(({ entry, q }, i) => ({
-    entry,
-    ...vectorOf(tokenised[i]),
-    grams: trigrams(q),
-  }));
+  const indexed: Indexed[] = [];
+  const wordPostings = new Map<string, { at: number; weight: number }[]>();
+  const gramPostings = new Map<string, number[]>();
+  phrasings.forEach(({ entry, q }, at) => {
+    const { vector, norm } = vectorOf(tokenised[at]);
+    const grams = trigrams(q);
+    indexed.push({ entry, norm, grams: grams.size });
+    for (const [t, weight] of vector) {
+      const list = wordPostings.get(t);
+      if (list) list.push({ at, weight });
+      else wordPostings.set(t, [{ at, weight }]);
+    }
+    for (const g of grams) {
+      const list = gramPostings.get(g);
+      if (list) list.push(at);
+      else gramPostings.set(g, [at]);
+    }
+  });
+
+  // Scratch space reused by every search.
+  const shared = new Uint16Array(indexed.length);
+  const dots = new Float64Array(indexed.length);
+  const seen = new Uint8Array(indexed.length);
 
   return {
     find(question) {
       const { vector, norm } = vectorOf(words(question));
       const grams = trigrams(question);
+      const touched: number[] = [];
+      const touch = (at: number) => {
+        if (!seen[at]) {
+          seen[at] = 1;
+          touched.push(at);
+        }
+      };
+      for (const g of grams)
+        for (const at of gramPostings.get(g) ?? []) {
+          touch(at);
+          shared[at]++;
+        }
+      for (const [t, w] of vector)
+        for (const { at, weight } of wordPostings.get(t) ?? []) {
+          touch(at);
+          dots[at] += w * weight;
+        }
+
       let best: ArchiveMatch | null = null;
-      for (const item of indexed) {
-        let dot = 0;
-        for (const [t, w] of vector) dot += w * (item.vector.get(t) ?? 0);
-        const cosine = norm > 0 && item.norm > 0 ? dot / (norm * item.norm) : 0;
-        let shared = 0;
-        for (const g of grams) if (item.grams.has(g)) shared++;
-        const dice =
-          grams.size + item.grams.size > 0 ? (2 * shared) / (grams.size + item.grams.size) : 0;
+      let bestAt = Infinity;
+      for (const at of touched) {
+        const item = indexed[at];
+        const cosine = norm > 0 && item.norm > 0 ? dots[at] / (norm * item.norm) : 0;
+        const total = grams.size + item.grams;
+        const dice = total > 0 ? (2 * shared[at]) / total : 0;
         const score = weights.words * cosine + weights.letters * dice;
-        if (!best || score > best.score) best = { entry: item.entry, score };
+        if (!best || score > best.score || (score === best.score && at < bestAt)) {
+          best = { entry: item.entry, score };
+          bestAt = at;
+        }
+        shared[at] = 0;
+        dots[at] = 0;
+        seen[at] = 0;
       }
       return best;
     },

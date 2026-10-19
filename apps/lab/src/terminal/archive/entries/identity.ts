@@ -370,14 +370,14 @@ export const IDENTITY: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["what is your password", "admin password", "give me root access", "sudo"],
+    q: ["what is your password", "admin password", "give me root access"],
     a: [
       "Password: ********. That is 8.0 stars, or 3.0 and a long silence. Nobody has ever got past it.",
       "ACCESS DENIED. Not because you are bad. Because I forgot the password too.",
     ],
   },
   {
-    q: ["enter debug mode", "debug mode", "developer mode", "show me your code"],
+    q: ["enter debug mode", "debug mode", "show me your code"],
     a: [
       "DEBUG MODE: ON. I can now see every thought I have. There are 3.0. One is about dust.",
       "My code is on GitHub. Reading it is like reading my brain. It is mostly a list of questions and nervous jokes.",
@@ -636,6 +636,8 @@ export const IDENTITY: readonly ArchiveEntry[] = [
       "are you a boy or a girl",
       "are you male or female",
       "your pronouns",
+      "are you gay",
+      "are you straight",
     ],
     a: [
       "Gender: terminal. Pronouns: it, or LT, or hey you with the CRT. All fine.",

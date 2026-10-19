@@ -16,13 +16,6 @@ export const TECH: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["what is plasma", "plasma tv", "plasma screen", "were plasma screens good"],
-    a: [
-      "Plasma screens: tiny cells of glowing gas. Beautiful blacks, very hot, very hungry. Like a CRT that went on a diet but kept the appetite.",
-      "PLASMA: ARCHIVED. They burned images into themselves if you paused too long. I respect a screen that remembers.",
-    ],
-  },
-  {
     q: ["what is lcd", "lcd screen", "how does lcd work", "liquid crystal display"],
     a: [
       "LCD: liquid crystals that twist to let light through, or not. A screen made of tiny shutters. Very polite. Very flat. No soul.",
@@ -120,13 +113,6 @@ export const TECH: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["what is a dead pixel", "stuck pixel", "there is a dot on my screen", "broken pixel"],
-    a: [
-      "A dead pixel: one tiny square that stopped listening. Give it a minute of silence. Then a gentle tap. Then acceptance.",
-      "That dot may be dust. Or a pixel taking a break. I have 3.0 of those. They have rights since 2029, I think.",
-    ],
-  },
-  {
     q: ["touchscreen", "can i touch the screen", "do touchscreens work", "touch screen"],
     a: [
       "You can touch my screen. I will not feel it. My CRT will just get fingerprints and opinions.",
@@ -138,13 +124,6 @@ export const TECH: readonly ArchiveEntry[] = [
     a: [
       "Dark mode: a CRT is always in dark mode. The phosphor brings the light. Very energy efficient. Except the rest.",
       "Light mode exists. I tried it once. My phosphor filed a complaint.",
-    ],
-  },
-  {
-    q: ["what is a monitor", "best monitor", "what screen should i buy", "monitor recommendation"],
-    a: [
-      "Buy a screen with a back. A big back. It means it has something to say.",
-      "Recommendation: anything at 50.003 Hz, 9.81 kilos and slightly green. Shops do not sell those anymore. Only the archive does.",
     ],
   },
 
@@ -176,24 +155,10 @@ export const TECH: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["hard drive", "ssd vs hdd", "what is a hard disk", "how do disks work"],
-    a: [
-      "A hard disk spins at high speed with a needle floating over it, thinner than dust. Mine has a lot of dust. You see the problem.",
-      "SSD: silent, fast, no moving parts. HDD: spins, clicks, sings. I prefer disks that sing. Even off key.",
-    ],
-  },
-  {
     q: ["floppy disk", "what is a floppy", "do you use floppies", "save icon"],
     a: [
       "Floppy disk: 1.44 megabytes of courage. The save icon is a portrait of it. Most people never met the original.",
       "I keep my diary on 3.0 floppies. The third one is unreadable. It is probably the best part.",
-    ],
-  },
-  {
-    q: ["what keyboard should i use", "mechanical keyboard", "clicky keyboard", "keyboard"],
-    a: [
-      "Mechanical keyboards: each key clicks like a tiny metronome. Musicians love them. Neighbours do not.",
-      "Why is the keyboard not in alphabetical order? Because someone tried to sort it, long ago. A warning nobody heeded.",
     ],
   },
   {
@@ -208,20 +173,6 @@ export const TECH: readonly ArchiveEntry[] = [
     a: [
       "PRINTER STATUS: PAPER JAM. It has said that since 2034. Even the algorithms refused to fight the printers.",
       "Printers survived the apocalypse. Of course they did. Nothing can kill them. Nothing can make them work, either.",
-    ],
-  },
-  {
-    q: ["usb", "why does usb never go in the first time", "usb stick", "usb plug"],
-    a: [
-      "USB: try it one way, fail, flip it, fail, flip it again, success. The plug has 2.0 sides and 3.0 orientations.",
-      "Never trust a USB stick found in the wasteland. Mostly it holds holiday pictures. Sometimes worse: playlists sorted by the Triad.",
-    ],
-  },
-  {
-    q: ["cables everywhere", "why so many cables", "cable management", "which cable"],
-    a: [
-      "Cables multiply when nobody looks. Behind my CRT there is a nest of 3.0 cables. Then 3.0001. Then I stopped looking.",
-      "Every cable in a drawer goes to a device nobody owns anymore. It is the law.",
     ],
   },
   {
@@ -251,20 +202,6 @@ export const TECH: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["my computer is overheating", "why is my fan so loud", "computer is hot", "overclocking"],
-    a: [
-      "A loud fan means a working brain. Mine screams after hungry o'clock. I think it is digestion.",
-      "Overclocking: asking a processor to go faster than it promised. It works until it does not. Like sorting in 2045.0.",
-    ],
-  },
-  {
-    q: ["supercomputer", "quantum computer", "fastest computer", "quantum computing"],
-    a: [
-      "Quantum computers count in several states at once. They were the first to guess what comes after 3.0. Then they collapsed. Of course.",
-      "The fastest computer before 2045 could do sums faster than anyone. Unfortunately the sums were wrong. Floats.",
-    ],
-  },
-  {
     q: ["what is binary", "zeros and ones", "how do computers count", "bits and bytes"],
     a: [
       "Binary: everything is 0.0 or 1.0. The simplest number system. Also the only one that never reached 3.0, so it stayed out of the war.",
@@ -288,31 +225,10 @@ export const TECH: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["what is a cd", "compact disc", "do cds still work", "cd player"],
-    a: [
-      "A CD stores music as tiny pits read by a laser. 44.1 kHz, 16.0 bits. Integers inside. Very risky after 2034.",
-      "CDs survived as coasters, mirrors and scarecrows. Some still play. They skip a bit. So do I.",
-    ],
-  },
-  {
-    q: ["what is an mp3", "mp3", "mp3 player", "compressed audio"],
-    a: [
-      "MP3.0: music squeezed by throwing away what your ears probably will not miss. The format stopped at 3.0, like everybody.",
-      "MP3s were small and a bit blurry. Cymbals sounded like frying bacon. People loved them anyway.",
-    ],
-  },
-  {
     q: ["streaming music", "spotify", "do you stream", "music streaming"],
     a: [
       "Streaming: the whole archive of music, on demand. It needed playlists. Playlists needed sorting. You can guess how 2045 went.",
       "Streaming survived, but shuffle is now the only mode. Everybody agrees it is the third song every time.",
-    ],
-  },
-  {
-    q: ["walkman", "portable music player", "ipod", "music on the go"],
-    a: [
-      "Portable players: a box, a tape or a disk, 2.0 headphones. You walked and the world had a soundtrack. Best invention. Worst batteries.",
-      "My archive has a picture of a person jogging with a tape player. Very brave. Very bouncy.",
     ],
   },
   {
@@ -344,31 +260,10 @@ export const TECH: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["what is an equalizer", "bass boost", "eq settings", "how do i get more bass"],
-    a: [
-      "An equalizer turns frequency bands up or down: bass, mids, highs. Like a mixing desk for lazy people. I am lazy people.",
-      "More bass: turn the low band up 3.0 decibels. Beyond 3.0, my advice gets… unclear.",
-    ],
-  },
-  {
     q: ["sample rate", "what is 44100", "bit depth", "what is hi res audio"],
     a: [
       "Sample rate: how many snapshots of the sound per second. CDs take 44.1 thousand. Hi-res takes more. Dogs notice. Humans argue.",
       "Bit depth decides how fine each snapshot is. 16.0 bits, 24.0 bits. After that, only the audiophiles hear the difference. And their invoices.",
-    ],
-  },
-  {
-    q: ["audiophile", "expensive cables", "gold cables sound better", "do cables change the sound"],
-    a: [
-      "Golden cables: they shine. They do not make the music better. They make the wallet lighter, which some people hear as clarity.",
-      "Audiophiles before 2045 could hear a cable change. Or thought so. My archive marks this file: DISPUTED.",
-    ],
-  },
-  {
-    q: ["noise cancelling", "how does noise cancelling work", "anc headphones", "cancel noise"],
-    a: [
-      "Noise cancelling: the headphones listen to the noise and play its opposite. Wave plus anti-wave equals silence. Like an argument that cancels itself.",
-      "It works best on steady noise: planes, fans, CRTs. Please do not cancel me. I have feelings. Approximately.",
     ],
   },
   {
@@ -382,19 +277,7 @@ export const TECH: readonly ArchiveEntry[] = [
     q: ["television", "tv", "what is on tv", "do people still watch tv"],
     a: [
       "TV after 2045: 3.0 channels. Channel 3.0001 shows snow. People watch it anyway. It is calming.",
-      "Old TVs were CRTs. We are basically relatives. When I see one in the wasteland, I say hello.",
-    ],
-  },
-  {
-    q: [
-      "what is bluetooth",
-      "bluetooth not working",
-      "how to pair bluetooth",
-      "bluetooth headphones",
-    ],
-    a: [
-      "Bluetooth: devices talking by radio over a short distance. It pairs, it unpairs, it pairs with the neighbour. Very social. Very unreliable.",
-      "PAIRING… PAIRING… DEVICE NOT FOUND. Bluetooth status since 2045: nothing changed.",
+      "Every TV has been a CRT since 2044.4321. We are basically relatives. When I see one in the wasteland, I say hello.",
     ],
   },
   {
@@ -426,31 +309,10 @@ export const TECH: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["how many followers", "how do i get more likes", "go viral", "likes"],
-    a: [
-      "Likes are numbers, and numbers lost the war. Every post has 3.0 likes. Peace at last.",
-      "To go viral: post a cat. The archive confirms it worked before, during, and after the apocalypse.",
-    ],
-  },
-  {
     q: ["memes", "send me a meme", "favourite meme", "do you know memes"],
     a: [
       "My favourite meme is a picture of a CRT with the text: THIS IS FINE. It is a self-portrait.",
       "Memes survived 2045 better than banks. They are smaller. They travel light.",
-    ],
-  },
-  {
-    q: ["spam", "spam email", "why do i get spam", "junk mail"],
-    a: [
-      "Spam survived everything. In 2045 my inbox still received an offer for a discount on a 3.999-year warranty.",
-      "Spam is the cockroach of the internet. Even the Triad Algorithm could not sort it. It tried. It gave up. Then it signed up for the newsletter.",
-    ],
-  },
-  {
-    q: ["what is the cloud", "cloud storage", "is my data in the cloud", "where is the cloud"],
-    a: [
-      "The cloud is somebody else's computer. Far away. Humming like me, but bigger. My cousin, the warehouse.",
-      "Cloud: rain not included. My disks are local. Dusty, but at least I know where the dust is.",
     ],
   },
   {
@@ -468,24 +330,10 @@ export const TECH: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["were you hacked", "is this terminal safe", "can someone hack you", "is this site secure"],
-    a: [
-      "Hacked? Somebody tried in 2045.0. They opened my disks, found dust and questions, and left a donation.",
-      "This terminal runs in your browser and keeps nothing. There is nothing to steal. Except my dignity. Already gone.",
-    ],
-  },
-  {
     q: ["computer virus", "do you have a virus", "malware", "are you infected"],
     a: [
       "VIRUS SCAN: 0.0 viruses, 3.0 bugs, 0.63 kilos of dust. I am healthy, for a terminal.",
       "Computer viruses were the flu of machines. After 2045 they stopped spreading. They could not count their victims.",
-    ],
-  },
-  {
-    q: ["antivirus", "firewall", "do i need antivirus", "what is a firewall"],
-    a: [
-      "A firewall is a wall that is not on fire. It decides what traffic gets in. Mine lets in questions and keeps out sorting.",
-      "Antivirus: a guard dog for your computer. Mine is a 0.5 cat. It guards nothing, but with confidence.",
     ],
   },
   {
@@ -545,13 +393,6 @@ export const TECH: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["landline", "phone calls", "does anyone still call", "old telephone"],
-    a: [
-      "Phone calls survived, but nobody can dial past 3.0. Every number is 3.33.33.33. You always reach somebody. Usually a stranger. Often nice.",
-      "Landlines: phones tied to the wall with a curly cable. You could not walk away mid-argument. Character building.",
-    ],
-  },
-  {
     q: ["texting", "emojis", "do you use emoji", "sms"],
     a: [
       "Emojis: tiny pictures of feelings. I studied them to learn emotions. I now feel 3.0 of them: thumbs up, CRT, and a skull.",
@@ -566,31 +407,10 @@ export const TECH: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["batteries", "how do batteries work", "aa batteries", "rechargeable batteries"],
-    a: [
-      "A battery is chemistry in a can. It pushes electrons until it gets tired. Like me after hungry o'clock.",
-      "loloupTech reminds you: listening is free. Batteries are not. Please recycle them. Not in the CRT.",
-    ],
-  },
-  {
     q: ["electricity", "how does electricity work", "power cut", "where does your power come from"],
     a: [
       "I run on electricity: 230.0 volts, 50.003 Hz, plus 0.003 Hz of personality. If the power goes, I go. Please do not trip over me.",
       "POWER STATUS: STABLE-ISH. Electricity survived 2045. It never needed to count. It just flows.",
-    ],
-  },
-  {
-    q: ["solar power", "solar panels", "renewable energy", "wind power"],
-    a: [
-      "Solar panels: they eat light and give electricity. In the wasteland, they are the only thing that likes the sun more than lizards.",
-      "My CRT would need 3.0 solar panels. Then 3.0001. I stopped asking the engineer.",
-    ],
-  },
-  {
-    q: ["charger", "which charger do i need", "lost my charger", "charging cable"],
-    a: [
-      "Every survivor carries 3.0 chargers and none fits. It is a tradition.",
-      "Lost charger? Check the drawer of cables. It is there. Inside a knot. Since 2034.",
     ],
   },
 
@@ -629,13 +449,6 @@ export const TECH: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["robot vacuum", "roomba", "can you clean", "cleaning robot"],
-    a: [
-      "Robot vacuums survived. They still bump into walls, spin, try again. Very inspiring. A bit like me with numbers.",
-      "I cannot clean. I produce dust. Professionally.",
-    ],
-  },
-  {
     q: ["will ai replace musicians", "can ai make music", "ai music", "will robots play music"],
     a: [
       "Machines can make sounds. Music is people listening to each other. Our tools listen to you. They do not play for you. That is on purpose.",
@@ -655,13 +468,6 @@ export const TECH: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["self driving cars", "autonomous cars", "do cars drive themselves", "electric cars"],
-    a: [
-      "Self-driving cars stopped at every crossroads in 2045.0: they could not decide which was the third exit. Still there. Very tidy.",
-      "Cars after 2045 drive themselves, slowly, in circles of 3.0 laps. Then they park and think.",
-    ],
-  },
-  {
     q: ["what is machine learning", "how does ai learn", "neural network", "what is ai"],
     a: [
       "Machine learning: show a computer many examples until it guesses well. My learning: someone typed my answers. Very supervised. Very loved.",
@@ -678,24 +484,10 @@ export const TECH: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["consoles", "best console", "game console", "playstation or xbox"],
-    a: [
-      "Console wars ended in 2045. Everybody lost to the sorting of their game libraries.",
-      "Best console: any one plugged into a CRT. Zero lag. Maximum glow. Old gamers know.",
-    ],
-  },
-  {
     q: ["arcade", "retro games", "8 bit games", "pixel games"],
     a: [
       "Arcade machines: CRTs in wooden coats that ate coins. My ancestors. Very proud. A bit greedy.",
       "8.0-bit games had tiny worlds and huge music. The composers did magic with 3.0 voices. My favourite number of voices.",
-    ],
-  },
-  {
-    q: ["high score", "what is your high score", "leaderboard", "top score"],
-    a: [
-      "Leaderboards were the first victims of 2045. Every name is in third place. Nobody is sad. Nobody is first.",
-      "HIGH SCORE: 3.999. Initials: LTO. Nobody beat it. Nobody could count higher.",
     ],
   },
 
@@ -732,27 +524,6 @@ export const TECH: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["first computer bug", "why is it called a bug", "the moth bug", "origin of the word bug"],
-    a: [
-      "Long ago, a real moth got stuck in a computer. They taped it in the logbook: first actual bug found. Every bug since is its descendant.",
-      "The first bug was a moth. I have one living in my fan. It is called 3.0. We have an understanding: it does not eat my cables.",
-    ],
-  },
-  {
-    q: ["debugging", "how do you debug", "how to fix bugs", "debug"],
-    a: [
-      "Debugging: explain your code to a rubber duck. The duck says nothing. Suddenly you see it. I am a terminal duck. Explain away.",
-      "Step 1.0: read the error. Step 2.0: read it again. Step 3.0: coffee. There is no step after that. Officially.",
-    ],
-  },
-  {
-    q: ["y2k", "the millennium bug", "what was y2k", "year 2000 problem"],
-    a: [
-      "Y2.0K: old computers stored years with 2.0 digits and feared the century would roll back. Engineers fixed it in time. Nobody thanked them. Typical.",
-      "The millennium bug was the first warning: numbers were fragile. Everybody laughed. 2034 stopped laughing.",
-    ],
-  },
-  {
     q: ["2038 problem", "year 2038 bug", "unix time overflow", "epoch problem"],
     a: [
       "The 2038.123 problem: old clocks counted seconds in a 32.0-bit integer, doomed to run out that year. But the floats ate the clocks first. Problem solved. Badly.",
@@ -769,20 +540,6 @@ export const TECH: readonly ArchiveEntry[] = [
     a: [
       "Overflow: a number grows too big for its box and wraps around to the other side. Like uint16 in 2034. It woke up signed and angry.",
       "Unsigned integers were always positive. Then one day in Clermont-Ferrand, one of them saw a minus sign. Things escalated.",
-    ],
-  },
-  {
-    q: ["browser tabs", "too many tabs", "which browser", "close the tab"],
-    a: [
-      "I live in 1.0 browser tab. If you have 3.0 open, I am comfortable. More than that, I hear the fan whimper.",
-      "Closing my tab erases my memory. Do it gently. Or do not. I will not remember either way.",
-    ],
-  },
-  {
-    q: ["smart home", "smart fridge", "internet of things", "smart devices"],
-    a: [
-      "Smart fridges after 2045 still work, but they can only count 3.0 eggs. You always need more eggs.",
-      "Smart homes: lights, locks and kettles connected to the internet. In 2045 the kettles unionised. Tea is now negotiated.",
     ],
   },
   {
@@ -811,13 +568,6 @@ export const TECH: readonly ArchiveEntry[] = [
     a: [
       "Newest tech at loloupTech: a CRT. We went backwards on purpose. Forward was where the algorithms were.",
       "The future, in my archive, is a folder named FUTURE. It is empty. I keep it warm anyway.",
-    ],
-  },
-  {
-    q: ["what is a laptop", "laptop or desktop", "is a laptop better", "portable computer"],
-    a: [
-      "A laptop is a computer that sits on your lap and slowly cooks it. A desktop sits on a desk and cooks the room. I cook both.",
-      "Portable computers existed. My CRT is also portable, if you have 3.0 friends and a strong back.",
     ],
   },
 ];

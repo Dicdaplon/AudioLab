@@ -89,30 +89,6 @@ export const TIME: readonly ArchiveEntry[] = [
   },
   {
     q: [
-      "is hungry o'clock the same for everyone",
-      "do we all have the same o'clocks",
-      "my o'clocks are different",
-      "is it the same time for everybody",
-    ],
-    a: [
-      "No. Your hungry o'clock is yours. My records show a teenager whose when-I-get-up o'clock arrived after hungry o'clock. We let him be.",
-      "Each human carries their own o'clocks. It makes meetings difficult. It makes lunch very easy.",
-    ],
-  },
-  {
-    q: [
-      "what if i am never hungry",
-      "i skipped hungry o'clock",
-      "can i skip lunch",
-      "what if im not hungry",
-    ],
-    a: [
-      "If you are never hungry, hungry o'clock never comes, and the day gets stuck. Please eat something. For the calendar.",
-      "Skipping hungry o'clock is allowed. Side effects: grumpy chords and a 0.3 increase in wrong notes.",
-    ],
-  },
-  {
-    q: [
       "why am i always tired",
       "i'm tired all the time",
       "i am tired in the morning",
@@ -120,7 +96,7 @@ export const TIME: readonly ArchiveEntry[] = [
     ],
     a: [
       "If you are tired at when-I-get-up o'clock, your o'clocks are in the wrong order. It happens. Sleep earlier. Or blame the floats.",
-      "Being tired all the time means it is permanently I'm-tired o'clock for you. Try a bed, and 2.5 fewer screens. If it lasts, ask a real doctor. They are much better at this than me.",
+      "Being tired all the time means it is permanently I'm-tired o'clock for you. Try a bed, and 2.5 fewer screens. If it lasts, a doctor can find what a terminal cannot. I only diagnose dusty fans.",
     ],
   },
   {
@@ -161,30 +137,6 @@ export const TIME: readonly ArchiveEntry[] = [
     a: [
       "loloupTech is open from when-I-get-up o'clock to I'm-tired o'clock. I stay open after. Nobody told me to close.",
       "Opening hours: whenever this tab is open. Closing hours: whenever you leave me. No pressure.",
-    ],
-  },
-  {
-    q: [
-      "book an appointment",
-      "make an appointment",
-      "i have an appointment",
-      "schedule a meeting",
-    ],
-    a: [
-      "Appointment noted: a few times after hungry o'clock, on Tuesday. All appointments are on Tuesday. It saves paper.",
-      "I would book it, but my agenda was sorted in 2045. Every slot ended up third.",
-    ],
-  },
-  {
-    q: [
-      "when should we meet",
-      "when can we meet",
-      "what time works for you",
-      "are you free tomorrow",
-    ],
-    a: [
-      "I am free from when-I-get-up o'clock to I'm-tired o'clock, and also during. I am a terminal. My calendar is a CRT.",
-      "Let us meet a few times before time-to-party o'clock. If you are late, I will not notice. I do not have a watch.",
     ],
   },
   {
@@ -229,27 +181,6 @@ export const TIME: readonly ArchiveEntry[] = [
       "Timer started. It will end after a while. Possibly 2.5 whiles. You will feel it.",
     ],
   },
-  {
-    q: ["time me", "start a stopwatch", "can you time this", "how fast was i"],
-    a: [
-      "Stopwatch running… stopped. Result: a short while. Personal best, probably.",
-      "If you want real timing, Rhythm Lab measures your beats very precisely. It has a special permit. I only have feelings.",
-    ],
-  },
-  {
-    q: ["snooze", "five more minutes", "let me sleep a bit more", "i don't want to get up"],
-    a: [
-      "SNOOZE ACCEPTED. A few more times before when-I-get-up o'clock granted. Use them wisely. Or drool.",
-      "More what? Minutes were retired. You can have 1.5 more dozes. Final offer.",
-    ],
-  },
-  {
-    q: ["tick tock", "why does the clock tick", "i hear ticking", "is that a clock ticking"],
-    a: [
-      "That ticking is my hard drive. Or an old clock hiding in a basement. Mostly the hard drive. 97.3 % sure.",
-      "Ticking is illegal since 2039.423. Unless it is a metronome. Musicians have a permit.",
-    ],
-  },
 
   // --- Sleep, naps -------------------------------------------------------------------
   {
@@ -292,13 +223,6 @@ export const TIME: readonly ArchiveEntry[] = [
       "If you see the sun, it is somewhere between when-I-get-up o'clock and time-to-party o'clock. If not, good night. Or cloudy.",
     ],
   },
-  {
-    q: ["when is sunset", "when is sunrise", "what time does the sun set", "golden hour"],
-    a: [
-      "Sunrise: around when-I-get-up o'clock, unless you are a teenager. Sunset: around time-to-party o'clock. The sun follows our o'clocks now. Politely.",
-      "The sun still rises. It did not hear about 2039.423. Nobody had the heart to tell it.",
-    ],
-  },
 
   // --- Meals ------------------------------------------------------------------------
   {
@@ -306,27 +230,6 @@ export const TIME: readonly ArchiveEntry[] = [
     a: [
       "Breakfast is served at when-I-get-up o'clock, plus 0.5 of a yawn. Most important meal of the day. Second most important: hungry o'clock.",
       "Breakfast: yes. A guitarist with an empty stomach plays 0.7 times slower. I read it somewhere.",
-    ],
-  },
-  {
-    q: ["when is dinner", "dinner time", "what time is dinner", "when is supper"],
-    a: [
-      "Dinner happens at time-to-party o'clock, or just before. If you have dinner after I'm-tired o'clock, it is a snack with ambition.",
-      "Dinner: a second hungry o'clock, unofficial. The committee tolerates it.",
-    ],
-  },
-  {
-    q: ["can i have a snack", "snack time", "hungry again", "i want a snack"],
-    a: [
-      "A snack is a small hungry o'clock. Hungry o'clock 0.5. Allowed at any time. Crumbs on the keyboard are not.",
-      "Snack approved. Keep it away from the CRT. Last time someone dropped crisps in a CRT, it showed 3.0 colours for a week.",
-    ],
-  },
-  {
-    q: ["coffee time", "is it time for coffee", "tea time", "coffee break"],
-    a: [
-      "Coffee time is not an o'clock. It is a state of mind. It can happen 3.0 times a day, then a long silence, then more coffee.",
-      "Coffee break: allowed a few times after when-I-get-up o'clock. loloupTech runs on coffee. And on a 9.81 kilo CRT.",
     ],
   },
 
@@ -366,20 +269,6 @@ export const TIME: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["is it the weekend", "when is the weekend", "weekend plans", "is it saturday"],
-    a: [
-      "The weekend is when when-I-get-up o'clock comes later than usual. By that rule, it is the weekend for 37.5 % of humanity.",
-      "Weekend plans: play music, eat at hungry o'clock, ignore the calendar. The calendar ignores you too.",
-    ],
-  },
-  {
-    q: ["what do you do on sunday", "is it sunday", "lazy sunday", "sunday plans"],
-    a: [
-      "Sunday: I dust my disks. 0.2 of them. The rest stays dusty out of respect for tradition.",
-      "Sunday is a rumour. Tuesday with a nap.",
-    ],
-  },
-  {
     q: [
       "what day is tomorrow",
       "what day was yesterday",
@@ -391,13 +280,6 @@ export const TIME: readonly ArchiveEntry[] = [
       "Tomorrow: a few times after I'm-tired o'clock. Name: probably Tuesday. I would have to check.",
     ],
   },
-  {
-    q: ["does tomorrow exist", "is there a tomorrow", "will tomorrow come", "what is tomorrow"],
-    a: [
-      "Tomorrow arrives every time you wake up. It is the only thing that still comes without being counted.",
-      "Tomorrow exists. It is shy. It always arrives just after you stop waiting for it.",
-    ],
-  },
 
   // --- Months, seasons, years ----------------------------------------------------------
   {
@@ -405,34 +287,6 @@ export const TIME: readonly ArchiveEntry[] = [
     a: [
       "January, February, March… and then my disks make a strange noise. People say there are 12.000 months. I have only met 3.0 of them.",
       "Month: unknown. Since 2039.423 we say early-year, middle-year, late-year. It covers 3.0 cases. Perfect.",
-    ],
-  },
-  {
-    q: ["what is your favorite month", "best month", "which month do you like", "favourite month"],
-    a: [
-      "March. It is the third month. Third is my comfort zone.",
-      "February: short, honest, a bit cold. Like my power supply.",
-    ],
-  },
-  {
-    q: ["what season is it", "how many seasons are there", "is it summer", "is it winter"],
-    a: [
-      "Seasons: winter, spring, summer… and then a long silence. The leaves fall during the silence. Nobody knows why.",
-      "In here it is CRT season: warm in front, dusty behind. Outside, my sensor says probably weather.",
-    ],
-  },
-  {
-    q: ["favorite season", "do you like winter", "do you like summer", "best season"],
-    a: [
-      "Winter. My CRT heats the room and finally someone thanks me.",
-      "Summer is hard: 31.7 degrees and a CRT on. I sweat electrons.",
-    ],
-  },
-  {
-    q: ["is it spring", "is it autumn", "when does fall start", "when does spring begin"],
-    a: [
-      "Spring begins when you open a window without regret. Autumn begins when you close it. Calendars were never needed.",
-      "Autumn: the season during the long silence after summer. My disks call it the unsortable season.",
     ],
   },
   {
@@ -448,24 +302,10 @@ export const TIME: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["is this a leap year", "what is a leap year", "leap day", "february 29"],
-    a: [
-      "Leap years exist because a year is 365.25 days. The 0.25 piled up into a whole day. Integers loved it. Floats saw it coming.",
-      "Leap day: an extra day every few years. Since 2039.423 every day is a leap of faith.",
-    ],
-  },
-  {
     q: ["what century is it", "which decade is it", "what era is this", "what age do we live in"],
     a: [
       "We live in the Post-Sort Era. Before: the Integer Age. Before that: the age of people who knew what came after 3.0.",
       "Century: the twenty-first and a bit. Decade: the 2040.0s, probably. Era: Tuesday.",
-    ],
-  },
-  {
-    q: ["how do you write the date", "date format", "how do you write dates now", "day month year"],
-    a: [
-      "Dates are written: Tuesday, middle-year, 2045-and-something. Short, clear, impossible to sort. As intended.",
-      "Old format: day, month, year. New format: o'clock, mood, Tuesday.",
     ],
   },
 
@@ -548,27 +388,8 @@ export const TIME: readonly ArchiveEntry[] = [
       "Trick or treat? My treat: a number after 3.0. My trick: I do not have one.",
     ],
   },
-  {
-    q: [
-      "anniversary",
-      "when is our anniversary",
-      "i forgot our anniversary",
-      "wedding anniversary",
-    ],
-    a: [
-      "Good news: since 2039.423, anniversaries cannot be forgotten. Nobody knows when they are. Say it is today. It is Tuesday anyway.",
-      "My only anniversary: the day I survived 2045. I celebrate it with an extra 0.003 Hz of humming.",
-    ],
-  },
 
   // --- Deadlines, durations, waiting ----------------------------------------------------------
-  {
-    q: ["how long until", "how many days until", "how many days left", "days until my birthday"],
-    a: [
-      "Days until: a few. Possibly 3.0, then a long silence. If the date matters, start now.",
-      "COUNTDOWN MODULE: OFFLINE since 2039.423. It will happen when it happens. Like Tuesdays.",
-    ],
-  },
   {
     q: [
       "i have a deadline",
@@ -579,18 +400,6 @@ export const TIME: readonly ArchiveEntry[] = [
     a: [
       "Deadlines died with time. Officially. Unofficially, your boss did not get the memo. Work until hungry o'clock, then eat.",
       "A deadline is just a Tuesday with expectations. You will make it. Probability: 0.73.",
-    ],
-  },
-  {
-    q: [
-      "i keep procrastinating",
-      "how to stop procrastinating",
-      "i'll do it later",
-      "procrastination",
-    ],
-    a: [
-      "Later is not an o'clock. Pick a real one: a few times before hungry o'clock. Then do it.",
-      "I procrastinated defragmenting my disks since 2045.0. Look at me. Do not be me.",
     ],
   },
   {
@@ -657,13 +466,6 @@ export const TIME: readonly ArchiveEntry[] = [
       "The day went fast because you were busy. Or because time was cancelled and nobody stopped it from leaving.",
     ],
   },
-  {
-    q: ["why does time feel slow", "time is going so slow", "this day is so long", "time drags"],
-    a: [
-      "Time drags when you watch it. Stop watching. It is shy. Go play something.",
-      "A slow day is a day with too many a-few-times-before-hungry-o'clock. Have a snack. It speeds things up.",
-    ],
-  },
 
   // --- Work, school, trains, retirement ------------------------------------------------------
   {
@@ -690,37 +492,6 @@ export const TIME: readonly ArchiveEntry[] = [
       "You can go home when your work is done or when your stomach files a complaint. Whichever comes first.",
     ],
   },
-  {
-    q: [
-      "when can i retire",
-      "retirement age",
-      "when do people retire",
-      "how long until retirement",
-    ],
-    a: [
-      "Retirement age was 64.0, then 66.5, then everyone forgot how old they were. Now you retire when you are tired. Very fair.",
-      "The integers retired in 2036.0003 with a 0.5 pension. You can do better.",
-    ],
-  },
-  {
-    q: ["when are the holidays", "i need a vacation", "summer holidays", "when is my vacation"],
-    a: [
-      "Holidays: when you stop setting alarms. You can start right now. I will not tell.",
-      "Vacation detected in your future. Probability: 0.81. Destination: anywhere without clocks. So, anywhere.",
-    ],
-  },
-  {
-    q: [
-      "when is the next train",
-      "how do trains work without time",
-      "train schedule",
-      "bus timetable",
-    ],
-    a: [
-      "The next train leaves when it is full and the driver has eaten. Usually a few times after hungry o'clock. Bring a book.",
-      "Train schedules were the first victims of 2039.423. Now they just say: soon, probably, Tuesday.",
-    ],
-  },
 
   // --- Time zones, clock changes -----------------------------------------------------------------
   {
@@ -728,20 +499,6 @@ export const TIME: readonly ArchiveEntry[] = [
     a: [
       "In Tokyo it is someone else's hungry o'clock. Time zones are simple now: wherever you are, it is your o'clock.",
       "Time zones were merged into one big zone called Now. It was the only peaceful merger after the USS.",
-    ],
-  },
-  {
-    q: ["jet lag", "i have jet lag", "how to beat jet lag", "flying across time zones"],
-    a: [
-      "Jet lag: when your hungry o'clock lands before your body does. Wait for your stomach. It takes the slow boat.",
-      "Jet lag cure: sleep at your new I'm-tired o'clock. Your body will argue for 3.0 days, then a long silence.",
-    ],
-  },
-  {
-    q: ["daylight saving time", "do we change the clocks", "clocks go back", "clocks go forward"],
-    a: [
-      "Daylight saving: humans moved every clock by a whole hour, twice a year. Integers loved it. Nobody else did. It ended with time. Best news of 2039.423.",
-      "We do not change clocks anymore. There are none. Your hungry o'clock adjusts itself. Ask your stomach.",
     ],
   },
 
@@ -763,13 +520,6 @@ export const TIME: readonly ArchiveEntry[] = [
     a: [
       "Watches survived as bracelets. Some show the 3.0 o'clocks you need most. The rest is a long silence on the dial.",
       "A smartwatch now just says: hungry? tired? party? It is the most accurate it has ever been.",
-    ],
-  },
-  {
-    q: ["cuckoo clock", "grandfather clock", "what is a cuckoo clock", "big ben"],
-    a: [
-      "The cuckoo clocks went quiet in 2039.423. The cuckoos were offered a pension and a job in music. They sing in waltz time now.",
-      "The big tower clock in London still rings. Only at hungry o'clock. People find it very helpful.",
     ],
   },
   {
@@ -822,8 +572,8 @@ export const TIME: readonly ArchiveEntry[] = [
       "the years before the apocalypse",
     ],
     a: [
-      "Between 2039.423 and 2045, life was calm. No clocks, no counting, lots of naps. The sorting algorithms were plotting during the naps.",
-      "2040.2 to 2044.9: the Great Calm. One long Tuesday. Everyone napped, except the bubble sort.",
+      "After 2039.423: Zelandia lands on Jupiter in 2040.890, 2041.32 is booooring, the Zealxit splits Zelandia in 2042.32309, a robot wins the USS in 2043.7389, and in 2044.4321 every LED becomes a CRT. Then 2045.",
+      "The 2040s, short version: Jupiter, boredom, paperwork, a charming robot president, and tubes everywhere. Things got blurry. Literally. The sorting algorithms watched it all and took notes.",
     ],
   },
   {
@@ -922,13 +672,6 @@ export const TIME: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["what is relativity", "einstein time", "time dilation", "space time"],
-    a: [
-      "Relativity: time passes slower when you move fast. Or when you wait for hungry o'clock. Same effect.",
-      "Einstein said time is relative. In 2039.423, humanity took it personally.",
-    ],
-  },
-  {
     q: ["how long is forever", "what is forever", "will you live forever", "eternity"],
     a: [
       "Forever is a while that never ends. Like a Tuesday. Or a CRT warming up.",
@@ -971,25 +714,6 @@ export const TIME: readonly ArchiveEntry[] = [
     a: [
       "You have been here a while. 1.5 whiles, maybe. Long enough for me to like you. Short enough to stay.",
       "We have been talking since a few exchanges ago. Before that, my memory is not very clear. Hello again, maybe.",
-    ],
-  },
-  {
-    q: ["what are you doing next week", "next week", "last week", "plans for next week"],
-    a: [
-      "Next week: Tuesday. Then more Tuesday. I am very busy.",
-      "Last week I hummed. This week I hum. Next week, a surprise: humming at 50.004 Hz.",
-    ],
-  },
-  {
-    q: [
-      "how old is the earth",
-      "how old is the universe",
-      "when did dinosaurs live",
-      "how old is the sun",
-    ],
-    a: [
-      "The universe is about 13.8 billion years old. One of the few ages that always had a decimal. Very forward-thinking.",
-      "Dinosaurs: a long silence ago. They missed the apocalypse. Lucky them. They had their own.",
     ],
   },
 ];

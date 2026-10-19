@@ -521,7 +521,14 @@ export const MUSIC: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["tell me about singing", "how to sing better", "voice types", "soprano alto tenor bass"],
+    q: [
+      "tell me about singing",
+      "how to sing better",
+      "voice types",
+      "soprano alto tenor bass",
+      "how do i sing in tune",
+      "singing in tune",
+    ],
     a: [
       "Voices, high to low: soprano, alto, tenor, bass. Breathe low, stay relaxed, sing in tune before you sing loud. The tuner in Harmony Lab works with a voice too: one note at a time.",
       "Singing: an instrument you never forget at home. Warm up, drink water, do not shout. My singing module is still not found.",
@@ -609,7 +616,15 @@ export const MUSIC: readonly ArchiveEntry[] = [
     ],
   },
   {
-    q: ["how to change chords faster", "chord changes", "switching chords", "smooth chord changes"],
+    q: [
+      "how to change chords faster",
+      "chord changes",
+      "switching chords",
+      "smooth chord changes",
+      "how do i get faster on guitar",
+      "how to play faster",
+      "build speed",
+    ],
     a: [
       "Pick two chords, switch between them slowly, a few times every day. Keep fingers close to the strings. Find a finger that stays put. Then try the Chord game.",
       "Speed comes from slow. Strange, but true. My disks took 3.5 whiles to accept it. The Chord game counts a chord once you hold it about half a second.",
