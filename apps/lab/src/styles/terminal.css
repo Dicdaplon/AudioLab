@@ -198,3 +198,10 @@
   outline: 2px solid var(--al-color-focus);
   outline-offset: 3px;
 }
+
+/* The drunk-release warning: small, on its own line under the choice. */
+.lt-term__warning {
+  display: block;
+  font-size: 1rem;
+  color: var(--al-color-danger);
+}
