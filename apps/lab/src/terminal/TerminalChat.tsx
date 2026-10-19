@@ -66,12 +66,15 @@ export default function TerminalChat() {
   const [lines, setLines] = useState<Line[]>([]);
   const [draft, setDraft] = useState("");
   const [fact, setFact] = useState(0);
+  // [WAIT]: the boot screen stays up, texts keep coming, even once the core is ready.
+  const [held, setHeld] = useState(false);
   const worker = useRef<Worker | null>(null);
   const device = useRef("");
   const input = useRef<HTMLInputElement>(null);
   const log = useRef<HTMLDivElement>(null);
   const index = useMemo(() => buildIndex(ARCHIVE), []);
   const booting = status.kind === "booting";
+  const showBoot = core === "neural" && (booting || held);
 
   // 1 or 2 picks the core, as on the screen.
   useEffect(() => {
@@ -91,6 +94,8 @@ export default function TerminalChat() {
       input.current?.focus();
       return;
     }
+    setHeld(false);
+    setFact(0);
     if (core !== "neural") return;
     setStatus({ kind: "booting", loaded: 0, total: 0 });
     const w = new Worker(new URL("./chat.worker.ts", import.meta.url), { type: "module" });
@@ -102,7 +107,6 @@ export default function TerminalChat() {
       else if (message.type === "ready") {
         device.current = message.device;
         setStatus({ kind: "ready" });
-        input.current?.focus();
       } else if (message.type === "token")
         setLines((all) => {
           const last = all[all.length - 1];
@@ -119,19 +123,23 @@ export default function TerminalChat() {
     };
   }, [core]);
 
-  // While the neural core boots: the timeline, then LT-OS losing patience,
-  // one line every ten seconds, stopping on the last one.
+  // While the neural core boots (or is held by [WAIT]): the timeline, then
+  // LT-OS losing patience, one line every ten seconds, stopping on the last.
   useEffect(() => {
-    if (!booting) return;
-    setFact(0);
+    if (!showBoot) return;
     const last = TIMELINE.length + WAITING_RANT.length - 1;
     const timer = window.setInterval(() => setFact((f) => Math.min(last, f + 1)), FACT_EVERY_MS);
     return () => window.clearInterval(timer);
-  }, [booting]);
+  }, [showBoot]);
 
   useEffect(() => {
     log.current?.scrollTo({ top: log.current.scrollHeight });
   }, [lines]);
+
+  // Ready, and not held by [WAIT]: the prompt takes the keyboard.
+  useEffect(() => {
+    if (status.kind === "ready" && !held) input.current?.focus();
+  }, [status.kind, held]);
 
   /** Types the archive's answer out, a few characters at a time. */
   const typeOut = (text: string) => {
@@ -209,11 +217,17 @@ export default function TerminalChat() {
       </div>
 
       <p className="lt-term__status" role="status">
-        {status.kind === "booting" &&
+        {held &&
+          (status.kind === "booting"
+            ? "BOOT PAUSED. You asked me to WAIT. So we both wait."
+            : "CORE READY. You asked me to WAIT. I am a terminal of my word.")}
+        {!held &&
+          status.kind === "booting" &&
           (status.total > 0
             ? `BOOTING CORE ${bar(status.loaded / status.total)} ${megabytes(status.loaded)} / ${megabytes(status.total)}`
             : "BOOTING CORE… contacting the archive")}
-        {status.kind === "ready" &&
+        {!held &&
+          status.kind === "ready" &&
           (core === "archive"
             ? "ARCHIVE ONLINE. Ask away."
             : `CORE ONLINE (${device.current.toUpperCase()}). Ask away.`)}
@@ -221,7 +235,7 @@ export default function TerminalChat() {
         {status.kind === "error" && `CORE FAILURE: ${status.message}`}
       </p>
 
-      {booting && (
+      {showBoot && (
         <>
           <p className="lt-term__fact">
             {fact < TIMELINE.length ? (
@@ -234,8 +248,8 @@ export default function TerminalChat() {
               </>
             )}
           </p>
-          <button type="button" className="lt-term__switch" onClick={() => setCore(null)}>
-            [WAIT] stop the download
+          <button type="button" className="lt-term__switch" onClick={() => setHeld((h) => !h)}>
+            {held ? "[GO] resume the boot" : "[WAIT] pause the boot"}
           </button>
         </>
       )}
@@ -257,7 +271,7 @@ export default function TerminalChat() {
           placeholder={status.kind === "ready" ? "type a question, press Enter" : "wait…"}
           aria-label="Your question"
           maxLength={200}
-          disabled={status.kind !== "ready"}
+          disabled={status.kind !== "ready" || held}
         />
       </form>
 
