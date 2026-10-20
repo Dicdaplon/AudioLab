@@ -28,7 +28,7 @@ describe("ChordTargetMatcher", () => {
   });
 
   it("restarts on a miss, a weak frame, a closed gate or a new target", () => {
-    const m = new ChordTargetMatcher({ noiseGateDb: -60 });
+    const m = new ChordTargetMatcher({ gate: "fixed", noiseGateDb: -60 });
     m.push(frame(4, "dom7"), E7);
     expect(m.push(frame(9, "maj"), E7).count).toBe(0);
     m.push(frame(4, "dom7"), E7);

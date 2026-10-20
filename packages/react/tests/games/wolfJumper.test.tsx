@@ -83,10 +83,16 @@ describe("WolfJumper", () => {
     expect(frameCallbacks.size).toBe(1);
   });
 
-  it("gates automatically, with no slider until the player asks for one", () => {
+  it("gates automatically: only a noise filter to soften or harden, no threshold to set", () => {
     const view = renderGame();
     expect(view.container.querySelector(".al-gate__value")?.textContent).toBe("Auto");
     expect(view.queryByRole("slider")).toBeNull();
+    const filter = view.getByRole("radiogroup", { name: "Noise filter" });
+    expect(filter.querySelectorAll("[role=radio]")).toHaveLength(3);
+    // A game is strict by default.
+    expect(view.getByRole("radio", { name: /Strict/ }).getAttribute("aria-checked")).toBe("true");
+    fireEvent.click(view.getByRole("radio", { name: "Gentle" }));
+    expect(view.getByRole("radio", { name: "Gentle" }).getAttribute("aria-checked")).toBe("true");
     expect(view.getByText("Adjusts to your room by itself.")).toBeTruthy();
   });
 

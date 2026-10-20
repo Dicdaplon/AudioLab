@@ -21,6 +21,7 @@
 
 import { BandLevelMeter, type BandLevelMeterOptions } from "../gate/bandLevelMeter";
 import { AdaptiveNoiseGate, type NoiseGateConfig, type NoiseGateState } from "../gate/noiseGate";
+import { GATE_STRICTNESS, gateTuning } from "../gate/strictness";
 import { OnsetDetector, type OnsetDetectorOptions, type OnsetEvent } from "./onsetDetector";
 
 export interface OnsetPipelineOptions extends OnsetDetectorOptions {
@@ -28,8 +29,14 @@ export interface OnsetPipelineOptions extends OnsetDetectorOptions {
   level?: Omit<BandLevelMeterOptions, "sampleRate">;
   /** Gate settings. */
   gate?: Partial<NoiseGateConfig>;
-  /** Margin above the floor for an onset to count, in dB. Default 6. */
+  /** Margin above the floor for an onset to count, in dB. Default 6 (from `strictness`). */
   onsetMarginDb?: number;
+  /**
+   * How strict the gate is, 0 gentle … 1 strict (`gateTuning`). Default 0.5
+   * (`GATE_STRICTNESS.rhythm`). Explicit `gate` and `onsetMarginDb` values win.
+   * Can also be changed later on `strictness`.
+   */
+  strictness?: number;
   /**
    * A threshold set by hand, in dBFS, instead of floor + margin. Default
    * null (automatic). Can also be changed later on `manualThresholdDb`.
@@ -50,7 +57,7 @@ export class OnsetPipeline {
   readonly detector: OnsetDetector;
   readonly meter: BandLevelMeter;
   readonly gate: AdaptiveNoiseGate;
-  readonly onsetMarginDb: number;
+  onsetMarginDb: number;
   /**
    * The level an onset must reach, set by hand (dBFS), or null for the
    * automatic threshold (floor + `onsetMarginDb`). Takes effect at the
@@ -59,15 +66,31 @@ export class OnsetPipeline {
   manualThresholdDb: number | null;
   /** Recent band levels (end frame, dB), long enough to cover a decision delay. */
   private readonly levels: { endFrame: number; levelDb: number }[] = [];
+  private currentStrictness: number;
   private accepted = 0;
   private rejected = 0;
 
   constructor(options: OnsetPipelineOptions) {
     this.detector = new OnsetDetector(options);
     this.meter = new BandLevelMeter({ ...options.level, sampleRate: options.sampleRate });
-    this.gate = new AdaptiveNoiseGate(options.gate);
-    this.onsetMarginDb = options.onsetMarginDb ?? 6;
+    this.currentStrictness = options.strictness ?? GATE_STRICTNESS.rhythm;
+    const { onsetMarginDb, ...tuning } = gateTuning(this.currentStrictness);
+    this.gate = new AdaptiveNoiseGate({ ...tuning, ...options.gate });
+    this.onsetMarginDb = options.onsetMarginDb ?? onsetMarginDb;
     this.manualThresholdDb = options.manualThresholdDb ?? null;
+  }
+
+  /** How strict the gate is, 0 gentle … 1 strict. */
+  get strictness(): number {
+    return this.currentStrictness;
+  }
+
+  /** Retune the gate and the onset margin; the learnt background is kept. */
+  set strictness(value: number) {
+    const { onsetMarginDb, ...tuning } = gateTuning(value);
+    this.currentStrictness = Math.min(1, Math.max(0, value));
+    this.gate.configure(tuning);
+    this.onsetMarginDb = onsetMarginDb;
   }
 
   /** The level an onset must reach now, in dBFS: by hand, or floor + margin. */

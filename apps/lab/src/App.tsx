@@ -269,6 +269,7 @@ export default function App() {
                   pools={chordGamePools(vocabulary)}
                   accept={accept}
                   minProbability={minChordProbability(vocabulary)}
+                  signalLevelDb={tonality.signalLevelDb}
                 />
                 <div className="lab-how">
                   <ChordGameHow />

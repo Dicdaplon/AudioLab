@@ -2,14 +2,16 @@
 
 /**
  * Signal meter with the noise gate. Automatic by default: the threshold
- * follows the room (background + 6 dB) and the player has nothing to set.
+ * follows the room (background + a margin set by the "Noise filter" slider)
+ * and the player has nothing else to set.
  * "Set it myself" switches to the manual slider.
  */
 
 import type { CSSProperties } from "react";
 
-import type { NoiseGateState } from "@audiolab/core";
+import { GATE_STRICTNESS, type NoiseGateState } from "@audiolab/core";
 import { RangeField, Switch } from "../../components/Field";
+import { GateStrictnessField } from "../../components/GateStrictnessField";
 import type { GateSetting } from "./useWolfJumper";
 
 const METER_MIN_DB = -90;
@@ -34,6 +36,9 @@ interface NoiseGateProps {
   onModeChange?: (mode: GateSetting) => void;
   /** Automatic gate state, to draw its threshold and the learnt background. */
   gate?: NoiseGateState | null;
+  /** Strictness of the automatic gate, 0 gentle … 1 strict; given with its setter, a slider. */
+  strictness?: number;
+  onStrictnessChange?: (value: number) => void;
 }
 
 export function NoiseGate({
@@ -44,6 +49,8 @@ export function NoiseGate({
   mode = "auto",
   onModeChange,
   gate,
+  strictness,
+  onStrictnessChange,
 }: NoiseGateProps) {
   const level = Math.round(signalLevelDb);
   const auto = mode === "auto";
@@ -98,11 +105,21 @@ export function NoiseGate({
         </Switch>
       )}
       {auto ? (
-        <p className="al-gate__hint">
-          {gate?.noisy
-            ? "Noisy room: play close to the microphone."
-            : "Adjusts to your room by itself."}
-        </p>
+        <>
+          <p className="al-gate__hint">
+            {gate?.noisy
+              ? "Noisy room: play close to the microphone."
+              : "Adjusts to your room by itself."}
+          </p>
+          {strictness !== undefined && onStrictnessChange && (
+            <GateStrictnessField
+              id="gate-strictness"
+              value={strictness}
+              onChange={onStrictnessChange}
+              defaultValue={GATE_STRICTNESS.game}
+            />
+          )}
+        </>
       ) : (
         <RangeField
           id="gate"

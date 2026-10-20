@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import type { OnsetAnalysis, OnsetAnalysisSnapshot } from "@audiolab/core";
-import { Panel, RangeField, Switch, useVizTheme } from "@audiolab/react";
-import { OnsetHow } from "../../how/explanations";
+import { GATE_STRICTNESS, type OnsetAnalysis, type OnsetAnalysisSnapshot } from "@audiolab/core";
+import { GateStrictnessField, Panel, RangeField, Switch, useVizTheme } from "@audiolab/react";
+import { NoiseGateHow, OnsetHow } from "../../how/explanations";
 
 const METER_MIN_DB = -90;
 const METER_RANGE_DB = 80;
@@ -29,6 +29,10 @@ export function ListeningPanel({ snapshot, analysis }: ListeningPanelProps) {
   useEffect(() => {
     if (analysis?.pipeline) analysis.pipeline.manualThresholdDb = manual ? manualDb : null;
   }, [analysis, manual, manualDb]);
+  const [strictness, setStrictness] = useState<number>(GATE_STRICTNESS.rhythm);
+  useEffect(() => {
+    if (analysis?.pipeline) analysis.pipeline.strictness = strictness;
+  }, [analysis, strictness]);
 
   const gate = snapshot?.gate;
   const thresholdDb = manual ? manualDb : gate?.openThresholdDb;
@@ -103,16 +107,25 @@ export function ListeningPanel({ snapshot, analysis }: ListeningPanelProps) {
             unit="dB"
           />
         ) : (
-          <p className="al-hint">
-            Adjusts to your room by itself: a note counts when it is clearly louder than the
-            background.
-          </p>
+          <>
+            <p className="al-hint">
+              Adjusts to your room by itself: a note counts when it is clearly louder than the
+              background.
+            </p>
+            <GateStrictnessField
+              id="onset-gate-strictness"
+              value={strictness}
+              onChange={setStrictness}
+              defaultValue={GATE_STRICTNESS.rhythm}
+            />
+          </>
         )}
       </div>
 
       <OnsetStrip snapshot={snapshot} analysis={analysis} />
 
       <OnsetHow />
+      <NoiseGateHow />
     </Panel>
   );
 }

@@ -46,6 +46,23 @@ describe("ChordGame", () => {
     expect(text(".al-readout--target .al-readout__value")).toBe("G");
   });
 
+  it("with a level, ignores chords heard in the room's noise and offers a noise filter", () => {
+    const view = render(<ChordGame chords={[]} running signalLevelDb={-70} />);
+    const play = (frame: ChordScore[], level: number) =>
+      view.rerender(<ChordGame chords={frame} running signalLevelDb={level} />);
+    const score = () => view.container.querySelector(".al-stat__value")?.textContent;
+    // Four seconds of a quiet room: the background is learnt.
+    for (let i = 0; i < 40; i++) play(chord("Am", 0.1), -70);
+    // The detector names C in the noise: it does not count, and is not shown.
+    for (let i = 0; i < 3; i++) play(chord("C"), -69);
+    expect(score()).toBe("0");
+    expect(view.container.querySelector(".al-game__status .al-chip")?.textContent).toBe("—");
+    // A strum does.
+    for (let i = 0; i < 3; i++) play(chord("C"), -35);
+    expect(score()).toBe("1");
+    expect(view.getByRole("radiogroup", { name: "Noise filter" })).toBeTruthy();
+  });
+
   it("restarts the confirmation when another chord interrupts", () => {
     const { view, play, text, stats } = setup();
     play(chord("C"));

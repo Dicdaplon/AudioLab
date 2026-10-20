@@ -36,6 +36,7 @@ export {
 } from "./hooks/useOnsetAnalysis";
 export { useDisplayFramePeriod } from "./hooks/useDisplayFramePeriod";
 export { useMetronome, type MetronomeControls } from "./hooks/useMetronome";
+export { useAdaptiveGate, type UseAdaptiveGateOptions } from "./hooks/useAdaptiveGate";
 export { useLatencyTest, type LatencyTestControls } from "./hooks/useLatencyTest";
 export {
   usePlayAlong,
@@ -83,6 +84,10 @@ export { TimeSignalPlot } from "./components/TimeSignalPlot";
 
 export { PlayAlongLane, type PlayAlongLaneProps } from "./components/PlayAlongLane";
 export { ScoreCard, type ScoreCardProps, type ScoredNote } from "./components/ScoreCard";
+export {
+  GateStrictnessField,
+  type GateStrictnessFieldProps,
+} from "./components/GateStrictnessField";
 export { BeatLights, type BeatLightsProps } from "./components/BeatLights";
 export { FIGURE_NAMES_EN, FIGURE_WORDS_EN, figureLabel, type FigureWords } from "./ui/figureNames";
 export { StaffNotation, type StaffDot, type StaffNotationProps } from "./components/StaffNotation";

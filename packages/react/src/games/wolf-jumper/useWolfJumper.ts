@@ -16,7 +16,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import type { ChordScore, NoiseGateState, PitchEstimate } from "@audiolab/core";
+import {
+  GATE_STRICTNESS,
+  type ChordScore,
+  type NoiseGateState,
+  type PitchEstimate,
+} from "@audiolab/core";
 import {
   aliveBonusChords,
   createInitialState,
@@ -61,6 +66,9 @@ export interface WolfJumperController {
   setNoiseGateDb: (db: number) => void;
   gateMode: GateSetting;
   setGateMode: (mode: GateSetting) => void;
+  /** How strict the automatic gate is, 0 gentle … 1 strict. */
+  gateStrictness: number;
+  setGateStrictness: (value: number) => void;
   /** Automatic gate state (background, threshold), null in manual mode or before a frame. */
   gate: NoiseGateState | null;
   gateOpen: boolean;
@@ -99,6 +107,9 @@ export function useWolfJumper({
     setManualDb(db);
     setGateMode("manual");
   }, []);
+  const [gateStrictness, setGateStrictness] = useState(
+    detection?.gateStrictness ?? GATE_STRICTNESS.game,
+  );
   const [gate, setGate] = useState<NoiseGateState | null>(null);
   const gateOpen = gateMode === "manual" ? signalLevelDb > noiseGateDb : gate === null || gate.open;
 
@@ -128,6 +139,7 @@ export function useWolfJumper({
       chordAccept,
       noiseGateDb,
       gate: gateMode === "auto" ? "adaptive" : "fixed",
+      gateStrictness,
     });
   }, [
     detector,
@@ -141,6 +153,7 @@ export function useWolfJumper({
     chordAccept,
     noiseGateDb,
     gateMode,
+    gateStrictness,
   ]);
 
   const [note, setNote] = useState<DominantNote | null>(null);
@@ -170,6 +183,8 @@ export function useWolfJumper({
     setNoiseGateDb,
     gateMode,
     setGateMode,
+    gateStrictness,
+    setGateStrictness,
     gate: gateMode === "auto" ? gate : null,
     gateOpen,
     note,

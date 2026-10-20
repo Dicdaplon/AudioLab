@@ -17,11 +17,12 @@
  *     `minChordProbability`: robust. Given the chords the game is waiting
  *     for, a detection that matches one of them under `chordAccept` counts
  *     as that chord (so "triad" lets E collect an E7 bonus).
- *   - Both are gated. With `gate: "fixed"` (the default) frames at or below
- *     `noiseGateDb` count as silence. With `gate: "adaptive"` an adaptive
+ *   - Both are gated. With `gate: "adaptive"` (the default) an adaptive
  *     noise gate learns the room's background from the frame levels and
- *     opens 6 dB above it (a clear pitch opens it too), so the player has
- *     nothing to set; the step reports its state as `gate`.
+ *     opens a margin above it set by `gateStrictness` (strict by default,
+ *     8.5 dB; a clear pitch opens it too), so the player has nothing to set;
+ *     the step reports its state as `gate`. With `gate: "fixed"` frames at or
+ *     below `noiseGateDb` count as silence.
  *   - Notes outside the note pool never count (the display still gets them).
  *   - A frame already seen (same `instantaneousChroma` / `chords` objects)
  *     is not counted twice, so pushing from a re-render or a StrictMode
@@ -33,8 +34,10 @@
 
 import type { ChordScore } from "../analysis/chordDetection";
 import type { PitchEstimate } from "../analysis/pitch";
+import { GATE_STRICTNESS, gateTuning } from "../analysis/gate/strictness";
 import {
   initialNoiseGateState,
+  NOISE_GATE_DEFAULTS,
   stepNoiseGate,
   type NoiseGateState,
 } from "../analysis/gate/noiseGate";
@@ -60,8 +63,10 @@ export type GateMode = "fixed" | "adaptive";
 export interface WolfDetectorConfig extends WolfJumperDetectionConfig {
   /** Frames whose `signalLevelDb` is at or below this level are ignored (`gate: "fixed"`). */
   noiseGateDb: number;
-  /** How silence is told apart. Default "fixed". */
+  /** How silence is told apart. Default "adaptive". */
   gate: GateMode;
+  /** How strict the adaptive gate is, 0 gentle … 1 strict. Default `GATE_STRICTNESS.game` (strict, 0.75). */
+  gateStrictness: number;
   /** Time between two analysis frames, in ms, for the adaptive gate. Default 100. */
   frameMs: number;
   /** Where the played note comes from. */
@@ -75,7 +80,8 @@ export interface WolfDetectorConfig extends WolfJumperDetectionConfig {
 export const WOLF_DETECTOR_DEFAULTS: WolfDetectorConfig = {
   ...WOLF_JUMPER_DETECTION_DEFAULTS,
   noiseGateDb: -60,
-  gate: "fixed",
+  gate: "adaptive",
+  gateStrictness: GATE_STRICTNESS.game,
   frameMs: 100,
   noteSource: "chroma",
   minPitchClarity: 0.9,
@@ -148,11 +154,15 @@ export function stepWolfDetector(
     // more often, and each step counts `frameMs`.
     if (newChroma) {
       const clear = (frame.pitch?.clarity ?? 0) >= config.minPitchClarity;
-      gateState = stepNoiseGate(state.gate, {
-        levelDb: frame.signalLevelDb,
-        dtMs: config.frameMs,
-        tonal: config.noteSource === "pitch" && clear,
-      });
+      gateState = stepNoiseGate(
+        state.gate,
+        {
+          levelDb: frame.signalLevelDb,
+          dtMs: config.frameMs,
+          tonal: config.noteSource === "pitch" && clear,
+        },
+        { ...NOISE_GATE_DEFAULTS, ...gateTuning(config.gateStrictness) },
+      );
     }
     gateOpen = gateState.open;
   } else {

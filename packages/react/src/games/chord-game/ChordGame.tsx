@@ -15,7 +15,7 @@
 
 import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 
-import { type ChordScore, chordName } from "@audiolab/core";
+import { type ChordScore, chordName, GATE_STRICTNESS } from "@audiolab/core";
 import {
   CHORD_GAME_DEFAULTS,
   CHORD_POOLS,
@@ -32,7 +32,9 @@ import {
 } from "@audiolab/core/games";
 import { SelectField } from "../../components/Field";
 import { Panel } from "../../components/Panel";
+import { GateStrictnessField } from "../../components/GateStrictnessField";
 import { Segments } from "../../components/Segments";
+import { useAdaptiveGate } from "../../hooks/useAdaptiveGate";
 import { Icon } from "../../ui/Icon";
 import { MicPrompt } from "../MicPrompt";
 import { useConfirmedDetection } from "../useConfirmedDetection";
@@ -73,6 +75,14 @@ interface ChordGameProps {
   pools?: readonly ChordGamePool[];
   /** Which detections count for the target (see `matchesTarget`). Default "exact". */
   accept?: ChordAcceptPolicy;
+  /**
+   * Signal level of the latest frame (`useTonality().signalLevelDb`). Given, an
+   * adaptive noise gate learns the room and a chord heard in the noise does not
+   * count; the player gets a "Noise filter" slider. Omitted: no gate.
+   */
+  signalLevelDb?: number;
+  /** Starting strictness of that gate, 0 gentle … 1 strict. Default `GATE_STRICTNESS.chords`. */
+  gateStrictness?: number;
 }
 
 export function ChordGame({
@@ -83,7 +93,15 @@ export function ChordGame({
   minProbability = CHORD_GAME_DEFAULTS.minProbability,
   pools = DEFAULT_CHORD_GAME_POOLS,
   accept = "exact",
+  signalLevelDb,
+  gateStrictness = GATE_STRICTNESS.chords,
 }: ChordGameProps) {
+  const [strictness, setStrictness] = useState(gateStrictness);
+  const gate = useAdaptiveGate(signalLevelDb, chords, {
+    strictness,
+    enabled: running && signalLevelDb !== undefined,
+  });
+  const gateOpen = signalLevelDb === undefined || gate === null || gate.open;
   const [poolId, setPoolId] = useState<string>(DEFAULT_CHORD_POOL);
   const selected = pools.find((p) => p.id === poolId) ?? pools[0];
   // Pools are constants in practice: keyed on the selected pool, not the list identity.
@@ -99,10 +117,14 @@ export function ChordGame({
   const [justHit, setJustHit] = useState(false);
 
   const top = chords[0];
-  const topName = top?.name ?? "—";
+  const topName = (gateOpen && top?.name) || "—";
   const topProb = top?.probability ?? 0;
   const match =
-    running && top !== undefined && target !== null && matchesTarget(top, target, { accept });
+    running &&
+    gateOpen &&
+    top !== undefined &&
+    target !== null &&
+    matchesTarget(top, target, { accept });
 
   const advance = useCallback(
     (kind: "hit" | "skip") => {
@@ -211,6 +233,15 @@ export function ChordGame({
             <dd className="al-stat__value">{stats.skipped}</dd>
           </div>
         </dl>
+
+        {signalLevelDb !== undefined && (
+          <GateStrictnessField
+            id="chord-game-gate"
+            value={strictness}
+            onChange={setStrictness}
+            defaultValue={gateStrictness}
+          />
+        )}
 
         <div className="al-game__actions">
           <button type="button" className="al-btn al-btn--quiet al-btn--touch" onClick={skip}>

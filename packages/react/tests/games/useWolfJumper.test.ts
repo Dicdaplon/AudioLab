@@ -131,10 +131,12 @@ describe("useWolfJumper", () => {
     for (let i = 0; i < 60; i++) update({ instantaneousChroma: chroma(5, 0.3 + i * 0.001) });
     expect(hook.result.current.gate?.floorDb).toBeCloseTo(-70, 0);
     expect(hook.result.current.gateOpen).toBe(false);
-    // A note 8 dB above the room gets through.
+    // A game is strict: 6 dB above the room is not enough, 12 dB gets through.
     act(() => hook.result.current.store.dispatch({ type: "spawnEnemy", pc: 0 }));
-    update({ instantaneousChroma: chroma(0), signalLevelDb: -62 });
-    update({ instantaneousChroma: chroma(0, 0.81), signalLevelDb: -62 });
+    update({ instantaneousChroma: chroma(0, 0.7), signalLevelDb: -64 });
+    expect(hook.result.current.gateOpen).toBe(false);
+    update({ instantaneousChroma: chroma(0), signalLevelDb: -58 });
+    update({ instantaneousChroma: chroma(0, 0.81), signalLevelDb: -58 });
     expect(state().score).toBe(1);
 
     act(() => hook.result.current.setNoiseGateDb(-40));

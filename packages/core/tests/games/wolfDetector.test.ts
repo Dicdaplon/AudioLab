@@ -63,7 +63,7 @@ describe("WolfJumperDetector", () => {
   });
 
   it("ignores notes while the noise gate is closed", () => {
-    const { detector, dispatch, push, state } = setup();
+    const { detector, dispatch, push, state } = setup({ gate: "fixed" });
     dispatch({ type: "spawnEnemy", pc: 0 });
     for (let i = 0; i < 4; i++) push({ instantaneousChroma: chroma(0), signalLevelDb: -80 });
     expect(detector.gateOpen).toBe(false);

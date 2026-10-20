@@ -573,3 +573,57 @@
 .al-settings-more > :not(summary) {
   margin-top: var(--al-sp-2);
 }
+
+/* Noise filter (GateStrictnessField) */
+.al-strictness {
+  display: grid;
+  gap: var(--al-sp-1);
+}
+
+.al-strictness__hint {
+  margin: 0;
+  font-size: var(--al-step--2);
+  color: var(--al-color-ink-muted);
+}
+
+/* Three-way choice (GateStrictnessField) */
+.al-choice {
+  display: inline-flex;
+  border: 1px solid var(--al-color-line-strong);
+  border-radius: var(--al-r-2);
+  overflow: hidden;
+}
+
+.al-choice__option {
+  padding: var(--al-sp-2) var(--al-sp-4);
+  border: none;
+  border-left: 1px solid var(--al-color-line);
+  background: var(--al-color-sunken);
+  font: inherit;
+  font-size: var(--al-step--1);
+  color: var(--al-color-ink-muted);
+  cursor: pointer;
+}
+
+.al-choice__option:first-child {
+  border-left: none;
+}
+
+.al-choice__option:hover {
+  color: var(--al-color-ink);
+}
+
+.al-choice__option[aria-checked="true"] {
+  background: var(--al-color-accent);
+  color: var(--al-color-accent-on);
+}
+
+.al-choice__option:focus-visible {
+  outline: 2px solid var(--al-color-focus);
+  outline-offset: -2px;
+}
+
+.al-choice__default {
+  font-size: var(--al-step--2);
+  opacity: 0.8;
+}

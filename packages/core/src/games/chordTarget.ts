@@ -18,17 +18,37 @@ import { CHORD_GAME_DEFAULTS, type ChordGameConfig } from "./chordGame";
 import { chordKey, matchesTarget, type ChordAcceptPolicy, type ChordRef } from "./chordRef";
 import { EMPTY_CONFIRMATION, stepConfirmation, type ConfirmationState } from "./confirmation";
 import { resolveConfig } from "../utils/resolveConfig";
+import {
+  initialNoiseGateState,
+  NOISE_GATE_DEFAULTS,
+  stepNoiseGate,
+  type NoiseGateState,
+} from "../analysis/gate/noiseGate";
+import { GATE_STRICTNESS, gateTuning } from "../analysis/gate/strictness";
+import type { GateMode } from "./wolfDetector";
 
 export interface ChordTargetConfig extends ChordGameConfig {
   /** Which detections count for the target. Default `"exact"`. */
   accept: ChordAcceptPolicy;
-  /** Frames whose `signalLevelDb` is at or below this level do not count. Default −Infinity (no gate). */
+  /**
+   * How silence is told apart (`ChordTargetMatcher` only): "adaptive" learns the
+   * room's background (default), "fixed" uses `noiseGateDb`.
+   */
+  gate: GateMode;
+  /** How strict the adaptive gate is, 0 gentle … 1 strict. Default `GATE_STRICTNESS.chords` (normal, 0.5). */
+  gateStrictness: number;
+  /** Time between two frames, in ms, for the adaptive gate. Default 100. */
+  frameMs: number;
+  /** Frames whose `signalLevelDb` is at or below this level do not count (`gate: "fixed"`). Default −Infinity (no gate). */
   noiseGateDb: number;
 }
 
 export const CHORD_TARGET_DEFAULTS: ChordTargetConfig = {
   ...CHORD_GAME_DEFAULTS,
   accept: "exact",
+  gate: "adaptive",
+  gateStrictness: GATE_STRICTNESS.chords,
+  frameMs: 100,
   noiseGateDb: -Infinity,
 };
 
@@ -37,6 +57,8 @@ export interface ChordTargetFrame {
   chords: readonly ChordScore[];
   /** Omitted: the gate is considered open. */
   signalLevelDb?: number;
+  /** The gate's verdict, when the caller runs one (the matcher does, with `gate: "adaptive"`). */
+  gateOpen?: boolean;
 }
 
 export interface ChordTargetStep {
@@ -58,7 +80,7 @@ export function stepChordTarget(
   config: ChordTargetConfig,
 ): ChordTargetStep {
   const top = frame.chords[0] ?? null;
-  const gateOpen = (frame.signalLevelDb ?? Infinity) > config.noiseGateDb;
+  const gateOpen = frame.gateOpen ?? (frame.signalLevelDb ?? Infinity) > config.noiseGateDb;
   const matched = gateOpen && top !== null && target !== null && matchesTarget(top, target, config);
   const step = stepConfirmation(state, matched ? chordKey(target) : null, top?.probability ?? 0, {
     required: config.confirmations,
@@ -76,6 +98,7 @@ export function stepChordTarget(
 export class ChordTargetMatcher {
   private cfg: ChordTargetConfig;
   private state: ConfirmationState<string> = EMPTY_CONFIRMATION;
+  private gateState: NoiseGateState = initialNoiseGateState();
 
   constructor(config: Partial<ChordTargetConfig> = {}) {
     this.cfg = resolveConfig(CHORD_TARGET_DEFAULTS, config);
@@ -90,6 +113,11 @@ export class ChordTargetMatcher {
     this.cfg = resolveConfig(this.cfg, patch);
   }
 
+  /** The adaptive gate (background, thresholds, open). */
+  get gate(): NoiseGateState {
+    return this.gateState;
+  }
+
   /** Frames counted so far in the current run. */
   get count(): number {
     return this.state.count;
@@ -97,7 +125,20 @@ export class ChordTargetMatcher {
 
   /** Feed one analysis frame. */
   push(frame: ChordTargetFrame, target: ChordRef | null): ChordTargetStep {
-    const step = stepChordTarget(this.state, frame, target, this.cfg);
+    let gated = frame;
+    if (
+      this.cfg.gate === "adaptive" &&
+      frame.signalLevelDb !== undefined &&
+      frame.gateOpen === undefined
+    ) {
+      this.gateState = stepNoiseGate(
+        this.gateState,
+        { levelDb: frame.signalLevelDb, dtMs: this.cfg.frameMs },
+        { ...NOISE_GATE_DEFAULTS, ...gateTuning(this.cfg.gateStrictness) },
+      );
+      gated = { ...frame, gateOpen: this.gateState.open };
+    }
+    const step = stepChordTarget(this.state, gated, target, this.cfg);
     this.state = step.state;
     return step;
   }

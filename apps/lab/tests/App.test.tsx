@@ -258,8 +258,13 @@ describe("App", () => {
       Scales: ["matching scales"],
       Spectrum: ["the spectrum"],
       "Chord game": ["when a chord counts"],
-      "Wolf Jumper": ["notes, and a gate with no knob"],
-      "Play along": ["grading the timing", "when a note starts", "latency and tolerance"],
+      "Wolf Jumper": ["notes, and a gate that learns"],
+      "Play along": [
+        "grading the timing",
+        "when a note starts",
+        "the noise filter",
+        "latency and tolerance",
+      ],
       Tempo: ["the tempo"],
     };
     for (const [tab, expected] of Object.entries(topics)) {

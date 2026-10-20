@@ -69,17 +69,28 @@ export function WolfJumper({
   const [armed, setArmed] = useState(false);
   const playing = running && (!reducedMotion || armed);
 
-  const { store, noiseGateDb, setNoiseGateDb, gateMode, setGateMode, gate, gateOpen, note, reset } =
-    useWolfJumper({
-      instantaneousChroma,
-      chords,
-      running: playing,
-      signalLevelDb,
-      pitch,
-      config,
-      detection,
-      gate: initialGate,
-    });
+  const {
+    store,
+    noiseGateDb,
+    setNoiseGateDb,
+    gateMode,
+    setGateMode,
+    gateStrictness,
+    setGateStrictness,
+    gate,
+    gateOpen,
+    note,
+    reset,
+  } = useWolfJumper({
+    instantaneousChroma,
+    chords,
+    running: playing,
+    signalLevelDb,
+    pitch,
+    config,
+    detection,
+    gate: initialGate,
+  });
   const tuning = store.getState().config;
 
   return (
@@ -122,6 +133,8 @@ export function WolfJumper({
           mode={gateMode}
           onModeChange={setGateMode}
           gate={gate}
+          strictness={gateStrictness}
+          onStrictnessChange={setGateStrictness}
         />
 
         <DetectionStatus

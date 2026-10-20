@@ -187,6 +187,15 @@ export {
   type NoiseGateInput,
   type NoiseGateState,
 } from "./analysis/gate/noiseGate";
+export {
+  GATE_LEVELS,
+  GATE_STRICTNESS,
+  gateLevelOf,
+  gateTuning,
+  type GateLevel,
+  type GateTuning,
+  type GateUse,
+} from "./analysis/gate/strictness";
 
 // --- Timing ------------------------------------------------------------------
 
