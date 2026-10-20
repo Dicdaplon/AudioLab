@@ -155,10 +155,10 @@ To measure on your own recordings: label the attacks in Audacity (one
 label per note at the attack), export the label track, then
 `npm run measure:onsets -- take.wav labels.txt`.
 
-## 3. Adaptive noise gate (no slider)
+## 3. Adaptive noise gate (one choice: gentle, normal, strict)
 
-The goal is a gate a learner never touches, and that would rather let a
-noise through than cut a note.
+The goal is a gate a learner never has to tune, and that would rather let a
+noise through than cut a note. The only choice left is how strict it is.
 
 - **Level**: `BandLevelMeter` high-passes at 80 Hz (2nd-order Butterworth:
   −8 dB at 50 Hz mains hum, −3 dB at the low E) and measures 10 ms blocks.
@@ -187,9 +187,35 @@ its attack's band level reaches floor + 6 dB. In practice the detector
 already ignores bursts of noise (3 and 6 dB bursts gave no candidate in
 the tests); the margin is a safety net for very quiet rooms.
 
-Wolf Jumper uses it: `WolfJumperDetector` takes `gate: "adaptive"`
-(default `"fixed"` for existing callers) and the React game gates
-automatically by default, "Set it myself" bringing the slider back.
+**Strictness** (`gateTuning`, `GATE_LEVELS`, `GATE_STRICTNESS`). One number
+in [0, 1] sets the open margin (and the onset margin), the close margin
+(half of it) and the hold; 0.5 gives the values above. Players get three
+levels:
+
+| Level  | Strictness | Margin above the background | Hold   | Default for                         |
+| ------ | ---------- | --------------------------- | ------ | ----------------------------------- |
+| gentle | 0.25       | 4.2 dB                      | 320 ms | single notes (`notes`)              |
+| normal | 0.5        | 6 dB                        | 250 ms | chords, rhythm (`chords`, `rhythm`) |
+| strict | 0.75       | 8.5 dB                      | 200 ms | games (`game`)                      |
+
+The margin doubles every quarter of the scale, so the levels are about 3 dB
+apart. The defaults per use are reasoned, not measured: a quiet decaying
+string is worse to cut than a noise; in a game a noise that fires a shot is
+worse than a note played firmer. `OnsetPipeline` takes `strictness` (also
+live, the background kept).
+
+**Where it applies.** Wherever a sound triggers an action:
+
+- rhythm onsets (`OnsetPipeline`, normal);
+- Wolf Jumper (`WolfJumperDetector`, `gate: "adaptive"` is now the default,
+  strict; `"fixed"` and "Set it myself" remain);
+- the chord game (`ChordTargetMatcher` with `gate: "adaptive"` by default,
+  normal; the React `ChordGame` gates when given `signalLevelDb`,
+  `useAdaptiveGate` for any other frame stream).
+
+Not in the tuner (the clarity of the pitch says "a note" better than
+loudness) nor in key detection (it averages over seconds; a silence does
+not move it). `GateStrictnessField` is the three-way control.
 
 ## 4. Latency without a sound
 
@@ -288,6 +314,20 @@ that the on-time edge scores exactly 0.8 (`scoreSigmaFor(tolerance)`:
 gives the σ for "0.8 at ±80 ms" (≈ 119.8 ms). `fitPattern` scores each note on its
 residual the same way (option `scoreSigmaMs`). The tiers do not change.
 
+**Stray sounds.** An onset outside every note's window (`TimingScorerState.strays`,
+`PlayAlongSession.strays`, `PlayedOnsetView.stray`) belongs to no note. A second
+strum, an echo or a buzzing string inside a window does not count as one.
+`exerciseScore(scores, strays)` gives the run's score:
+
+```
+score = max(0, Σ note scores − STRAY_PENALTY · strays) / notes · 100      STRAY_PENALTY = 0.25
+```
+
+A stray costs a quarter of a perfect note: lighter than a note gains, so a
+cough does not ruin a run, but playing everywhere does not pay. `ScoreCard`
+(`@audiolab/react`) shows it: the final score in a ring, the bell curve with
+each note where it landed, one bar per note.
+
 ### 5.2 Scrolling notes and chords: `TimingScorer`
 
 Each expected note accepts onsets within ±wₖ, wₖ = min(windowMs, ½ · gap to
@@ -382,6 +422,33 @@ Which latency applies depends on what the player follows:
 | --------------------------------------------- | ------------------------------------------ |
 | `"visual"` (a scrolling target, `BeatLights`) | input + display                            |
 | `"audio"` (an audible click)                  | input + output, or the measured round trip |
+
+### 6.2a Any click sound: learnt during the count-in
+
+The band rule fits the SDK's sine clicks. A noisy click (a clave, a wood block)
+spreads beyond any band: on a synthetic clave (band-pass noise at 2.4 kHz, Q 2.4,
+through a phone-like high-pass), 23 to 41 % of its echoes fall under the 0.6 band
+share in [1700, 3400] Hz and would count as notes. That is what made a phone
+without headphones "hear sounds all the time".
+
+So the count-in teaches the filter. While the player waits, every onset is the
+click's echo: `ClickEchoFilter.learn` keeps its delay (up to 800 ms, Android
+round trips included) and the shape of what appeared (`SpectralRise.bands`, 13
+half-octave bands from 100 Hz to 9 kHz). Once two count-in echoes agree on the
+delay (± 40 ms), an onset is an echo when it comes at that delay and its shape
+is like the learnt one (`riseSimilarity` ≥ 0.4, cosine of square-rooted band
+energies). `PlayAlongSession` does it by itself for onsets before the first
+note's window, and never grades them.
+
+Measured on synthetic signals (the tests): an echo alone scores 0.85–1 against
+the learnt click, at any loudness (from 6 dB quieter to 14 dB louder); a guitar
+attack alone 0.05–0.25; an echo over strings still ringing from a note 50–200 ms
+earlier 0.42–0.99 (median 0.70), recognised. Limits: a note played within
+~15 ms after the echo merges with it and shows only if the guitar is much
+louder than the echo (about 18 dB here); an echo over a guitar three times
+louder than it is missed half the time: it is not a stray (it lands in the
+window of the note just played), but if it lands closer to the mark than the
+note did, it takes the note's place. Not measured on a real phone yet.
 
 ### 6.2b Bluetooth headphones: latency by ear
 

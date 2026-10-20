@@ -210,7 +210,7 @@ export function ChordGameHow() {
 export function WolfJumperHow() {
   return (
     <HowPanel
-      topic="notes, and a gate with no knob"
+      topic="notes, and a gate that learns"
       diagram={
         <SketchChain
           label="The room level, its learnt floor, the threshold above it"
@@ -218,13 +218,13 @@ export function WolfJumperHow() {
             { sketch: <SketchWave kind="noise" />, caption: "your room" },
             {
               sketch: <SketchMeter level={0.62} floor={0.3} threshold={0.42} />,
-              caption: "floor + 6 dB",
+              caption: "floor + margin",
             },
             { sketch: <SketchLabel text="E" sub="note fired" />, caption: "enemy down" },
           ]}
         />
       }
-      algorithm="Follow the pitch (the default) uses the tuner's method: best for single notes and low strings. Loudest note in the spectrum takes the strongest of the 12 notes over 0.3 s: for when other strings ring. Either way a note fires when it holds for two readings. The gate's floor is the quietest level of the last six seconds; it opens 6 dB (a clear step louder) above and closes 3 dB above after 250 ms."
+      algorithm="Follow the pitch (the default) uses the tuner's method: best for single notes and low strings. Loudest note in the spectrum takes the strongest of the 12 notes over 0.3 s: for when other strings ring. Either way a note fires when it holds for two readings. The gate's floor is the quietest level of the last six seconds; here it is Strict by default: it opens 8.5 dB above (a clear step louder), so a noise doesn't fire a shot. The noise filter softens it."
       limits="Two notes at once confuse the pitch tracker; low notes can lose to their own harmonics. In a noisy room the gate keeps working and says so; Set it myself is for noise it can't learn."
       sources={[
         { label: "Martin, minimum statistics, IEEE TSAP 2001" },
@@ -418,8 +418,8 @@ export function PlayAlongHow() {
           ]}
         />
       }
-      algorithm="With the metronome: each note meets the nearest mark within its window (windows never overlap); the click the microphone hears is told apart by its narrow, high pitch (2.3–4 kHz). Use it to play in time with a beat, like with a band. At your own pace: no click; I draw the straight line of your own steady tempo through your notes and grade each one against it. Use it for a written rhythm, or when the delay is unknown."
-      limits="Fast passages narrow the windows. A very loud strum on top of the click can hide it. At your own pace, slowing down on purpose reads as uneven."
+      algorithm="With the metronome: each note meets the nearest mark within its window (windows never overlap). During the count-in you wait, so whatever the microphone hears is the click: I learn its sound and its delay there, and drop its echoes afterwards. Use it to play in time with a beat, like with a band. At your own pace: no click; I draw the straight line of your own steady tempo through your notes. Use it for a written rhythm, or when the delay is unknown. The score: each note earns up to 100 on a bell curve around its mark (dead on 100, at the edge of the band 80). A stray sound, outside every window, costs a quarter of a note."
+      limits="Fast passages narrow the windows. A strum much louder than the click, right on its echo, can hide it. At your own pace, slowing down on purpose reads as uneven."
       sources={[{ label: "Sen, Theil–Sen slope, JASA 1968" }, { label: "Repp 2005" }]}
       aside="At your own pace the latency cancels out completely: only how even your rhythm is gets graded."
     >
@@ -427,6 +427,37 @@ export function PlayAlongHow() {
         Every mark sits on the metronome&apos;s grid. Your note lands on the same clock, delay
         removed, and meets the closest mark: on time, early, late or missed. The red dot shows
         exactly where you landed.
+      </p>
+    </HowPanel>
+  );
+}
+
+export function NoiseGateHow() {
+  return (
+    <HowPanel
+      topic="the noise filter"
+      diagram={
+        <SketchChain
+          label="The room's background is learnt; a sound counts above it, by a margin you choose"
+          items={[
+            { sketch: <SketchWave kind="noise" />, caption: "your room" },
+            {
+              sketch: <SketchMeter level={0.72} floor={0.3} threshold={0.42} />,
+              caption: "background + margin",
+            },
+            { sketch: <SketchLabel text="Normal" sub="6 dB above" />, caption: "the level" },
+          ]}
+        />
+      }
+      algorithm="I keep the quietest level of the last 6 seconds: that's your room. It may only rise slowly (6 dB a second), so a note you hold is never taken for the background, and it drops at once when the room gets quieter. A sound counts from a margin above it, and I wait a quarter of a second of quiet before closing, so a ringing note isn't chopped. Three levels. Gentle (about 4 dB above the room): quiet single notes. Normal (6 dB): chords and rhythm. Strict (8.5 dB): games, where a noise that fires a shot is worse than a note played a little firmer."
+      limits="A noise louder than your playing (a TV, someone talking) gets through: loudness alone can't tell it apart. For the first seconds, while I listen to the room, I'm a little too open."
+      sources={[{ label: "Martin, Noise PSD estimation by minimum statistics, IEEE TSAP 2001" }]}
+      aside="Used for rhythm, the chord game and Wolf Jumper. Not for the tuner (how clear the pitch is says 'a note' better than loudness) nor for the key (it averages over seconds; a silence doesn't move it)."
+    >
+      <p>
+        Before I can say &ldquo;you played&rdquo;, I need to know what silence sounds like where you
+        are. A fridge, a fan, the street: that&apos;s the background. I learn it myself, and a sound
+        only counts once it rises clearly above it. You just choose how clearly.
       </p>
     </HowPanel>
   );
