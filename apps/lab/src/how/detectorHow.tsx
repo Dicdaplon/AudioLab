@@ -21,7 +21,7 @@ export function detectorHow(options: DetectorHowOptions): DetectorHow {
     chordChroma: (
       <WindowHow
         seconds={1}
-        use="The first window, kept for 1 s: about one chord. It feeds the chord answer and the chord list."
+        use="The first window, kept for 1 s: about one chord. It feeds the chord answer and the chord list: watch it while you change chords."
       />
     ),
     liveChroma: (
@@ -33,7 +33,7 @@ export function detectorHow(options: DetectorHowOptions): DetectorHow {
     tonalityChroma: (
       <WindowHow
         seconds={options.long}
-        use={`The first window, kept for ${options.long} s: about a section. It feeds the estimated key: slow to move, sure of itself.`}
+        use={`The first window, kept for ${options.long} s: about a section. It feeds the estimated key: slow to move, sure of itself, the one to read for a whole song.`}
       />
     ),
     chords: <ChordsHow {...options} />,

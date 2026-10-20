@@ -26,13 +26,14 @@ export function ReadoutsHow({ live, long }: DetectorHowOptions) {
     <HowPanel
       compact
       topic="how this page reads"
-      algorithm={`One chain, top to bottom. The first window turns the sound into 12 notes. The next three keep those same notes in memory for 1 s, ${live} s and ${long} s. Each memory feeds one answer: the chord (1 s), the live key (${live} s), the estimated key (${long} s). Presence, at the bottom, is a second road to the key: it counts which notes showed up, not how loud they were.`}
+      algorithm={`One chain, top to bottom. The first window turns the sound into a chroma: 12 bars, how much of each note is sounding. The next three keep that picture in memory for 1 s, ${live} s and ${long} s. Each memory feeds one answer: the chord (1 s), the live key (${live} s), the estimated key (${long} s). Presence, at the bottom, is a second road to the key: it counts which notes showed up, not how loud they were.`}
       limits="The percentage is a share, not a certainty: the scores of all candidates add up to 100. In silence they all tie and the name means nothing."
       aside="Notes are written with sharps only (A#, D#): I work on twelve sounds, not on spelled notes. A# major is B♭ major."
     >
       <p>
-        Same notes, three memories: the short one follows you, the long one is sure of itself. When
-        the three answers agree, trust them. When they don&apos;t, the passage really is ambiguous.
+        Same notes, three memories: the short one follows you, the long one is sure of itself. Read
+        the short one while you change chords, the long one for the key of a whole song. When the
+        three agree, trust them. When they don&apos;t, the passage really is ambiguous.
       </p>
     </HowPanel>
   );
@@ -58,7 +59,7 @@ export function InstantChromaHow() {
           ]}
         />
       }
-      algorithm="An FFT of 16384 points ten times a second, every frequency from 55 Hz to 5 kHz poured into its nearest note (A = 440), octaves folded together, the total scaled to 1."
+      algorithm="Ten times a second, an FFT of 16384 points splits the sound into its frequencies, like a prism. Each one from 55 Hz to 5 kHz is poured into its nearest note (A = 440 Hz), octaves folded together, the total scaled to 1."
       limits="Below about 150 Hz a bass note spills into its neighbours. Harmonics count too: a low C also lights up G and E a little."
     >
       <p>
@@ -74,7 +75,7 @@ export function WindowHow({ seconds, use }: { seconds: number; use: string }) {
     <HowPanel
       compact
       topic={`same notes, last ${seconds} s`}
-      algorithm={`The mean of the last ${seconds * 10} chromas, scaled back to 1. Every reading weighs the same, loud or soft.`}
+      algorithm={`The average of the last ${seconds * 10} chromas (ten a second), scaled back to 1. Every reading weighs the same, loud or soft.`}
       limits="Silence and hiss count as much as a chord: stop playing and the picture slowly fades into noise."
     >
       <p>{use}</p>
@@ -87,13 +88,13 @@ export function ChordsHow({ extended }: DetectorHowOptions) {
     <HowPanel
       compact
       topic="ranking the chords"
-      algorithm={`Each chord is a stencil, one hole per note. cos says how much of what rings falls in the holes (1 = all of it). ${
+      algorithm={`Each chord is a stencil, one hole per note. cos, the fit, says how much of what rings falls in the holes (1 = all of it). ${
         extended
           ? "Every quality is on: up to 132 stencils, dim and m7♭5 slightly held back so a D7 isn't read as F#dim."
           : "24 stencils: 12 major and 12 minor triads."
       }`}
       limits="Same notes, one name: C6 and Am7 are the same stencil, and I name it after the loudest note. No bass detection, so inversions count as the plain chord."
-      aside="A note's fifth harmonic is its major third: a minor chord can lean major."
+      aside="A note's fifth harmonic (one of the quiet higher tones it always carries) is its major third: a minor chord can lean major."
     >
       <p>The chords whose notes best fit the last second, best first.</p>
     </HowPanel>
@@ -105,8 +106,8 @@ export function KeysHow({ seconds }: { seconds: number }) {
     <HowPanel
       compact
       topic="ranking the keys"
-      algorithm={`The ${seconds} s chroma is compared with the profile of each of the 24 major and minor keys. r is that resemblance (1 = same shape); the percentages share 100 between them.`}
-      limits="Only major and minor: a dorian or mixolydian vamp lands on the major or minor key with the same notes. Relative keys (C major, A minor) are told apart only by the weight of the tonic."
+      algorithm={`The ${seconds} s chroma is compared with the profile of each of the 24 major and minor keys: how much each note weighs in that key, as listeners rated it. r is that resemblance (1 = same shape); the percentages share 100 between them.`}
+      limits="Only major and minor: a dorian or mixolydian vamp lands on the major or minor key with the same notes. Relative keys (C major, A minor) are told apart only by how heavy the home note is."
       sources={[KK_SOURCE]}
     >
       <p>
@@ -138,14 +139,15 @@ export function PresenceHow({ live, long }: DetectorHowOptions) {
           ]}
         />
       }
-      algorithm={`Ten times a second, every note above 35 % of the strongest one in the ${live} s chroma is marked present (1), the rest absent (0). Over ${long} s, each bar is the share of time the note was present. The same key profiles then read that histogram instead of the energy.`}
+      algorithm={`Ten times a second, every note above 35 % of the strongest one in the ${live} s chroma is marked present (1), the rest absent (0). Over ${long} s, each bar is the share of time the note was present. The same key profiles then read those shares instead of the loudness.`}
       limits="A short passing note may never be marked. And since the seven notes of a scale all end up about equally present, relative major and minor get even harder to tell apart."
       sources={[{ label: "No paper: my own adaptation of Krumhansl–Schmuckler" }]}
       aside="This is also what the Scales page reads: a note counts as played when it was present more than a quarter of the time."
     >
       <p>
         A loud bass or an open string ringing all along shouldn&apos;t vote ten times. So I stop
-        weighing the notes and just take attendance: who was there, how often.
+        weighing the notes and just take attendance: who was there, how often. Trust it over the
+        loudness reading when one note drones.
       </p>
     </HowPanel>
   );
@@ -156,7 +158,7 @@ export function SettingsHow() {
     <HowPanel
       compact
       topic="what the knobs change"
-      algorithm="“Present above … % of loudest”: how strong a note must be, next to the loudest one, to count. Under Fine tuning, the memory (how many recent readings set “the loudest”) and their mean or median. The cut line and the loudest note are shares of everything heard, not volumes."
+      algorithm="“Present above … % of loudest”: how strong a note must be, next to the loudest one, to count. Under Fine tuning, the memory (how many recent readings set “the loudest”) and how they're combined: mean, the default, counts every reading; median ignores one odd loud one. The cut line and the loudest note are shares of everything heard, not volumes."
       limits="Turn it up and only the core notes remain; down, passing notes and ringing harmonics come in too."
       aside="The defaults (35 %, 3, mean) were picked by a grid search on my recordings. For 95 % of uses, leave them alone."
     >
