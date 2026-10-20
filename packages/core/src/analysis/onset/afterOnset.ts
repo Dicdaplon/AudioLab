@@ -167,9 +167,40 @@ export interface SpectralRise {
   bandShare: number;
   /** Total energy after vs before (80 Hz – 10 kHz), in dB: > 0 when something starts. */
   riseDb: number;
+  /** Level of the new energy alone, in dB (relative: compare two rises, not to dBFS). */
+  levelDb: number;
+  /** New energy per half-octave band (`RISE_BAND_EDGES_HZ`): the shape of what appeared. */
+  bands: readonly number[];
 }
 
 const DEFAULT_CLICK_BAND: readonly [number, number] = [2300, 4000];
+
+/** Edges of the half-octave bands of `SpectralRise.bands`, 100 Hz – 9 kHz, in Hz. */
+export const RISE_BAND_EDGES_HZ: readonly number[] = Array.from({ length: 14 }, (_, i) =>
+  Math.round(100 * Math.pow(2, i / 2)),
+);
+
+/**
+ * How alike two rises are, from their band shapes: 1 for the same spectrum
+ * at any loudness, near 0 for unrelated ones (cosine of the square roots, so
+ * the loudest band does not decide alone). A metronome's echo against the
+ * echoes learnt during the count-in scores above 0.85; a guitar attack under
+ * 0.25, and an echo over strings still ringing 0.4–1 (synthetic clave and
+ * strums, see the tests).
+ */
+export function riseSimilarity(a: readonly number[], b: readonly number[]): number {
+  let dot = 0;
+  let na = 0;
+  let nb = 0;
+  for (let i = 0; i < Math.min(a.length, b.length); i++) {
+    const x = Math.sqrt(Math.max(0, a[i]));
+    const y = Math.sqrt(Math.max(0, b[i]));
+    dot += x * y;
+    na += x * x;
+    nb += y * y;
+  }
+  return na > 0 && nb > 0 ? dot / Math.sqrt(na * nb) : 0;
+}
 
 /**
  * What appears at a frame: the power spectrum of the `windowMs` after it,
@@ -190,10 +221,13 @@ export function spectralRise(
   const pb = computeFftDb(before, sampleRate, { fftSize: length }).magnitude;
   const pa = computeFftDb(after, sampleRate, { fftSize: length }).magnitude;
   const binHz = sampleRate / length;
+  const edges = RISE_BAND_EDGES_HZ;
+  const bands = new Array<number>(edges.length - 1).fill(0);
   let inBand = 0;
   let rise = 0;
   let energyBefore = 0;
   let energyAfter = 0;
+  let band = 0;
   for (let k = 1; k < pa.length; k++) {
     const f = k * binHz;
     if (f < 80 || f > 10000) continue;
@@ -204,10 +238,14 @@ export function spectralRise(
     const r = Math.max(0, a - b);
     rise += r;
     if (f >= lo && f <= hi) inBand += r;
+    while (band < bands.length && f >= edges[band + 1]) band++;
+    if (band < bands.length && f >= edges[band]) bands[band] += r;
   }
   return {
     bandShare: rise > 0 ? inBand / rise : 0,
     riseDb: 10 * Math.log10((energyAfter + 1e-20) / (energyBefore + 1e-20)),
+    levelDb: 10 * Math.log10(rise + 1e-20),
+    bands,
   };
 }
 

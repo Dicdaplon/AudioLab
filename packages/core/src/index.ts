@@ -151,6 +151,8 @@ export {
   clickBandShare,
   clickWindowLength,
   spectralRise,
+  RISE_BAND_EDGES_HZ,
+  riseSimilarity,
   type ClickBandOptions,
   type SpectralRise,
   chordAfterOnset,
@@ -209,6 +211,7 @@ export {
   ClickEchoFilter,
   type ClickEchoConfig,
   type ClickEchoVerdict,
+  type LearntClick,
 } from "./timing/clickEcho";
 export {
   LATENCY_TEST,

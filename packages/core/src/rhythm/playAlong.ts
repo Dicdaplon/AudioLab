@@ -29,7 +29,7 @@ const AFTER_ECHO_MS = [15, 30, 45];
 const HIDDEN_NOTE_RISE_DB = 3;
 
 import { clickWindowLength, spectralRise, type StreamHistory } from "../analysis/onset/afterOnset";
-import { CLICK_BAND_HZ, ClickEchoFilter } from "../timing/clickEcho";
+import { CLICK_BAND_HZ, ClickEchoFilter, type LearntClick } from "../timing/clickEcho";
 import {
   TimingScorer,
   type ExpectedNote,
@@ -93,6 +93,8 @@ export class PlayAlongSession {
   private readonly queue: PlayAlongOnset[] = [];
   private pendingLabels: PendingLabel[] = [];
   private readonly views: PlayedOnsetView[] = [];
+  /** Detected onsets before this time (s) belong to the count-in: the player waits. */
+  private readonly countInEnd: number;
 
   constructor(notes: readonly ExpectedNote[], options: PlayAlongOptions) {
     const { sampleRate, clicks, labeler, ...scorer } = options;
@@ -101,6 +103,14 @@ export class PlayAlongSession {
     this.clicks = clicks;
     this.labeler = labeler;
     this.echoFilter = clicks ? (clicks.filter ?? new ClickEchoFilter()) : null;
+    const { offsetMs, tolerance } = this.scorer.config;
+    const first = notes.reduce((t, n) => Math.min(t, n.time), Infinity);
+    this.countInEnd = first + (offsetMs - tolerance.windowMs) / 1000;
+  }
+
+  /** The click learnt from its echoes during the count-in, or null (headphones, too few). */
+  get learntClick(): LearntClick | null {
+    return this.echoFilter?.learntClick ?? null;
   }
 
   /** The resolved scoring configuration (tolerance, offset, bias settings). */
@@ -161,11 +171,15 @@ export class PlayAlongSession {
       if (this.clicks && this.echoFilter) {
         if (history.range.to < onset.frame + needed) break; // wait for the audio
         const rise = spectralRise(history, onset.frame, this.sampleRate, { band });
-        const verdict = this.echoFilter.check(
-          onset.time,
-          rise?.bandShare ?? null,
-          this.clicks.times(),
-        );
+        if (onset.time < this.countInEnd) {
+          // The count-in: the player waits, so what is heard is the click.
+          // Learnt from, shown, never graded (not even as an extra).
+          const learnt = this.echoFilter.learn(onset.time, rise, this.clicks.times());
+          this.addView(onset.id, onset.time, learnt);
+          this.queue.shift();
+          continue;
+        }
+        const verdict = this.echoFilter.check(onset.time, rise, this.clicks.times());
         if (verdict.echo) {
           this.addView(onset.id, onset.time, true);
           played = this.hiddenNote(history, onset, band);
@@ -211,7 +225,10 @@ export class PlayAlongSession {
     for (const ms of AFTER_ECHO_MS) {
       const frame = echo.frame + Math.round((ms / 1000) * this.sampleRate);
       const rise = spectralRise(history, frame, this.sampleRate, { band });
-      if (rise && rise.riseDb >= HIDDEN_NOTE_RISE_DB && rise.bandShare < minShare) {
+      if (!rise || rise.riseDb < HIDDEN_NOTE_RISE_DB) continue;
+      // Not the click: by the learnt shape once there is one, else by the band.
+      const click = this.echoFilter?.looksLikeClick(rise) ?? null;
+      if (click === null ? rise.bandShare < minShare : !click) {
         return { id: echo.id, time: echo.time + ms / 1000, frame };
       }
     }
