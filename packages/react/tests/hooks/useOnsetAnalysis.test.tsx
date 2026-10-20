@@ -111,4 +111,33 @@ describe("useOnsetAnalysis", () => {
     });
     vi.unstubAllGlobals();
   });
+
+  it("applies a calibration to the reference it was measured with", async () => {
+    const { result, rerender } = renderHook(
+      ({ reference, calibration }) =>
+        useOnsetAnalysis(mic, { updatesPerSecond: 50, reference, calibration }),
+      {
+        initialProps: {
+          reference: "audio" as "audio" | "visual",
+          calibration: { offsetMs: 300, spreadMs: 12 } as {
+            offsetMs: number;
+            spreadMs: number;
+            reference?: "audio" | "visual";
+          } | null,
+        },
+      },
+    );
+    // Set by ear with the click (the default): it replaces input + output.
+    await waitFor(() => expect(result.current.budget?.components[0].id).toBe("calibration"));
+    expect(result.current.budget!.offsetMs).toBe(300);
+    expect(result.current.budget!.visualDelayMs).toBeGreaterThan(200);
+    // Measured against the screen: not used while the click sounds.
+    rerender({
+      reference: "audio",
+      calibration: { offsetMs: 40, spreadMs: 5, reference: "visual" },
+    });
+    await waitFor(() => expect(result.current.budget?.components[0].id).toBe("input"));
+    rerender({ reference: "audio", calibration: null });
+    await waitFor(() => expect(result.current.budget?.components[1].id).toBe("output"));
+  });
 });

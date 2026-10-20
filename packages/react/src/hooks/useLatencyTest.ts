@@ -67,13 +67,10 @@ export function useLatencyTest(context: BaseAudioContext | null): LatencyTestCon
   const { start: startMetronome, stop: stopMetronome } = metronome;
 
   const start = useCallback(() => {
-    if (!context) return;
-    const m = startMetronome({
-      bpm: LATENCY_TEST.bpm,
-      beatsPerBar: LATENCY_TEST.countIn,
-      sound: true,
-    });
-    if (!m) return;
+    const m = context
+      ? startMetronome({ bpm: LATENCY_TEST.bpm, beatsPerBar: LATENCY_TEST.countIn, sound: true })
+      : null;
+    if (!context || !m) return;
     const clicks = latencyTestClicks(m.grid);
     clicksRef.current = clicks;
     cancelledRef.current = false;
