@@ -6,11 +6,13 @@ import {
   noteLabel,
   noteLabeler,
   rhythmLength,
+  scoreSigmaFor,
+  TIMING_TOLERANCE_DEFAULTS,
   toleranceFromUncertainty,
 } from "@audiolab/core/rhythm";
-import { PlayAlongLane, StaffNotation, laneTarget } from "@audiolab/react";
+import { PlayAlongLane, ScoreCard, StaffNotation, laneTarget } from "@audiolab/react";
 
-import { VERDICT_TEXT, scoreOutOf100, type ExerciseEnv } from "./env";
+import { VERDICT_TEXT, type ExerciseEnv } from "./env";
 import { SCROLL_SEQUENCES, type ScrollMode } from "./exercises";
 import { staffStates } from "./staffState";
 
@@ -79,8 +81,7 @@ export function ScrollingLane({ mode, env }: { mode: ScrollMode; env: ExerciseEn
   else if (play.done && results) {
     const onTime = results.filter((r) => r.tier === "onTime").length;
     const right = results.filter((r) => r.label === "correct").length;
-    const score = scoreOutOf100(results.map((r) => r.score));
-    message = `Score ${score}/100: ${onTime} of ${results.length} on time, ${right} right ${noun}s.`;
+    message = `${onTime} of ${results.length} on time, ${right} right ${noun}s.`;
   } else if (results) {
     const last = results.filter((r) => r.resolved).at(-1);
     if (last) {
@@ -132,6 +133,15 @@ export function ScrollingLane({ mode, env }: { mode: ScrollMode; env: ExerciseEn
       <p className="rhythm__message" role="status">
         {message}
       </p>
+      {results && (
+        <ScoreCard
+          results={results}
+          strays={play.strays}
+          sigmaMs={scoreSigmaFor(tolerance ?? TIMING_TOLERANCE_DEFAULTS)}
+          done={play.done}
+          labels={names}
+        />
+      )}
     </div>
   );
 }

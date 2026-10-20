@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 
 import {
   StreamHistory,
@@ -191,7 +191,10 @@ describe("RhythmTab", () => {
       );
     });
     batch(m.grid.startTime + (17 * 60) / 70);
-    expect(panel("Play in time").textContent).toMatch(/Score 100\/100: 20 of 20 on time./);
+    expect(panel("Play in time").textContent).toMatch(/20 of 20 on time./);
+    const card = within(panel("Play in time")).getByRole("region", { name: "Score" });
+    expect(card.textContent).toContain("100/100");
+    expect(card.textContent).toMatch(/20 of 20 notes right on/);
     // The rhythm is written above the lane, as on a score.
     expect(panel("Play in time").querySelectorAll(".al-staff__note")).toHaveLength(20);
     expect(screen.getByRole("button", { name: "Again" })).toBeTruthy();

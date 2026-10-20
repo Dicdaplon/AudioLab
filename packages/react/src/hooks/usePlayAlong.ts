@@ -51,6 +51,8 @@ export interface PlayAlongControls {
   stop: () => void;
   /** Results of the current (or last) run, null before the first. */
   results: readonly NoteResult[] | null;
+  /** Sounds outside every note's window in the current run (they cost points). */
+  strays: number;
   /** True once the run is over and graded. */
   done: boolean;
   /** True between `start` and the end of the run. */
@@ -112,6 +114,7 @@ export function usePlayAlong(): PlayAlongControls {
   feedRef.current ??= createSource(() => sampleRateRef.current);
   const [results, setResults] = useState<readonly NoteResult[] | null>(null);
   const [done, setDone] = useState(false);
+  const [strays, setStrays] = useState(0);
   const [active, setActive] = useState(false);
   const [roundTrip, setRoundTrip] = useState<{ ms: number | null; spread: number }>({
     ms: null,
@@ -133,15 +136,20 @@ export function usePlayAlong(): PlayAlongControls {
       runRef.current = run;
       run.subscribe((event) => {
         if (runRef.current !== run) return;
-        if (event.type === "results") setResults([...run.results]);
+        if (event.type === "results") {
+          setResults([...run.results]);
+          setStrays(run.strays);
+        }
         if (event.type === "roundTrip") setRoundTrip({ ms: event.ms, spread: event.spreadMs });
         if (event.type === "done") {
           setResults([...event.results]);
+          setStrays(run.strays);
           setDone(true);
           setActive(false);
         }
       });
       setResults(run.results);
+      setStrays(0);
       setDone(false);
       setActive(true);
     },
@@ -163,6 +171,7 @@ export function usePlayAlong(): PlayAlongControls {
     start,
     stop,
     results,
+    strays,
     done,
     active,
     onsets,

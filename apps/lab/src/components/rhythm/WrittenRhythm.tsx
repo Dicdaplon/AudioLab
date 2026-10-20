@@ -4,13 +4,22 @@ import {
   fitPattern,
   playedBeats,
   rhythmLength,
+  scoreSigmaFor,
+  TIMING_TOLERANCE_DEFAULTS,
   toleranceFromUncertainty,
   type PatternFit,
   type TimingTier,
 } from "@audiolab/core/rhythm";
-import { SelectField, StaffNotation, Switch, type StaffDot } from "@audiolab/react";
+import {
+  ScoreCard,
+  SelectField,
+  StaffNotation,
+  Switch,
+  type ScoredNote,
+  type StaffDot,
+} from "@audiolab/react";
 
-import { scoreOutOf100, type ExerciseEnv } from "./env";
+import type { ExerciseEnv } from "./env";
 import { BEATS_PER_BAR, RHYTHM_PATTERNS, patternEvents } from "./exercises";
 import { useOnsetBus } from "./onsetBus";
 import { staffStates } from "./staffState";
@@ -142,7 +151,7 @@ export function WrittenRhythm({ env }: { env: ExerciseEnv }) {
     if (playing) message = `Listening… ${freeOnsets?.length ?? 0} of ${beats.length} notes.`;
     else if (freeDone && fit) {
       const inTime = fit.notes.filter((n) => n.tier === "onTime").length;
-      message = `Score ${scoreOutOf100(fit.notes.map((n) => n.score))}/100: ${inTime} of ${fit.notes.length} notes in time, at about ${Math.round(fit.tempoBpm)} BPM. ${
+      message = `${inTime} of ${fit.notes.length} notes in time, at about ${Math.round(fit.tempoBpm)} BPM. ${
         fit.stats.jitterMs < 35 ? "Steady." : "A bit uneven: try it slower."
       }`;
     } else if (freeDone) message = "Not enough notes heard. Try again.";
@@ -155,8 +164,39 @@ export function WrittenRhythm({ env }: { env: ExerciseEnv }) {
     }
     if (play.done && results) {
       const inTime = results.filter((r) => r.tier === "onTime").length;
-      message = `Score ${scoreOutOf100(results.map((r) => r.score))}/100: ${inTime} of ${results.length} notes in time.`;
+      message = `${inTime} of ${results.length} notes in time.`;
     }
+  }
+  // The score card: the metronome run, or the free-tempo fit once the take ends.
+  let card: {
+    notes: readonly ScoredNote[];
+    strays: number;
+    done: boolean;
+    sigmaMs: number;
+  } | null = null;
+  if (ownPace) {
+    if (freeDone && fit) {
+      card = {
+        notes: fit.notes.map((n) => ({
+          resolved: true,
+          tier: n.tier,
+          deltaMs: n.residualMs,
+          score: n.onsetTime === null ? 0 : n.score,
+        })),
+        strays: fit.extras.length,
+        done: true,
+        sigmaMs: scoreSigmaFor(TIMING_TOLERANCE_DEFAULTS),
+      };
+    }
+  } else if (play.results) {
+    card = {
+      notes: play.results,
+      strays: play.strays,
+      done: play.done,
+      sigmaMs: scoreSigmaFor(
+        budget ? toleranceFromUncertainty(budget.uncertaintyMs) : TIMING_TOLERANCE_DEFAULTS,
+      ),
+    };
   }
   if (!running) message = "Start the microphone, then play the rhythm.";
   const dotsRef = useRef(dotList);
@@ -214,6 +254,14 @@ export function WrittenRhythm({ env }: { env: ExerciseEnv }) {
       <p className="rhythm__message" role="status">
         {message}
       </p>
+      {card && (
+        <ScoreCard
+          results={card.notes}
+          strays={card.strays}
+          sigmaMs={card.sigmaMs}
+          done={card.done}
+        />
+      )}
     </div>
   );
 }

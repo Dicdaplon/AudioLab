@@ -137,6 +137,13 @@ export interface TimingScorerState {
   rawDeltasMs: readonly (number | null)[];
   /** Onsets that matched no note. */
   extras: readonly PlayedOnset[];
+  /**
+   * The extras outside every note's window (corrected time): sounds that
+   * belong to no note at all. An extra inside a window (a second strum, an
+   * echo, a buzzing string) is not one. `exerciseScore` counts them against
+   * the player.
+   */
+  strays: readonly PlayedOnset[];
   /** Learnt bias, in ms. */
   biasMs: number;
   /** Raw offsets feeding the bias. */
@@ -185,6 +192,7 @@ export function createTimingScorerState(
     candidates: sorted.map(() => null),
     rawDeltasMs: sorted.map(() => null),
     extras: [],
+    strays: [],
     biasMs: 0,
     biasSamples: [],
     firstOpen: 0,
@@ -210,6 +218,11 @@ function correctedTime(state: TimingScorerState, t: number, config: TimingScorer
   return t - (config.offsetMs + state.biasMs) / 1000;
 }
 
+/** True when a corrected time falls in some note's window, resolved or not. */
+function inAnyWindow(state: TimingScorerState, t: number): boolean {
+  return state.notes.some((n, k) => Math.abs(t - n.time) <= state.windows[k]);
+}
+
 function onOnset(
   state: TimingScorerState,
   onset: PlayedOnset,
@@ -227,7 +240,11 @@ function onOnset(
       bestDist = Math.abs(dt);
     }
   }
-  if (best < 0) return { state: { ...state, extras: [...state.extras, onset] }, changed: [] };
+  if (best < 0) {
+    const extras = [...state.extras, onset];
+    const strays = inAnyWindow(state, t) ? state.strays : [...state.strays, onset];
+    return { state: { ...state, extras, strays }, changed: [] };
+  }
 
   const previous = state.candidates[best];
   const previousDist = previous === null ? Infinity : Math.abs(previous - state.notes[best].time);

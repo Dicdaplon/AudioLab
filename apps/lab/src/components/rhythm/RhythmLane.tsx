@@ -4,11 +4,13 @@ import {
   medianOf,
   playedBeats,
   rhythmLength,
+  scoreSigmaFor,
+  TIMING_TOLERANCE_DEFAULTS,
   toleranceFromUncertainty,
 } from "@audiolab/core/rhythm";
-import { PlayAlongLane, SelectField, StaffNotation, laneTarget } from "@audiolab/react";
+import { PlayAlongLane, ScoreCard, SelectField, StaffNotation, laneTarget } from "@audiolab/react";
 
-import { VERDICT_TEXT, scoreOutOf100, type ExerciseEnv } from "./env";
+import { VERDICT_TEXT, type ExerciseEnv } from "./env";
 import { RHYTHM_PATTERNS, patternEvents } from "./exercises";
 import { staffStates } from "./staffState";
 
@@ -71,8 +73,7 @@ export function RhythmLane({ env }: { env: ExerciseEnv }) {
     if (budget?.calibrated && deltas.length >= 4 && Math.abs(tendency) > 25) {
       hint = tendency < 0 ? " You tend to rush." : " You tend to drag.";
     }
-    const score = scoreOutOf100(results.map((r) => r.score));
-    message = `Score ${score}/100: ${onTime} of ${results.length} on time.${hint}`;
+    message = `${onTime} of ${results.length} on time.${hint}`;
   } else if (results) {
     const last = results.filter((r) => r.resolved).at(-1);
     if (last) message = `${VERDICT_TEXT[last.tier ?? "missed"]}.`;
@@ -128,6 +129,14 @@ export function RhythmLane({ env }: { env: ExerciseEnv }) {
       <p className="rhythm__message" role="status">
         {message}
       </p>
+      {results && (
+        <ScoreCard
+          results={results}
+          strays={play.strays}
+          sigmaMs={scoreSigmaFor(tolerance ?? TIMING_TOLERANCE_DEFAULTS)}
+          done={play.done}
+        />
+      )}
     </div>
   );
 }

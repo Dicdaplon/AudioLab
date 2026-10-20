@@ -57,6 +57,8 @@ export interface PlayAlongRun {
   readonly results: readonly NoteResult[];
   /** Detected onsets with their played time (for a lane or a score). */
   readonly onsets: readonly PlayedOnsetView[];
+  /** Sounds outside every note's window (`exerciseScore(scores, run.strays)`). */
+  readonly strays: number;
   /** Measured speaker → microphone round trip, in ms (audible clicks only). */
   readonly roundTripMs: number | null;
   /** Bias learnt so far, in ms (`adaptiveBias`). */
@@ -149,6 +151,9 @@ export function attachPlayAlong(
     },
     get onsets() {
       return session.onsets;
+    },
+    get strays() {
+      return session.strays;
     },
     get roundTripMs() {
       return session.roundTripMs;

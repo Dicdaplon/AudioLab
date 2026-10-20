@@ -76,6 +76,8 @@ export interface PlayedOnsetView {
   time: number;
   /** A metronome click picked up by the microphone. */
   echo: boolean;
+  /** A sound outside every note's window: it costs points (`exerciseScore`). */
+  stray: boolean;
 }
 
 interface PendingLabel {
@@ -130,6 +132,11 @@ export class PlayAlongSession {
   /** True once every note is resolved (and labelled, with a labeler). */
   get done(): boolean {
     return this.results.every((r) => r.resolved && (r.label !== "pending" || r.onsetId === null));
+  }
+
+  /** Sounds outside every note's window so far (count them with `exerciseScore`). */
+  get strays(): number {
+    return this.scorer.state.strays.length;
   }
 
   /** Every detected onset, for display. */
@@ -188,7 +195,9 @@ export class PlayAlongSession {
       this.queue.shift();
       if (!played) continue;
       this.addView(played.id, played.time, false);
+      const strays = this.scorer.state.strays.length;
       note(this.scorer.onset({ id: played.id, time: played.time }));
+      if (this.scorer.state.strays.length > strays) this.views[this.views.length - 1].stray = true;
       if (this.labeler) {
         this.pendingLabels.push({
           id: played.id,
@@ -212,7 +221,12 @@ export class PlayAlongSession {
 
   private addView(id: number, time: number, echo: boolean): void {
     const { offsetMs } = this.scorer.config;
-    this.views.push({ id, time: time - (offsetMs + this.scorer.state.biasMs) / 1000, echo });
+    this.views.push({
+      id,
+      time: time - (offsetMs + this.scorer.state.biasMs) / 1000,
+      echo,
+      stray: false,
+    });
   }
 
   /** A note started within 45 ms after an echo, merged into its onset. */

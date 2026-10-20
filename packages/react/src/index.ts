@@ -82,6 +82,7 @@ export { TimeSignalPlot } from "./components/TimeSignalPlot";
 // --- Rhythm -----------------------------------------------------------------
 
 export { PlayAlongLane, type PlayAlongLaneProps } from "./components/PlayAlongLane";
+export { ScoreCard, type ScoreCardProps, type ScoredNote } from "./components/ScoreCard";
 export { BeatLights, type BeatLightsProps } from "./components/BeatLights";
 export { FIGURE_NAMES_EN, FIGURE_WORDS_EN, figureLabel, type FigureWords } from "./ui/figureNames";
 export { StaffNotation, type StaffDot, type StaffNotationProps } from "./components/StaffNotation";

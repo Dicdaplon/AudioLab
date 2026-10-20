@@ -35,3 +35,52 @@ export function sigmaForScore(deltaMs: number, score: number): number {
 export function scoreSigmaFor(tolerance: TimingTolerance): number {
   return sigmaForScore(tolerance.onTimeMs, SCORE_PASS);
 }
+
+/**
+ * What a stray sound costs, as a share of a perfect note: a sound outside
+ * every note's window (`TimingScorerState.strays`) takes away a quarter of
+ * what a note dead on brings. Lighter than a note gains, so a cough or a
+ * fret buzz does not ruin a run, but playing everywhere does not pay either.
+ */
+export const STRAY_PENALTY = 0.25;
+
+export interface ExerciseScore {
+  /** Final score, 0–100: notes earned minus strays, never below 0. */
+  score: number;
+  /** What the notes earned, 0–100 (the mean of their scores). */
+  notes: number;
+  /** What the strays took away, in points (0–100 scale). */
+  penalty: number;
+  /** Stray sounds counted. */
+  strays: number;
+  /** Notes that pass (`SCORE_PASS`). */
+  passed: number;
+  /** Notes graded. */
+  total: number;
+}
+
+/**
+ * The score of a run: each note brings its score (0–1, a missed one 0), each
+ * stray sound costs `strayPenalty` (default `STRAY_PENALTY`), all over the
+ * number of notes, on 100:
+ *
+ *   score = max(0, Σ scores − penalty · strays) / notes · 100
+ */
+export function exerciseScore(
+  scores: readonly (number | null)[],
+  strays: number,
+  strayPenalty: number = STRAY_PENALTY,
+): ExerciseScore {
+  const total = scores.length;
+  if (total === 0) return { score: 0, notes: 0, penalty: 0, strays, passed: 0, total };
+  const earned = scores.reduce<number>((s, v) => s + (v ?? 0), 0);
+  const lost = Math.max(0, strayPenalty) * strays;
+  return {
+    score: (100 * Math.max(0, earned - lost)) / total,
+    notes: (100 * earned) / total,
+    penalty: (100 * lost) / total,
+    strays,
+    passed: scores.filter((v) => v !== null && v >= SCORE_PASS).length,
+    total,
+  };
+}

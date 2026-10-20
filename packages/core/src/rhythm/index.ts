@@ -29,7 +29,15 @@ export {
   type TimingTier,
   type TimingTolerance,
 } from "./tolerance";
-export { SCORE_PASS, scoreSigmaFor, sigmaForScore, timingScore } from "./score";
+export {
+  exerciseScore,
+  SCORE_PASS,
+  scoreSigmaFor,
+  sigmaForScore,
+  STRAY_PENALTY,
+  timingScore,
+  type ExerciseScore,
+} from "./score";
 export {
   TIMING_SCORER_DEFAULTS,
   scorerSigmaMs,
