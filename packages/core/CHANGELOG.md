@@ -1,5 +1,46 @@
 # @audiolab/core
 
+## 0.5.0
+
+### Minor Changes
+
+- The click is learnt during the count-in. `ClickEchoFilter.learn` keeps the delay (up to
+  800 ms) and the spectral shape (`SpectralRise.bands`, `riseSimilarity`) of the echoes heard
+  while the player waits; afterwards an echo is recognised by that shape at that delay, so any
+  click sound works (a clave, a wood block) and Android round trips over 400 ms too.
+  `PlayAlongSession` (and `attachPlayAlong`) learn from onsets before the first note's window and
+  never grade them; `learntClick` says what was learnt. `SpectralRise` gains `bands` and
+  `levelDb`.
+- The adaptive noise gate has one setting, its strictness, in three levels (`GATE_LEVELS`:
+  gentle 4.2 dB, normal 6 dB, strict 8.5 dB above the room) and a default per use
+  (`GATE_STRICTNESS`: notes gentle, chords and rhythm normal, games strict); `gateTuning` maps any
+  strictness in [0, 1]. `OnsetPipeline` takes `strictness` (also live).
+
+  Breaking defaults: `WolfJumperDetector` now gates adaptively (`gate: "adaptive"`, strict;
+  pass `gate: "fixed"` for the old behaviour) and `ChordTargetMatcher` gates adaptively when
+  frames carry `signalLevelDb` (`gate: "fixed"` with `noiseGateDb: -Infinity` for none). The
+  React `ChordGame` gates when given `signalLevelDb`; `useAdaptiveGate` gates any frame stream;
+  `GateStrictnessField` is the three-way control, also in Wolf Jumper's noise gate.
+
+- 9ca17e5: Latency by ear, for Bluetooth headphones: `measureTapLatency` (and `LATENCY_TEST`,
+  `latencyTestClicks`) measures the click → note delay from 8 clicks played along after a
+  4-click count-in; `useLatencyTest` runs it with its own audible metronome. The budget takes
+  it with `calibrationReference: "audio"` (a calibration now applies only to the reference it
+  was measured with; default "visual", as before), and reports `outputDelayMs` and
+  `visualDelayMs`: draw the lane that much later so it lands with the click heard.
+  `useOnsetAnalysis` takes `calibration`.
+- 32f9f87: `OnsetPipeline` takes `manualThresholdDb` (option and live field): the level an onset
+  must reach, set by hand, instead of the learnt floor + margin; `onsetThresholdDb` reads
+  the threshold in force. The detector's settings speak plainly: "Present above … %
+  of loudest", the cut line and the loudest note as percentages, and the
+  memory and aggregator folded under "Fine tuning".
+- Stray sounds count against a run. `TimingScorerState.strays` lists the onsets outside every
+  note's window; `PlayAlongSession.strays`, `PlayAlongRun.strays`, `PlayedOnsetView.stray` and
+  `usePlayAlong().strays` expose them. `exerciseScore(scores, strays)` gives the run's score on
+  100, each stray costing `STRAY_PENALTY` (a quarter of a perfect note), never below 0.
+  `ScoreCard` shows it: a ring with the final score, the bell curve with every note where it
+  landed, one bar per note. The lab's rhythm exercises use it.
+
 ## 0.4.0
 
 ### Minor Changes

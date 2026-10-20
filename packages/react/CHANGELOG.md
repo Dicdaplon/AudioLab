@@ -1,5 +1,69 @@
 # @audiolab/react
 
+## 0.5.0
+
+### Minor Changes
+
+- 5e70e97: Compact "How?" sheets for the small windows. `HowPanel` takes `compact`; `Panel`,
+  `ChromaView`, `ChordView`, `KeyProbabilities`, `ToneBaseTonalityView` and
+  `SettingsPanel` take a `how` node (a panel with a sheet drops its technical hint);
+  `DetectorTab` takes `how: DetectorHow`, one slot per window. `FftTab` takes
+  `view: "all" | "spectrum" | "tempo"` to show one half, and a `how` per half; the tempo
+  capture only runs while the tempo half is shown. The chord list hint no longer claims
+  24 templates when extended qualities are on.
+
+  An opt-in pixel skin: put `al-pixel` on an ancestor of the Loupe root for notched
+  corners, square LEDs and switches, block chevrons and stepped game motion (new tokens
+  `--al-font-pixel`, `--al-font-pixel-micro`, falling back to the mono). Without the
+  class nothing changes, except the select chevron, which shows again (its SVG namespace
+  was broken).
+
+- The adaptive noise gate has one setting, its strictness, in three levels (`GATE_LEVELS`:
+  gentle 4.2 dB, normal 6 dB, strict 8.5 dB above the room) and a default per use
+  (`GATE_STRICTNESS`: notes gentle, chords and rhythm normal, games strict); `gateTuning` maps any
+  strictness in [0, 1]. `OnsetPipeline` takes `strictness` (also live).
+
+  Breaking defaults: `WolfJumperDetector` now gates adaptively (`gate: "adaptive"`, strict;
+  pass `gate: "fixed"` for the old behaviour) and `ChordTargetMatcher` gates adaptively when
+  frames carry `signalLevelDb` (`gate: "fixed"` with `noiseGateDb: -Infinity` for none). The
+  React `ChordGame` gates when given `signalLevelDb`; `useAdaptiveGate` gates any frame stream;
+  `GateStrictnessField` is the three-way control, also in Wolf Jumper's noise gate.
+
+- 9ca17e5: Latency by ear, for Bluetooth headphones: `measureTapLatency` (and `LATENCY_TEST`,
+  `latencyTestClicks`) measures the click → note delay from 8 clicks played along after a
+  4-click count-in; `useLatencyTest` runs it with its own audible metronome. The budget takes
+  it with `calibrationReference: "audio"` (a calibration now applies only to the reference it
+  was measured with; default "visual", as before), and reports `outputDelayMs` and
+  `visualDelayMs`: draw the lane that much later so it lands with the click heard.
+  `useOnsetAnalysis` takes `calibration`.
+- 18df00d: Opt-in pixel-art plots. Two optional tokens, unset by default: `--al-viz-pixel` (a cell
+  size in CSS px; 0, 1 or unset is off) makes `SpectrumPlot`, `TempoPlot`,
+  `TimeSignalPlot` and `PlayAlongLane` draw on a grid of square cells (stepped equaliser
+  columns with a bright top cell, lines of cells, dotted grids, pixel discs on the lane,
+  `image-rendering: pixelated`); `--al-plot-font` sets the canvas font of tick labels and
+  the empty state (falls back to the mono). `VizTheme` gains the optional `pixel` and
+  `plotFont` fields. With neither token set, every plot draws exactly as before.
+- Stray sounds count against a run. `TimingScorerState.strays` lists the onsets outside every
+  note's window; `PlayAlongSession.strays`, `PlayAlongRun.strays`, `PlayedOnsetView.stray` and
+  `usePlayAlong().strays` expose them. `exerciseScore(scores, strays)` gives the run's score on
+  100, each stray costing `STRAY_PENALTY` (a quarter of a perfect note), never below 0.
+  `ScoreCard` shows it: a ring with the final score, the bell curve with every note where it
+  landed, one bar per note. The lab's rhythm exercises use it.
+
+### Patch Changes
+
+- 32f9f87: `OnsetPipeline` takes `manualThresholdDb` (option and live field): the level an onset
+  must reach, set by hand, instead of the learnt floor + margin; `onsetThresholdDb` reads
+  the threshold in force. The detector's settings speak plainly: "Present above … %
+  of loudest", the cut line and the loudest note as percentages, and the
+  memory and aggregator folded under "Fine tuning".
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies [9ca17e5]
+- Updated dependencies [32f9f87]
+- Updated dependencies
+  - @audiolab/core@0.5.0
+
 ## 0.4.0
 
 ### Minor Changes
