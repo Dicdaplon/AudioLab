@@ -111,6 +111,10 @@ export class ClickEchoFilter {
       break;
     }
     if (delayMs === null) return false;
+    // An echo the band already recognises measures the round trip at once.
+    if (delayMs <= this.config.maxDelayMs && rise.bandShare >= this.config.minBandShare) {
+      this.remember(delayMs);
+    }
     this.learnt.push({ delayMs, bands: rise.bands });
     if (this.learnt.length > this.config.echoWindow) this.learnt.shift();
     this.cachedClick = undefined;
