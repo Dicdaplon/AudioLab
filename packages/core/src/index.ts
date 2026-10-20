@@ -211,6 +211,14 @@ export {
   type ClickEchoVerdict,
 } from "./timing/clickEcho";
 export {
+  LATENCY_TEST,
+  latencyTestClicks,
+  measureTapLatency,
+  TAP_LATENCY_DEFAULTS,
+  type TapLatency,
+  type TapLatencyConfig,
+} from "./timing/tapLatency";
+export {
   ASSUMED_OUTPUT_LATENCY_MS,
   ASSUMED_OUTPUT_UNCERTAINTY_MS,
   type TimingReference,

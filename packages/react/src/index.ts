@@ -36,6 +36,7 @@ export {
 } from "./hooks/useOnsetAnalysis";
 export { useDisplayFramePeriod } from "./hooks/useDisplayFramePeriod";
 export { useMetronome, type MetronomeControls } from "./hooks/useMetronome";
+export { useLatencyTest, type LatencyTestControls } from "./hooks/useLatencyTest";
 export {
   usePlayAlong,
   type PlayAlongControls,

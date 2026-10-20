@@ -726,6 +726,18 @@ body {
   color: var(--al-color-ink-muted);
 }
 
+.rhythm__latency {
+  display: grid;
+  gap: var(--al-sp-3);
+}
+
+.rhythm__latency-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--al-sp-4);
+}
+
 /* --- How? sheets under a tab ----------------------------------------------- */
 
 .lab-how {

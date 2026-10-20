@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MicSource } from "@audiolab/core";
 import {
   MicPrompt,
   Panel,
   SelectField,
+  useLatencyTest,
   useMetronome,
   useOnsetAnalysis,
   usePlayAlong,
@@ -11,6 +12,8 @@ import {
 
 import { PlayAlongHow } from "../../how/explanations";
 import type { ExerciseEnv } from "./env";
+import { useStoredLatency } from "./latencyStore";
+import { LatencyTest } from "./LatencyTest";
 import { ListeningPanel } from "./ListeningPanel";
 import { MetronomeBar } from "./MetronomeBar";
 import { createOnsetBus } from "./onsetBus";
@@ -45,18 +48,24 @@ export function RhythmTab({ mic, running, onStart }: RhythmTabProps) {
   const bus = useMemo(createOnsetBus, []);
   const metronome = useMetronome(mic?.context ?? null);
   const play = usePlayAlong();
+  const latencyTest = useLatencyTest(mic?.context ?? null);
+  const [latency, setLatency] = useStoredLatency();
 
   const { snapshot, budget, analysis, captureMethod } = useOnsetAnalysis(mic, {
     strummed: exercise === "chords",
     reference: metronome.sound ? "audio" : "visual",
     roundTripMs: play.roundTripMs,
     roundTripSpreadMs: play.roundTripSpreadMs,
+    // Set by ear, with the click: it applies when the click sounds.
+    calibration: latency,
     onOnset: (onset, history) => {
       play.onOnset(onset);
+      latencyTest.onOnset(onset);
       bus.emitOnset(onset, history);
     },
     onBatch: (history, analysedTime) => {
       play.onBatch(history, analysedTime);
+      latencyTest.onBatch(history, analysedTime);
       bus.emitBatch(history, analysedTime);
     },
   });
@@ -67,10 +76,20 @@ export function RhythmTab({ mic, running, onStart }: RhythmTabProps) {
     if (play.done) stopMetronome();
   }, [play.done, stopMetronome]);
 
-  const now = useCallback(
-    () => analysis?.clock.perfMsToContextTime(performance.now()) ?? null,
-    [analysis],
-  );
+  // What is drawn follows what is heard: with Bluetooth headphones the click
+  // comes late, so the lanes and lights are drawn that much later.
+  const visualDelayRef = useRef(0);
+  visualDelayRef.current = budget?.visualDelayMs ?? 0;
+  const now = useCallback(() => {
+    const t = analysis?.clock.perfMsToContextTime(performance.now());
+    return t === undefined || t === null ? null : t - visualDelayRef.current / 1000;
+  }, [analysis]);
+
+  // An exercise started during the latency test ends the test.
+  const stopLatencyTest = latencyTest.stop;
+  useEffect(() => {
+    if (play.active) stopLatencyTest();
+  }, [play.active, stopLatencyTest]);
 
   const env: ExerciseEnv = {
     bus,
@@ -122,6 +141,19 @@ export function RhythmTab({ mic, running, onStart }: RhythmTabProps) {
             With headphones the click stays out of the microphone. Without them, the page tells the
             click from your playing.
           </p>
+        )}
+        {(metronome.sound || latencyTest.active) && (
+          <LatencyTest
+            test={latencyTest}
+            stored={latency}
+            onStore={setLatency}
+            running={running}
+            onStart={() => {
+              play.stop();
+              metronome.stop();
+            }}
+            now={now}
+          />
         )}
         {exercise === "lane" && <RhythmLane key="lane" env={env} />}
         {exercise === "written" && <WrittenRhythm key="written" env={env} />}

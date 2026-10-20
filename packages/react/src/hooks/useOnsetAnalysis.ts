@@ -58,6 +58,11 @@ export interface UseOnsetAnalysisOptions {
   roundTripMs?: number | null;
   /** Spread of that measurement, in ms. */
   roundTripSpreadMs?: number;
+  /**
+   * A measured offset (e.g. `useLatencyTest().result`), applied when the
+   * player follows what it was measured with (`reference`, default "audio").
+   */
+  calibration?: { offsetMs: number; spreadMs: number; reference?: TimingReference } | null;
 }
 
 export interface OnsetAnalysisState {
@@ -93,6 +98,7 @@ export function useOnsetAnalysis(
     reference = "visual",
     roundTripMs = null,
     roundTripSpreadMs,
+    calibration = null,
   } = options;
   const [state, setState] = useState<OnsetAnalysisState>(IDLE);
   const framePeriodMs = useDisplayFramePeriod(enabled && mic !== null);
@@ -106,8 +112,16 @@ export function useOnsetAnalysis(
     reference,
     roundTripMs,
     roundTripSpreadMs,
+    calibration,
   });
-  budgetInputRef.current = { framePeriodMs, strummed, reference, roundTripMs, roundTripSpreadMs };
+  budgetInputRef.current = {
+    framePeriodMs,
+    strummed,
+    reference,
+    roundTripMs,
+    roundTripSpreadMs,
+    calibration,
+  };
 
   useEffect(() => {
     if (!mic || !enabled) {
@@ -126,6 +140,9 @@ export function useOnsetAnalysis(
         reference: b.reference,
         measuredRoundTripMs: b.roundTripMs,
         roundTripSpreadMs: b.roundTripSpreadMs,
+        calibratedOffsetMs: b.calibration?.offsetMs,
+        calibrationSpreadMs: b.calibration?.spreadMs,
+        calibrationReference: b.calibration ? (b.calibration.reference ?? "audio") : undefined,
         displayFramePeriodMs: b.framePeriodMs ?? undefined,
         clockSpreadMs: snapshot.clock.batches > 4 ? snapshot.clock.offsetSpreadMs : undefined,
         strummed: b.strummed,

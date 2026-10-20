@@ -11,7 +11,7 @@ const COMPONENT_LABELS: Record<string, string> = {
   clock: "Audio ↔ page clock",
   detector: "Onset detector",
   strum: "Strum spread",
-  calibration: "Calibration",
+  calibration: "Click → your note (set by ear)",
 };
 
 const SOURCE_LABELS: Record<TimingComponent["source"], string> = {
@@ -74,6 +74,10 @@ export function TimingPanel({ snapshot, budget, captureMethod }: TimingPanelProp
           <dd className="al-stat__value">
             {tolerance ? `± ${tolerance.onTimeMs.toFixed(0)} ms` : "—"}
           </dd>
+        </div>
+        <div className="al-stat">
+          <dt className="al-stat__label">Screen held back (to match the click)</dt>
+          <dd className="al-stat__value">{ms(budget?.visualDelayMs)}</dd>
         </div>
       </dl>
 

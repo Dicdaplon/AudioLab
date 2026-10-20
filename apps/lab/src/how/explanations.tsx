@@ -375,8 +375,8 @@ export function LatencyHow() {
           ]}
         />
       }
-      algorithm="Each audio batch carries its sample number, so the page clock is mapped onto the audio clock from arrival times. Delays add, uncertainties add in quadrature, and the on-time window is at least twice the result. With the click in the microphone, its echo measures the round trip directly."
-      limits="Without the click reaching the microphone, the input delay is an estimate. Bluetooth adds 150–300 ms on its own."
+      algorithm="Each audio batch carries its sample number, so the page clock is mapped onto the audio clock from arrival times. Delays add, uncertainties add in quadrature, and the on-time window is at least twice the result. With the click in the microphone, its echo measures the round trip directly. With headphones, “Sync the click” has you play on 8 clicks: the median delay is the one you live with, and the screen is held back by it so what you see lands with what you hear."
+      limits="Without the click reaching the microphone and without a sync, the input delay is an estimate. Bluetooth adds 150–300 ms on its own, and no browser measures it."
       sources={[
         { label: "W3C Web Audio API" },
         { label: "Repp, Sensorimotor synchronization, PB&R 2005" },

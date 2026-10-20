@@ -52,6 +52,18 @@ export interface TimingBudget {
   minToleranceMs: number;
   /** True when every offset was measured or reported (none assumed). */
   calibrated: boolean;
+  /**
+   * How late the page's own sounds (the click) are heard after their
+   * scheduled time, in ms; 0 when the player follows the screen.
+   */
+  outputDelayMs: number;
+  /**
+   * How much later to draw anything placed on the audio clock so that it is
+   * seen when its click is heard: the output delay minus the screen's own
+   * delay, never negative. About 0 on a wired setup; the Bluetooth delay
+   * with Bluetooth headphones.
+   */
+  visualDelayMs: number;
 }
 
 export function combineTimingComponents(components: readonly TimingComponent[]): TimingBudget {
@@ -70,6 +82,8 @@ export function combineTimingComponents(components: readonly TimingComponent[]):
     uncertaintyMs: sigma,
     minToleranceMs: 2 * sigma,
     calibrated,
+    outputDelayMs: 0,
+    visualDelayMs: 0,
   };
 }
 
@@ -89,10 +103,15 @@ export interface TimingBudgetInput {
   detectorUncertaintyMs?: number;
   /** True for chords: adds the strum spread. Default false. */
   strummed?: boolean;
-  /** A measured total offset (e.g. a play-along calibration) replacing input + display. */
+  /**
+   * A measured total offset replacing the estimates of its reference: input +
+   * display for "visual", input + output for "audio" (e.g. `measureTapLatency`).
+   */
   calibratedOffsetMs?: number;
   /** Spread of that calibration, in ms. */
   calibrationSpreadMs?: number;
+  /** What the player followed during the calibration; it applies to that reference only. Default "visual". */
+  calibrationReference?: TimingReference;
   /**
    * What the player follows: "visual" (a scrolling target: display + input
    * latency) or "audio" (an audible click: output + input latency). Default
@@ -132,12 +151,73 @@ export function looksLikeBluetooth(label: string | undefined): boolean {
   return label !== undefined && BLUETOOTH_LABEL.test(label);
 }
 
+function inputComponent(input: TimingBudgetInput): TimingComponent {
+  const reported = input.reportedInputLatencySeconds;
+  if (reported !== undefined && reported > 0 && reported <= 0.5) {
+    return {
+      id: "input",
+      offsetMs: reported * 1000,
+      uncertaintyMs: Math.max(5, reported * 500),
+      source: "reported",
+    };
+  }
+  if (looksLikeBluetooth(input.deviceLabel)) {
+    return {
+      id: "input",
+      offsetMs: BLUETOOTH_INPUT_LATENCY_MS,
+      uncertaintyMs: BLUETOOTH_INPUT_UNCERTAINTY_MS,
+      source: "assumed",
+    };
+  }
+  return {
+    id: "input",
+    offsetMs: ASSUMED_INPUT_LATENCY_MS,
+    uncertaintyMs: ASSUMED_INPUT_UNCERTAINTY_MS,
+    source: "assumed",
+  };
+}
+
+/** The click is scheduled at T and heard after the output buffers. */
+function outputComponent(input: TimingBudgetInput): TimingComponent {
+  const out = input.reportedOutputLatencySeconds;
+  return out !== undefined && out > 0 && out <= 0.5
+    ? {
+        id: "output",
+        offsetMs: out * 1000,
+        uncertaintyMs: Math.max(5, out * 500),
+        source: "reported",
+      }
+    : {
+        id: "output",
+        offsetMs: ASSUMED_OUTPUT_LATENCY_MS,
+        uncertaintyMs: ASSUMED_OUTPUT_UNCERTAINTY_MS,
+        source: "assumed",
+      };
+}
+
 /** The budget of a session from what the browser and the capture tell. */
 export function estimateTimingBudget(input: TimingBudgetInput = {}): TimingBudget {
   const components: TimingComponent[] = [];
   const frame = input.displayFramePeriodMs ?? 1000 / 60;
+  const reference = input.reference ?? "visual";
+  // Drawn at T, composited at the next vsync, scanned out over a frame.
+  // The frame period may be measured; the 1.5-frame model is assumed
+  // (a monitor's own processing is invisible to the page).
+  const display: TimingComponent = {
+    id: "display",
+    offsetMs: 1.5 * frame,
+    uncertaintyMs: frame,
+    source: "assumed",
+  };
+  const inputPart = inputComponent(input);
+  const calibration =
+    input.calibratedOffsetMs !== undefined && (input.calibrationReference ?? "visual") === reference
+      ? input.calibratedOffsetMs
+      : null;
+  // The measured delay of a heard click (to the microphone), if any.
+  let heardMs: number | null = null;
 
-  if (input.reference === "audio" && typeof input.measuredRoundTripMs === "number") {
+  if (reference === "audio" && typeof input.measuredRoundTripMs === "number") {
     // The click heard and the note detected went through the same speaker,
     // air and microphone: the measured echo delay is the whole offset.
     components.push({
@@ -146,66 +226,17 @@ export function estimateTimingBudget(input: TimingBudgetInput = {}): TimingBudge
       uncertaintyMs: Math.max(3, input.roundTripSpreadMs ?? 0),
       source: "measured",
     });
-  } else if (input.calibratedOffsetMs !== undefined) {
+    heardMs = input.measuredRoundTripMs;
+  } else if (calibration !== null) {
     components.push({
       id: "calibration",
-      offsetMs: input.calibratedOffsetMs,
+      offsetMs: calibration,
       uncertaintyMs: input.calibrationSpreadMs ?? 10,
       source: "measured",
     });
+    if (reference === "audio") heardMs = calibration;
   } else {
-    const reported = input.reportedInputLatencySeconds;
-    if (reported !== undefined && reported > 0 && reported <= 0.5) {
-      components.push({
-        id: "input",
-        offsetMs: reported * 1000,
-        uncertaintyMs: Math.max(5, reported * 500),
-        source: "reported",
-      });
-    } else if (looksLikeBluetooth(input.deviceLabel)) {
-      components.push({
-        id: "input",
-        offsetMs: BLUETOOTH_INPUT_LATENCY_MS,
-        uncertaintyMs: BLUETOOTH_INPUT_UNCERTAINTY_MS,
-        source: "assumed",
-      });
-    } else {
-      components.push({
-        id: "input",
-        offsetMs: ASSUMED_INPUT_LATENCY_MS,
-        uncertaintyMs: ASSUMED_INPUT_UNCERTAINTY_MS,
-        source: "assumed",
-      });
-    }
-    if (input.reference === "audio") {
-      // The click is scheduled at T and heard after the output buffers.
-      const out = input.reportedOutputLatencySeconds;
-      components.push(
-        out !== undefined && out > 0 && out <= 0.5
-          ? {
-              id: "output",
-              offsetMs: out * 1000,
-              uncertaintyMs: Math.max(5, out * 500),
-              source: "reported",
-            }
-          : {
-              id: "output",
-              offsetMs: ASSUMED_OUTPUT_LATENCY_MS,
-              uncertaintyMs: ASSUMED_OUTPUT_UNCERTAINTY_MS,
-              source: "assumed",
-            },
-      );
-    } else {
-      // Drawn at T, composited at the next vsync, scanned out over a frame.
-      // The frame period may be measured; the 1.5-frame model is assumed
-      // (a monitor's own processing is invisible to the page).
-      components.push({
-        id: "display",
-        offsetMs: 1.5 * frame,
-        uncertaintyMs: frame,
-        source: "assumed",
-      });
-    }
+    components.push(inputPart, reference === "audio" ? outputComponent(input) : display);
   }
 
   components.push({
@@ -223,5 +254,19 @@ export function estimateTimingBudget(input: TimingBudgetInput = {}): TimingBudge
   if (input.strummed) {
     components.push({ id: "strum", offsetMs: 0, uncertaintyMs: 12, source: "assumed" });
   }
-  return combineTimingComponents(components);
+
+  // A measured click delay still holds the input part: the output is what
+  // remains once the (estimated) input is taken off.
+  let outputDelayMs = 0;
+  if (reference === "audio") {
+    outputDelayMs =
+      heardMs !== null
+        ? Math.max(0, heardMs - inputPart.offsetMs)
+        : outputComponent(input).offsetMs;
+  }
+  return {
+    ...combineTimingComponents(components),
+    outputDelayMs,
+    visualDelayMs: Math.max(0, outputDelayMs - display.offsetMs),
+  };
 }

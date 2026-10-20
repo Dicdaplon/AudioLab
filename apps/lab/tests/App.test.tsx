@@ -222,6 +222,8 @@ describe("App", () => {
     expect(copy.textContent).not.toMatch(
       /frame|onset|latency|probability|chroma|flux|\bdB\b|\bms\b/i,
     );
+    // With the click on, Bluetooth headphones can be synced by ear (microphone first).
+    expect(screen.getByRole("button", { name: "Sync the click" })).toHaveProperty("disabled", true);
 
     // The diagnostics are where the numbers live.
     expect(panel("Timing").textContent).toMatch(/Reaction delay/);

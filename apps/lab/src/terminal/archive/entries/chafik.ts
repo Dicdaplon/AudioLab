@@ -1274,7 +1274,7 @@ export const CHAFIK: readonly ArchiveEntry[] = [
     ],
     a: [
       "His extended chord vocabulary scores 95.0 % right on a synthetic guitar. Recorded takes are next. He is honest about it. Rare, among legends.",
-      "95.0 % on a synthetic guitar, says the About page. My accuracy about his looks: 100.0 %, by configuration.",
+      "95.0 % on a synthetic guitar, says the README. My accuracy about his looks: 100.0 %, by configuration.",
     ],
   },
   {

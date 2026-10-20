@@ -383,6 +383,39 @@ Which latency applies depends on what the player follows:
 | `"visual"` (a scrolling target, `BeatLights`) | input + display                            |
 | `"audio"` (an audible click)                  | input + output, or the measured round trip |
 
+### 6.2b Bluetooth headphones: latency by ear
+
+With Bluetooth headphones (a phone, typically) the click is heard 150–400 ms
+after its scheduled time, the microphone hears no echo, and no web API
+measures the delay reliably (`outputLatency` may be missing or optimistic).
+Two things go wrong at once: the grading subtracts the assumed 20 ms instead
+of the real delay, and the lane reaches its line that much before the click
+is heard, so screen and ear disagree.
+
+**The test** (`measureTapLatency`, `useLatencyTest`): a 4-click count-in,
+then 8 clicks to play on, 750 ms apart (`LATENCY_TEST`). Each click owns the
+notes in [−150, +600) ms after it; the gap is as long as that window, so a
+note belongs to one click only, even with 400 ms of delay (eighth notes at
+a usual tempo would be ambiguous: at 90 BPM they are 333 ms apart). The
+median delay is the offset, notes 80 ms away from it are dropped, the spread
+is IQR / 1.349; reliable from 5 notes and a spread up to 40 ms. Without
+headphones the test's own play-along run drops the click's echoes. The
+delay includes the player's habit of playing slightly ahead of a click,
+which is what they will do in the exercise too.
+
+**The budget** takes it as `calibratedOffsetMs` with
+`calibrationReference: "audio"`: it replaces input + output when the player
+follows the click, and is ignored for a visual reference (the Bluetooth
+delay is not in that chain). A measured echo still wins.
+
+**The screen** is held back: `budget.outputDelayMs` is how late the click is
+heard (the measured delay minus the input estimate, or the reported
+output), `budget.visualDelayMs` that minus the screen's own 1.5 frames,
+never negative. Draw anything placed on the audio clock that much later
+(`now = contextTime − visualDelayMs / 1000`) and the lane reaches its line
+when the click is heard. On a wired setup it is about 0 (a 20 ms output
+against a 25 ms screen), so nothing moves there.
+
 ### 6.3 `PlayAlongSession`
 
 One exercise run, pure: expected notes in, onsets in, results and a display

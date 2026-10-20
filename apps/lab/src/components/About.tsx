@@ -88,15 +88,7 @@ export function About() {
         </p>
         <p>
           Under the hood it is an SDK, <code>@audiolab/core</code> and <code>@audiolab/react</code>:
-          the same detectors run here and on ecoleduloup.fr. The extended chord vocabulary is
-          measured on a synthetic guitar so far (95 % right with every quality on); recorded takes
-          are next.
-        </p>
-
-        <p>
-          AI is the next layer. Not as a magic box, but as one more way to listen: classical signal
-          processing first, learned models where they genuinely help. (Yes, before it all went
-          wrong.)
+          the same detectors run here and on ecoleduloup.fr.
         </p>
 
         <h3 className="about__subtitle">l’école du loup(é)</h3>
