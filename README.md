@@ -116,7 +116,13 @@ accepted.
 | Pitch, stiff strings              | Same, inharmonicity B = 1e-5 and 2e-5                                 | max error 0.47 and 0.93 cents (the stretched partials pull the period)  |
 | Pitch, weak / missing fundamental | Partials 2–6 only, or the fundamental 30 dB down (196 Hz)             | right octave, error < 0.01 cents                                        |
 | Pitch, silence / white noise      | Zeros, −60 dBFS tone, uniform noise                                   | null (no reading)                                                       |
+| Chords, real guitar (opt-in HMM)  | GuitarSet, 90 excerpts of players 03–05 (46 min), lead sheet, majmin  | 48.6 % default, 51.8 % HMM + Gaussian/log chroma, at display time       |
+| Key, real guitar                  | GuitarSet, 180 excerpts (120 major, 60 minor)                         | 44.4 % exact default, 60.6 % with the opt-in Gaussian/log chroma        |
 | Scale matching                    | C D E G A                                                             | C major pentatonic and A minor pentatonic first, then A blues           |
+
+The full benchmark (onsets, tempo, chords and key; synthetic and real; clean, noisy room,
+bar and bad microphone; scored by style) is in [docs/BENCHMARKS.md](docs/BENCHMARKS.md),
+reproducible with `npm run bench`.
 
 The recordings are a small, personal set: these numbers are regression baselines, not a
 benchmark. The pitch figures are measured on **synthetic** signals (the generators in
@@ -169,6 +175,13 @@ keeping that threshold.
   ranked against the same key profiles.
 - **Chord detection.** 24 major/minor triad templates scored by cosine similarity on a
   1 s chroma window.
+- **Listening methods to choose from (opt-in).** Each detector keeps its original method as the
+  default and offers alternatives that won their tests: note onsets ("sensitive", "superflux-complex":
+  70.8 → 84.0 % F on real guitar), tempo ("flux": 14 → 70 % of readings right), chords (a constant-Q
+  chroma, a chord HMM, an AI note reader running Basic Pitch in the browser), key (the chords vote) and
+  the tuner (pYIN, CREPE tiny in plain TypeScript). The lab lets you switch them on every page, each with
+  its How? sheet; measurements in [docs/POC-METHODS.md](docs/POC-METHODS.md) and
+  [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
 - **Tuner.** McLeod pitch method on 2048-sample windows from the gapless sample capture:
   note, octave, cents against a configurable A4, clarity; median smoothing and a
   note-name hysteresis in `PitchTracker`.
@@ -290,29 +303,34 @@ the permission prompt.
 
 ## Scripts
 
-| Command                    | What it does                                                                        |
-| -------------------------- | ----------------------------------------------------------------------------------- |
-| `npm run dev`              | Vite dev server for the lab on `127.0.0.1:5173`, packages resolved from source      |
-| `npm run build`            | Builds both packages (tsup), then the lab against their `dist` into `apps/lab/dist` |
-| `npm run build:packages`   | Only the packages                                                                   |
-| `npm run check:packages`   | publint + arethetypeswrong on the packed tarballs                                   |
-| `npm run preview`          | Serve the production build of the lab locally                                       |
-| `npm test`                 | Fast suite: Vitest `unit` + `dom` projects                                          |
-| `npm run test:watch`       | Same projects in watch mode                                                         |
-| `npm run test:samples`     | Regression suite on the real audio fixtures in `packages/core/tests/Sample`         |
-| `npm run test:all`         | All three projects                                                                  |
-| `npm run coverage`         | Fast suite with v8 coverage and enforced thresholds                                 |
-| `npm run typecheck`        | `tsc -b` over the packages, the lab, their tests and the config files               |
-| `npm run lint`             | ESLint                                                                              |
-| `npm run format`           | Prettier, write                                                                     |
-| `npm run format:check`     | Prettier, check only                                                                |
-| `npm run changeset`        | Record a change for the next release                                                |
-| `npm run version-packages` | Apply pending changesets (versions, changelogs, lock file)                          |
-| `npm run release`          | Build, check and publish the packages (manual, see INTEGRATION.md)                  |
-| `npm run sweep`            | Grid search of the chord and presence parameters over the samples                   |
-| `npm run extract:backing`  | Cut three 30 s WAV extracts from each track in `packages/core/localSample/`         |
-| `npm run analyze:backing`  | Print chord histogram and key rankings for the backing-track extract                |
-| `npm run measure:chords`   | Chord confusion per quality set, synthetic guitar or `-- <dir>` of recordings       |
+| Command                         | What it does                                                                        |
+| ------------------------------- | ----------------------------------------------------------------------------------- |
+| `npm run dev`                   | Vite dev server for the lab on `127.0.0.1:5173`, packages resolved from source      |
+| `npm run build`                 | Builds both packages (tsup), then the lab against their `dist` into `apps/lab/dist` |
+| `npm run build:packages`        | Only the packages                                                                   |
+| `npm run check:packages`        | publint + arethetypeswrong on the packed tarballs                                   |
+| `npm run preview`               | Serve the production build of the lab locally                                       |
+| `npm test`                      | Fast suite: Vitest `unit` + `dom` projects                                          |
+| `npm run test:watch`            | Same projects in watch mode                                                         |
+| `npm run test:samples`          | Regression suite on the real audio fixtures in `packages/core/tests/Sample`         |
+| `npm run test:all`              | All three projects                                                                  |
+| `npm run coverage`              | Fast suite with v8 coverage and enforced thresholds                                 |
+| `npm run typecheck`             | `tsc -b` over the packages, the lab, their tests and the config files               |
+| `npm run lint`                  | ESLint                                                                              |
+| `npm run format`                | Prettier, write                                                                     |
+| `npm run format:check`          | Prettier, check only                                                                |
+| `npm run changeset`             | Record a change for the next release                                                |
+| `npm run version-packages`      | Apply pending changesets (versions, changelogs, lock file)                          |
+| `npm run release`               | Build, check and publish the packages (manual, see INTEGRATION.md)                  |
+| `npm run sweep`                 | Grid search of the chord and presence parameters over the samples                   |
+| `npm run extract:backing`       | Cut three 30 s WAV extracts from each track in `packages/core/localSample/`         |
+| `npm run analyze:backing`       | Print chord histogram and key rankings for the backing-track extract                |
+| `npm run measure:chords`        | Chord confusion per quality set, synthetic guitar or `-- <dir>` of recordings       |
+| `npm run measure:progressions`  | Chord methods on synthetic and real progressions: accuracy, delay, flicker, CPU     |
+| `npm run measure:keys`          | Key methods on the AILab backing-tracks dataset (`-- --dataset <dir>`)              |
+| `npm run build:backing-dataset` | Cut the backing tracks into labelled clips for AILab (see docs/ALTERNATIVES.md)     |
+| `npm run measure:guitarset`     | Chord and key methods on GuitarSet (`-- --guitarset <dir> [--sweep]`)               |
+| `npm run extract:guitarset`     | Cut the four GuitarSet excerpts of the sample suite                                 |
 
 ## Testing strategy
 

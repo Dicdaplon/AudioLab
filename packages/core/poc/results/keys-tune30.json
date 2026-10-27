@@ -1,0 +1,425 @@
+{
+  "SDK energy + Krumhansl": {
+    "byCondition": {
+      "clean": {
+        "strict": 0.5166666666666667,
+        "merged": 0.6722222222222222
+      },
+      "pink-20": {
+        "strict": 0.5166666666666666,
+        "merged": 0.6722222222222222
+      },
+      "bar-10": {
+        "strict": 0.4888888888888889,
+        "merged": 0.6166666666666667
+      },
+      "bad-mic": {
+        "strict": 0.45,
+        "merged": 0.6277777777777777
+      }
+    },
+    "byGroup": {
+      "BN": {
+        "strict": 0.6666666666666666,
+        "merged": 0.6666666666666666
+      },
+      "Funk": {
+        "strict": 0.5,
+        "merged": 0.6666666666666666
+      },
+      "Jazz": {
+        "strict": 0.6666666666666666,
+        "merged": 0.8333333333333334
+      },
+      "Rock": {
+        "strict": 0.3333333333333333,
+        "merged": 0.5
+      },
+      "SS": {
+        "strict": 0.3333333333333333,
+        "merged": 0.6666666666666666
+      },
+      "backing": {
+        "strict": 0.6,
+        "merged": 0.7
+      }
+    },
+    "seconds": 44.653
+  },
+  "SDK gaussian-log + Krumhansl": {
+    "byCondition": {
+      "clean": {
+        "strict": 0.6722222222222222,
+        "merged": 0.7833333333333333
+      },
+      "pink-20": {
+        "strict": 0.6999999999999998,
+        "merged": 0.7833333333333332
+      },
+      "bar-10": {
+        "strict": 0.5444444444444444,
+        "merged": 0.6555555555555556
+      },
+      "bad-mic": {
+        "strict": 0.48333333333333334,
+        "merged": 0.5277777777777778
+      }
+    },
+    "byGroup": {
+      "BN": {
+        "strict": 0.6666666666666666,
+        "merged": 0.8333333333333334
+      },
+      "Funk": {
+        "strict": 0.5,
+        "merged": 0.5
+      },
+      "Jazz": {
+        "strict": 1,
+        "merged": 1
+      },
+      "Rock": {
+        "strict": 0.5,
+        "merged": 0.6666666666666666
+      },
+      "SS": {
+        "strict": 0.6666666666666666,
+        "merged": 1
+      },
+      "backing": {
+        "strict": 0.7,
+        "merged": 0.7
+      }
+    },
+    "seconds": 24.471
+  },
+  "control: glog 8192 (≈ SDK opt-in)": {
+    "byCondition": {
+      "clean": {
+        "strict": 0.6722222222222222,
+        "merged": 0.7833333333333333
+      },
+      "pink-20": {
+        "strict": 0.6999999999999998,
+        "merged": 0.7833333333333332
+      },
+      "bar-10": {
+        "strict": 0.5444444444444444,
+        "merged": 0.6555555555555556
+      },
+      "bad-mic": {
+        "strict": 0.48333333333333334,
+        "merged": 0.5277777777777778
+      }
+    },
+    "byGroup": {
+      "BN": {
+        "strict": 0.6666666666666666,
+        "merged": 0.8333333333333334
+      },
+      "Funk": {
+        "strict": 0.5,
+        "merged": 0.5
+      },
+      "Jazz": {
+        "strict": 1,
+        "merged": 1
+      },
+      "Rock": {
+        "strict": 0.5,
+        "merged": 0.6666666666666666
+      },
+      "SS": {
+        "strict": 0.6666666666666666,
+        "merged": 1
+      },
+      "backing": {
+        "strict": 0.7,
+        "merged": 0.7
+      }
+    },
+    "seconds": 24.719
+  },
+  "glog 10 fps + bass 0.5": {
+    "byCondition": {
+      "clean": {
+        "strict": 0.5833333333333333,
+        "merged": 0.6555555555555556
+      },
+      "pink-20": {
+        "strict": 0.5722222222222222,
+        "merged": 0.6722222222222222
+      },
+      "bar-10": {
+        "strict": 0.5166666666666666,
+        "merged": 0.6166666666666667
+      },
+      "bad-mic": {
+        "strict": 0.3333333333333333,
+        "merged": 0.4333333333333333
+      }
+    },
+    "byGroup": {
+      "BN": {
+        "strict": 0.6666666666666666,
+        "merged": 0.6666666666666666
+      },
+      "Funk": {
+        "strict": 0.6666666666666666,
+        "merged": 0.6666666666666666
+      },
+      "Jazz": {
+        "strict": 0.5,
+        "merged": 0.5
+      },
+      "Rock": {
+        "strict": 0.5,
+        "merged": 0.6666666666666666
+      },
+      "SS": {
+        "strict": 0.6666666666666666,
+        "merged": 0.8333333333333334
+      },
+      "backing": {
+        "strict": 0.5,
+        "merged": 0.6
+      }
+    },
+    "seconds": 16.779
+  },
+  "from chords (NNLS + bass)": {
+    "byCondition": {
+      "clean": {
+        "strict": 0.7111111111111111,
+        "merged": 0.8555555555555556
+      },
+      "pink-20": {
+        "strict": 0.7666666666666666,
+        "merged": 0.8833333333333333
+      },
+      "bar-10": {
+        "strict": 0.7555555555555555,
+        "merged": 0.8833333333333333
+      },
+      "bad-mic": {
+        "strict": 0.7277777777777777,
+        "merged": 0.8555555555555555
+      }
+    },
+    "byGroup": {
+      "BN": {
+        "strict": 0.3333333333333333,
+        "merged": 0.8333333333333334
+      },
+      "Funk": {
+        "strict": 0.8333333333333334,
+        "merged": 0.8333333333333334
+      },
+      "Jazz": {
+        "strict": 1,
+        "merged": 1
+      },
+      "Rock": {
+        "strict": 0.8333333333333334,
+        "merged": 0.8333333333333334
+      },
+      "SS": {
+        "strict": 0.6666666666666666,
+        "merged": 0.8333333333333334
+      },
+      "backing": {
+        "strict": 0.6,
+        "merged": 0.8
+      }
+    },
+    "seconds": 79.955
+  },
+  "from chords + chroma": {
+    "byCondition": {
+      "clean": {
+        "strict": 0.7944444444444444,
+        "merged": 0.8666666666666667
+      },
+      "pink-20": {
+        "strict": 0.8111111111111112,
+        "merged": 0.8833333333333333
+      },
+      "bar-10": {
+        "strict": 0.8111111111111112,
+        "merged": 0.8833333333333333
+      },
+      "bad-mic": {
+        "strict": 0.7833333333333333,
+        "merged": 0.8555555555555556
+      }
+    },
+    "byGroup": {
+      "BN": {
+        "strict": 0.5,
+        "merged": 0.8333333333333334
+      },
+      "Funk": {
+        "strict": 0.8333333333333334,
+        "merged": 0.8333333333333334
+      },
+      "Jazz": {
+        "strict": 1,
+        "merged": 1
+      },
+      "Rock": {
+        "strict": 1,
+        "merged": 1
+      },
+      "SS": {
+        "strict": 0.8333333333333334,
+        "merged": 0.8333333333333334
+      },
+      "backing": {
+        "strict": 0.6,
+        "merged": 0.7
+      }
+    },
+    "seconds": 0.344
+  },
+  "from chords (CQT + bass)": {
+    "byCondition": {
+      "clean": {
+        "strict": 0.7555555555555555,
+        "merged": 0.911111111111111
+      },
+      "pink-20": {
+        "strict": 0.7555555555555555,
+        "merged": 0.911111111111111
+      },
+      "bar-10": {
+        "strict": 0.6722222222222222,
+        "merged": 0.8277777777777778
+      },
+      "bad-mic": {
+        "strict": 0.6222222222222222,
+        "merged": 0.6944444444444443
+      }
+    },
+    "byGroup": {
+      "BN": {
+        "strict": 0.6666666666666666,
+        "merged": 1
+      },
+      "Funk": {
+        "strict": 0.5,
+        "merged": 0.6666666666666666
+      },
+      "Jazz": {
+        "strict": 1,
+        "merged": 1
+      },
+      "Rock": {
+        "strict": 0.6666666666666666,
+        "merged": 1
+      },
+      "SS": {
+        "strict": 1,
+        "merged": 1
+      },
+      "backing": {
+        "strict": 0.7,
+        "merged": 0.8
+      }
+    },
+    "seconds": 127.75
+  },
+  "from chords (glog + bass)": {
+    "byCondition": {
+      "clean": {
+        "strict": 0.8111111111111112,
+        "merged": 0.8555555555555555
+      },
+      "pink-20": {
+        "strict": 0.7111111111111111,
+        "merged": 0.8555555555555555
+      },
+      "bar-10": {
+        "strict": 0.5722222222222222,
+        "merged": 0.7000000000000001
+      },
+      "bad-mic": {
+        "strict": 0.6055555555555555,
+        "merged": 0.6333333333333332
+      }
+    },
+    "byGroup": {
+      "BN": {
+        "strict": 1,
+        "merged": 1
+      },
+      "Funk": {
+        "strict": 0.6666666666666666,
+        "merged": 0.6666666666666666
+      },
+      "Jazz": {
+        "strict": 1,
+        "merged": 1
+      },
+      "Rock": {
+        "strict": 0.8333333333333334,
+        "merged": 1
+      },
+      "SS": {
+        "strict": 0.6666666666666666,
+        "merged": 0.6666666666666666
+      },
+      "backing": {
+        "strict": 0.7,
+        "merged": 0.8
+      }
+    },
+    "seconds": 0.269
+  },
+  "from chords (glog + bass) + chroma": {
+    "byCondition": {
+      "clean": {
+        "strict": 0.8111111111111112,
+        "merged": 0.8833333333333333
+      },
+      "pink-20": {
+        "strict": 0.7666666666666666,
+        "merged": 0.8666666666666667
+      },
+      "bar-10": {
+        "strict": 0.7111111111111111,
+        "merged": 0.7833333333333333
+      },
+      "bad-mic": {
+        "strict": 0.5833333333333334,
+        "merged": 0.6833333333333332
+      }
+    },
+    "byGroup": {
+      "BN": {
+        "strict": 0.8333333333333334,
+        "merged": 1
+      },
+      "Funk": {
+        "strict": 0.6666666666666666,
+        "merged": 0.6666666666666666
+      },
+      "Jazz": {
+        "strict": 0.8333333333333334,
+        "merged": 1
+      },
+      "Rock": {
+        "strict": 1,
+        "merged": 1
+      },
+      "SS": {
+        "strict": 0.8333333333333334,
+        "merged": 0.8333333333333334
+      },
+      "backing": {
+        "strict": 0.7,
+        "merged": 0.8
+      }
+    },
+    "seconds": 0.263
+  }
+}
