@@ -284,12 +284,31 @@ export {
   type TonalityEngineConfig,
   type TonalityFrame,
 } from "./analysis/engine/tonalityEngine";
+export {
+  CHORD_METHOD_PRESETS,
+  CHORD_SMOOTHINGS,
+  CHROMA_METHODS,
+  DEFAULT_CHORD_METHOD_PRESET,
+  DEFAULT_CHORD_SMOOTHING,
+  DEFAULT_CHROMA_METHOD,
+  DEFAULT_KEY_METHOD,
+  KEY_METHODS,
+  isChordMethodPreset,
+  isChordSmoothing,
+  isChromaMethod,
+  isKeyMethod,
+  type ChordMethodOptions,
+  type ChordMethodPreset,
+} from "./analysis/engine/tonalityMethods";
 export { ChordHmm, selfTransitionFor, type ChordHmmOptions } from "./analysis/chordHmm";
 export { CqtChroma, type CqtChromaOptions } from "./analysis/cqt";
 export {
+  DEFAULT_TEMPO_METHOD,
   TEMPO_ANALYZER_DEFAULTS,
   TEMPO_FLUX_DEFAULTS,
+  TEMPO_METHODS,
   TempoAnalyzer,
+  isTempoMethod,
   type TempoAnalyzerConfig,
   type TempoAnalyzerMethod,
   type TempoEstimate,
@@ -408,3 +427,12 @@ export {
   type CrepeTrackerOptions,
 } from "./analysis/crepe";
 export { refineFrequencyNear, smoothPitchHistory } from "./analysis/pitch";
+export {
+  DEFAULT_PITCH_METHOD,
+  PITCH_METHODS,
+  createPitchTracker,
+  isPitchMethod,
+  loadCrepeModelCached,
+  type LivePitchTracker,
+  type PitchMethod,
+} from "./analysis/pitchMethods";

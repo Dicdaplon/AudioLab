@@ -54,7 +54,15 @@ import {
  *   harmonic enhancement and smoothing across readings. Much better on
  *   strummed guitar (a chord barely moves the broadband loudness).
  */
-export type TempoAnalyzerMethod = "envelope" | "flux";
+export const TEMPO_METHODS = ["envelope", "flux"] as const;
+
+export type TempoAnalyzerMethod = (typeof TEMPO_METHODS)[number];
+
+export const DEFAULT_TEMPO_METHOD: TempoAnalyzerMethod = "envelope";
+
+export function isTempoMethod(value: unknown): value is TempoAnalyzerMethod {
+  return (TEMPO_METHODS as readonly unknown[]).includes(value);
+}
 
 export interface TempoAnalyzerConfig {
   /** Sample rate of the pushed audio, in Hz. */
@@ -85,7 +93,7 @@ export interface TempoAnalyzerConfig {
 }
 
 export const TEMPO_ANALYZER_DEFAULTS: Omit<TempoAnalyzerConfig, "sampleRate"> = {
-  method: "envelope",
+  method: DEFAULT_TEMPO_METHOD,
   blockSize: 128,
   decimation: 4,
   windowSeconds: 8,
@@ -175,7 +183,7 @@ export class TempoAnalyzer {
     }
     if (!(c.windowSeconds > 0)) throw new Error("windowSeconds must be > 0");
     if (!(c.minBpm > 0) || !(c.maxBpm > c.minBpm)) throw new Error("invalid BPM range");
-    if (c.method !== "envelope" && c.method !== "flux") throw new Error("unknown tempo method");
+    if (!isTempoMethod(c.method)) throw new Error("unknown tempo method");
     if (c.method === "flux") this.flux = new FluxNovelty(c.sampleRate);
     this.lowpass = new LowpassFilter(c.lowpassCutoffHz, this.blockRate);
     this.buffer = new TimeRingBuffer(Math.max(2, Math.round(c.windowSeconds * this.envelopeRate)));

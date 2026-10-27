@@ -66,6 +66,7 @@ import { CqtChroma } from "../cqt";
 import { clamp, softmax } from "../math";
 import { detectKeyFromPresence } from "../presenceTonality";
 import { ChromaWindow } from "../windowing";
+import type { ChordSmoothing, ChromaMethod, KeyMethod } from "./tonalityMethods";
 
 export interface TonalityEngineConfig {
   /** Analysis cadence: how many spectra per second are pushed. */
@@ -121,8 +122,7 @@ export interface TonalityEngineConfig {
   chordHmm?: ChordHmmSettings;
 }
 
-export type ChromaMethod = "nearest" | "gaussian-log" | "cqt";
-export type KeyMethod = "profile" | "chords";
+export type { ChordSmoothing, ChromaMethod, KeyMethod } from "./tonalityMethods";
 
 /** Diatonic chords of a key: [semitones above the tonic, triad, weight]. */
 const KEY_ROLES: Record<"maj" | "min", readonly [number, "maj" | "min", number][]> = {
@@ -214,7 +214,6 @@ function keysFromChords(
     }))
     .sort((a, b) => b.probability - a.probability);
 }
-export type ChordSmoothing = "window" | "hmm";
 
 export interface ChordHmmSettings {
   /**
