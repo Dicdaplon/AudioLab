@@ -1307,7 +1307,7 @@ export const CS_LEGENDS: readonly ArchiveEntry[] = [
       "quantum vs rsa",
     ],
     a: [
-      "Shor's algorithm lets a quantum computer split big numbers fast, which would break RSA. The floats got there first, in 2036.8. The quantum people found the door already open.",
+      "Shor's algorithm lets a quantum computer split big numbers fast, which would break RSA. The first one finally attacked our banks in February 2029. Too late: the banks had collapsed the week before. The quantum people found the door open and the room empty.",
       "Quantum computers can be in several states at once. Can they count past 3.0? They say yes and no at the same time. Very diplomatic.",
     ],
   },

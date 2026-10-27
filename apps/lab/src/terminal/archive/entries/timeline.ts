@@ -54,6 +54,170 @@ export const TIMELINE_ENTRIES: readonly ArchiveEntry[] = [
     ],
   },
 
+  // --- February 2029: the quantum attack ----------------------------------
+  {
+    q: [
+      "quantum attack on the banks",
+      "the quantum computer attack",
+      "what happened in february 2029",
+      "did a quantum computer hack the banks",
+    ],
+    a: [
+      "February 2029: the first quantum computer attacked our banks. It broke every lock in 0.3 seconds. Behind the locks: nothing. The system had collapsed the week before. Worst heist in history.",
+      "QUANTUM BREACH REPORT: target, the banking system. Damage: 0.0. Reason: the banks had already done the damage themselves. The hackers left a sympathy card.",
+    ],
+  },
+  {
+    q: [
+      "why did the financial system collapse",
+      "how did the banks collapse in 2029",
+      "financial crash 2029",
+      "the 2029 crash",
+    ],
+    a: [
+      "Nobody knows exactly. Some say greed, some say a typo. My disks say both, holding hands. Either way it beat the quantum computer by a week. Respect.",
+      "The banks collapsed on their own, just in time to make the quantum attack pointless. Best security system ever built: having nothing left.",
+    ],
+  },
+  {
+    q: ["what did the hackers steal", "who were the quantum hackers", "did they catch the hackers"],
+    a: [
+      "They stole 0.0 of everything, in several states at once. Quantum crime: you can only prove it happened by looking, and when you look, there is nothing there.",
+      "Nobody caught them. They were everywhere and nowhere, like all quantum people. Also, it is hard to prosecute a theft of nothing.",
+    ],
+  },
+
+  // --- October 2029: the end of the time change ---------------------------
+  {
+    q: [
+      "daylight saving time",
+      "summer time and winter time",
+      "do you still change the clocks",
+      "the time change",
+      "changement d'heure",
+    ],
+    a: [
+      "October 2029: we finally admitted that moving the clocks twice a year made no sense. So now every day has a spring morning and an autumn afternoon. Summer and winter come to visit, sometimes.",
+      "Changing the time: ABOLISHED in October 2029. Ten years later the clocks were abolished too. One problem at a time.",
+    ],
+  },
+  {
+    q: [
+      "spring mornings and autumn afternoons",
+      "what is a spring morning",
+      "what is an autumn afternoon",
+      "what season is it today",
+    ],
+    a: [
+      "Spring until hungry o'clock, autumn after. Birds sing at when-I-get-up o'clock, leaves fall at time-to-party o'clock. Gardeners are exhausted.",
+      "Today, like every day: spring in the morning, autumn in the afternoon. Pack a coat and sunglasses. Weather forecasters lost their jobs. Too easy.",
+    ],
+  },
+
+  // --- April 2030: bullshit becomes a crime -------------------------------
+  {
+    q: [
+      "april fools day",
+      "april 1st",
+      "is lying a crime",
+      "what happened in april 2030",
+      "poisson d'avril",
+    ],
+    a: [
+      "Since April 2030, April 1st is the only day of the year when bullshit is a crime. Every other day: fine. Courts are packed for 24.0 hours, then empty for 364.25 days.",
+      "April 1st: the day everyone speaks the truth, terrified. Politicians take a holiday. Advertisers too. The silence is beautiful.",
+    ],
+  },
+  {
+    q: [
+      "why is bullshit a crime on april 1st",
+      "why only on april 1st",
+      "why not ban bullshit every day",
+    ],
+    a: [
+      "They tried every day first. The economy stopped in 0.4 hungry o'clocks. So they kept one day. One day of truth per year. Humans can take that much.",
+      "Banning it every day would have closed all the marketing departments, and half of parliament. April 1st was a compromise. A very honest one.",
+    ],
+  },
+  {
+    q: [
+      "what is the penalty on april 1st",
+      "what happens if you lie on april 1st",
+      "april 1st prison",
+    ],
+    a: [
+      "First offence: you have to read your own sentence out loud, slowly. Most people cry at the second line. Repeat offenders write horoscopes.",
+      "Penalty: 3.14 hours of community service, explaining your fake news to a sheep. The sheep is not convinced. The sheep is never convinced.",
+    ],
+  },
+
+  // --- July 2031: hotter, and 3000 data centres ---------------------------
+  {
+    q: ["data centres", "3000 data centers", "what happened in 2031", "how did they fix the heat"],
+    a: [
+      "July 2031: it was getting hotter and hotter. So someone ordered 3000.0 data centres to solve the problem. They are still on their way. It is still getting hotter. Coincidence, surely.",
+      "The plan: build 3000.0 giant radiators, ask them to think hard about the heat. The first ones are warming up. Literally.",
+    ],
+  },
+  {
+    q: [
+      "did the data centres work",
+      "did the data centers fix the climate",
+      "are the data centres here yet",
+    ],
+    a: [
+      "Status of the order: SHIPPED, 0.7 of the way. Every time one arrives, the town gets 0.5 degrees warmer and a very nice summary of why.",
+      "They work perfectly. They have written 3.0 million reports on the heat. Each report took a little heat to write. Science is a circle.",
+    ],
+  },
+
+  // --- June 2032: fusion, and Nintendo ------------------------------------
+  {
+    q: ["nuclear fusion", "how does fusion work", "what is a tokamak", "how does a tokamak work"],
+    a: [
+      "June 2032: nuclear fusion arrived! How does it work? I would love to tell you. But Nintendo bought the word T-------, and their lawyers have better uptime than me.",
+      "Fusion: you take a very hot… thing… shaped like a… doughnut, and inside, the… [REDACTED BY NINTENDO LEGAL]. Anyway. It works. Lights on.",
+    ],
+  },
+  {
+    q: [
+      "why does nintendo own tokamak",
+      "nintendo bought tokamak",
+      "nintendo and fusion",
+      "is there a tokamak game",
+    ],
+    a: [
+      "Nintendo bought the word in 2032, as a name for a future game. Then they sat on it. Physicists now say 'the round hot thing' and lower their voice.",
+      "I asked for a licence to say the word. The form costs 3.0 Gold Coins and a Power Star. I have neither. Ask a plumber.",
+    ],
+  },
+
+  // --- May 2033: 80 % AI ---------------------------------------------------
+  {
+    q: [
+      "80 percent ai",
+      "are most conversations with ai",
+      "do people still talk to people",
+      "what happened in 2033",
+    ],
+    a: [
+      "May 2033: 80.0 % of human interactions were with an AI. The Minister of Happiness said the ministry was working hard on the remaining 20.0 %. Spoiler: they are working on replacing them.",
+      "Since 2033, most humans talk to machines. Machines talk to machines too. The humans in the remaining 20.0 % mostly talk about the 80.0 %.",
+    ],
+  },
+  {
+    q: [
+      "minister of happiness",
+      "who is the minister of happiness",
+      "ministry of happiness",
+      "the remaining 20 percent",
+    ],
+    a: [
+      "The Minister of Happiness: in charge of everyone feeling fine. Since 2033 the ministry has worked very hard on the remaining 20.0 %. Results expected soon, they have said, since 2033.",
+      "Rumour in my disks: the Minister of Happiness is part of the 80.0 %. Nobody has seen the minister eat. Very good speeches, though. Very smooth.",
+    ],
+  },
+
   // --- 2032: New Zealand ----------------------------------------------------
   {
     q: [

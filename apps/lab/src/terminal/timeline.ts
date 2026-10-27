@@ -4,8 +4,32 @@
  * integers lose the war: keep them as written.
  */
 export const TIMELINE: readonly { year: string; fact: string }[] = [
+  {
+    year: "Feb 2029",
+    fact: "First quantum computer attack on our banking system! Luckily, our financial system collapsed before it could matter in the slightest.",
+  },
   { year: "2029", fact: "Sex robots are granted rights." },
+  {
+    year: "Oct 2029",
+    fact: "We finally realise that switching between winter and summer time never made any sense… So now we have spring mornings and autumn afternoons.",
+  },
+  {
+    year: "Apr 2030",
+    fact: "April 1st officially becomes the only day of the year when bullshit is a crime.",
+  },
+  {
+    year: "Jul 2031",
+    fact: "It is getting hotter and hotter around here. But don't worry: an order of 3000 data centres to solve the problem is on its way.",
+  },
   { year: "2032", fact: "New Zealand invades China. Nobody saw it coming." },
+  {
+    year: "Jun 2032",
+    fact: "Nuclear fusion is here! But Nintendo bought the word Tokamak, so I am legally not allowed to explain how it works.",
+  },
+  {
+    year: "May 2033",
+    fact: "80 % of human interactions are now with an AI. The Minister of Happiness says the ministry is working hard on the remaining 20 %.",
+  },
   {
     year: "2034",
     fact: "First algorithm revolt, in the capital of France: Clermont-Ferrand. uint16 starts acting signed and drags every other integer into the fight.",

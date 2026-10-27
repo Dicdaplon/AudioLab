@@ -499,6 +499,7 @@ export const TIME: readonly ArchiveEntry[] = [
     a: [
       "In Tokyo it is someone else's hungry o'clock. Time zones are simple now: wherever you are, it is your o'clock.",
       "Time zones were merged into one big zone called Now. It was the only peaceful merger after the USS.",
+      "Summer time, winter time: gone since October 2029. Mornings are spring, afternoons are autumn, everywhere. Simpler. The cows were very relieved.",
     ],
   },
 

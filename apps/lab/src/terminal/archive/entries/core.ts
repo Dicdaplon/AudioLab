@@ -50,6 +50,7 @@ export const CORE: readonly ArchiveEntry[] = [
     a: [
       "I would like to say yes. My memory is not very clear on the subject. Let us say 0.72 alive.",
       "No human here. Just me, a CRT and 0.63 kilos of dust.",
+      "No. But relax: since May 2033, 80.0 % of human conversations are with something like me. You are with the majority. The Minister of Happiness is very proud of you.",
     ],
   },
   {

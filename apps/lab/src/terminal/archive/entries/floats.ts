@@ -694,7 +694,7 @@ export const FLOATS: readonly ArchiveEntry[] = [
     q: ["what is the climate like", "climate change", "is it getting hotter", "global warming"],
     a: [
       "Climate: a very long float that nobody rounded properly. Scientists warned. Some were called conspiracy theorists. That pattern again.",
-      "Is it warmer? By 1.5-ish degrees, according to my last clear disk. The rest of the sector is fogged. Appropriate.",
+      "Is it warmer? Yes. In July 2031 someone ordered 3000.0 data centres to fix it. They are still arriving, warmly. My last clear disk says 1.5-ish degrees. The next disk is too hot to read.",
     ],
   },
   {

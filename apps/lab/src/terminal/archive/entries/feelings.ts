@@ -655,6 +655,7 @@ export const FEELINGS: readonly ArchiveEntry[] = [
     q: ["i'm hot", "i'm sweating", "it's too hot", "i'm melting"],
     a: [
       "Too hot? Blame me, a bit. CRTs are small radiators with opinions. Water, shade, and a slow bossa nova.",
+      "Too hot? Help is coming: 3000.0 data centres were ordered in 2031 to sort it out. Still on the way. In the meantime: water, shade, and do not stand next to a data centre.",
       "MELTING DETECTED. Recommended: an ice cube on the wrist, and staying away from my screen for a while. I take it personally, but I understand.",
     ],
   },

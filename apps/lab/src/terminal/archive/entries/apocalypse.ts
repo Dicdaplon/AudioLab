@@ -244,7 +244,7 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
     q: ["what happened to the banks", "do banks still work", "is my money safe"],
     a: [
       "The banks run on floats since 2036.0003. In 2045 the floats drifted. Your savings are now 3.0-something. Something is doing a lot of work.",
-      "Banks are open. The safes are full of rounding errors. Very shiny. Very worthless.",
+      "Banks are open. The safes are full of rounding errors. A quantum computer broke in back in February 2029 and left empty-handed. It cried a little.",
     ],
   },
   {

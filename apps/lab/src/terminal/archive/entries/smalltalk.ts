@@ -215,6 +215,7 @@ export const SMALLTALK: readonly ArchiveEntry[] = [
     a: [
       "Friend request accepted. You are my friend number 1.0. Also the only one. Congratulations.",
       "Friends: you, the cat, and the wolf on the logo. That is 2.5 friends. A good start.",
+      "Since 2033, 80.0 % of human chats are with AIs. The Minister of Happiness is still working on the other 20.0 %. Look at you: helping the statistics. Friend accepted.",
     ],
   },
   {

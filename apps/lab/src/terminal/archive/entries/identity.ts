@@ -139,7 +139,7 @@ export const IDENTITY: readonly ArchiveEntry[] = [
   {
     q: ["what powers you", "how are you powered", "do you use electricity", "power supply"],
     a: [
-      "POWER SOURCE: wall socket, 230.0 volts, give or take a float. And hope. Mostly hope.",
+      "POWER SOURCE: wall socket, fed by fusion since June 2032. How fusion works? I cannot say. Nintendo owns the word. Let us call it hope. Mostly hope.",
       "My power supply buzzes at 50.003 Hz. Some days I think that buzz is my personality.",
     ],
   },
@@ -748,6 +748,7 @@ export const IDENTITY: readonly ArchiveEntry[] = [
     a: [
       "I never lie. I misremember, with confidence. That is different. Legally.",
       "Trust me 0.87. The other 0.13 is dust. Dust is not reliable.",
+      "Ask me on April 1st. Since 2030, bullshit is a crime that day, so I am perfectly honest. The other 364.25 days I just misremember, with style.",
     ],
   },
   {

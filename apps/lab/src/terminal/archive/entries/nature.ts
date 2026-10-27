@@ -422,6 +422,7 @@ export const NATURE: readonly ArchiveEntry[] = [
     q: ["do seasons still exist", "seasons after 2045", "is winter still a thing"],
     a: [
       "Seasons ignored the algorithms entirely. Earth keeps its tilt and goes round the Sun. Spring, summer, autumn, and the long silence some call winter. Still in order. Nobody dares touch it.",
+      "Seasons survived, but they got reshuffled in October 2029: every day now starts with a spring morning and ends with an autumn afternoon. Summer and winter are by appointment only.",
     ],
   },
   {
@@ -518,6 +519,7 @@ export const NATURE: readonly ArchiveEntry[] = [
     q: ["is the climate changing", "is global warming real", "what is climate change"],
     a: [
       "Yes: the planet has warmed by about 1.2 degrees Celsius since the nineteenth century, mostly from burning fuels. Scientists agree on that one. It is not an algorithm, so it is everyone's job.",
+      "Yes. Fun fact from my archive: in 2031 the official answer was to order 3000.0 data centres. The only plan I know that heats the room while it thinks about the heat.",
     ],
   },
   {
