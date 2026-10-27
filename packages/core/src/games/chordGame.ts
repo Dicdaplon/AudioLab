@@ -5,7 +5,7 @@
  */
 
 import { CHORD_TEMPLATES } from "../analysis/chordDetection";
-import { type ChordRef, sameChord } from "./chordRef";
+import { type ChordRef, sameChord } from "../analysis/chordRef";
 
 export type ChordPoolId =
   "open-major" | "open-minor" | "open-mix" | "all-major" | "all-minor" | "all";

@@ -21,7 +21,7 @@ import path from "node:path";
 
 import { chordName, type ChordQuality } from "../src/analysis/chordDetection";
 import { TonalityEngine } from "../src/analysis/engine/tonalityEngine";
-import { matchesTarget, parseChordKey } from "../src/games/chordRef";
+import { matchesTarget, parseChordKey } from "../src/analysis/chordRef";
 import { decodeAudioFile } from "../src/offline/decodeAudio";
 import { Confusion, percentile } from "../tests/helpers/confusion";
 import { GUITAR_VOICINGS, QUALITY_SETS, guitarChordConfusion } from "../tests/helpers/guitarChords";

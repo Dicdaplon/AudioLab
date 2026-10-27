@@ -41,8 +41,13 @@ import {
   stepNoiseGate,
   type NoiseGateState,
 } from "../analysis/gate/noiseGate";
-import { chordKey, matchesTarget, parseChordKey, type ChordAcceptPolicy } from "./chordRef";
-import type { ChordRef } from "./chordRef";
+import {
+  chordKey,
+  matchesTarget,
+  parseChordKey,
+  type ChordAcceptPolicy,
+} from "../analysis/chordRef";
+import type { ChordRef } from "../analysis/chordRef";
 import { EMPTY_CONFIRMATION, stepConfirmation, type ConfirmationState } from "./confirmation";
 import { resolveConfig } from "../utils/resolveConfig";
 import {

@@ -1,15 +1,11 @@
 /**
- * How the games name a chord: a root pitch class and a quality, never a
- * display string. `ChordScore` from the detector satisfies `ChordRef`
- * structurally, so a detection can be passed to the engines as is.
+ * How the games and the rhythm labels name a chord: a root pitch class and
+ * a quality, never a display string. `ChordScore` from the detector
+ * satisfies `ChordRef` structurally, so a detection can be passed to the
+ * engines as is. Public through `@audiolab/core/games`.
  */
 
-import {
-  CHORD_QUALITIES,
-  baseTriad,
-  chordPitchClasses,
-  type ChordQuality,
-} from "../analysis/chordDetection";
+import { CHORD_QUALITIES, baseTriad, chordPitchClasses, type ChordQuality } from "./chordDetection";
 
 export interface ChordRef {
   /** Root pitch class (0 = C, ..., 11 = B). */

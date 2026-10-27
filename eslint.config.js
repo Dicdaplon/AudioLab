@@ -67,6 +67,30 @@ export default tseslint.config(
     },
   },
   {
+    // The analysis layer is the bottom of core: pure DSP and engines, no Web
+    // Audio adapters, no game or rhythm logic. It may read the shared
+    // defaults of config/ (TonalityEngine's defaults come from there).
+    files: ["packages/core/src/analysis/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            ...CORE_PATTERNS,
+            {
+              group: ["**/audio", "**/audio/*", "**/games", "**/games/*"],
+              message: "analysis/ must not import the Web Audio adapters or the games",
+            },
+            {
+              group: ["**/rhythm", "**/rhythm/*"],
+              message: "analysis/ must not import the rhythm subpath",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ["packages/core/src/rhythm/**/*.ts"],
     rules: { "no-restricted-imports": ["error", { patterns: CORE_PATTERNS }] },
   },

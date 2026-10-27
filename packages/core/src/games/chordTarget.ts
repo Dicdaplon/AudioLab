@@ -15,7 +15,12 @@
 
 import type { ChordScore } from "../analysis/chordDetection";
 import { CHORD_GAME_DEFAULTS, type ChordGameConfig } from "./chordGame";
-import { chordKey, matchesTarget, type ChordAcceptPolicy, type ChordRef } from "./chordRef";
+import {
+  chordKey,
+  matchesTarget,
+  type ChordAcceptPolicy,
+  type ChordRef,
+} from "../analysis/chordRef";
 import { EMPTY_CONFIRMATION, stepConfirmation, type ConfirmationState } from "./confirmation";
 import { resolveConfig } from "../utils/resolveConfig";
 import {

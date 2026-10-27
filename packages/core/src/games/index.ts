@@ -23,7 +23,7 @@ export {
   type ChordAcceptPolicy,
   type ChordRef,
   type MatchesTargetOptions,
-} from "./chordRef";
+} from "../analysis/chordRef";
 export {
   CHORD_GAME_DEFAULTS,
   CHORD_POOLS,

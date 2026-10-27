@@ -9,7 +9,7 @@ import {
   TRIAD_QUALITIES,
   type ChordQuality,
 } from "../../src/analysis/chordDetection";
-import { matchesTarget, type ChordRef } from "../../src/games/chordRef";
+import { matchesTarget, type ChordRef } from "../../src/analysis/chordRef";
 import { Confusion } from "./confusion";
 import { strum, voicingNotes } from "./guitar";
 import { CHORD_SECONDS, runLive, SR } from "./liveRig";

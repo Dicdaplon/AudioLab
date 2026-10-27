@@ -16,7 +16,7 @@ import {
   type ChordAfterOnsetOptions,
   type NoteAfterOnsetOptions,
 } from "../analysis/onset/afterOnset";
-import { chordKey } from "../games/chordRef";
+import { chordKey } from "../analysis/chordRef";
 import type { OnsetLabeler } from "./playAlong";
 
 /** Label of an expected note: its pitch class as a string. */

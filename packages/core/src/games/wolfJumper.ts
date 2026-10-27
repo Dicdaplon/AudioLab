@@ -19,7 +19,7 @@
  * names belong to the UI.
  */
 
-import { type ChordRef, sameChord } from "./chordRef";
+import { type ChordRef, sameChord } from "../analysis/chordRef";
 import { SeededRandom } from "./rng";
 import { CHROMA_SIZE } from "../analysis/chroma";
 
