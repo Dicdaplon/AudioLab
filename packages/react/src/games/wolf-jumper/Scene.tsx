@@ -17,7 +17,7 @@ import {
   type Bonus,
   type BonusType,
   type Enemy,
-  type GameState,
+  type WolfJumperState,
   type WolfJumperConfig,
 } from "@audiolab/core/games";
 import { WOLF_ASPECT } from "./wolfArt";
@@ -35,7 +35,7 @@ import {
 } from "./constants";
 import { shallowEqual, useStoreSelector, type ReadableStore } from "./store";
 
-const selectScene = (s: GameState) => ({
+const selectScene = (s: WolfJumperState) => ({
   config: s.config,
   enemies: s.enemies,
   bonuses: s.bonuses,
@@ -44,7 +44,7 @@ const selectScene = (s: GameState) => ({
   gameOver: s.gameOver,
 });
 
-const selectFinalScore = (s: GameState) => ({ score: s.score, bestStreak: s.bestStreak });
+const selectFinalScore = (s: WolfJumperState) => ({ score: s.score, bestStreak: s.bestStreak });
 
 const BONUS_ICON: Record<BonusType, IconName> = {
   hp: "heart",
@@ -65,7 +65,7 @@ function entityX(progress: number): number {
 }
 
 interface SceneProps {
-  store: ReadableStore<GameState>;
+  store: ReadableStore<WolfJumperState>;
   onRestart: () => void;
 }
 

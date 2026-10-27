@@ -14,7 +14,7 @@ import {
   computeTravelMs,
   shieldRemainingMs,
   slowRemainingMs,
-  type GameState,
+  type WolfJumperState,
 } from "@audiolab/core/games";
 import { Segments } from "../../components/Segments";
 import { Icon } from "../../ui/Icon";
@@ -22,7 +22,7 @@ import { shallowEqual, useStoreSelector, type ReadableStore } from "./store";
 
 const toTenths = (ms: number) => Math.ceil(ms / 100);
 
-const selectHud = (s: GameState) => ({
+const selectHud = (s: WolfJumperState) => ({
   config: s.config,
   score: s.score,
   streak: s.streak,
@@ -36,7 +36,7 @@ const selectHud = (s: GameState) => ({
 
 const formatTenths = (tenths: number) => `${(tenths / 10).toFixed(1)} s`;
 
-export function Hud({ store }: { store: ReadableStore<GameState> }) {
+export function Hud({ store }: { store: ReadableStore<WolfJumperState> }) {
   const hud = useStoreSelector(store, selectHud, shallowEqual);
   const maxHp = hud.config.maxHp;
   const travelMs = computeTravelMs(hud.score, hud.config);

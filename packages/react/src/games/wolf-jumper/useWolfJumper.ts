@@ -24,20 +24,20 @@ import {
 } from "@audiolab/core";
 import {
   aliveBonusChords,
-  createInitialState,
-  gameReducer,
+  createWolfJumperState,
+  wolfJumperReducer,
   randomSeed,
   WolfJumperDetector,
   type DominantNote,
-  type GameAction,
-  type GameState,
+  type WolfJumperAction,
+  type WolfJumperState,
   type WolfDetectorConfig,
   type WolfJumperConfig,
 } from "@audiolab/core/games";
 import { DEFAULT_NOISE_GATE_DB } from "./constants";
 import { createStore, useStoreSelector, type Store } from "./store";
 
-export type GameStore = Store<GameState, GameAction>;
+export type GameStore = Store<WolfJumperState, WolfJumperAction>;
 
 export interface WolfJumperInputs {
   instantaneousChroma: Float32Array;
@@ -77,7 +77,7 @@ export interface WolfJumperController {
   reset: () => void;
 }
 
-const selectGameOver = (s: GameState) => s.gameOver;
+const selectGameOver = (s: WolfJumperState) => s.gameOver;
 
 export function useWolfJumper({
   instantaneousChroma,
@@ -90,7 +90,7 @@ export function useWolfJumper({
   gate: initialGate = "auto",
 }: WolfJumperInputs): WolfJumperController {
   const [store] = useState<GameStore>(() =>
-    createStore(gameReducer, createInitialState(randomSeed(), config)),
+    createStore(wolfJumperReducer, createWolfJumperState(randomSeed(), config)),
   );
   const gameOver = useStoreSelector(store, selectGameOver);
   const playing = running && !gameOver;

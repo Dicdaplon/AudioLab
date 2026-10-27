@@ -542,3 +542,16 @@ describe("note detection helpers", () => {
     expect(dominantNote([new Float32Array(12)])).toBeNull();
   });
 });
+
+describe("Wolf Jumper names", () => {
+  it("keeps the former generic names as aliases", async () => {
+    const games = await import("../../src/games");
+    expect(games.gameReducer).toBe(games.wolfJumperReducer);
+    expect(games.createInitialState).toBe(games.createWolfJumperState);
+    const state: import("../../src/games").WolfJumperState = games.createWolfJumperState(7);
+    const old: import("../../src/games").GameState = state;
+    expect(games.wolfJumperReducer(old, { type: "start" })).toEqual(
+      games.gameReducer(state, { type: "start" }),
+    );
+  });
+});

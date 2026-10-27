@@ -11,7 +11,7 @@
  *   - Actions that change nothing return the same state object, letting
  *     subscribers skip re-renders.
  *   - The tuning lives in `state.config`, resolved once by
- *     `createInitialState(seed, config?)` from `WOLF_JUMPER_DEFAULTS`: a host
+ *     `createWolfJumperState(seed, config?)` from `WOLF_JUMPER_DEFAULTS`: a host
  *     can restrict the note pool to a scale, change the bonus chords, the
  *     speeds or the health without touching the rules.
  *
@@ -170,7 +170,7 @@ export interface ActiveEffects {
   sameNotePc: number | null;
 }
 
-export interface GameState {
+export interface WolfJumperState {
   /** Resolved tuning, fixed for the game. */
   config: WolfJumperConfig;
   /** Game clock (ms). */
@@ -194,7 +194,7 @@ export interface GameState {
 
 // ---- Actions ----
 
-export type GameAction =
+export type WolfJumperAction =
   /** Begin or resume play: schedules an immediate enemy and the first bonus. */
   | { type: "start" }
   /** Advance the simulation by `dtMs` of wall-clock time. */
@@ -222,11 +222,11 @@ export function computeSpawnMs(score: number, config: WolfJumperConfig = WOLF_JU
 
 // ---- Selectors ----
 
-export function shieldRemainingMs(state: GameState): number {
+export function shieldRemainingMs(state: WolfJumperState): number {
   return Math.max(0, state.effects.shieldUntil - state.time);
 }
 
-export function slowRemainingMs(state: GameState): number {
+export function slowRemainingMs(state: WolfJumperState): number {
   return Math.max(0, state.effects.slowUntil - state.time);
 }
 
@@ -251,11 +251,14 @@ export function resolveWolfJumperConfig(config: Partial<WolfJumperConfig> = {}):
   return resolved;
 }
 
-export function createInitialState(seed: number, config?: Partial<WolfJumperConfig>): GameState {
+export function createWolfJumperState(
+  seed: number,
+  config?: Partial<WolfJumperConfig>,
+): WolfJumperState {
   return initialState(seed, resolveWolfJumperConfig(config));
 }
 
-function initialState(seed: number, config: WolfJumperConfig): GameState {
+function initialState(seed: number, config: WolfJumperConfig): WolfJumperState {
   return {
     config,
     time: 0,
@@ -277,7 +280,10 @@ function initialState(seed: number, config: WolfJumperConfig): GameState {
 
 // ---- Reducer ----
 
-export function gameReducer(state: GameState, action: GameAction): GameState {
+export function wolfJumperReducer(
+  state: WolfJumperState,
+  action: WolfJumperAction,
+): WolfJumperState {
   switch (action.type) {
     case "reset":
       return withRng(initialState(state.seed, state.config), scheduleSpawns);
@@ -305,14 +311,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 }
 
 /** Runs `step` with an RNG cursor and stores the advanced seed in the result. */
-function withRng(state: GameState, step: (s: GameState, rng: SeededRandom) => GameState) {
+function withRng(
+  state: WolfJumperState,
+  step: (s: WolfJumperState, rng: SeededRandom) => WolfJumperState,
+) {
   const rng = new SeededRandom(state.seed);
   const next = step(state, rng);
   if (next === state && rng.seed === state.seed) return state;
   return { ...next, seed: rng.seed };
 }
 
-function scheduleSpawns(state: GameState, rng: SeededRandom): GameState {
+function scheduleSpawns(state: WolfJumperState, rng: SeededRandom): WolfJumperState {
   const { firstBonusDelayMs, bonusIntervalMinMs } = state.config;
   return {
     ...state,
@@ -322,7 +331,7 @@ function scheduleSpawns(state: GameState, rng: SeededRandom): GameState {
   };
 }
 
-function tick(state: GameState, dtMs: number, rng: SeededRandom): GameState {
+function tick(state: WolfJumperState, dtMs: number, rng: SeededRandom): WolfJumperState {
   const cfg = state.config;
   const dt = Math.min(cfg.maxTickMs, Math.max(0, dtMs));
   if (dt === 0) return state;
@@ -365,7 +374,7 @@ function tick(state: GameState, dtMs: number, rng: SeededRandom): GameState {
   }
 
   const hp = Math.max(0, state.hp - hits);
-  let next: GameState = {
+  let next: WolfJumperState = {
     ...state,
     time,
     enemies,
@@ -391,7 +400,12 @@ function tick(state: GameState, dtMs: number, rng: SeededRandom): GameState {
   return next;
 }
 
-function spawnEnemy(state: GameState, rng: SeededRandom, pc?: number, lane?: number): GameState {
+function spawnEnemy(
+  state: WolfJumperState,
+  rng: SeededRandom,
+  pc?: number,
+  lane?: number,
+): WolfJumperState {
   const cfg = state.config;
   let effects = state.effects;
   let notePc: number;
@@ -429,12 +443,12 @@ function spawnEnemy(state: GameState, rng: SeededRandom, pc?: number, lane?: num
 }
 
 function spawnBonus(
-  state: GameState,
+  state: WolfJumperState,
   rng: SeededRandom,
   bonusType?: BonusType,
   chord?: ChordRef,
   lane?: number,
-): GameState {
+): WolfJumperState {
   const cfg = state.config;
   const bonus: Bonus = {
     id: state.nextBonusId,
@@ -449,7 +463,7 @@ function spawnBonus(
   return { ...state, bonuses: [...state.bonuses, bonus], nextBonusId: state.nextBonusId + 1 };
 }
 
-function killNote(state: GameState, pc: number): GameState {
+function killNote(state: WolfJumperState, pc: number): WolfJumperState {
   let kills = 0;
   const enemies = state.enemies.map((e): Enemy => {
     if (e.status !== "alive" || e.pc !== pc) return e;
@@ -468,7 +482,7 @@ function killNote(state: GameState, pc: number): GameState {
   };
 }
 
-function collectChord(state: GameState, chord: ChordRef, rng: SeededRandom): GameState {
+function collectChord(state: WolfJumperState, chord: ChordRef, rng: SeededRandom): WolfJumperState {
   const collected: BonusType[] = [];
   const bonuses = state.bonuses.map((b): Bonus => {
     if (b.status !== "alive" || !sameChord(b.chord, chord)) return b;
@@ -477,13 +491,13 @@ function collectChord(state: GameState, chord: ChordRef, rng: SeededRandom): Gam
   });
   if (collected.length === 0) return state;
 
-  return collected.reduce<GameState>((s, type) => applyBonus(s, type, rng), {
+  return collected.reduce<WolfJumperState>((s, type) => applyBonus(s, type, rng), {
     ...state,
     bonuses,
   });
 }
 
-function applyBonus(state: GameState, type: BonusType, rng: SeededRandom): GameState {
+function applyBonus(state: WolfJumperState, type: BonusType, rng: SeededRandom): WolfJumperState {
   const { effects, time, config: cfg } = state;
   switch (type) {
     case "hp":
@@ -550,3 +564,14 @@ export function dominantNote(frames: readonly Float32Array[]): DominantNote | nu
   }
   return best;
 }
+
+// ---- Former generic names ----
+
+/** @deprecated Use `WolfJumperState`. */
+export type GameState = WolfJumperState;
+/** @deprecated Use `WolfJumperAction`. */
+export type GameAction = WolfJumperAction;
+/** @deprecated Use `wolfJumperReducer`. */
+export const gameReducer = wolfJumperReducer;
+/** @deprecated Use `createWolfJumperState`. */
+export const createInitialState = createWolfJumperState;
