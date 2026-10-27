@@ -1,11 +1,14 @@
 /** The detector's compact sheets, one per window, for DetectorTab's `how` prop. */
 
+import type { ReactNode } from "react";
 import type { DetectorHow } from "@audiolab/react";
 
 import {
   ChordsHow,
   InstantChromaHow,
   KeysHow,
+  NotesHeardHow,
+  PageHow,
   PresenceHow,
   ReadoutsHow,
   SettingsHow,
@@ -13,9 +16,17 @@ import {
   type DetectorHowOptions,
 } from "./detector";
 
+/** The Chords & keys page: its two front sheets, then one per window under the hood. */
+export interface ChordsKeysHow extends DetectorHow {
+  page: ReactNode;
+  notes: ReactNode;
+}
+
 /** One compact sheet per detector window. */
-export function detectorHow(options: DetectorHowOptions): DetectorHow {
+export function detectorHow(options: DetectorHowOptions): ChordsKeysHow {
   return {
+    page: <PageHow {...options} />,
+    notes: <NotesHeardHow />,
     readouts: <ReadoutsHow {...options} />,
     instantChroma: <InstantChromaHow />,
     chordChroma: (
@@ -37,8 +48,8 @@ export function detectorHow(options: DetectorHowOptions): DetectorHow {
       />
     ),
     chords: <ChordsHow {...options} />,
-    liveKeys: <KeysHow seconds={options.live} />,
-    keys: <KeysHow seconds={options.long} />,
+    liveKeys: <KeysHow seconds={options.live} byChords={options.keyFromChords} />,
+    keys: <KeysHow seconds={options.long} byChords={options.keyFromChords} />,
     presence: <PresenceHow {...options} />,
     settings: <SettingsHow />,
   };

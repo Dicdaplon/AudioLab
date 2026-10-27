@@ -3,7 +3,12 @@
  * chord sets the games offer for each. The extended sets showcase the
  * opt-in qualities of `detectChord`; the SDK only ships the triad pools.
  */
-import { CHORD_QUALITIES, TRIAD_QUALITIES, type ChordQuality } from "@audiolab/core";
+import {
+  CHORD_QUALITIES,
+  TRIAD_QUALITIES,
+  type ChordQuality,
+  type KeyProfileName,
+} from "@audiolab/core";
 import type { ChordRef } from "@audiolab/core/games";
 import { DEFAULT_CHORD_GAME_POOLS, type ChordGamePool } from "@audiolab/react";
 
@@ -85,3 +90,9 @@ export function wolfBonusChords(vocabulary: Vocabulary): readonly ChordRef[] | u
     c(9, "dom7"),
   ];
 }
+
+export const KEY_REFERENCES: Readonly<Record<KeyProfileName, string>> = {
+  krumhansl: "Listening tests (Krumhansl, the original)",
+  temperley: "Written music (Temperley)",
+  kostkaPayne: "A harmony textbook (Kostka & Payne)",
+};

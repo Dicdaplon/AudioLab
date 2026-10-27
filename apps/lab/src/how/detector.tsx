@@ -19,16 +19,82 @@ export interface DetectorHowOptions {
   long: number;
   /** Sevenths, sus, 6 and diminished are switched on. */
   extended: boolean;
+  /** The key comes from the chords vote, not from the note profile. */
+  keyFromChords?: boolean;
 }
 
-export function ReadoutsHow({ live, long }: DetectorHowOptions) {
+/** The page's two answers: the chord now, the key of the song. */
+export function PageHow({ long }: DetectorHowOptions) {
   return (
     <HowPanel
       compact
       topic="how this page reads"
+      diagram={
+        <SketchChain
+          label="The notes, a chord, then a key"
+          items={[
+            {
+              sketch: <SketchBars values={C_MAJOR} highlight={[0, 4, 7]} labels={NOTES} />,
+              caption: "notes heard",
+            },
+            { sketch: <SketchLabel text="C" sub="the chord" />, caption: "now" },
+            { sketch: <SketchLabel text="C major" sub="or A minor" />, caption: `over ${long} s` },
+          ]}
+        />
+      }
+      algorithm={`The chord comes from the method picked under "Chord detection method", on about the last second. The key comes from "Key detection method", over the last ${long} s: the chords I named vote for their keys, or the notes are matched against the habits of each key. The small line under the key is its relative: same notes, same key signature.`}
+      limits="In silence there is nothing to name, and both stay blank. The relative is not a second guess: it shares every note, and which of the two is home depends on where the music comes to rest."
+      aside="Notes are written with sharps only (A#, D#): I work on twelve sounds, not on spelled notes. A# major is B♭ major."
+    >
+      <p>
+        Two answers. The chord follows your hand, it changes within a second. The key takes its
+        time, like an ear that waits a few bars before saying where home is. Change the method below
+        and watch both answers change with it.
+      </p>
+    </HowPanel>
+  );
+}
+
+/** The one chroma left on the page: the notes of the last second. */
+export function NotesHeardHow() {
+  return (
+    <HowPanel
+      compact
+      topic="the notes I hear"
+      diagram={
+        <SketchChain
+          label="A spectrum folded into twelve notes"
+          items={[
+            {
+              sketch: <SketchBars values={[0.2, 0.9, 0.3, 0.6, 0.25, 0.5, 0.2, 0.3]} />,
+              caption: "frequencies",
+            },
+            {
+              sketch: <SketchBars values={C_MAJOR} highlight={[0, 4, 7]} labels={NOTES} />,
+              caption: "12 notes, 1 s",
+            },
+          ]}
+        />
+      }
+      algorithm="Ten times a second the sound is split into its frequencies, and each one is poured into its note, octaves folded together. The last second of these pictures is averaged: that is what the chord is read from. The method you picked decides how sharp the picture is (the constant-Q one gives each note its own window)."
+      limits="Harmonics count too: a low C also lights up G and E a little. With the AI method the chord comes from the notes the model writes down, not from these bars."
+    >
+      <p>
+        Twelve bars, one per note name, whatever the octave. Strum a C and three bars stand up: C,
+        E, G. If a fourth one rises, look at the chord list: it may have heard a seventh.
+      </p>
+    </HowPanel>
+  );
+}
+
+/** Under the hood: the chain of memories behind the answers. */
+export function ReadoutsHow({ live, long }: DetectorHowOptions) {
+  return (
+    <HowPanel
+      compact
+      topic="the machinery, top to bottom"
       algorithm={`One chain, top to bottom. The first window turns the sound into a chroma: 12 bars, how much of each note is sounding. The next three keep that picture in memory for 1 s, ${live} s and ${long} s. Each memory feeds one answer: the chord (1 s), the live key (${live} s), the estimated key (${long} s). Presence, at the bottom, is a second road to the key: it counts which notes showed up, not how loud they were.`}
       limits="The percentage is a share, not a certainty: the scores of all candidates add up to 100. In silence they all tie and the name means nothing."
-      aside="Notes are written with sharps only (A#, D#): I work on twelve sounds, not on spelled notes. A# major is B♭ major."
     >
       <p>
         Same notes, three memories: the short one follows you, the long one is sure of itself. Read
@@ -101,12 +167,16 @@ export function ChordsHow({ extended }: DetectorHowOptions) {
   );
 }
 
-export function KeysHow({ seconds }: { seconds: number }) {
+export function KeysHow({ seconds, byChords = false }: { seconds: number; byChords?: boolean }) {
   return (
     <HowPanel
       compact
       topic="ranking the keys"
-      algorithm={`The ${seconds} s chroma is compared with the profile of each of the 24 major and minor keys: how much each note weighs in that key, as listeners rated it. r is that resemblance (1 = same shape); the percentages share 100 between them.`}
+      algorithm={
+        byChords
+          ? `Over the last ${seconds} s, every chord I named votes for the keys it belongs to, the home chord and its dominant loudest; the note profile of each key adds half a vote. The percentages share 100 between them.`
+          : `The ${seconds} s chroma is compared with the profile of each of the 24 major and minor keys: how much each note weighs in that key, as listeners rated it. r is that resemblance (1 = same shape); the percentages share 100 between them.`
+      }
       limits="Only major and minor: a dorian or mixolydian vamp lands on the major or minor key with the same notes. Relative keys (C major, A minor) are told apart only by how heavy the home note is."
       sources={[KK_SOURCE]}
     >

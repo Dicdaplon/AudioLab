@@ -87,7 +87,7 @@ describe("App", () => {
     expect(screen.getByRole("tab", { name: "Harmony Lab", selected: true })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Chords & keys", selected: true })).toBeTruthy();
     expect(page().id).toBe("panel-detector");
-    expect(screen.getByRole("group", { name: "Estimated key" })).toBeTruthy();
+    expect(screen.getByRole("group", { name: "Key" })).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/Détecteur|Démarrer|seuil|fenêtre/);
     expect(screen.queryByRole("alert")).toBeNull();
   });
@@ -242,30 +242,33 @@ describe("App", () => {
     const topics: Record<string, string[]> = {
       "Chords & keys": [
         "how this page reads",
+        "the notes I hear",
+        "ranking the chords",
+        "chroma templates",
+        "chord vote",
+        "the machinery, top to bottom",
         "what the knobs change",
         "what a chroma is",
         "same notes, last 1 s",
         "same notes, last 8 s",
         "same notes, last 30 s",
-        "ranking the chords",
         "ranking the keys",
         "ranking the keys",
         "who showed up, not who was loud",
-        "finding the key",
-        "naming the chord",
       ],
-      Tuner: ["reading the pitch"],
+      Tuner: ["MPM", "reading the pitch"],
       Scales: ["matching scales"],
       Spectrum: ["the spectrum"],
-      "Chord game": ["when a chord counts"],
-      "Wolf Jumper": ["notes, and a gate that learns"],
+      "Chord game": ["chroma templates", "when a chord counts"],
+      "Wolf Jumper": ["chroma templates", "notes, and a gate that learns"],
       "Play along": [
+        "SuperFlux",
         "grading the timing",
         "when a note starts",
         "the noise filter",
         "latency and tolerance",
       ],
-      Tempo: ["the tempo"],
+      Tempo: ["RMS envelope", "the tempo"],
     };
     for (const [tab, expected] of Object.entries(topics)) {
       open(tab);

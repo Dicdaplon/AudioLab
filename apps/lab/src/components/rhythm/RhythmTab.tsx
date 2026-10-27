@@ -11,6 +11,8 @@ import {
 } from "@audiolab/react";
 
 import { PlayAlongHow } from "../../how/explanations";
+import { ONSET_METHODS, type OnsetMethodId } from "../../methods";
+import { MethodPicker } from "../MethodPicker";
 import type { ExerciseEnv } from "./env";
 import { useStoredLatency } from "./latencyStore";
 import { LatencyTest } from "./LatencyTest";
@@ -44,6 +46,7 @@ interface RhythmTabProps {
  */
 export function RhythmTab({ mic, running, onStart }: RhythmTabProps) {
   const [exercise, setExercise] = useState<Exercise>("lane");
+  const [onsetMethod, setOnsetMethod] = useState<OnsetMethodId>("classic");
   const [bpm, setBpm] = useState(70);
   const bus = useMemo(createOnsetBus, []);
   const metronome = useMetronome(mic?.context ?? null);
@@ -52,6 +55,7 @@ export function RhythmTab({ mic, running, onStart }: RhythmTabProps) {
   const [latency, setLatency] = useStoredLatency();
 
   const { snapshot, budget, analysis, captureMethod } = useOnsetAnalysis(mic, {
+    method: onsetMethod,
     strummed: exercise === "chords",
     reference: metronome.sound ? "audio" : "visual",
     roundTripMs: play.roundTripMs,
@@ -112,6 +116,14 @@ export function RhythmTab({ mic, running, onStart }: RhythmTabProps) {
   return (
     <div className="rhythm">
       {!running && <MicPrompt message="Start the microphone, then play along." onStart={onStart} />}
+
+      <MethodPicker
+        name="onset-method"
+        title="Onset detection method"
+        choices={ONSET_METHODS}
+        value={onsetMethod}
+        onChange={setOnsetMethod}
+      />
 
       <Panel title="Play in time" as="section" className="rhythm__play">
         <div className="rhythm__setup">

@@ -1,0 +1,31 @@
+crepe-tiny.bin: the "tiny" CREPE pitch-estimation model, weights converted to
+float16 by packages/core/scripts/convertCrepeModel.ts from the TF.js export
+published at https://github.com/marl/crepe (gh-pages branch, model/).
+No weight was retrained or altered beyond the float16 rounding.
+
+Kim, J. W., Salamon, J., Li, P. & Bello, J. P. (2018). CREPE: A Convolutional
+Representation for Pitch Estimation. Proc. IEEE ICASSP, 161-165.
+
+Licence of the original code and model (MIT):
+
+The MIT License (MIT)
+
+Copyright (c) 2018 Jong Wook Kim
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

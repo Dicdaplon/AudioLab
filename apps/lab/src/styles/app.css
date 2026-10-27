@@ -342,7 +342,7 @@ body {
 
 .lab-options {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
   gap: var(--al-sp-3) var(--al-sp-5);
 }
 
@@ -748,4 +748,198 @@ body {
 
 .lab-how .al-how:last-child {
   border-bottom: 1px dashed var(--al-color-line-strong);
+}
+
+/* --- Method picker: how a detector listens ---------------------------------- */
+
+.lab-method__set {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.lab-method__title {
+  padding: 0;
+  margin-bottom: var(--al-sp-2);
+  color: var(--al-color-ink);
+  font-weight: 600;
+}
+
+.lab-method__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
+  gap: var(--al-sp-2);
+}
+
+.lab-method__card {
+  display: grid;
+  align-content: start;
+  gap: var(--al-sp-1);
+  padding: var(--al-sp-3);
+  border: 1px solid var(--al-color-line);
+  border-radius: var(--al-r-2);
+  background: var(--al-color-surface);
+  cursor: pointer;
+  transition:
+    border-color var(--al-dur-1) var(--al-ease-out),
+    background-color var(--al-dur-1) var(--al-ease-out);
+}
+
+.lab-method__card:hover {
+  border-color: var(--al-color-line-strong);
+}
+
+.lab-method__card[data-selected] {
+  border-color: var(--al-color-accent);
+  background: var(--al-color-raised);
+  box-shadow: inset 0 0 0 1px var(--al-color-accent);
+}
+
+.lab-method__card:focus-within {
+  outline: 2px solid var(--al-color-focus);
+  outline-offset: 2px;
+}
+
+.lab-method__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--al-sp-1) var(--al-sp-2);
+}
+
+.lab-method__name {
+  color: var(--al-color-ink);
+  font-weight: 600;
+}
+
+.lab-method__tag {
+  padding: 0 var(--al-sp-2);
+  border: 1px solid var(--al-color-line);
+  border-radius: 999px;
+  color: var(--al-color-ink-muted);
+  font-family: var(--al-font-mono);
+  font-size: var(--al-step--2);
+  white-space: nowrap;
+}
+
+.lab-method__card[data-selected] .lab-method__tag {
+  border-color: var(--al-color-accent);
+  color: var(--al-color-accent);
+}
+
+.lab-method__summary {
+  color: var(--al-color-ink-muted);
+  font-size: var(--al-step--1);
+}
+
+.lab-method__note {
+  margin-top: var(--al-sp-2);
+}
+
+.lab-method__how {
+  margin-top: var(--al-sp-3);
+}
+
+.lab-methods {
+  display: grid;
+  gap: var(--al-stack-gap, var(--al-sp-4));
+}
+
+@media (min-width: 1024px) {
+  .lab-methods--pair {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: start;
+  }
+}
+
+/* --- Chords & keys: two answers, the notes heard, the machinery folded --- */
+
+.lab-ck {
+  display: flex;
+  flex-direction: column;
+  gap: var(--al-stack-gap, var(--al-sp-4));
+  min-width: 0;
+}
+
+.lab-ck__answers,
+.lab-ck__now {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--al-grid-gap, var(--al-sp-3));
+}
+
+@media (min-width: 720px) {
+  .lab-ck__answers,
+  .lab-ck__now {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.lab-ck__how {
+  grid-column: 1 / -1;
+}
+
+.lab-ck__key {
+  display: grid;
+  gap: var(--al-sp-1);
+  min-width: 0;
+}
+
+.lab-ck__relative {
+  margin: 0;
+  padding-left: var(--al-sp-1);
+}
+
+.lab-hood {
+  border-top: 1px solid var(--al-color-line-strong);
+}
+
+.lab-hood__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--al-sp-1) var(--al-sp-3);
+  padding: var(--al-sp-3) var(--al-sp-1);
+  cursor: pointer;
+  list-style: none;
+  border-radius: var(--al-r-1);
+}
+
+.lab-hood__summary::-webkit-details-marker {
+  display: none;
+}
+
+.lab-hood__summary::before {
+  content: "▸";
+  color: var(--al-color-ink-muted);
+  transition: transform var(--al-dur-1) var(--al-ease-out);
+}
+
+.lab-hood[open] .lab-hood__summary::before {
+  transform: rotate(90deg);
+}
+
+.lab-hood__summary:focus-visible {
+  outline: 2px solid var(--al-color-focus);
+  outline-offset: 2px;
+}
+
+.lab-hood__title {
+  color: var(--al-color-ink);
+  font-weight: 600;
+}
+
+.lab-hood__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--al-stack-gap, var(--al-sp-4));
+  padding-top: var(--al-sp-2);
+}
+
+.lab-hood__keys {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
+  gap: var(--al-grid-gap, var(--al-sp-3));
 }

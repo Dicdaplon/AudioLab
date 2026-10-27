@@ -5,22 +5,24 @@ import {
   DEFAULT_FFT_SETTINGS,
   type DetectorSettings,
   type FftSettings,
+  type KeyProfileName,
 } from "@audiolab/core";
 import type { ChordAcceptPolicy, NoteSource } from "@audiolab/core/games";
 
 import {
   ChordGame,
-  DetectorTab,
   LoupeRoot,
   FftTab,
   MicNotice,
   MicTransport,
   TabBar,
+  SelectField,
   ThemeToggle,
   WolfJumper,
   panelId,
   tabId,
   useMicrophone,
+  useNoteModelChords,
   usePitch,
   useTonality,
   type MicState,
@@ -28,23 +30,29 @@ import {
 } from "@audiolab/react";
 
 import {
+  KEY_REFERENCES,
   VOCABULARIES,
   chordGamePools,
   minChordProbability,
   wolfBonusChords,
   type Vocabulary,
 } from "./chordOptions";
-import { About } from "./components/About";
+import { MethodPicker } from "./components/MethodPicker";
+import { useBasicPitchRunner } from "./ml/useBasicPitchRunner";
 import {
-  ChordGameHow,
-  ChordHow,
-  KeyHow,
-  SpectrumHow,
-  TempoHow,
-  WolfJumperHow,
-} from "./how/explanations";
+  CHORD_ENGINE,
+  CHORD_METHODS,
+  KEY_METHODS,
+  TEMPO_METHODS,
+  type ChordMethodId,
+  type KeyMethodId,
+  type TempoMethodId,
+} from "./methods";
+import { About } from "./components/About";
+import { ChordGameHow, SpectrumHow, TempoHow, WolfJumperHow } from "./how/explanations";
 import { detectorHow } from "./how/detectorHow";
 import { ChordOptions } from "./components/ChordOptions";
+import { ChordsKeysPage } from "./components/ChordsKeysPage";
 import { CrtOverlay, CrtToggle } from "./components/CrtOverlay";
 import { useCrt } from "./crt";
 import { Brand } from "./components/Brand";
@@ -121,6 +129,10 @@ export default function App() {
   const [vocabulary, setVocabulary] = useState<Vocabulary>("triads");
   const [accept, setAccept] = useState<ChordAcceptPolicy>("exact");
   const [noteSource, setNoteSource] = useState<NoteSource>("pitch");
+  const [chordMethod, setChordMethod] = useState<ChordMethodId>("classic");
+  const [keyMethod, setKeyMethod] = useState<KeyMethodId>("chords");
+  const [keyProfile, setKeyProfile] = useState<KeyProfileName>("krumhansl");
+  const [tempoMethod, setTempoMethod] = useState<TempoMethodId>("envelope");
 
   // Environment check (secure context, getUserMedia, AudioContext), after mount.
   const microphone = useMicrophone();
@@ -137,11 +149,92 @@ export default function App() {
     fftEnabled: tab === "spectrum",
     noiseMethod: fftSettings.noiseMethod,
     chordQualities: VOCABULARIES[vocabulary].qualities,
+    ...CHORD_ENGINE[chordMethod],
+    keyMethod,
+    keyProfile,
   });
+  // The AI chord method: Basic Pitch, loaded only when picked on a chord page.
+  const aiChords =
+    chordMethod === "ai" && (tab === "detector" || tab === "game" || tab === "jumper");
+  const basicPitch = useBasicPitchRunner(aiChords);
+  const noteChords = useNoteModelChords(microphone.mic, {
+    runner: basicPitch.runner,
+    enabled: aiChords,
+  });
+  const chords = aiChords ? (noteChords.chord ? noteChords.chords : []) : tonality.chords;
+  const chordData = aiChords ? { ...tonality, chords } : tonality;
+  let aiNote: string | undefined;
+  if (aiChords) {
+    if (basicPitch.error || noteChords.error) {
+      aiNote = `The AI model could not start (${(basicPitch.error ?? noteChords.error)!.message}).`;
+    } else if (basicPitch.loading) aiNote = "Loading the AI model (about 15 MB, once)…";
+    else if (!microphone.running) aiNote = "The AI model is ready: start the microphone.";
+    else if (noteChords.inferenceMs !== null) {
+      aiNote = `AI listening: one look every 0.25 s, each in ${Math.round(noteChords.inferenceMs)} ms.`;
+    } else aiNote = "AI listening…";
+  }
+
   // Only captured while Wolf Jumper reads its notes from the pitch tracker.
   const pitch = usePitch(microphone.mic, {
     enabled: tab === "jumper" && noteSource === "pitch",
   });
+
+  const chordPicker = (
+    <MethodPicker
+      name="chord-method"
+      title="Chord detection method"
+      choices={CHORD_METHODS}
+      value={chordMethod}
+      onChange={setChordMethod}
+      note={
+        tab === "detector" || aiNote ? (
+          <>
+            {tab === "detector" && (
+              <SelectField
+                id="chord-vocabulary"
+                label="Chords it knows"
+                value={vocabulary}
+                onChange={(v) => setVocabulary(v as Vocabulary)}
+              >
+                {(Object.keys(VOCABULARIES) as Vocabulary[]).map((id) => (
+                  <option key={id} value={id}>
+                    {VOCABULARIES[id].label}
+                  </option>
+                ))}
+              </SelectField>
+            )}
+            {tab === "detector" && <p>{VOCABULARIES[vocabulary].hint}</p>}
+            {aiNote && <p>{aiNote}</p>}
+          </>
+        ) : undefined
+      }
+    />
+  );
+  const keyPicker = (
+    <MethodPicker
+      name="key-method"
+      title="Key detection method"
+      choices={KEY_METHODS}
+      value={keyMethod}
+      onChange={setKeyMethod}
+      note={
+        keyMethod === "profile" ? (
+          <SelectField
+            id="key-reference"
+            label="What a key sounds like, after"
+            value={keyProfile}
+            onChange={(v) => setKeyProfile(v as KeyProfileName)}
+          >
+            {(Object.keys(KEY_REFERENCES) as KeyProfileName[]).map((id) => (
+              <option key={id} value={id}>
+                {KEY_REFERENCES[id]}
+              </option>
+            ))}
+          </SelectField>
+        ) : undefined
+      }
+    />
+  );
 
   let micState: MicState = "idle";
   if (unsupported) micState = "unsupported";
@@ -210,36 +303,40 @@ export default function App() {
               "aria-labelledby": tabId(tab),
             })}
           >
-            {(tab === "detector" || tab === "game" || tab === "jumper") && (
-              <ChordOptions
-                vocabulary={vocabulary}
-                onVocabularyChange={setVocabulary}
-                accept={tab === "detector" ? undefined : accept}
-                onAcceptChange={setAccept}
-                noteSource={tab === "jumper" ? noteSource : undefined}
-                onNoteSourceChange={setNoteSource}
-              />
+            {(tab === "game" || tab === "jumper") && (
+              <>
+                <ChordOptions
+                  vocabulary={vocabulary}
+                  onVocabularyChange={setVocabulary}
+                  accept={accept}
+                  onAcceptChange={setAccept}
+                  noteSource={tab === "jumper" ? noteSource : undefined}
+                  onNoteSourceChange={setNoteSource}
+                />
+                <div className="lab-methods">{chordPicker}</div>
+              </>
             )}
 
             {tab === "detector" && (
-              <>
-                <DetectorTab
-                  data={tonality}
-                  settings={settings}
-                  onSettingsChange={setSettings}
-                  colourByPitch={colourByPitch}
-                  onColourByPitchChange={setColourByPitch}
-                  how={detectorHow({
-                    live: settings.liveAcquisitionSeconds,
-                    long: settings.tonalityAcquisitionSeconds,
-                    extended: vocabulary !== "triads",
-                  })}
-                />
-                <div className="lab-how">
-                  <KeyHow />
-                  <ChordHow />
-                </div>
-              </>
+              <ChordsKeysPage
+                data={chordData}
+                settings={settings}
+                onSettingsChange={setSettings}
+                colourByPitch={colourByPitch}
+                onColourByPitchChange={setColourByPitch}
+                methods={
+                  <div className="lab-methods lab-methods--pair">
+                    {chordPicker}
+                    {keyPicker}
+                  </div>
+                }
+                how={detectorHow({
+                  live: settings.liveAcquisitionSeconds,
+                  long: settings.tonalityAcquisitionSeconds,
+                  extended: vocabulary !== "triads",
+                  keyFromChords: keyMethod === "chords",
+                })}
+              />
             )}
 
             {tab === "tuner" && (
@@ -263,7 +360,7 @@ export default function App() {
             {tab === "game" && (
               <>
                 <ChordGame
-                  chords={tonality.chords}
+                  chords={chords}
                   running={microphone.running}
                   onStart={microphone.start}
                   pools={chordGamePools(vocabulary)}
@@ -290,7 +387,7 @@ export default function App() {
                   }}
                   pitch={pitch.estimate}
                   instantaneousChroma={tonality.instantaneousChroma}
-                  chords={tonality.chords}
+                  chords={chords}
                   running={microphone.running}
                   signalLevelDb={tonality.signalLevelDb}
                   onStart={microphone.start}
@@ -309,9 +406,20 @@ export default function App() {
               />
             )}
 
+            {tab === "tempo" && (
+              <MethodPicker
+                name="tempo-method"
+                title="Tempo method"
+                choices={TEMPO_METHODS}
+                value={tempoMethod}
+                onChange={setTempoMethod}
+              />
+            )}
+
             {(tab === "spectrum" || tab === "tempo") && (
               <>
                 <FftTab
+                  tempoMethod={tempoMethod}
                   mic={microphone.mic}
                   spectrum={tonality.fft}
                   settings={fftSettings}

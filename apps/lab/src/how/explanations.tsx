@@ -17,8 +17,6 @@ import {
 } from "@audiolab/react";
 
 const NOTES = ["C", "", "D", "", "E", "F", "", "G", "", "A", "", "B"];
-/** A C major chroma: C, E and G stand out. */
-const C_MAJOR = [0.9, 0.08, 0.2, 0.06, 0.75, 0.15, 0.05, 0.85, 0.07, 0.25, 0.05, 0.18];
 
 /** Points of a decaying curve with peaks, for correlation and flux sketches. */
 function peaks(at: readonly number[], width = 0.03, floor = 0.08): [number, number][] {
@@ -31,79 +29,6 @@ function peaks(at: readonly number[], width = 0.03, floor = 0.08): [number, numb
     out.push([x, y]);
   }
   return out;
-}
-
-export function KeyHow() {
-  return (
-    <HowPanel
-      topic="finding the key"
-      diagram={
-        <SketchChain
-          label="Sound, folded into twelve notes, compared with 24 key profiles"
-          items={[
-            { sketch: <SketchWave kind="pluck" />, caption: "what you play" },
-            {
-              sketch: <SketchBars values={C_MAJOR} highlight={[0, 4, 7]} labels={NOTES} />,
-              caption: "12 notes, short and long",
-            },
-            { sketch: <SketchLabel text="C" sub="major" />, caption: "best of 24 keys" },
-          ]}
-        />
-      }
-      algorithm="An FFT (a prism that splits the sound into its frequencies) feeds the chroma: how much of each of the 12 notes is sounding, octaves folded together. Over several seconds, that shape is compared with the profile of each of the 24 major and minor keys, and the closest one wins (Krumhansl–Schmuckler)."
-      limits="Relative keys (C major, A minor) use exactly the same notes: only how heavy the home note is tells them apart. Modal music (dorian, mixolydian) or very chromatic music confuses it."
-      sources={[
-        { label: "Krumhansl & Kessler, Psychological Review, 1982" },
-        { label: "Krumhansl, Cognitive Foundations of Musical Pitch, 1990" },
-      ]}
-      aside="The profiles come from listeners rating how well each note fits once a key is set. The algorithm literally uses human ears as its template."
-    >
-      <p>
-        A key is a family of notes that keep coming back, with one of them as home. So I don&apos;t
-        hunt for one note: I measure how much of each of the twelve notes the music holds, and ask
-        which key has the same shape.
-      </p>
-    </HowPanel>
-  );
-}
-
-export function ChordHow() {
-  return (
-    <HowPanel
-      topic="naming the chord"
-      diagram={
-        <SketchChain
-          label="One second of chroma compared with a template for each chord"
-          items={[
-            {
-              sketch: <SketchBars values={C_MAJOR} highlight={[0, 4, 7]} labels={NOTES} />,
-              caption: "last second",
-            },
-            {
-              sketch: (
-                <SketchBars
-                  values={[1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0]}
-                  highlight={[0, 4, 7]}
-                  labels={NOTES}
-                />
-              ),
-              caption: "C major template",
-            },
-            { sketch: <SketchLabel text="C" sub="closest template" />, caption: "winner" },
-          ]}
-        />
-      }
-      algorithm="I take the last second of chroma (how much of each of the 12 notes is sounding) and measure how much of it falls in each chord's stencil: the 24 major and minor triads, plus sevenths, sus and diminished when switched on. The fits become shares that add up to 100 % (a softmax)."
-      limits="Every note carries quiet higher tones (harmonics), and its 5th one is its major third: a minor chord can lean major. Chords with the same notes (C6 and Am7) can't be told apart without the bass, and I don't listen for the bass."
-      sources={[{ label: "Fujishima, Realtime chord recognition, ICMC 1999" }]}
-      aside="One second is a trade-off: shorter and a ringing strum flickers between names, longer and chord changes lag behind."
-    >
-      <p>
-        A chord is a handful of notes ringing together. I compare what rings with a stencil of every
-        chord, one hole per note, and keep the stencil that fits best.
-      </p>
-    </HowPanel>
-  );
 }
 
 export function TunerHow() {

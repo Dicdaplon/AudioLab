@@ -2,6 +2,11 @@ import { useState } from "react";
 import { A4_FREQ, type MicSource, pitchClassName } from "@audiolab/core";
 import { MicPrompt, Panel, RangeField, Segments, usePitch } from "@audiolab/react";
 import { TunerHow } from "../how/explanations";
+import { PITCH_METHODS, type PitchMethodId } from "../methods";
+import { MethodPicker } from "./MethodPicker";
+
+/** The CREPE tiny model shipped with the lab (MIT, public/models/crepe-tiny/). */
+const CREPE_MODEL_URL = `${import.meta.env.BASE_URL}models/crepe-tiny/crepe-tiny.bin`;
 
 const A4_MIN = 415;
 const A4_MAX = 466;
@@ -23,7 +28,12 @@ function octaveOf(midi: number): number {
 /** Chromatic tuner: note name, cents needle, frequency and the A4 reference. */
 export function TunerTab({ mic, running, onStart }: TunerTabProps) {
   const [referenceA4, setReferenceA4] = useState(A4_FREQ);
-  const { estimate, captureMethod } = usePitch(mic, { referenceA4 });
+  const [method, setMethod] = useState<PitchMethodId>("mpm");
+  const { estimate, captureMethod } = usePitch(mic, {
+    referenceA4,
+    method,
+    crepeModelUrl: CREPE_MODEL_URL,
+  });
   const cents = estimate?.cents ?? 0;
   const inTune = estimate !== null && Math.abs(cents) <= IN_TUNE_CENTS;
   const needle = Math.max(-60, Math.min(60, cents));
@@ -31,6 +41,17 @@ export function TunerTab({ mic, running, onStart }: TunerTabProps) {
   return (
     <div className="tuner">
       {!running && <MicPrompt message="Start the microphone to tune." onStart={onStart} />}
+
+      <MethodPicker
+        name="pitch-method"
+        title="Pitch detection method"
+        choices={PITCH_METHODS}
+        value={method}
+        onChange={setMethod}
+        note={
+          method === "crepe" ? "The AI model (1 MB) loads the first time you pick it." : undefined
+        }
+      />
 
       <Panel title="Tuner" meta={captureMethod ? `${captureMethod} · 2048` : "2048"} as="section">
         <div
