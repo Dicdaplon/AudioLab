@@ -14,6 +14,13 @@
  *          onset + skipMs + durationMs] (default 30 → 200 ms), then
  *          `detectChord`
  *
+ * Opt-in methods (the defaults above stay):
+ *
+ *   note   `method: "pyin"`  pYIN over the same window, decoded 50 ms later
+ *          `method: "crepe"` CREPE tiny on the ≈ 66 ms after `skipMs`
+ *                            (`crepeModel` required)
+ *   chord  `chromaMethod: "gaussian-log"` or `"cqt"` for the segment's chroma
+ *
  * Skipping the first tens of ms avoids the pick noise and the previous
  * note still decaying; the verdict is available `skipMs + window` after
  * the onset. A short chord segment has a coarse spectrum (6 Hz bins for
@@ -23,8 +30,19 @@
  */
 
 import { detectChord, type ChordScore, type DetectChordOptions } from "../chordDetection";
-import { spectrumToChroma } from "../chroma";
-import { detectPitch, type PitchEstimate, type PitchOptions } from "../pitch";
+import { GAUSSIAN_LOG_CHROMA, spectrumToChroma } from "../chroma";
+import { CqtChroma } from "../cqt";
+import { CrepePitch, type CrepeModel } from "../crepe";
+import type { ChromaMethod } from "../engine/tonalityMethods";
+import {
+  PITCH_DEFAULTS,
+  detectPitch,
+  frequencyToPitch,
+  type PitchEstimate,
+  type PitchOptions,
+} from "../pitch";
+import type { PitchMethod } from "../pitchMethods";
+import { PyinTracker } from "../pyin";
 import { computeFftDb, nextPow2 } from "../timeFft";
 
 /** Samples of a stream addressed by their frame, over the last `capacity` frames. */
@@ -73,8 +91,58 @@ export class StreamHistory {
 export interface NoteAfterOnsetOptions extends PitchOptions {
   /** Delay after the attack before the analysed window, in ms. Default 30. */
   skipMs?: number;
-  /** Window length in samples. Default 2048. */
+  /** Window length in samples ("mpm" and "pyin"). Default 2048. */
   windowSize?: number;
+  /**
+   * Pitch estimator. "mpm" (default): `detectPitch` on the window. "pyin":
+   * pYIN (`PyinTracker`, 10 ms hops) decoding that same window with 50 ms of
+   * look-ahead, so the answer comes 50 ms later. "crepe": CREPE tiny
+   * (`CrepePitch`, cents refined by MPM) on the ≈ 66 ms after `skipMs`,
+   * unvoiced below a confidence of 0.6; it needs `crepeModel`.
+   * `peakThreshold` and `clarityThreshold` only apply to "mpm".
+   */
+  method?: PitchMethod;
+  /** Loaded CREPE model (`loadCrepeModel`, `loadCrepeModelCached`), required by "crepe". */
+  crepeModel?: CrepeModel;
+}
+
+/** pYIN of the note readers: 10 ms hops, 50 ms of look-ahead (the tracker's defaults). */
+function pyinHops(sampleRate: number): { hop: number; lag: number } {
+  const hop = Math.max(1, Math.round(sampleRate / 100));
+  return { hop, lag: Math.max(0, Math.round((0.05 * sampleRate) / hop)) };
+}
+
+/** One `CrepePitch` per model and sample rate (it caches its resampling matrix). */
+const crepePitches = new WeakMap<CrepeModel, Map<number, CrepePitch>>();
+
+function crepePitchFor(options: NoteAfterOnsetOptions, sampleRate: number): CrepePitch {
+  const model = options.crepeModel;
+  if (!model) throw new Error('method "crepe" needs a loaded crepeModel');
+  let byRate = crepePitches.get(model);
+  if (!byRate) crepePitches.set(model, (byRate = new Map()));
+  let pitch = byRate.get(sampleRate);
+  if (!pitch) byRate.set(sampleRate, (pitch = new CrepePitch(model, { sampleRate })));
+  return pitch;
+}
+
+/**
+ * Samples read for a note, from `skip` frames after the onset: `offset`
+ * (≤ 0: pYIN starts one hop early, its first frame only primes the
+ * decoder) and `length`.
+ */
+function noteSegment(
+  sampleRate: number,
+  options: NoteAfterOnsetOptions,
+): { offset: number; length: number } {
+  const windowSize = options.windowSize ?? 2048;
+  if (options.method === "pyin") {
+    const { hop, lag } = pyinHops(sampleRate);
+    return { offset: -hop, length: windowSize + (lag + 1) * hop };
+  }
+  if (options.method === "crepe") {
+    return { offset: 0, length: Math.max(crepePitchFor(options, sampleRate).inputLength, 2048) };
+  }
+  return { offset: 0, length: windowSize };
 }
 
 /** First frame after which `noteAfterOnset` can answer. */
@@ -84,7 +152,8 @@ export function noteReadyAt(
   options: NoteAfterOnsetOptions = {},
 ): number {
   const skip = Math.round(((options.skipMs ?? 30) / 1000) * sampleRate);
-  return onsetFrame + skip + (options.windowSize ?? 2048);
+  const { offset, length } = noteSegment(sampleRate, options);
+  return onsetFrame + skip + offset + length;
 }
 
 /**
@@ -97,10 +166,45 @@ export function noteAfterOnset(
   sampleRate: number,
   options: NoteAfterOnsetOptions = {},
 ): PitchEstimate | null {
-  const { skipMs = 30, windowSize = 2048, ...pitch } = options;
-  const start = onsetFrame + Math.round((skipMs / 1000) * sampleRate);
-  const segment = history.read(start, windowSize);
-  return segment ? detectPitch(segment, sampleRate, pitch) : null;
+  const { skipMs = 30, windowSize = 2048, method, crepeModel: _model, ...pitch } = options;
+  const { offset, length } = noteSegment(sampleRate, options);
+  const start = onsetFrame + Math.round((skipMs / 1000) * sampleRate) + offset;
+  const segment = history.read(start, length);
+  if (!segment) return null;
+  if (method === "pyin") {
+    const tracker = new PyinTracker({
+      sampleRate,
+      windowSize,
+      referenceA4: pitch.referenceA4,
+      minFrequency: pitch.minFrequency,
+      maxFrequency: pitch.maxFrequency,
+      silenceRms: pitch.silenceRms,
+    });
+    tracker.push(segment);
+    return tracker.estimate;
+  }
+  if (method === "crepe") return crepeNote(segment, sampleRate, options);
+  return detectPitch(segment, sampleRate, pitch);
+}
+
+/** CREPE's verdict on a segment, with `CrepeTracker`'s thresholds. */
+function crepeNote(
+  segment: Float32Array,
+  sampleRate: number,
+  options: NoteAfterOnsetOptions,
+): PitchEstimate | null {
+  const {
+    referenceA4 = PITCH_DEFAULTS.referenceA4,
+    minFrequency = PITCH_DEFAULTS.minFrequency,
+    maxFrequency = PITCH_DEFAULTS.maxFrequency,
+    silenceRms = PITCH_DEFAULTS.silenceRms,
+  } = options;
+  let energy = 0;
+  for (let i = 0; i < segment.length; i++) energy += segment[i] * segment[i];
+  if (Math.sqrt(energy / segment.length) < silenceRms) return null;
+  const r = crepePitchFor(options, sampleRate).analyze(segment);
+  if (r.confidence < 0.6 || r.frequency < minFrequency || r.frequency > maxFrequency) return null;
+  return frequencyToPitch(r.frequency, r.confidence, referenceA4);
 }
 
 export interface ChordAfterOnsetOptions extends DetectChordOptions {
@@ -113,6 +217,27 @@ export interface ChordAfterOnsetOptions extends DetectChordOptions {
   maxFreq?: number;
   /** Segments quieter than this RMS give no chord. Default 0.001 (−60 dBFS). */
   silenceRms?: number;
+  /**
+   * Chroma of the segment. "nearest" (default): the FFT bins to their
+   * nearest semitone. "gaussian-log": Gaussian semitone binning and log
+   * compression (`GAUSSIAN_LOG_CHROMA`). "cqt": constant-Q chroma of the
+   * segment (`CqtChroma`, E2–D7, so `minFreq` / `maxFreq` do not apply; the
+   * low notes' windows are cut to the segment's length).
+   */
+  chromaMethod?: ChromaMethod;
+}
+
+/** Constant-Q kernels per sample rate and segment length (a few, reused across onsets). */
+const cqtChromas = new Map<string, CqtChroma>();
+
+function cqtChromaFor(sampleRate: number, length: number): CqtChroma {
+  const key = `${sampleRate}:${length}`;
+  let cqt = cqtChromas.get(key);
+  if (!cqt) {
+    if (cqtChromas.size >= 4) cqtChromas.clear();
+    cqtChromas.set(key, (cqt = new CqtChroma({ sampleRate, maxLength: length })));
+  }
+  return cqt;
 }
 
 /** First frame after which `chordAfterOnset` can answer. */
@@ -141,6 +266,7 @@ export function chordAfterOnset(
     minFreq = 70,
     maxFreq = 2000,
     silenceRms = 0.001,
+    chromaMethod = "nearest",
     ...chordOptions
   } = options;
   const start = onsetFrame + Math.round((skipMs / 1000) * sampleRate);
@@ -150,8 +276,16 @@ export function chordAfterOnset(
   let energy = 0;
   for (let i = 0; i < segment.length; i++) energy += segment[i] * segment[i];
   if (Math.sqrt(energy / segment.length) < silenceRms) return [];
+  if (chromaMethod === "cqt") {
+    return detectChord(cqtChromaFor(sampleRate, length).analyse(segment).chroma, chordOptions);
+  }
   const { magnitude } = computeFftDb(segment, sampleRate, { fftSize: nextPow2(length) });
-  const chroma = spectrumToChroma(magnitude, { sampleRate, minFreq, maxFreq });
+  const chroma = spectrumToChroma(magnitude, {
+    sampleRate,
+    minFreq,
+    maxFreq,
+    ...(chromaMethod === "gaussian-log" && GAUSSIAN_LOG_CHROMA),
+  });
   return detectChord(chroma, chordOptions);
 }
 
