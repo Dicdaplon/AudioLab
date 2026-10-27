@@ -315,7 +315,12 @@ describe("App", () => {
 
     it("shows the note, its octave, the cents and the frequency", () => {
       session.running = true;
-      pitch.state = { estimate: estimate(), captureMethod: "worklet" };
+      pitch.state = {
+        estimate: estimate(),
+        captureMethod: "worklet",
+        activeMethod: "mpm",
+        modelError: null,
+      };
       render(<App />);
       open("Tuner");
 
@@ -335,6 +340,8 @@ describe("App", () => {
       pitch.state = {
         estimate: estimate({ frequency: 130.3, midi: 48, pitchClass: 0, cents: -3.2 }),
         captureMethod: "analyser",
+        activeMethod: "mpm",
+        modelError: null,
       };
       render(<App />);
       open("Tuner");

@@ -22,7 +22,11 @@
  *   cents. It runs at most 10 times a second, a few milliseconds each, on
  *   the main thread inside the capture callback: short enough not to need
  *   a worker on a laptop (~5 ms per run, ~5 % of a core). Until the model
- *   is loaded, or if it cannot be (no URL, network error), "mpm" runs.
+ *   is loaded, or if it cannot be (no URL, network error), "mpm" runs:
+ *   `activeMethod` says which one is running, `modelError` why CREPE is not.
+ *
+ * The trackers come from `createPitchTracker` and the model from
+ * `loadCrepeModelCached` (@audiolab/core), usable without React.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -30,19 +34,19 @@ import { useEffect, useRef, useState } from "react";
 import {
   A4_FREQ,
   type CaptureMethod,
-  CrepeTracker,
-  type CrepeModel,
-  loadCrepeModel,
+  createPitchTracker,
+  type LivePitchTracker,
+  loadCrepeModelCached,
   type MicSource,
   type PitchEstimate,
-  PitchTracker,
+  type PitchMethod,
   type PitchTrackerOptions,
-  PyinTracker,
   type SampleCapture,
   startSampleCapture,
 } from "@audiolab/core";
 
-export type PitchMethod = "mpm" | "pyin" | "crepe";
+/** The estimators of `method` (defined in @audiolab/core, re-exported here). */
+export type { PitchMethod } from "@audiolab/core";
 
 export interface UsePitchOptions extends Omit<PitchTrackerOptions, "sampleRate" | "referenceA4"> {
   /** Run the capture and analysis. Default true. */
@@ -67,27 +71,26 @@ export interface PitchState {
   estimate: PitchEstimate | null;
   /** How samples are captured, once the capture has started. */
   captureMethod: CaptureMethod | null;
+  /**
+   * The estimator running: `method`, except "crepe", which runs "mpm" until
+   * its model is loaded, and for good if it cannot be (see `modelError`).
+   */
+  activeMethod: PitchMethod;
+  /** Why the CREPE model is not running ("crepe" only): no URL, or the load failed. */
+  modelError: Error | null;
 }
 
-const IDLE: PitchState = { estimate: null, captureMethod: null };
+/** `modelError` of "crepe" without `crepeModelUrl` (one instance, so states compare equal). */
+const NO_CREPE_URL = new Error('usePitch: method "crepe" needs crepeModelUrl, running MPM');
 
-/** What the hook needs from a tracker. */
-interface LiveTracker {
-  readonly estimate: PitchEstimate | null;
-  push(samples: ArrayLike<number>): void;
-  setReferenceA4(hz: number): void;
-}
-
-/** One fetch per model URL for the page's lifetime; a failed load is retried next time. */
-const crepeModels = new Map<string, Promise<CrepeModel>>();
-
-function crepeModel(url: string): Promise<CrepeModel> {
-  const cached = crepeModels.get(url);
-  if (cached) return cached;
-  const model = loadCrepeModel(url);
-  crepeModels.set(url, model);
-  model.catch(() => crepeModels.delete(url));
-  return model;
+/** The state before any estimate: "crepe" starts on "mpm". */
+function idle(method: PitchMethod, modelError: Error | null = null): PitchState {
+  return {
+    estimate: null,
+    captureMethod: null,
+    activeMethod: method === "crepe" ? "mpm" : method,
+    modelError,
+  };
 }
 
 /** Identity of an estimate for change detection (midi follows from frequency and cents). */
@@ -113,48 +116,62 @@ export function usePitch(mic: MicSource | null, options: UsePitchOptions = {}): 
     silenceRms,
   } = options;
 
-  const [state, setState] = useState<PitchState>(IDLE);
-  const trackerRef = useRef<LiveTracker | null>(null);
+  const [state, setState] = useState<PitchState>(() => idle(method));
+  const trackerRef = useRef<LivePitchTracker | null>(null);
   const referenceRef = useRef(referenceA4);
   referenceRef.current = referenceA4;
 
   useEffect(() => {
+    const noUrl = method === "crepe" && !crepeModelUrl ? NO_CREPE_URL : null;
     if (!mic || !enabled) {
       trackerRef.current = null;
-      setState(IDLE);
+      setState(idle(method, noUrl));
       return;
     }
 
-    const sampleRate = mic.context.sampleRate;
-    const common = { sampleRate, hysteresisCents, minFrequency, maxFrequency, silenceRms };
-    let tracker: LiveTracker =
-      method === "pyin"
-        ? new PyinTracker({ ...common, referenceA4: referenceRef.current, windowSize, hopSize })
-        : new PitchTracker({
-            ...common,
-            referenceA4: referenceRef.current,
-            windowSize,
-            hopSize,
-            medianFrames,
-            peakThreshold,
-            clarityThreshold,
-          });
+    const options: PitchTrackerOptions = {
+      sampleRate: mic.context.sampleRate,
+      referenceA4: referenceRef.current,
+      windowSize,
+      hopSize,
+      medianFrames,
+      hysteresisCents,
+      minFrequency,
+      maxFrequency,
+      peakThreshold,
+      clarityThreshold,
+      silenceRms,
+    };
+    // "crepe" starts on the MPM tracker (no model yet).
+    let tracker = createPitchTracker(method, options);
+    let activeMethod: PitchMethod = method === "crepe" ? "mpm" : method;
+    let modelError = noUrl;
     trackerRef.current = tracker;
+    setState((prev) =>
+      prev.activeMethod === activeMethod && prev.modelError === modelError
+        ? prev
+        : { ...prev, activeMethod, modelError },
+    );
 
     let cancelled = false;
     if (method === "crepe" && crepeModelUrl) {
-      crepeModel(crepeModelUrl)
+      loadCrepeModelCached(crepeModelUrl)
         .then((model) => {
           if (cancelled) return;
-          tracker = new CrepeTracker(model, {
-            ...common,
-            referenceA4: referenceRef.current,
-            hopSize: Math.max(hopSize ?? 0, Math.round(sampleRate / 10)),
-          });
+          tracker = createPitchTracker(
+            "crepe",
+            { ...options, referenceA4: referenceRef.current },
+            model,
+          );
           trackerRef.current = tracker;
+          activeMethod = "crepe";
+          setState((prev) => ({ ...prev, activeMethod }));
         })
         .catch((error: unknown) => {
           console.warn("usePitch: CREPE model unavailable, staying on MPM", error);
+          if (cancelled) return;
+          modelError = error instanceof Error ? error : new Error(String(error));
+          setState((prev) => ({ ...prev, modelError }));
         });
     }
 
@@ -166,7 +183,7 @@ export function usePitch(mic: MicSource | null, options: UsePitchOptions = {}): 
           return;
         }
         capture = c;
-        setState({ estimate: tracker.estimate, captureMethod: c.method });
+        setState({ estimate: tracker.estimate, captureMethod: c.method, activeMethod, modelError });
       })
       .catch(() => {
         // Capture could not start (context closed meanwhile): stay idle.
@@ -177,9 +194,12 @@ export function usePitch(mic: MicSource | null, options: UsePitchOptions = {}): 
       const captureMethod = capture.method;
       const estimate = tracker.estimate;
       setState((prev) =>
-        estimateKey(prev.estimate) === estimateKey(estimate) && prev.captureMethod === captureMethod
+        estimateKey(prev.estimate) === estimateKey(estimate) &&
+        prev.captureMethod === captureMethod &&
+        prev.activeMethod === activeMethod &&
+        prev.modelError === modelError
           ? prev
-          : { estimate, captureMethod },
+          : { estimate, captureMethod, activeMethod, modelError },
       );
     }, 1000 / updatesPerSecond);
 

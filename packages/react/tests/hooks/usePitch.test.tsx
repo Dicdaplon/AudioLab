@@ -89,7 +89,12 @@ describe("usePitch", () => {
 
   it("stays idle without a microphone", () => {
     const { hook } = setup({}, null);
-    expect(hook.result.current).toEqual({ estimate: null, captureMethod: null });
+    expect(hook.result.current).toEqual({
+      estimate: null,
+      captureMethod: null,
+      activeMethod: "mpm",
+      modelError: null,
+    });
   });
 
   it("starts the capture and publishes the pitch of the incoming audio", async () => {
@@ -169,7 +174,12 @@ describe("usePitch", () => {
     const first = worklet.nodes[0];
     rerender({ options: { enabled: false } });
     expect(first.disconnect).toHaveBeenCalled();
-    expect(hook.result.current).toEqual({ estimate: null, captureMethod: null });
+    expect(hook.result.current).toEqual({
+      estimate: null,
+      captureMethod: null,
+      activeMethod: "mpm",
+      modelError: null,
+    });
 
     rerender({ options: { enabled: true, windowSize: 4096 } });
     await act(async () => {});
@@ -207,7 +217,12 @@ describe("usePitch", () => {
     act(() => {
       vi.advanceTimersByTime(200);
     });
-    expect(hook.result.current).toEqual({ estimate: null, captureMethod: null });
+    expect(hook.result.current).toEqual({
+      estimate: null,
+      captureMethod: null,
+      activeMethod: "mpm",
+      modelError: null,
+    });
   });
   it("runs pYIN when asked", async () => {
     const { hook } = setup({ updatesPerSecond: 10, method: "pyin" });
@@ -219,6 +234,7 @@ describe("usePitch", () => {
     const estimate = hook.result.current.estimate!;
     expect(estimate.midi).toBe(69);
     expect(Math.abs(estimate.cents)).toBeLessThan(2);
+    expect(hook.result.current.activeMethod).toBe("pyin");
   });
 
   it("runs CREPE once its model is loaded", async () => {
@@ -229,9 +245,12 @@ describe("usePitch", () => {
       crepeModelUrl: "models/crepe-tiny/crepe-tiny.bin?a",
       hopSize: 512,
     });
+    expect(hook.result.current.activeMethod).toBe("mpm");
     await act(async () => {});
     await act(async () => {});
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(hook.result.current.activeMethod).toBe("crepe");
+    expect(hook.result.current.modelError).toBeNull();
     play(440, 0.3);
     act(() => {
       vi.advanceTimersByTime(100);
@@ -260,10 +279,14 @@ describe("usePitch", () => {
       vi.advanceTimersByTime(100);
     });
     expect(hook.result.current.estimate!.clarity).toBeGreaterThan(0.99);
+    expect(hook.result.current.activeMethod).toBe("mpm");
+    expect(hook.result.current.modelError?.message).toMatch(/CREPE model/);
 
     const noUrl = setup({ updatesPerSecond: 10, method: "crepe" });
     await act(async () => {});
     expect(noUrl.hook.result.current.captureMethod).toBe("worklet");
+    expect(noUrl.hook.result.current.activeMethod).toBe("mpm");
+    expect(noUrl.hook.result.current.modelError?.message).toMatch(/crepeModelUrl/);
   });
 
   it("ignores a CREPE model that arrives after the hook was torn down", async () => {
