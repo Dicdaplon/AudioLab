@@ -3,6 +3,10 @@
  * batches from a fake AudioWorkletNode into the `PitchTracker`, and the
  * hook publishes the estimate at its own rate.
  */
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, renderHook } from "@testing-library/react";
 
@@ -16,6 +20,24 @@ import {
 } from "../../../core/tests/helpers/fakeWebAudio";
 
 const SR = 48_000;
+
+const MODEL_FILE = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../../../apps/lab/public/models/crepe-tiny/crepe-tiny.bin",
+);
+
+/** A fetch stub serving the converted CREPE model (or failing). */
+function stubModelFetch(ok = true) {
+  const bytes = readFileSync(MODEL_FILE);
+  const body = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+  const fetchMock = vi.fn(async () => ({
+    ok,
+    status: ok ? 200 : 404,
+    arrayBuffer: async () => body,
+  }));
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
 
 function sine(freq: number, length: number, amplitude = 0.3, offset = 0): Float32Array {
   const out = new Float32Array(length);
@@ -41,6 +63,7 @@ describe("usePitch", () => {
     worklet.restore();
     fakes.restore();
     vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   /** Posts `seconds` of a continuous tone as 2048-sample worklet batches. */
@@ -185,5 +208,73 @@ describe("usePitch", () => {
       vi.advanceTimersByTime(200);
     });
     expect(hook.result.current).toEqual({ estimate: null, captureMethod: null });
+  });
+  it("runs pYIN when asked", async () => {
+    const { hook } = setup({ updatesPerSecond: 10, method: "pyin" });
+    await act(async () => {});
+    play(440, 0.3);
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    const estimate = hook.result.current.estimate!;
+    expect(estimate.midi).toBe(69);
+    expect(Math.abs(estimate.cents)).toBeLessThan(2);
+  });
+
+  it("runs CREPE once its model is loaded", async () => {
+    const fetchMock = stubModelFetch();
+    const { hook } = setup({
+      updatesPerSecond: 10,
+      method: "crepe",
+      crepeModelUrl: "models/crepe-tiny/crepe-tiny.bin?a",
+      hopSize: 512,
+    });
+    await act(async () => {});
+    await act(async () => {});
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    play(440, 0.3);
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    const estimate = hook.result.current.estimate!;
+    expect(estimate.midi).toBe(69);
+    expect(Math.abs(estimate.cents)).toBeLessThan(1);
+    // CREPE's confidence, not MPM's clarity (> 0.99 on a sine).
+    expect(estimate.clarity).toBeGreaterThan(0.6);
+    expect(estimate.clarity).toBeLessThan(0.99);
+  });
+
+  it("stays on MPM while the CREPE model is missing", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    stubModelFetch(false);
+    const { hook } = setup({
+      updatesPerSecond: 10,
+      method: "crepe",
+      crepeModelUrl: "models/missing.bin",
+    });
+    await act(async () => {});
+    await act(async () => {});
+    expect(warn).toHaveBeenCalled();
+    play(440, 0.2);
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    expect(hook.result.current.estimate!.clarity).toBeGreaterThan(0.99);
+
+    const noUrl = setup({ updatesPerSecond: 10, method: "crepe" });
+    await act(async () => {});
+    expect(noUrl.hook.result.current.captureMethod).toBe("worklet");
+  });
+
+  it("ignores a CREPE model that arrives after the hook was torn down", async () => {
+    const fetchMock = stubModelFetch();
+    const { hook } = setup({
+      method: "crepe",
+      crepeModelUrl: "models/crepe-tiny/crepe-tiny.bin?b",
+    });
+    hook.unmount();
+    await act(async () => {});
+    await act(async () => {});
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

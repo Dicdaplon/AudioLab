@@ -28,7 +28,17 @@ export {
   type TempoAnalysisState,
   type UseTempoAnalysisOptions,
 } from "./hooks/useTempoAnalysis";
-export { usePitch, type PitchState, type UsePitchOptions } from "./hooks/usePitch";
+export {
+  usePitch,
+  type PitchMethod,
+  type PitchState,
+  type UsePitchOptions,
+} from "./hooks/usePitch";
+export {
+  useNoteModelChords,
+  type NoteModelChordsState,
+  type UseNoteModelChordsOptions,
+} from "./hooks/useNoteModelChords";
 export {
   useOnsetAnalysis,
   type OnsetAnalysisState,
@@ -159,4 +169,4 @@ export {
 } from "./ui/theme";
 export { DEFAULT_VIZ_THEME, readVizTheme, useVizTheme, type VizTheme } from "./ui/vizTheme";
 export { BREAKPOINTS, useMediaQuery } from "./ui/useMediaQuery";
-export { chordRows, keyRows, splitKeyName } from "./ui/rankRows";
+export { chordRows, keyRows, qualityMode, splitKeyName } from "./ui/rankRows";

@@ -27,6 +27,11 @@ import {
   type NoiseFloorMethod,
   startLiveAnalysis,
   TonalityEngine,
+  type ChordHmmSettings,
+  type ChordSmoothing,
+  type ChromaMethod,
+  type KeyMethod,
+  type KeyProfileName,
   type TonalityEngineConfig,
   type TonalityFrame,
 } from "@audiolab/core";
@@ -54,6 +59,16 @@ export interface UseTonalityOptions {
   noiseMethod?: NoiseFloorMethod;
   /** Chord qualities the chord ranking considers. Default: major and minor triads. */
   chordQualities?: readonly ChordQuality[];
+  /** Chroma front-end (opt-in "gaussian-log"). Default "nearest". */
+  chromaMethod?: ChromaMethod;
+  /** Key-profile set of the key rankings. Default "krumhansl". */
+  keyProfile?: KeyProfileName;
+  /** How the live and long-window keys are ranked (opt-in "chords"). Default "profile". */
+  keyMethod?: KeyMethod;
+  /** Chord smoothing (opt-in "hmm"). Default "window". */
+  chordSmoothing?: ChordSmoothing;
+  /** Settings of the "hmm" chord smoothing. Read when the smoothing changes. */
+  chordHmm?: ChordHmmSettings;
 }
 
 /** Magnitude spectrum of the last frame (only updated while `fftEnabled`). */
@@ -90,6 +105,11 @@ export function useTonality(mic: MicSource | null, options: UseTonalityOptions =
     filterMemory: options.maxFilterMemory ?? DEFAULT_DETECTOR_SETTINGS.maxFilterMemory,
     filterMode: options.maxFilterMode ?? DEFAULT_DETECTOR_SETTINGS.maxFilterMode,
     chordQualities: options.chordQualities,
+    chromaMethod: options.chromaMethod,
+    keyProfile: options.keyProfile,
+    keyMethod: options.keyMethod,
+    chordSmoothing: options.chordSmoothing,
+    chordHmm: options.chordHmm,
   };
   const chordQualitiesKey = options.chordQualities?.join(",");
   const fftEnabled = options.fftEnabled ?? false;
@@ -121,6 +141,10 @@ export function useTonality(mic: MicSource | null, options: UseTonalityOptions =
     engineConfig.filterMemory,
     engineConfig.filterMode,
     chordQualitiesKey,
+    engineConfig.chromaMethod,
+    engineConfig.keyProfile,
+    engineConfig.keyMethod,
+    engineConfig.chordSmoothing,
   ]);
 
   // Analysis loop, bound to the microphone session.

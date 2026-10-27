@@ -8,7 +8,8 @@ import { RankList } from "./RankList";
 
 interface ChordViewProps {
   chords: ChordScore[];
-  windowSeconds: number;
+  /** Shown next to the title; omit it when the method has no fixed window. */
+  windowSeconds?: number;
   /** How many ranked chords to list. */
   topN?: number;
   /** A compact "How?" sheet; it replaces the technical hint. */
@@ -18,7 +19,11 @@ interface ChordViewProps {
 /** Ranked chord candidates of the short window. */
 export function ChordView({ chords, windowSeconds, topN = 6, how }: ChordViewProps) {
   return (
-    <Panel title="Chord candidates" meta={`${windowSeconds} s`} how={how}>
+    <Panel
+      title="Chord candidates"
+      meta={windowSeconds === undefined ? undefined : `${windowSeconds} s`}
+      how={how}
+    >
       {chords.length === 0 ? (
         <p className="al-waiting">Waiting for signal…</p>
       ) : (

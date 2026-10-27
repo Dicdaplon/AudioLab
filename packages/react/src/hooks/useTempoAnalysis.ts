@@ -18,6 +18,7 @@ import {
   type SampleCapture,
   startSampleCapture,
   TempoAnalyzer,
+  type TempoAnalyzerMethod,
   type TempoFrame,
 } from "@audiolab/core";
 
@@ -28,6 +29,12 @@ export interface UseTempoAnalysisOptions {
   lowpassCutoffHz?: number;
   /** How often the envelope spectrum is recomputed. Default 5 Hz. */
   updatesPerSecond?: number;
+  /**
+   * "envelope" (default): the RMS envelope, right on click tracks. "flux":
+   * the spectral-flux novelty with an autocorrelation and a tempo prior,
+   * far better on strummed guitar (docs/POC-METHODS.md). Opt-in.
+   */
+  method?: TempoAnalyzerMethod;
 }
 
 export interface TempoAnalysisState {
@@ -46,6 +53,7 @@ export function useTempoAnalysis(
   const enabled = options.enabled ?? true;
   const lowpassCutoffHz = options.lowpassCutoffHz ?? DEFAULT_FFT_SETTINGS.onsetLowpassHz;
   const updatesPerSecond = options.updatesPerSecond ?? 5;
+  const method = options.method ?? "envelope";
 
   const [state, setState] = useState<TempoAnalysisState>(IDLE);
   const analyzerRef = useRef<TempoAnalyzer | null>(null);
@@ -62,6 +70,7 @@ export function useTempoAnalysis(
     const analyzer = new TempoAnalyzer({
       sampleRate: mic.context.sampleRate,
       lowpassCutoffHz: cutoffRef.current,
+      method,
     });
     analyzerRef.current = analyzer;
 
@@ -91,7 +100,7 @@ export function useTempoAnalysis(
       capture?.stop();
       if (analyzerRef.current === analyzer) analyzerRef.current = null;
     };
-  }, [mic, enabled, updatesPerSecond]);
+  }, [mic, enabled, updatesPerSecond, method]);
 
   useEffect(() => {
     analyzerRef.current?.setLowpassCutoff(lowpassCutoffHz);

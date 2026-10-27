@@ -22,6 +22,7 @@ import {
   type OnsetAnalysis,
   type OnsetAnalysisOptions,
   type OnsetAnalysisSnapshot,
+  type OnsetMethod,
   startOnsetAnalysis,
   StreamHistory,
   type TimedOnset,
@@ -39,6 +40,12 @@ export interface UseOnsetAnalysisOptions {
   updatesPerSecond?: number;
   /** Pipeline settings (detector, gate, onset margin), read at start. */
   pipeline?: OnsetAnalysisOptions["pipeline"];
+  /**
+   * Onset method: "classic" (default), or the opt-in "sensitive" and
+   * "superflux-complex" (docs/POC-METHODS.md). Changing it restarts the
+   * analysis. `pipeline.method`, if set, wins.
+   */
+  method?: OnsetMethod;
   /** Worklet batch size in samples, read at start. Default 512. */
   batchSize?: number;
   /** Seconds of samples kept for `noteAfterOnset` / `chordAfterOnset`. Default 3. */
@@ -150,7 +157,7 @@ export function useOnsetAnalysis(
     };
 
     void startOnsetAnalysis(mic.context, mic.source, {
-      pipeline: optionsRef.current.pipeline,
+      pipeline: { method: optionsRef.current.method, ...optionsRef.current.pipeline },
       batchSize: optionsRef.current.batchSize,
       onSamples: (samples, info, analysedTime) => {
         history.push(samples, info.startFrame);
@@ -195,7 +202,7 @@ export function useOnsetAnalysis(
       clearInterval(timer);
       analysis?.stop();
     };
-  }, [mic, enabled, updatesPerSecond, historySeconds]);
+  }, [mic, enabled, updatesPerSecond, historySeconds, options.method]);
 
   return state;
 }

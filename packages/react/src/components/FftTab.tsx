@@ -8,7 +8,12 @@ import { TimeSignalPlot } from "./TimeSignalPlot";
 import { FftSettingsPanel } from "./FftSettingsPanel";
 import { Panel } from "./Panel";
 import { SettingsRail } from "./SettingsRail";
-import { FFT_DISPLAY_MAX_HZ, type FftSettings, type MicSource } from "@audiolab/core";
+import {
+  FFT_DISPLAY_MAX_HZ,
+  type FftSettings,
+  type MicSource,
+  type TempoAnalyzerMethod,
+} from "@audiolab/core";
 import { useTempoAnalysis } from "../hooks/useTempoAnalysis";
 import type { SpectrumState } from "../hooks/useTonality";
 import { BREAKPOINTS, useMediaQuery } from "../ui/useMediaQuery";
@@ -24,6 +29,8 @@ interface FftTabProps {
   view?: "all" | "spectrum" | "tempo";
   /** Compact "How?" sheets closing each panel; a sheet replaces the hint. */
   how?: { spectrum?: ReactNode; tempo?: ReactNode };
+  /** Tempo method of the tempo half (`useTempoAnalysis`). Default "envelope". */
+  tempoMethod?: TempoAnalyzerMethod;
 }
 
 const EMPTY = new Float32Array(0);
@@ -43,11 +50,13 @@ export function FftTab({
   onSettingsChange,
   view = "all",
   how = {},
+  tempoMethod,
 }: FftTabProps) {
   const showSpectrum = view !== "tempo";
   const showTempo = view !== "spectrum";
   const tempo = useTempoAnalysis(showTempo ? mic : null, {
     lowpassCutoffHz: settings.onsetLowpassHz,
+    method: tempoMethod,
   });
   const frame = tempo.frame;
   const estimate = frame?.estimate ?? null;
