@@ -1,5 +1,65 @@
 # @audiolab/react
 
+## 0.6.0
+
+### Minor Changes
+
+- 0aa0bbb: Opt-in alternative methods next to the original chord and key pipeline (defaults unchanged,
+  measurements in docs/ALTERNATIVES.md). `TonalityEngine` / `useTonality` take
+  `chordSmoothing: "hmm"` (per-frame templates smoothed by `ChordHmm`, a hidden Markov model with a
+  "no chord" state; `chordHmm` settings, `CHORD_HMM_DEFAULTS`; frames then carry
+  `noChordProbability`), `chromaMethod: "gaussian-log"` (Gaussian semitone binning and log
+  compression, `GAUSSIAN_LOG_CHROMA`; `spectrumToChroma` takes `binning`, `compression`,
+  `logGain`, `tuningCents`) and `keyProfile: "temperley" | "kostkaPayne"` (`KEY_PROFILE_SETS`;
+  `detectKey(chroma, { temperature, profile })`, the number argument still works). The offline
+  pipeline takes `chroma` frame options and a key profile. The HMM defaults (mean chord 1 s,
+  emission exponent 0.6, lag 0) were tuned on GuitarSet players 00–02 and checked on 03–05.
+- 0aa0bbb: Opt-in listening methods for every detector, the originals staying the defaults (measured in
+  docs/POC-METHODS.md and docs/BENCHMARKS.md):
+
+  - Onsets: `OnsetPipeline` / `OnsetDetector` / `useOnsetAnalysis` take `method: "classic" | "sensitive" |
+"superflux-complex"` (`ONSET_METHODS`, `onsetMethodPreset`, `SuperFluxComplexOdf`).
+  - Tempo: `TempoAnalyzer` / `useTempoAnalysis` / `FftTab` take `method: "envelope" | "flux"` (spectral-flux
+    novelty, autocorrelation, tempo prior; `TEMPO_FLUX_DEFAULTS`).
+  - Chords: `chromaMethod: "cqt"` (`CqtChroma`), fed by `TonalityEngine.pushTimeDomain` /
+    `processTimeDomain`; `startLiveAnalysis` attaches a 32768-sample time analyser on demand.
+  - Key: `keyMethod: "chords"` on `TonalityEngine` / `useTonality` (the chords found vote for their keys).
+  - Pitch: `PyinTracker` (pYIN) and `CrepeTracker` / `CrepePitch` / `loadCrepeModel` (CREPE tiny in plain
+    TypeScript, MIT weights), and `usePitch({ method: "mpm" | "pyin" | "crepe", crepeModelUrl })`.
+  - Note models: `NoteModelChords`, `NoteModelRunner`, `transcribeNotes` (Basic Pitch windowing, notes →
+    chords, any runtime plugged in) and `useNoteModelChords`.
+  - `ChordView`: `windowSeconds` is optional (no window label for methods without a fixed window);
+    `qualityMode` is exported.
+
+- a392406: Public API housekeeping, all additive (every existing export and option still works):
+
+  - Method registries, in the pattern of `ONSET_METHODS`: `CHROMA_METHODS`, `KEY_METHODS`,
+    `CHORD_SMOOTHINGS`, `TEMPO_METHODS`, `PITCH_METHODS`, each with its `DEFAULT_*` and `is*`
+    guard; `CHORD_METHOD_PRESETS` (`classic`, `follow`, `sharper`, `cqt`) names the benchmarked
+    chord methods as `TonalityEngine` options. `PitchMethod` now lives in core (`@audiolab/react`
+    re-exports it).
+  - Framework-free pitch tracking: `createPitchTracker(method, options, crepeModel?)` returns a
+    `LivePitchTracker` (MPM, pYIN or CREPE; "crepe" without a model runs MPM, its hop is never
+    under 100 ms) and `loadCrepeModelCached(url)` fetches a model once per URL (a failed load is
+    retried). `usePitch` is built on them and its state adds `activeMethod` and `modelError`, so
+    the CREPE → MPM fallback is visible.
+  - Play-along labels: `noteLabeler` / `noteAfterOnset` take `method: "pyin" | "crepe"` (with
+    `crepeModel`), `chordLabeler` / `chordAfterOnset` take `chromaMethod: "gaussian-log" | "cqt"`.
+    Defaults unchanged.
+  - `TonalityEngine` accepts `filterTolerance` (`filterTolerancy` is deprecated, still honoured);
+    its defaults are read from `ANALYSIS_DEFAULTS` / `DEFAULT_DETECTOR_SETTINGS` (same values).
+  - `@audiolab/core/games`: `wolfJumperReducer`, `WolfJumperState`, `WolfJumperAction`,
+    `createWolfJumperState`; `gameReducer`, `GameState`, `GameAction` and `createInitialState`
+    remain as deprecated aliases.
+  - The declarations no longer list the `@internal` weights of `CrepeModel`.
+
+### Patch Changes
+
+- Updated dependencies [0aa0bbb]
+- Updated dependencies [0aa0bbb]
+- Updated dependencies [a392406]
+  - @audiolab/core@0.6.0
+
 ## 0.5.0
 
 ### Minor Changes
