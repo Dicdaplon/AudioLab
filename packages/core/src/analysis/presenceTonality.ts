@@ -29,7 +29,7 @@
  *      → detectKeyFromPresence(...)                    # KK on presence
  */
 
-import { detectKey, type KeyScore } from "./keyDetection";
+import { detectKey, type KeyProfileName, type KeyScore } from "./keyDetection";
 
 /**
  * Compute tonality scores from a presence histogram.
@@ -38,6 +38,10 @@ import { detectKey, type KeyScore } from "./keyDetection";
  *                 after the 30 s mean). Need not be normalized — KK Pearson
  *                 correlation is scale-invariant.
  */
-export function detectKeyFromPresence(presence: ArrayLike<number>, temperature = 0.1): KeyScore[] {
-  return detectKey(presence, temperature);
+export function detectKeyFromPresence(
+  presence: ArrayLike<number>,
+  temperature = 0.1,
+  profile: KeyProfileName = "krumhansl",
+): KeyScore[] {
+  return detectKey(presence, { temperature, profile });
 }

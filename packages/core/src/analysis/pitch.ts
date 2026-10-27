@@ -186,6 +186,37 @@ function refineWithMultiples(nsdf: Float64Array, lag: number, minValue: number):
   return lag;
 }
 
+/**
+ * MPM's precise frequency near a guide given by another estimator: the
+ * highest NSDF peak within ±60 cents of the guide's lag, parabolic
+ * interpolation, then the peak at the largest usable multiple of that lag
+ * (lags up to half the window, as `detectPitch`). Returns 0 when there is
+ * no NSDF peak of height ≥ `minValue` there. The guide decides the note
+ * and the octave, the NSDF gives the cents.
+ */
+export function refineFrequencyNear(
+  samples: ArrayLike<number>,
+  sampleRate: number,
+  guide: number,
+  minValue = 0.5,
+): number {
+  const maxLag = Math.floor(samples.length / 2);
+  const lag0 = sampleRate / guide;
+  if (!(lag0 > 2) || lag0 >= maxLag - 1) return 0;
+  const nsdf = normalizedSquareDifference(samples, maxLag);
+  const span = Math.pow(2, 60 / 1200);
+  const from = Math.max(2, Math.floor(lag0 / span));
+  const to = Math.min(maxLag - 1, Math.ceil(lag0 * span));
+  let best = -1;
+  for (let t = from; t <= to; t++) {
+    if (nsdf[t] >= nsdf[t - 1] && nsdf[t] >= nsdf[t + 1] && (best < 0 || nsdf[t] > nsdf[best])) {
+      best = t;
+    }
+  }
+  if (best < 0 || nsdf[best] < minValue) return 0;
+  return sampleRate / refineWithMultiples(nsdf, interpolatePeak(nsdf, best).lag, minValue);
+}
+
 /** Nearest equal-tempered note, pitch class and cents for a frequency. */
 export function frequencyToPitch(
   frequency: number,
@@ -348,19 +379,32 @@ export class PitchTracker {
   }
 
   private smooth(): PitchEstimate | null {
-    const { medianFrames, hysteresisCents, referenceA4 } = this.opts;
-    const valid = this.history.filter((e): e is PitchEstimate => e !== null);
-    if (valid.length < Math.ceil(medianFrames / 2)) return null;
-
-    const midiFloat = median(valid.map((e) => A4_MIDI + 12 * Math.log2(e.frequency / referenceA4)));
-    const clarity = median(valid.map((e) => e.clarity));
-    const frequency = referenceA4 * Math.pow(2, (midiFloat - A4_MIDI) / 12);
-    const fresh = frequencyToPitch(frequency, clarity, referenceA4);
-
-    const held = this.current;
-    if (held === null) return fresh;
-    const centsFromHeld = (midiFloat - held.midi) * 100;
-    if (Math.abs(centsFromHeld) > 50 + hysteresisCents) return fresh;
-    return { ...fresh, midi: held.midi, pitchClass: held.pitchClass, cents: centsFromHeld };
+    return smoothPitchHistory(this.history, this.current, this.opts);
   }
+}
+
+/**
+ * The smoothing of `PitchTracker`, shared by the other trackers: median of
+ * the valid estimates of `history` (`null` when fewer than half of
+ * `medianFrames`, or none, are valid), then the held note keeps its name
+ * while the pitch stays within 50 + `hysteresisCents` cents of it.
+ */
+export function smoothPitchHistory(
+  history: readonly (PitchEstimate | null)[],
+  held: PitchEstimate | null,
+  opts: { medianFrames: number; hysteresisCents: number; referenceA4: number },
+): PitchEstimate | null {
+  const { medianFrames, hysteresisCents, referenceA4 } = opts;
+  const valid = history.filter((e): e is PitchEstimate => e !== null);
+  if (valid.length === 0 || valid.length < Math.ceil(medianFrames / 2)) return null;
+
+  const midiFloat = median(valid.map((e) => A4_MIDI + 12 * Math.log2(e.frequency / referenceA4)));
+  const clarity = median(valid.map((e) => e.clarity));
+  const frequency = referenceA4 * Math.pow(2, (midiFloat - A4_MIDI) / 12);
+  const fresh = frequencyToPitch(frequency, clarity, referenceA4);
+
+  if (held === null) return fresh;
+  const centsFromHeld = (midiFloat - held.midi) * 100;
+  if (Math.abs(centsFromHeld) > 50 + hysteresisCents) return fresh;
+  return { ...fresh, midi: held.midi, pitchClass: held.pitchClass, cents: centsFromHeld };
 }

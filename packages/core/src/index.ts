@@ -12,6 +12,7 @@ export { BUILD_INFO, type BuildInfo } from "./buildInfo";
 
 export {
   CHROMA_SIZE,
+  GAUSSIAN_LOG_CHROMA,
   averageChromas,
   dbSpectrumToMagnitude,
   l1Normalize,
@@ -21,6 +22,7 @@ export {
 export { ChromaWindow, type ChromaWindowOptions } from "./analysis/windowing";
 export {
   KEY_PROFILES,
+  KEY_PROFILE_SETS,
   KRUMHANSL_MAJOR_PROFILE,
   KRUMHANSL_MINOR_PROFILE,
   detectKey,
@@ -28,7 +30,9 @@ export {
   keyName,
   keyShortName,
   relativeMajorTonic,
+  type DetectKeyOptions,
   type KeyMode,
+  type KeyProfileName,
   type KeyScore,
 } from "./analysis/keyDetection";
 export {
@@ -147,6 +151,22 @@ export {
   type OnsetPipelineResult,
 } from "./analysis/onset/onsetPipeline";
 export {
+  DEFAULT_ONSET_METHOD,
+  ONSET_METHODS,
+  ONSET_METHOD_DEFAULTS,
+  isOnsetMethod,
+  onsetMethodPreset,
+  type OnsetMethod,
+  type OnsetMethodDefaults,
+  type OnsetMethodPreset,
+} from "./analysis/onset/onsetMethods";
+export {
+  SUPER_FLUX_COMPLEX_DEFAULTS,
+  SuperFluxComplexOdf,
+  type SuperFluxComplexConfig,
+  type SuperFluxComplexOptions,
+} from "./analysis/onset/complexFlux";
+export {
   StreamHistory,
   clickBandShare,
   clickWindowLength,
@@ -252,17 +272,26 @@ export { argmax, clamp, mean, median, softmax } from "./analysis/math";
 // --- Engines ---------------------------------------------------------------
 
 export {
+  CHORD_HMM_DEFAULTS,
   SILENCE_LEVEL_DB,
   TONALITY_ENGINE_DEFAULTS,
   TonalityEngine,
   emptyTonalityFrame,
+  type ChordHmmSettings,
+  type ChordSmoothing,
+  type ChromaMethod,
+  type KeyMethod,
   type TonalityEngineConfig,
   type TonalityFrame,
 } from "./analysis/engine/tonalityEngine";
+export { ChordHmm, selfTransitionFor, type ChordHmmOptions } from "./analysis/chordHmm";
+export { CqtChroma, type CqtChromaOptions } from "./analysis/cqt";
 export {
   TEMPO_ANALYZER_DEFAULTS,
+  TEMPO_FLUX_DEFAULTS,
   TempoAnalyzer,
   type TempoAnalyzerConfig,
+  type TempoAnalyzerMethod,
   type TempoEstimate,
   type TempoFrame,
 } from "./analysis/engine/tempoAnalyzer";
@@ -349,3 +378,33 @@ export {
   pitchClassFrequencies,
   pitchClassName,
 } from "./utils/notes";
+
+// --- Note models (Basic Pitch) ------------------------------------------------
+
+export * from "./analysis/notes";
+
+// --- Pitch: pYIN and CREPE (opt-in tuner methods) ---------------------------
+
+export {
+  PyinTracker,
+  pyinThresholdPrior,
+  type PyinCandidate,
+  type PyinTrackerOptions,
+} from "./analysis/pyin";
+export {
+  CREPE_BINS,
+  CREPE_FRAME,
+  CREPE_SAMPLE_RATE,
+  CrepePitch,
+  CrepeTracker,
+  crepeActivations,
+  decodeCrepeActivations,
+  loadCrepeModel,
+  parseCrepeModel,
+  type CrepeModel,
+  type CrepeModelOptions,
+  type CrepePitchOptions,
+  type CrepeResult,
+  type CrepeTrackerOptions,
+} from "./analysis/crepe";
+export { refineFrequencyNear, smoothPitchHistory } from "./analysis/pitch";

@@ -108,3 +108,36 @@ export function pushChunks<T>(
   }
   return out;
 }
+
+/** Notes across the neck, loudness drawn in [0.05, 0.35], every `gap` s. */
+export function melody(count: number, gap: number, seed: number, midi?: number): NoteHit[] {
+  const pool = [40, 45, 50, 55, 59, 64, 52, 57, 62, 67];
+  const rand = mulberry32(seed);
+  return Array.from({ length: count }, (_, i) => ({
+    time: 0.5 + i * gap,
+    midi: midi ?? pool[Math.floor(rand() * pool.length)],
+    amplitude: 0.05 + 0.3 * rand(),
+  }));
+}
+
+export function strums(count: number, seed: number): NoteHit[] {
+  const shapes = [
+    [40, 47, 52, 55, 59, 64],
+    [45, 52, 57, 60, 64],
+    [43, 47, 50, 55, 59, 67],
+    [50, 57, 62, 66],
+  ];
+  const rand = mulberry32(seed);
+  return Array.from({ length: count }, (_, i) => ({
+    time: 0.5 + i * 0.8,
+    midi: shapes[i % shapes.length],
+    amplitude: 0.15 + 0.25 * rand(),
+    strumMs: 3 + 7 * rand(),
+  }));
+}
+
+/** Strums whose per-string delay is drawn in [lo, hi] ms. */
+export function strumsSpread(count: number, seed: number, lo: number, hi: number): NoteHit[] {
+  const rand = mulberry32(seed);
+  return strums(count, seed).map((h) => ({ ...h, strumMs: lo + (hi - lo) * rand() }));
+}

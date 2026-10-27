@@ -29,3 +29,13 @@ vite.config.d.ts
 
 # Personal source recordings (used by packages/core/scripts/extractBackingExtracts.ts)
 **/localSample/
+
+# Downloaded backing tracks (dataset sources, see packages/core/scripts/buildBackingDataset.ts)
+/sample/
+# Clips of the AILab backing-tracks dataset (commercial audio, see tests/samples/backingClips.test.ts)
+packages/core/tests/Sample/BackingClips/
+
+# Benchmark: local runs and caches
+packages/core/bench/results/local/
+packages/core/bench/.cache/
+packages/core/poc/.cache/

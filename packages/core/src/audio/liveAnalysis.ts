@@ -11,9 +11,14 @@
  * The cadence is the engine's `framesPerSecond`, read at start, so the
  * windows (sized in seconds at that rate) and the polling cannot disagree.
  * To change the rate, stop and start again.
+ *
+ * With `chromaMethod: "cqt"` the engine needs the time signal: a second
+ * AnalyserNode (32768 samples, the longest the Web Audio API keeps) is
+ * attached on demand, and each frame also reads its time-domain data.
  */
 
 import { createAnalyser, readSpectrumDb } from "./analyser";
+import { dbSpectrumToMagnitude } from "../analysis/chroma";
 import { ANALYSIS_DEFAULTS } from "../config/settings";
 import {
   TonalityEngine,
@@ -69,9 +74,24 @@ export function startLiveAnalysis(options: LiveAnalysisOptions): LiveAnalysis {
   const listeners = new Set<LiveFrameListener>();
   let last: TonalityFrame | null = null;
 
+  let timeAnalyser: AnalyserNode | null = null;
+  let timeBuffer: Float32Array<ArrayBuffer> | null = null;
+
   const tick = () => {
     const db = readSpectrumDb(setup);
-    last = engine.processDbSpectrum(db, setup.sampleRate);
+    if (engine.config.chromaMethod === "cqt") {
+      if (!timeAnalyser) {
+        timeAnalyser = context.createAnalyser();
+        timeAnalyser.fftSize = 32768;
+        source.connect(timeAnalyser);
+        timeBuffer = new Float32Array(timeAnalyser.fftSize);
+      }
+      timeAnalyser.getFloatTimeDomainData(timeBuffer!);
+      const level = engine.signalLevelDb(dbSpectrumToMagnitude(db), setup.sampleRate);
+      last = engine.processTimeDomain(timeBuffer!, setup.sampleRate, level);
+    } else {
+      last = engine.processDbSpectrum(db, setup.sampleRate);
+    }
     const spectrum = { db, sampleRate: setup.sampleRate };
     for (const listener of [...listeners]) listener(last, spectrum);
   };
@@ -98,6 +118,14 @@ export function startLiveAnalysis(options: LiveAnalysisOptions): LiveAnalysis {
         // Already disconnected (or the source was torn down by its owner).
       }
       setup.analyser.disconnect();
+      if (timeAnalyser) {
+        try {
+          source.disconnect(timeAnalyser);
+        } catch {
+          // Already disconnected.
+        }
+        timeAnalyser = null;
+      }
     },
   };
 }

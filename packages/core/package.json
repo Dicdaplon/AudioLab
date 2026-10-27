@@ -56,9 +56,17 @@
     "build:worklet": "tsx scripts/buildWorklet.ts",
     "sweep": "tsx scripts/parameterSweep.ts",
     "extract:backing": "tsx scripts/extractBackingExtracts.ts",
+    "extract:guitarset": "tsx scripts/extractGuitarSetFixtures.ts",
+    "build:backing-dataset": "tsx scripts/buildBackingDataset.ts",
     "analyze:backing": "tsx scripts/analyzeBacking.ts",
     "measure:chords": "tsx scripts/measureChords.ts",
-    "measure:onsets": "tsx scripts/measureOnsets.ts"
+    "measure:progressions": "tsx scripts/measureProgressions.ts",
+    "measure:keys": "tsx scripts/measureKeys.ts",
+    "measure:guitarset": "tsx scripts/measureGuitarSet.ts",
+    "measure:onsets": "tsx scripts/measureOnsets.ts",
+    "bench": "tsx bench/run.ts --jobs 4",
+    "bench:quick": "tsx bench/run.ts --quick",
+    "bench:report": "tsx bench/report.ts"
   },
   "peerDependencies": {
     "audio-decode": "^2.2.2"

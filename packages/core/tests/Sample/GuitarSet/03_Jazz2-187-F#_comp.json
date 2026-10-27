@@ -1,0 +1,52 @@
+{
+  "source": "GuitarSet 1.1.0, 03_Jazz2-187-F#_comp (audio_mono-mic), 0–12 s",
+  "license": "CC BY 4.0",
+  "key": "F#:minor",
+  "chords": [
+    {
+      "start": 0,
+      "end": 1.283,
+      "label": "B:min"
+    },
+    {
+      "start": 1.283,
+      "end": 2.567,
+      "label": "E:7"
+    },
+    {
+      "start": 2.567,
+      "end": 3.85,
+      "label": "A:maj"
+    },
+    {
+      "start": 3.85,
+      "end": 5.134,
+      "label": "D:maj"
+    },
+    {
+      "start": 5.134,
+      "end": 6.417,
+      "label": "G#:hdim7"
+    },
+    {
+      "start": 6.417,
+      "end": 7.701,
+      "label": "C#:7"
+    },
+    {
+      "start": 7.701,
+      "end": 10.267,
+      "label": "F#:min"
+    },
+    {
+      "start": 10.267,
+      "end": 11.551,
+      "label": "B:min"
+    },
+    {
+      "start": 11.551,
+      "end": 12,
+      "label": "E:7"
+    }
+  ]
+}

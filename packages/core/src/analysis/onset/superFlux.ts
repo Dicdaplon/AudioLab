@@ -154,9 +154,9 @@ export class SuperFluxOdf {
 
   private readonly window: Float64Array;
   private readonly ring: Float32Array;
-  private readonly real: Float64Array;
-  private readonly imag: Float64Array;
-  private readonly magnitude: Float32Array;
+  protected readonly real: Float64Array;
+  protected readonly imag: Float64Array;
+  protected readonly magnitude: Float32Array;
   /** Last μ+1 max-filtered band frames, as a ring. */
   private readonly history: Float32Array[];
   private readonly current: Float32Array;
@@ -262,7 +262,8 @@ export class SuperFluxOdf {
     return out;
   }
 
-  private computeFrame(): number {
+  /** One ODF value from the current window (the FFT stays in `real` / `imag`, `magnitude`). */
+  protected computeFrame(): number {
     const { frameSize, logGain, maxFilterRadius, diffFrames } = this.config;
     const { real, imag, window, ring, magnitude } = this;
     for (let n = 0; n < frameSize; n++) {

@@ -10,9 +10,9 @@
  * frame rate and the dB round-trip of the AnalyserNode path.
  */
 
-import { CHROMA_SIZE, spectrumToChroma } from "../analysis/chroma";
+import { CHROMA_SIZE, spectrumToChroma, type ChromaOptions } from "../analysis/chroma";
 import { detectChord, type ChordScore } from "../analysis/chordDetection";
-import { detectKey, type KeyScore } from "../analysis/keyDetection";
+import { detectKey, type KeyProfileName, type KeyScore } from "../analysis/keyDetection";
 import { applyHannWindow, fftMagnitude } from "../analysis/fft";
 import type { HighWaterMarkOptions } from "../analysis/highWaterMark";
 import { TonalityEngine, type TonalityFrame } from "../analysis/engine/tonalityEngine";
@@ -24,6 +24,8 @@ export interface FrameOptions {
   hopSize: number;
   minFreq?: number;
   maxFreq?: number;
+  /** Extra chroma options (e.g. `GAUSSIAN_LOG_CHROMA`). Default: none, the original chroma. */
+  chroma?: Omit<ChromaOptions, "sampleRate" | "minFreq" | "maxFreq">;
 }
 
 /** Compute the chroma vector of a single audio frame. */
@@ -32,10 +34,11 @@ function frameChroma(
   sampleRate: number,
   minFreq: number,
   maxFreq: number,
+  extra: FrameOptions["chroma"] = {},
 ): Float32Array {
   applyHannWindow(frame);
   const mag = fftMagnitude(frame);
-  return spectrumToChroma(mag, { sampleRate, minFreq, maxFreq });
+  return spectrumToChroma(mag, { ...extra, sampleRate, minFreq, maxFreq });
 }
 
 /**
@@ -48,7 +51,7 @@ export function computeChromaSequence(audio: DecodedAudio, opts: FrameOptions): 
   const { samples, sampleRate } = audio;
   for (let start = 0; start + fftSize <= samples.length; start += hopSize) {
     const frame = samples.slice(start, start + fftSize);
-    chromas.push(frameChroma(frame, sampleRate, minFreq, maxFreq));
+    chromas.push(frameChroma(frame, sampleRate, minFreq, maxFreq, opts.chroma));
   }
   return chromas;
 }
@@ -85,7 +88,11 @@ export interface SegmentScores {
 }
 
 /** Aggregate the whole sequence (with optional head/tail trimming). */
-export function analyzeOverall(chromas: Float32Array[], trimRatio = 0.1): SegmentScores {
+export function analyzeOverall(
+  chromas: Float32Array[],
+  trimRatio = 0.1,
+  keyProfile: KeyProfileName = "krumhansl",
+): SegmentScores {
   const total = chromas.length;
   const from = Math.floor(total * trimRatio);
   const to = Math.ceil(total * (1 - trimRatio));
@@ -93,7 +100,7 @@ export function analyzeOverall(chromas: Float32Array[], trimRatio = 0.1): Segmen
   return {
     chroma,
     chords: detectChord(chroma),
-    keys: detectKey(chroma),
+    keys: detectKey(chroma, { profile: keyProfile }),
   };
 }
 
@@ -164,6 +171,8 @@ export interface PresenceTonalityRunOptions {
   framesPerSecond: number;
   /** High-water-mark filter parameters. */
   filter?: HighWaterMarkOptions;
+  /** Key-profile set. Default "krumhansl". */
+  keyProfile?: KeyProfileName;
 }
 
 export interface PresenceTonalityRunResult {
@@ -188,6 +197,7 @@ export function runPresenceTonality(
     framesPerSecond: opts.framesPerSecond,
     liveAcquisitionSeconds: opts.liveAcquisitionSeconds,
     tonalityAcquisitionSeconds: opts.tonalityAcquisitionSeconds,
+    ...(opts.keyProfile && { keyProfile: opts.keyProfile }),
     ...(opts.filter?.tolerancy !== undefined && { filterTolerancy: opts.filter.tolerancy }),
     ...(opts.filter?.memory !== undefined && { filterMemory: opts.filter.memory }),
     ...(opts.filter?.mode !== undefined && { filterMode: opts.filter.mode }),

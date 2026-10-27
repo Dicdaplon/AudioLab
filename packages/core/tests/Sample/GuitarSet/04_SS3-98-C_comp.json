@@ -1,0 +1,32 @@
+{
+  "source": "GuitarSet 1.1.0, 04_SS3-98-C_comp (audio_mono-mic), 0–12 s",
+  "license": "CC BY 4.0",
+  "key": "C:major",
+  "chords": [
+    {
+      "start": 0,
+      "end": 2.449,
+      "label": "C:maj"
+    },
+    {
+      "start": 2.449,
+      "end": 4.898,
+      "label": "G:maj"
+    },
+    {
+      "start": 4.898,
+      "end": 7.347,
+      "label": "A:min"
+    },
+    {
+      "start": 7.347,
+      "end": 9.796,
+      "label": "E:min"
+    },
+    {
+      "start": 9.796,
+      "end": 12,
+      "label": "F:maj"
+    }
+  ]
+}

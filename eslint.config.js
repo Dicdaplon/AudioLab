@@ -34,7 +34,14 @@ export default tseslint.config(
     },
   },
   {
-    files: ["**/scripts/**/*.ts", "**/tests/**/*.ts", "**/*.config.ts", "vitest.workspace.ts"],
+    files: [
+      "**/scripts/**/*.ts",
+      "**/bench/**/*.ts",
+      "**/poc/**/*.ts",
+      "**/tests/**/*.ts",
+      "**/*.config.ts",
+      "vitest.workspace.ts",
+    ],
     languageOptions: { globals: { ...globals.node } },
   },
   {

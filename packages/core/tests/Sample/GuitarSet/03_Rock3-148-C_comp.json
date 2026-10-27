@@ -1,0 +1,47 @@
+{
+  "source": "GuitarSet 1.1.0, 03_Rock3-148-C_comp (audio_mono-mic), 0–12 s",
+  "license": "CC BY 4.0",
+  "key": "C:major",
+  "chords": [
+    {
+      "start": 0,
+      "end": 1.622,
+      "label": "C:maj"
+    },
+    {
+      "start": 1.622,
+      "end": 3.243,
+      "label": "G:maj"
+    },
+    {
+      "start": 3.243,
+      "end": 4.865,
+      "label": "A:min"
+    },
+    {
+      "start": 4.865,
+      "end": 6.486,
+      "label": "E:min"
+    },
+    {
+      "start": 6.486,
+      "end": 8.108,
+      "label": "F:maj"
+    },
+    {
+      "start": 8.108,
+      "end": 9.73,
+      "label": "C:maj"
+    },
+    {
+      "start": 9.73,
+      "end": 11.351,
+      "label": "F:maj"
+    },
+    {
+      "start": 11.351,
+      "end": 12,
+      "label": "G:maj"
+    }
+  ]
+}

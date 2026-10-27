@@ -14,9 +14,17 @@
  * main lobe spans about ±3 bins (±9 Hz at 48 kHz / 16384), which is ±2.7
  * semitones at 55 Hz and ±0.7 semitone at 220 Hz, so a low bass note leaks
  * part of its energy into the neighbouring pitch classes.
+ *
+ * Alternative (opt-in, `binning: "gaussian"` and `compression: "log"`): each
+ * bin is shared between its two nearest semitones with a Gaussian weight of
+ * its distance to them (σ = 0.3 semitone by default), so a bin that sits
+ * between two notes counts for little, and each bin's energy is compressed
+ * as log(1 + γ·E / E_max) before summing, so the bass and the loudest
+ * partials no longer drown the rest. Both follow common chroma practice
+ * (Müller, Fundamentals of Music Processing, 2015, §3.1 and §5.2).
  */
 
-import { freqToPitchClass } from "../utils/notes";
+import { freqToMidi, freqToPitchClass } from "../utils/notes";
 
 export const CHROMA_SIZE = 12;
 
@@ -29,7 +37,29 @@ export interface ChromaOptions {
   maxFreq?: number;
   /** Use squared magnitude (energy) instead of linear magnitude. Default true. */
   useEnergy?: boolean;
+  /**
+   * How a bin is assigned to pitch classes. "nearest" (default): all of it
+   * to the nearest semitone. "gaussian": shared between the two nearest
+   * semitones with a Gaussian weight of the distance (see `gaussianWidth`).
+   */
+  binning?: "nearest" | "gaussian";
+  /** σ of the Gaussian binning, in semitones. Default 0.3. */
+  gaussianWidth?: number;
+  /**
+   * "none" (default): bin weights summed as they are. "log": each weight w
+   * becomes log(1 + γ·w / w_max) with γ = `logGain`; level-invariant.
+   */
+  compression?: "none" | "log";
+  /** γ of the log compression. Default 100: the knee sits 20 dB (in energy) under the loudest bin. */
+  logGain?: number;
+  /** Tuning offset of the reference A4, in cents (A = 440·2^(c/1200)). Default 0. */
+  tuningCents?: number;
 }
+
+/** Gaussian-binning and log-compression preset of `spectrumToChroma`. */
+export const GAUSSIAN_LOG_CHROMA: Readonly<
+  Pick<ChromaOptions, "binning" | "gaussianWidth" | "compression" | "logGain">
+> = { binning: "gaussian", gaussianWidth: 0.3, compression: "log", logGain: 100 };
 
 /**
  * Compute a chroma vector from a magnitude spectrum.
@@ -46,6 +76,13 @@ export function spectrumToChroma(
   const chroma = new Float32Array(CHROMA_SIZE);
   const n = spectrum.length;
   if (n === 0) return chroma;
+  if (
+    (options.binning ?? "nearest") !== "nearest" ||
+    (options.compression ?? "none") !== "none" ||
+    (options.tuningCents ?? 0) !== 0
+  ) {
+    return weightedChroma(spectrum, options);
+  }
 
   // Bin k of an N-point one-sided spectrum corresponds to frequency
   //   f_k = k * sampleRate / (2 * N)   when spectrum.length == fftSize / 2
@@ -63,6 +100,51 @@ export function spectrumToChroma(
     chroma[pc] += weight;
   }
 
+  return l1Normalize(chroma);
+}
+
+/**
+ * The opt-in path of `spectrumToChroma`: Gaussian binning, log compression,
+ * tuning. The compression applies to each FFT bin. Compressing per note
+ * instead (gather the bins of each MIDI note first) was measured and did
+ * not do better on the backing-tracks clips (docs/ALTERNATIVES.md).
+ */
+function weightedChroma(spectrum: ArrayLike<number>, options: ChromaOptions): Float32Array {
+  const { sampleRate, minFreq = 55, maxFreq = 5000, useEnergy = true } = options;
+  const gaussian = options.binning === "gaussian";
+  const sigma = options.gaussianWidth ?? 0.3;
+  const logGain = options.compression === "log" ? (options.logGain ?? 100) : 0;
+  const tuning = (options.tuningCents ?? 0) / 100;
+  const n = spectrum.length;
+  const binHz = sampleRate / (2 * n);
+  const kMin = Math.max(1, Math.ceil(minFreq / binHz));
+  const kMax = Math.min(n - 1, Math.floor(maxFreq / binHz));
+
+  let peak = 0;
+  if (logGain > 0) {
+    for (let k = kMin; k <= kMax; k++) {
+      const mag = spectrum[k];
+      if (Number.isFinite(mag) && mag > 0) peak = Math.max(peak, useEnergy ? mag * mag : mag);
+    }
+  }
+  const chroma = new Float32Array(CHROMA_SIZE);
+  const g = (d: number) => Math.exp((-d * d) / (2 * sigma * sigma));
+  for (let k = kMin; k <= kMax; k++) {
+    const mag = spectrum[k];
+    if (!Number.isFinite(mag) || mag <= 0) continue;
+    let w = useEnergy ? mag * mag : mag;
+    if (logGain > 0) w = Math.log1p((logGain * w) / peak);
+    const midi = freqToMidi(k * binHz) - tuning;
+    const near = Math.round(midi);
+    const pc = ((near % 12) + 12) % 12;
+    if (!gaussian) {
+      chroma[pc] += w;
+      continue;
+    }
+    const d = midi - near;
+    chroma[pc] += w * g(d);
+    chroma[(pc + (d >= 0 ? 1 : 11)) % 12] += w * g(1 - Math.abs(d));
+  }
   return l1Normalize(chroma);
 }
 

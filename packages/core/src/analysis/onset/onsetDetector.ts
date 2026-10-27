@@ -5,6 +5,10 @@
  *   samples ─┬─► SuperFluxOdf ──► OnlinePeakPicker ──► candidate (ODF frame)
  *            └─► AttackEnvelope ─────────────────────► locate() → attack frame
  *
+ * `method` (onsetMethods.ts) picks the ODF and peak-picking presets:
+ * "classic" (default) as drawn, "sensitive" (lower threshold), or
+ * "superflux-complex" (SuperFluxComplexOdf, complexFlux.ts).
+ *
  * A candidate is held for `refineSeconds` (default 10 ms) so that the fine
  * envelope contains the top of the attack, then the onset is reported at
  * the start of the level rise. Without a usable rise (legato, a note over a
@@ -27,13 +31,28 @@
  */
 
 import { AttackEnvelope, type AttackEnvelopeOptions } from "./attackEnvelope";
+import { SuperFluxComplexOdf, type SuperFluxComplexOptions } from "./complexFlux";
+import {
+  DEFAULT_ONSET_METHOD,
+  onsetMethodPreset,
+  isOnsetMethod,
+  type OnsetMethod,
+} from "./onsetMethods";
 import { OnlinePeakPicker, type PeakPickerOptions } from "./peakPicker";
-import { SuperFluxOdf, type SuperFluxOptions } from "./superFlux";
+import { SuperFluxOdf } from "./superFlux";
 
 export interface OnsetDetectorOptions {
   sampleRate: number;
-  /** SuperFlux settings (window, hop, bands). */
-  odf?: Omit<SuperFluxOptions, "sampleRate">;
+  /**
+   * Detection method (onsetMethods.ts). Default "classic", the detector as it
+   * always was; "sensitive" and "superflux-complex" are opt-in.
+   */
+  method?: OnsetMethod;
+  /**
+   * SuperFlux settings (window, hop, bands); the complex-domain and
+   * normalisation settings only apply to "superflux-complex".
+   */
+  odf?: Omit<SuperFluxComplexOptions, "sampleRate">;
   /** Peak-picking settings (thresholds, minimum interval). */
   peaks?: Omit<PeakPickerOptions, "frameRate">;
   /** Attack localisation settings. */
@@ -53,7 +72,10 @@ export interface OnsetEvent {
   time: number;
   /** Stream frame at which the onset was decided (frame + decision latency). */
   decidedAtFrame: number;
-  /** ODF peak value: how sharp the attack is (band-averaged log flux). */
+  /**
+   * ODF peak value: how sharp the attack is (band-averaged log flux; for
+   * "superflux-complex", the sum of the two normalised functions, 0 … 2).
+   */
   strength: number;
   /** Loudest envelope level around the attack, in dBFS. */
   levelDb: number;
@@ -73,6 +95,8 @@ interface Pending {
 
 export class OnsetDetector {
   readonly sampleRate: number;
+  /** The detection method in use. */
+  readonly method: OnsetMethod;
   readonly odf: SuperFluxOdf;
   readonly picker: OnlinePeakPicker;
   readonly envelope: AttackEnvelope;
@@ -83,9 +107,18 @@ export class OnsetDetector {
 
   constructor(options: OnsetDetectorOptions) {
     this.sampleRate = options.sampleRate;
-    this.odf = new SuperFluxOdf({ ...options.odf, sampleRate: options.sampleRate });
+    const method = options.method ?? DEFAULT_ONSET_METHOD;
+    if (!isOnsetMethod(method)) throw new Error(`unknown onset method: ${String(method)}`);
+    this.method = method;
+    const preset = onsetMethodPreset(method, options.sampleRate);
+    const odfOptions = { ...preset.odf, ...defined(options.odf), sampleRate: options.sampleRate };
+    this.odf =
+      method === "superflux-complex"
+        ? new SuperFluxComplexOdf(odfOptions)
+        : new SuperFluxOdf(odfOptions);
     this.picker = new OnlinePeakPicker({
-      ...options.peaks,
+      ...preset.peaks,
+      ...defined(options.peaks),
       frameRate: options.sampleRate / this.odf.config.hopSize,
     });
     this.envelope = new AttackEnvelope({ ...options.attack, sampleRate: options.sampleRate });
@@ -188,6 +221,12 @@ export class OnsetDetector {
       });
     }
   }
+}
+
+/** The entries of `o` that are not undefined (so they never mask a preset). */
+function defined<T extends object>(o: T | undefined): Partial<T> {
+  if (!o) return {};
+  return Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined)) as Partial<T>;
 }
 
 function sliceOf(samples: ArrayLike<number>, from: number, to: number): ArrayLike<number> {

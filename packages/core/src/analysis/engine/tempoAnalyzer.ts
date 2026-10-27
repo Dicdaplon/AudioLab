@@ -30,36 +30,62 @@
  * octaves, after Ellis, "Beat Tracking by Dynamic Programming", J. New
  * Music Research 36(1), 2007. It breaks ties between a tempo and its
  * double/half in favour of the musically likely one.
+ *
+ * `method: "flux"` (opt-in) replaces this chain with a log spectral-flux
+ * novelty read by autocorrelation, harmonic enhancement and smoothing
+ * across readings (see tempoFlux.ts). Same streaming API, same frame shape.
  */
 
 import { LowpassFilter } from "../lowpass";
 import { TimeRingBuffer } from "../timeBuffer";
 import { computeFftDb } from "../timeFft";
+import {
+  FLUX_SMOOTHING_PER_SECOND,
+  FluxNovelty,
+  harmonicEnhance,
+  normalisedAcf,
+} from "./tempoFlux";
+
+/**
+ * How the beat rate is read:
+ * - `"envelope"`: spectrum of the RMS onset envelope (default, the
+ *   historical behaviour);
+ * - `"flux"`: autocorrelation of a log spectral-flux novelty curve, with
+ *   harmonic enhancement and smoothing across readings. Much better on
+ *   strummed guitar (a chord barely moves the broadband loudness).
+ */
+export type TempoAnalyzerMethod = "envelope" | "flux";
 
 export interface TempoAnalyzerConfig {
   /** Sample rate of the pushed audio, in Hz. */
   sampleRate: number;
-  /** Samples per RMS block. Default 128 (one Web Audio render quantum). */
+  /** Tempo method. Default "envelope". */
+  method: TempoAnalyzerMethod;
+  /** Samples per RMS block. Default 128 (one Web Audio render quantum). "envelope" only. */
   blockSize: number;
-  /** Decimation factor applied after the lowpass. Default 4. */
+  /** Decimation factor applied after the lowpass. Default 4. "envelope" only. */
   decimation: number;
   /** Length of the analysed onset-strength window, in seconds. Default 8. */
   windowSeconds: number;
-  /** Cutoff of the onset-strength lowpass, in Hz. Default 8. */
+  /** Cutoff of the onset-strength lowpass, in Hz. Default 8. "envelope" only. */
   lowpassCutoffHz: number;
-  /** Log-compression gain γ: knee at rms = 1/γ. Default 100 (−40 dBFS). */
+  /** Log-compression gain γ: knee at rms = 1/γ. Default 100 (−40 dBFS). "envelope" only. */
   compressionGain: number;
-  /** Zero-padded FFT length of the envelope spectrum. Default 4096. */
+  /** Zero-padded FFT length of the envelope spectrum. Default 4096. "envelope" only. */
   fftSize: number;
   /** BPM axis of the result. Defaults 40–240. */
   minBpm: number;
   maxBpm: number;
-  /** Tempo prior centre and width (octaves). Defaults 120 BPM, 1.4. */
+  /**
+   * Tempo prior centre and width (octaves). Defaults 120 BPM, and 1.4
+   * octaves for "envelope" / 0.7 for "flux".
+   */
   priorCentreBpm: number;
   priorSigmaOctaves: number;
 }
 
 export const TEMPO_ANALYZER_DEFAULTS: Omit<TempoAnalyzerConfig, "sampleRate"> = {
+  method: "envelope",
   blockSize: 128,
   decimation: 4,
   windowSeconds: 8,
@@ -72,24 +98,41 @@ export const TEMPO_ANALYZER_DEFAULTS: Omit<TempoAnalyzerConfig, "sampleRate"> = 
   priorSigmaOctaves: 1.4,
 };
 
+/** Defaults that differ for `method: "flux"` (the POC-confirmed prior width). */
+export const TEMPO_FLUX_DEFAULTS: Partial<TempoAnalyzerConfig> = {
+  priorSigmaOctaves: 0.7,
+};
+
 export interface TempoEstimate {
   /** Estimated beat rate in BPM (parabolic interpolation around the peak). */
   bpm: number;
   /**
-   * Peak prominence in [0, 1]: 1 − mean/peak of the prior-weighted spectrum
-   * over the BPM range. Near 0 for a flat (noise-like) envelope spectrum.
+   * In [0, 1]. "envelope": peak prominence, 1 − mean/peak of the
+   * prior-weighted spectrum over the BPM range (near 0 for a flat,
+   * noise-like envelope spectrum). "flux": the normalised (smoothed)
+   * autocorrelation of the novelty at the chosen beat period, i.e. how
+   * strongly the onsets repeat at that period (1 = perfectly periodic,
+   * near 0 for noise).
    */
   confidence: number;
 }
 
 export interface TempoFrame {
-  /** Onset-strength window in chronological order (zero-padded while filling). */
+  /**
+   * Onset-strength window in chronological order (zero-padded while
+   * filling). "flux": the spectral-flux novelty curve (100 Hz).
+   */
   onsetEnvelope: Float32Array;
   /** Rate of `onsetEnvelope`, in Hz. */
   envelopeRate: number;
   /** Seconds of audio received so far (capped at `windowSeconds`). */
   filledSeconds: number;
-  /** Envelope spectrum magnitude (linear, see computeFftDb) over the BPM range. */
+  /**
+   * "envelope": envelope spectrum magnitude (linear, see computeFftDb) over
+   * the BPM range. "flux": tempo strength, the enhanced autocorrelation
+   * already multiplied by `priorWeight` (one entry per lag, so the BPM
+   * spacing widens towards fast tempi).
+   */
   spectrum: Float32Array;
   /** BPM of each `spectrum` entry (ascending). */
   bpmAxis: Float32Array;
@@ -111,8 +154,20 @@ export class TempoAnalyzer {
   private decimationPhase = 0;
   private totalBlocks = 0;
 
+  // "flux" method state.
+  private flux: FluxNovelty | null = null;
+  private totalSamples = 0;
+  private noveltyFrames = 0;
+  private acfAverage: Float64Array | null = null;
+  private acfAverageFrames = 0;
+
   constructor(config: Partial<TempoAnalyzerConfig> & { sampleRate: number }) {
-    this.cfg = { ...TEMPO_ANALYZER_DEFAULTS, ...config };
+    const method = config.method ?? TEMPO_ANALYZER_DEFAULTS.method;
+    this.cfg = {
+      ...TEMPO_ANALYZER_DEFAULTS,
+      ...(method === "flux" ? TEMPO_FLUX_DEFAULTS : {}),
+      ...config,
+    };
     const c = this.cfg;
     if (!(c.sampleRate > 0)) throw new Error("sampleRate must be > 0");
     if (!(c.blockSize >= 1) || !(c.decimation >= 1)) {
@@ -120,6 +175,8 @@ export class TempoAnalyzer {
     }
     if (!(c.windowSeconds > 0)) throw new Error("windowSeconds must be > 0");
     if (!(c.minBpm > 0) || !(c.maxBpm > c.minBpm)) throw new Error("invalid BPM range");
+    if (c.method !== "envelope" && c.method !== "flux") throw new Error("unknown tempo method");
+    if (c.method === "flux") this.flux = new FluxNovelty(c.sampleRate);
     this.lowpass = new LowpassFilter(c.lowpassCutoffHz, this.blockRate);
     this.buffer = new TimeRingBuffer(Math.max(2, Math.round(c.windowSeconds * this.envelopeRate)));
   }
@@ -135,6 +192,7 @@ export class TempoAnalyzer {
 
   /** Rate of the onset-strength envelope stored in the window, in Hz. */
   get envelopeRate(): number {
+    if (this.flux) return this.flux.frameRate;
     return this.blockRate / this.cfg.decimation;
   }
 
@@ -143,7 +201,7 @@ export class TempoAnalyzer {
     return this.buffer.capacity;
   }
 
-  /** Change the lowpass cutoff on the fly (state is kept). */
+  /** Change the lowpass cutoff on the fly (state is kept). No effect on "flux". */
   setLowpassCutoff(cutoffHz: number): void {
     this.lowpass.setCutoff(cutoffHz, this.blockRate);
     this.cfg = { ...this.cfg, lowpassCutoffHz: cutoffHz };
@@ -158,6 +216,11 @@ export class TempoAnalyzer {
     this.previousLevel = 0;
     this.decimationPhase = 0;
     this.totalBlocks = 0;
+    this.flux?.reset();
+    this.totalSamples = 0;
+    this.noveltyFrames = 0;
+    this.acfAverage = null;
+    this.acfAverageFrames = 0;
   }
 
   /**
@@ -165,6 +228,11 @@ export class TempoAnalyzer {
    * across calls, so chunk boundaries never create artefacts.
    */
   pushSamples(samples: ArrayLike<number>): void {
+    if (this.flux) {
+      this.totalSamples += samples.length;
+      this.flux.push(samples, this.pushNovelty);
+      return;
+    }
     const { blockSize, compressionGain, decimation } = this.cfg;
     for (let i = 0; i < samples.length; i++) {
       const x = samples[i];
@@ -187,6 +255,11 @@ export class TempoAnalyzer {
     }
   }
 
+  private readonly pushNovelty = (value: number): void => {
+    this.buffer.push(value);
+    this.noveltyFrames++;
+  };
+
   /** Prior weight for a beat rate (Gaussian in log2 BPM). */
   priorWeight(bpm: number): number {
     const { priorCentreBpm, priorSigmaOctaves } = this.cfg;
@@ -196,6 +269,7 @@ export class TempoAnalyzer {
 
   /** Envelope spectrum over the BPM range and the current estimate. */
   analyze(): TempoFrame {
+    if (this.flux) return this.analyzeFlux(this.flux);
     const { fftSize, minBpm, maxBpm, windowSeconds } = this.cfg;
     const rate = this.envelopeRate;
     const onsetEnvelope = this.buffer.lastSamplesChronological(this.buffer.capacity);
@@ -258,6 +332,79 @@ export class TempoAnalyzer {
       const bpm = 60 * (kMin + peakIdx + offset) * binHz;
       const meanWeighted = weightedSum / n;
       estimate = { bpm, confidence: Math.max(0, 1 - meanWeighted / peakValue) };
+    }
+
+    return {
+      onsetEnvelope,
+      envelopeRate: rate,
+      filledSeconds,
+      spectrum,
+      bpmAxis,
+      priorWeight,
+      estimate,
+    };
+  }
+
+  /** "flux": autocorrelation of the novelty window, enhanced and prior-weighted. */
+  private analyzeFlux(flux: FluxNovelty): TempoFrame {
+    const { minBpm, maxBpm, windowSeconds, sampleRate } = this.cfg;
+    const rate = flux.frameRate;
+    const onsetEnvelope = this.buffer.lastSamplesChronological(this.buffer.capacity);
+    const filledSeconds = Math.min(windowSeconds, this.totalSamples / sampleRate);
+
+    const minLag = Math.max(1, Math.floor((60 * rate) / maxBpm));
+    const maxLag = Math.max(minLag, Math.ceil((60 * rate) / minBpm));
+    const n = maxLag - minLag + 1;
+    const spectrum = new Float32Array(n);
+    const bpmAxis = new Float32Array(n);
+    const priorWeight = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const bpm = (60 * rate) / (maxLag - i); // ascending BPM = descending lag
+      bpmAxis[i] = bpm;
+      priorWeight[i] = this.priorWeight(bpm);
+    }
+
+    // Smoothed autocorrelation, updated only when new novelty has arrived,
+    // with a weight per second of audio so the call rate does not matter.
+    const stored = this.buffer.size;
+    if (stored >= maxLag + 2 && this.noveltyFrames !== this.acfAverageFrames) {
+      const window = this.buffer.lastSamplesChronological(stored);
+      const span = Math.min(4 * maxLag + 4, stored - 1);
+      const r = normalisedAcf(window, span) ?? new Float64Array(span + 1);
+      const avg = this.acfAverage;
+      if (!avg || avg.length !== r.length) {
+        this.acfAverage = r;
+      } else {
+        const seconds = (this.noveltyFrames - this.acfAverageFrames) / rate;
+        const a = Math.pow(FLUX_SMOOTHING_PER_SECOND, seconds);
+        for (let l = 0; l < r.length; l++) avg[l] = a * avg[l] + (1 - a) * r[l];
+      }
+      this.acfAverageFrames = this.noveltyFrames;
+    }
+
+    let estimate: TempoEstimate | null = null;
+    const r = this.acfAverage;
+    if (r) {
+      const h = harmonicEnhance(r, maxLag);
+      // Strength by lag, zero outside [minLag, maxLag] (parabola edges).
+      const s = new Float64Array(maxLag + 2);
+      let best = -1;
+      for (let l = minLag; l <= maxLag; l++) {
+        s[l] = h[l] * priorWeight[maxLag - l];
+        spectrum[maxLag - l] = s[l];
+        if (best < 0 || s[l] > s[best]) best = l;
+      }
+      if (best >= 0 && s[best] > 0) {
+        const a = s[best - 1];
+        const b = s[best];
+        const c = s[best + 1];
+        const d = a - 2 * b + c;
+        const lag = d < 0 ? best + (0.5 * (a - c)) / d : best;
+        estimate = {
+          bpm: (60 * rate) / lag,
+          confidence: Math.min(1, Math.max(0, r[best])),
+        };
+      }
     }
 
     return {
