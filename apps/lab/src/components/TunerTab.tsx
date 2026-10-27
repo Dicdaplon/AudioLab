@@ -2,11 +2,8 @@ import { useState } from "react";
 import { A4_FREQ, type MicSource, pitchClassName } from "@audiolab/core";
 import { MicPrompt, Panel, RangeField, Segments, usePitch } from "@audiolab/react";
 import { TunerHow } from "../how/explanations";
-import { PITCH_METHODS, type PitchMethodId } from "../methods";
+import { CREPE_MODEL_URL, PITCH_METHODS, type PitchMethodId } from "../methods";
 import { MethodPicker } from "./MethodPicker";
-
-/** The CREPE tiny model shipped with the lab (MIT, public/models/crepe-tiny/). */
-const CREPE_MODEL_URL = `${import.meta.env.BASE_URL}models/crepe-tiny/crepe-tiny.bin`;
 
 const A4_MIN = 415;
 const A4_MAX = 466;
@@ -29,7 +26,7 @@ function octaveOf(midi: number): number {
 export function TunerTab({ mic, running, onStart }: TunerTabProps) {
   const [referenceA4, setReferenceA4] = useState(A4_FREQ);
   const [method, setMethod] = useState<PitchMethodId>("mpm");
-  const { estimate, captureMethod } = usePitch(mic, {
+  const { estimate, captureMethod, activeMethod, modelError } = usePitch(mic, {
     referenceA4,
     method,
     crepeModelUrl: CREPE_MODEL_URL,
@@ -49,7 +46,13 @@ export function TunerTab({ mic, running, onStart }: TunerTabProps) {
         value={method}
         onChange={setMethod}
         note={
-          method === "crepe" ? "The AI model (1 MB) loads the first time you pick it." : undefined
+          method !== "crepe"
+            ? undefined
+            : modelError
+              ? `The AI model could not load (${modelError.message}): MPM is listening.`
+              : activeMethod === "crepe"
+                ? "The AI model is listening."
+                : "The AI model (1 MB) loads the first time you pick it: MPM listens meanwhile."
         }
       />
 

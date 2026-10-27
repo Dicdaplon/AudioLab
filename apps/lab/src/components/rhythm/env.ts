@@ -1,6 +1,11 @@
 /** What every exercise of the Rhythm tab receives from the tab. */
 
-import type { OnsetAnalysis, TimingBudget } from "@audiolab/core";
+import type {
+  ChordAfterOnsetOptions,
+  NoteAfterOnsetOptions,
+  OnsetAnalysis,
+  TimingBudget,
+} from "@audiolab/core";
 import type { MetronomeControls, PlayAlongControls } from "@audiolab/react";
 
 import type { OnsetBus } from "./onsetBus";
@@ -18,6 +23,10 @@ export interface ExerciseEnv {
   now: () => number | null;
   bpm: number;
   metronome: MetronomeControls;
+  /** Options of the scrolling notes' `noteLabeler` (the picked pitch method). */
+  noteLabel: NoteAfterOnsetOptions;
+  /** Options of the scrolling chords' `chordLabeler` (the picked chroma). */
+  chordLabel: ChordAfterOnsetOptions;
 }
 
 export const VERDICT_TEXT: Record<string, string> = {

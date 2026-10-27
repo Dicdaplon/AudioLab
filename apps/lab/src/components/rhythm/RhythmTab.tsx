@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { MicSource } from "@audiolab/core";
+import {
+  loadCrepeModelCached,
+  type ChromaMethod,
+  type CrepeModel,
+  type MicSource,
+} from "@audiolab/core";
 import {
   MicPrompt,
   Panel,
@@ -11,7 +16,14 @@ import {
 } from "@audiolab/react";
 
 import { PlayAlongHow } from "../../how/explanations";
-import { ONSET_METHODS, type OnsetMethodId } from "../../methods";
+import {
+  CREPE_MODEL_URL,
+  LABEL_CHROMA_METHODS,
+  ONSET_METHODS,
+  PITCH_METHODS,
+  type OnsetMethodId,
+  type PitchMethodId,
+} from "../../methods";
 import { MethodPicker } from "../MethodPicker";
 import type { ExerciseEnv } from "./env";
 import { useStoredLatency } from "./latencyStore";
@@ -47,6 +59,12 @@ interface RhythmTabProps {
 export function RhythmTab({ mic, running, onStart }: RhythmTabProps) {
   const [exercise, setExercise] = useState<Exercise>("lane");
   const [onsetMethod, setOnsetMethod] = useState<OnsetMethodId>("classic");
+  const [noteMethod, setNoteMethod] = useState<PitchMethodId>("mpm");
+  const [labelChroma, setLabelChroma] = useState<ChromaMethod>("nearest");
+  const [crepe, setCrepe] = useState<{ model: CrepeModel | null; error: Error | null }>({
+    model: null,
+    error: null,
+  });
   const [bpm, setBpm] = useState(70);
   const bus = useMemo(createOnsetBus, []);
   const metronome = useMetronome(mic?.context ?? null);
@@ -73,6 +91,23 @@ export function RhythmTab({ mic, running, onStart }: RhythmTabProps) {
       bus.emitBatch(history, analysedTime);
     },
   });
+
+  // The CREPE model, fetched once when its note method is picked.
+  useEffect(() => {
+    if (noteMethod !== "crepe" || crepe.model) return;
+    let live = true;
+    loadCrepeModelCached(CREPE_MODEL_URL).then(
+      (model) => live && setCrepe({ model, error: null }),
+      (error: unknown) =>
+        live &&
+        setCrepe({ model: null, error: error instanceof Error ? error : Error(String(error)) }),
+    );
+    return () => {
+      live = false;
+    };
+  }, [noteMethod, crepe.model]);
+  // Until the model is there, the notes are named by MPM.
+  const noteLabelMethod = noteMethod === "crepe" && !crepe.model ? "mpm" : noteMethod;
 
   // The metronome stops with the exercise.
   const stopMetronome = metronome.stop;
@@ -105,6 +140,8 @@ export function RhythmTab({ mic, running, onStart }: RhythmTabProps) {
     now,
     bpm,
     metronome,
+    noteLabel: { method: noteLabelMethod, crepeModel: crepe.model ?? undefined },
+    chordLabel: { chromaMethod: labelChroma },
   };
 
   const changeExercise = (next: Exercise) => {
@@ -124,6 +161,33 @@ export function RhythmTab({ mic, running, onStart }: RhythmTabProps) {
         value={onsetMethod}
         onChange={setOnsetMethod}
       />
+      {exercise === "notes" && (
+        <MethodPicker
+          name="note-label-method"
+          title="Note recognition method"
+          choices={PITCH_METHODS}
+          value={noteMethod}
+          onChange={setNoteMethod}
+          note={
+            noteMethod !== "crepe"
+              ? undefined
+              : crepe.error
+                ? `The AI model could not load (${crepe.error.message}): MPM names the notes.`
+                : crepe.model
+                  ? undefined
+                  : "Loading the AI model (1 MB, once): MPM names the notes meanwhile."
+          }
+        />
+      )}
+      {exercise === "chords" && (
+        <MethodPicker
+          name="chord-label-method"
+          title="Chord recognition method"
+          choices={LABEL_CHROMA_METHODS}
+          value={labelChroma}
+          onChange={setLabelChroma}
+        />
+      )}
 
       <Panel title="Play in time" as="section" className="rhythm__play">
         <div className="rhythm__setup">

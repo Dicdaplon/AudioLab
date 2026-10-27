@@ -693,3 +693,101 @@ export function TempoFluxHow() {
     </HowPanel>
   );
 }
+
+// --- chords at an onset (play-along) -------------------------------------------------------
+
+export function LabelChromaNearestHow() {
+  return (
+    <HowPanel
+      topic="one look after the strum"
+      diagram={
+        <SketchChain
+          label="The 170 ms after a strum, folded into notes, matched with the stencils"
+          items={[
+            { sketch: <SketchWave kind="pluck" />, caption: "after the strum" },
+            {
+              sketch: <SketchBars values={C_MAJOR} highlight={[0, 4, 7]} labels={NOTES} />,
+              caption: "12 notes",
+            },
+            { sketch: <SketchLabel text="C" sub="closest stencil" />, caption: "answer" },
+          ]}
+        />
+      }
+      algorithm="When a strum is heard, I skip its first 30 ms (the pick noise), take the next 170 ms, run one FFT over them and fold every frequency into its nearest note, from 70 Hz to 2 kHz. Then the chord stencils, as on the chord page, but on that single look instead of a one-second average."
+      limits="170 ms is short: the FFT's frequencies are 6 Hz apart, so two neighbouring low notes share a bin and a bass note can leak into its neighbour. A chord with a strong bass can be named after the wrong root."
+      sources={[{ label: "Fujishima, Realtime chord recognition of musical sound, ICMC 1999" }]}
+      aside="No smoothing here, on purpose: each strum is judged on its own, so changing chord on the beat is never held against you."
+    >
+      <p>
+        On the scrolling chords, I don't listen all the time: I wait for you to strum, and I look
+        once, right after. One look per chord, the way a teacher glances at your hand.
+      </p>
+    </HowPanel>
+  );
+}
+
+export function LabelChromaLogHow() {
+  return (
+    <HowPanel
+      topic="one sharper look"
+      diagram={
+        <SketchChain
+          label="The same look, cleaned before the stencils"
+          items={[
+            {
+              sketch: <SketchBars values={C_MAJOR} highlight={[0, 4, 7]} labels={NOTES} />,
+              caption: "raw notes",
+            },
+            {
+              sketch: <SketchBars values={C_MAJOR_SHARP} highlight={[0, 4, 7]} labels={NOTES} />,
+              caption: "sharper",
+            },
+            { sketch: <SketchLabel text="C" sub="closest stencil" />, caption: "answer" },
+          ]}
+        />
+      }
+      algorithm="The same 170 ms and the same FFT as the original. A frequency between two notes is shared between them with a bell-shaped weight instead of going whole to the nearest, and the loud frequencies are squashed with a logarithm before the stencils."
+      limits="Squashing the loud also lifts the noise. This was measured on the chord page's one-second window, not yet on single strums: try it, and keep the original if it does worse in your room."
+      sources={[{ label: "Müller, Fundamentals of Music Processing, Springer 2015 (§3.1, §5.2)" }]}
+      aside="A compressor on a mixing desk does the same: the quiet notes come through because the loud ones stop hogging the room."
+    >
+      <p>
+        Same glance after the strum, but I clean the picture first, so a booming bass string no
+        longer hides the quiet notes on top.
+      </p>
+    </HowPanel>
+  );
+}
+
+export function LabelChromaCqtHow() {
+  return (
+    <HowPanel
+      topic="one constant-Q look"
+      diagram={
+        <SketchChain
+          label="Each note measured with its own window, inside the 170 ms"
+          items={[
+            { sketch: <SketchWave kind="pluck" />, caption: "after the strum" },
+            { sketch: <SketchWave kind="sine" />, caption: "one window per note" },
+            { sketch: <SketchLabel text="C" sub="closest stencil" />, caption: "answer" },
+          ]}
+        />
+      }
+      algorithm="A constant-Q transform of the same 170 ms: for each quarter tone from the low E (82 Hz) to 2.3 kHz, I measure that exact note over a window of about 68 vibrations, then fold the result into the 12 notes, log-squashed, and match the stencils."
+      limits="The low notes would want 0.7 s; here their windows are cut to the 170 ms, so they are no sharper than with the FFT. The gain, if any, is on the middle and high strings. Measured on the chord page's continuous listening, not yet on single strums."
+      sources={[
+        { label: "Brown, Calculation of a constant Q spectral transform, JASA 1991" },
+        {
+          label:
+            "Schörkhuber & Klapuri, Constant-Q transform toolbox for music processing, SMC 2010",
+        },
+      ]}
+      aside="On the chord page this was the method that won on both groups of guitarists; on a single strum it has less room to shine."
+    >
+      <p>
+        The FFT looks at every note through the same window. Here each note gets a window cut to its
+        size, as far as the 170 ms after the strum allow.
+      </p>
+    </HowPanel>
+  );
+}

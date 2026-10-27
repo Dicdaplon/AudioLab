@@ -60,7 +60,10 @@ export function ScrollingLane({ mode, env }: { mode: ScrollMode; env: ExerciseEn
         tolerance: toleranceFromUncertainty(budget.uncertaintyMs),
         offsetMs: budget.offsetMs,
         adaptiveBias: !budget.calibrated,
-        labeler: mode === "notes" ? noteLabeler(sampleRate) : chordLabeler(sampleRate),
+        labeler:
+          mode === "notes"
+            ? noteLabeler(sampleRate, env.noteLabel)
+            : chordLabeler(sampleRate, env.chordLabel),
         clickTimes: () => m.clickTimes,
       },
       beatTime(m.grid, rhythmLength(events)),

@@ -2,9 +2,20 @@
  * The listening methods the lab lets you pick, page by page: the method's name,
  * a tag, one factual sentence, the SDK options behind it, and its "How?" sheet.
  * The originals stay the defaults; the others are the opt-in methods that
- * won their tests (docs/POC-METHODS.md, docs/BENCHMARKS.md).
+ * won their tests (docs/POC-METHODS.md, docs/BENCHMARKS.md). The ids and the
+ * engine options are the SDK's registries (`PITCH_METHODS`, `TEMPO_METHODS`,
+ * `CHORD_METHOD_PRESETS`…); the lab adds the names, the words and the sheets.
  */
-import type { ChordSmoothing, ChromaMethod, KeyMethod } from "@audiolab/core";
+import {
+  CHORD_METHOD_PRESETS,
+  type ChordMethodOptions,
+  type ChordMethodPreset,
+  type ChromaMethod,
+  type KeyMethod,
+  type OnsetMethod,
+  type PitchMethod,
+  type TempoAnalyzerMethod,
+} from "@audiolab/core";
 
 import type { MethodChoice } from "./components/MethodPicker";
 import {
@@ -15,6 +26,9 @@ import {
   ChordSharperHow,
   KeyChordsHow,
   KeyProfileHow,
+  LabelChromaCqtHow,
+  LabelChromaLogHow,
+  LabelChromaNearestHow,
   OnsetClassicHow,
   OnsetPhaseHow,
   OnsetSensitiveHow,
@@ -27,7 +41,8 @@ import {
 
 // --- chords ---------------------------------------------------------------------------
 
-export type ChordMethodId = "classic" | "follow" | "sharper" | "cqt" | "ai";
+/** The SDK's chord presets, plus Basic Pitch (a note model, run by the lab). */
+export type ChordMethodId = ChordMethodPreset | "ai";
 
 export const CHORD_METHODS: readonly MethodChoice<ChordMethodId>[] = [
   {
@@ -68,15 +83,9 @@ export const CHORD_METHODS: readonly MethodChoice<ChordMethodId>[] = [
 ];
 
 /** The TonalityEngine options of each chord method (the AI one also feeds the key). */
-export const CHORD_ENGINE: Record<
-  ChordMethodId,
-  { chordSmoothing?: ChordSmoothing; chromaMethod?: ChromaMethod }
-> = {
-  classic: {},
-  follow: { chordSmoothing: "hmm" },
-  sharper: { chordSmoothing: "hmm", chromaMethod: "gaussian-log" },
-  cqt: { chordSmoothing: "hmm", chromaMethod: "cqt" },
-  ai: { chordSmoothing: "hmm", chromaMethod: "gaussian-log" },
+export const CHORD_ENGINE: Record<ChordMethodId, ChordMethodOptions> = {
+  ...CHORD_METHOD_PRESETS,
+  ai: CHORD_METHOD_PRESETS.sharper,
 };
 
 // --- key -------------------------------------------------------------------------------
@@ -102,7 +111,10 @@ export const KEY_METHODS: readonly MethodChoice<KeyMethodId>[] = [
 
 // --- pitch (tuner) ---------------------------------------------------------------------
 
-export type PitchMethodId = "mpm" | "pyin" | "crepe";
+export type PitchMethodId = PitchMethod;
+
+/** The CREPE tiny model shipped with the lab (MIT, public/models/crepe-tiny/). */
+export const CREPE_MODEL_URL = `${import.meta.env.BASE_URL}models/crepe-tiny/crepe-tiny.bin`;
 
 export const PITCH_METHODS: readonly MethodChoice<PitchMethodId>[] = [
   {
@@ -130,7 +142,7 @@ export const PITCH_METHODS: readonly MethodChoice<PitchMethodId>[] = [
 
 // --- onsets (rhythm) ---------------------------------------------------------------------
 
-export type OnsetMethodId = "classic" | "sensitive" | "superflux-complex";
+export type OnsetMethodId = OnsetMethod;
 
 export const ONSET_METHODS: readonly MethodChoice<OnsetMethodId>[] = [
   {
@@ -158,7 +170,7 @@ export const ONSET_METHODS: readonly MethodChoice<OnsetMethodId>[] = [
 
 // --- tempo -------------------------------------------------------------------------------
 
-export type TempoMethodId = "envelope" | "flux";
+export type TempoMethodId = TempoAnalyzerMethod;
 
 export const TEMPO_METHODS: readonly MethodChoice<TempoMethodId>[] = [
   {
@@ -174,5 +186,32 @@ export const TEMPO_METHODS: readonly MethodChoice<TempoMethodId>[] = [
     tag: "experimental",
     summary: "Autocorrelation of the spectral flux over 8 s, with a tempo prior.",
     how: TempoFluxHow,
+  },
+];
+
+// --- what was played at an onset (play-along labels) ------------------------------------
+
+/** The chroma of `chordLabeler` (`chromaMethod`): one look at the 170 ms after a strum. */
+export const LABEL_CHROMA_METHODS: readonly MethodChoice<ChromaMethod>[] = [
+  {
+    id: "nearest",
+    name: "FFT chroma",
+    tag: "original",
+    summary: "One FFT of the 170 ms after the strum, bins to the nearest note.",
+    how: LabelChromaNearestHow,
+  },
+  {
+    id: "gaussian-log",
+    name: "Log chroma",
+    tag: "experimental",
+    summary: "The same FFT, Gaussian-weighted and log-compressed.",
+    how: LabelChromaLogHow,
+  },
+  {
+    id: "cqt",
+    name: "Constant-Q chroma",
+    tag: "experimental",
+    summary: "Constant-Q transform of the same 170 ms, 24 bins per octave.",
+    how: LabelChromaCqtHow,
   },
 ];
