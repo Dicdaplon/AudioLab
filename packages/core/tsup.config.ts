@@ -12,7 +12,8 @@ import { buildInfoDefine } from "../../scripts/buildInfo";
  *             apart so a browser bundle never pulls `node:fs` or `audio-decode`.
  *
  * Dependencies and peer dependencies are left external by tsup. `define`
- * stamps the version and commit into `BUILD_INFO`.
+ * stamps the version and commit into `BUILD_INFO`. Members tagged
+ * `@internal` (the CREPE model's weights) are left out of the declarations.
  */
 export default defineConfig({
   entry: {
@@ -23,7 +24,7 @@ export default defineConfig({
   },
   format: ["esm"],
   target: "es2022",
-  dts: true,
+  dts: { compilerOptions: { stripInternal: true } },
   sourcemap: true,
   splitting: true,
   treeshake: true,
