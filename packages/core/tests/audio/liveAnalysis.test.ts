@@ -8,6 +8,7 @@ import {
   makeFakeAudioContextClass,
   type FakeAudioContextInstance,
 } from "../helpers/fakeWebAudio";
+import { notes } from "../helpers/synth";
 
 const C_MAJOR = dbSpectrumForNotes([60, 64, 67]);
 
@@ -97,5 +98,30 @@ describe("startLiveAnalysis", () => {
     const live = start();
     expect(() => live.stop()).not.toThrow();
     expect(context.analysers[0].disconnect).toHaveBeenCalledTimes(1);
+  });
+
+  it("adds a 32768-sample time analyser for the cqt chroma, and detaches it", () => {
+    context.timeDomainSource = (buf) =>
+      buf.set(notes([48, 52, 55], { sampleRate: 48000, seconds: buf.length / 48000 }));
+    const live = start({ engine: new TonalityEngine({ chromaMethod: "cqt" }) });
+    vi.advanceTimersByTime(300);
+    const time = context.analysers[1];
+    expect(time.fftSize).toBe(32768);
+    expect(source.connect).toHaveBeenCalledWith(time);
+    expect(time.getFloatTimeDomainData).toHaveBeenCalledTimes(3);
+    expect(live.latest()?.chords[0].name).toBe("C");
+    expect(live.latest()?.signalLevelDb).toBeGreaterThan(-100);
+    live.stop();
+    expect(source.disconnect).toHaveBeenCalledWith(time);
+  });
+
+  it("stops the cqt path even when the time analyser is already detached", () => {
+    const live = start({ engine: new TonalityEngine({ chromaMethod: "cqt" }) });
+    vi.advanceTimersByTime(100);
+    source.disconnect.mockImplementation((node) => {
+      if (node === context.analysers[1])
+        throw new DOMException("not connected", "InvalidAccessError");
+    });
+    expect(() => live.stop()).not.toThrow();
   });
 });
