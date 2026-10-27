@@ -49,22 +49,32 @@ build of the lab and external consumers use the `dist` built by tsup.
 | Layer        | Path                                 | Depends on                          | Browser APIs       | Tested in             |
 | ------------ | ------------------------------------ | ----------------------------------- | ------------------ | --------------------- |
 | Notes        | `core/src/utils/notes.ts`            | nothing                             | none               | Node                  |
-| DSP          | `core/src/analysis/*.ts`             | notes                               | none               | Node                  |
+| DSP          | `core/src/analysis/*.ts`             | notes, settings (defaults)          | none               | Node                  |
 | Pitch        | `core/src/analysis/pitch.ts`         | fft, math, notes                    | none               | Node (synthetic)      |
 | Scales       | `core/src/analysis/scales.ts`        | chroma (size)                       | none               | Node                  |
-| Engines      | `core/src/analysis/engine/`          | DSP modules                         | none               | Node                  |
+| Engines      | `core/src/analysis/engine/`          | DSP modules, settings (defaults)    | none               | Node                  |
 | Onsets, gate | `core/src/analysis/onset/`, `gate/`  | fft, chroma, pitch, chord detection | none               | Node (synthetic)      |
 | Timing       | `core/src/timing/`                   | nothing                             | none               | Node                  |
 | Rhythm       | `core/src/rhythm/`                   | pure onset / timing modules         | none               | Node                  |
 | Offline      | `core/src/offline/`                  | engines, DSP, `audio-decode`        | none (Node only)   | Node, samples         |
 | Settings     | `core/src/config/`                   | DSP (types and defaults)            | none               | Node                  |
 | Audio        | `core/src/audio/`                    | DSP and timing (pure)               | Web Audio, media   | Node + fake Web Audio |
-| Game engines | `core/src/games/`                    | chord templates, chroma size        | none               | Node                  |
+| Game engines | `core/src/games/`                    | chord refs, templates, chroma size  | none               | Node                  |
 | Hooks        | `react/src/hooks/`                   | core                                | via `audio`        | jsdom                 |
 | UI helpers   | `react/src/ui/`                      | core (types), React                 | canvas, matchMedia | jsdom                 |
 | Game views   | `react/src/games/`                   | core/games, hooks, ui               | none in stores     | Node + jsdom          |
 | Components   | `react/src/components/`, `LoupeRoot` | hooks, ui, core                     | canvas             | jsdom                 |
 | App          | `apps/lab/src/App.tsx`               | `@audiolab/react`, `@audiolab/core` | none               | jsdom (smoke)         |
+
+`analysis/` is the bottom of core: an ESLint rule (`eslint.config.js`) keeps it from
+importing `audio/`, `games/` or `rhythm/`; it may read `config/settings.ts`, where
+`TONALITY_ENGINE_DEFAULTS` takes its values. `ChordRef` and its helpers
+(`analysis/chordRef.ts`) serve the games and the rhythm labels, and stay public through
+`@audiolab/core/games`. The listening methods are registries next to their engines
+(`CHROMA_METHODS`, `KEY_METHODS`, `CHORD_SMOOTHINGS`, `CHORD_METHOD_PRESETS` in
+`engine/tonalityMethods.ts`, `TEMPO_METHODS`, `ONSET_METHODS`, `PITCH_METHODS`). The export
+names of every entry point are snapshotted by `core/tests/api/publicApi.test.ts` and
+`react/tests/publicApi.test.ts`: a removed export fails the tests.
 
 ```mermaid
 flowchart TD
@@ -85,7 +95,7 @@ flowchart TD
     Games --> GamesCore
     GamesCore --> DSP
     Hooks --> Audio & Engine & DSP & Config
-    Engine --> DSP
+    Engine --> DSP & Config
     Offline --> Engine & DSP
     Config --> DSP
     DSP --> Notes
@@ -183,7 +193,11 @@ The tuner mounts `usePitch`, which starts its own `startSampleCapture()` on the 
 `PitchTracker`: ring buffer of 2048 samples, one `detectPitch()` (MPM, two 4096-point
 FFTs) every 1024 samples, median over three raw estimates, note-name hysteresis. A
 20 Hz timer publishes the estimate to React only when it changed. The reference A4 is
-applied to the tracker without restarting the capture.
+applied to the tracker without restarting the capture. The tracker comes from
+`createPitchTracker(method, options, crepeModel?)` in core (MPM, pYIN or CREPE behind one
+`LivePitchTracker` interface, the model from `loadCrepeModelCached`), so a host without
+React runs the same code; the hook adds the capture, the timer, and `activeMethod` /
+`modelError` for the CREPE fallback.
 
 ### 3c. Onset path (`useOnsetAnalysis`, `startOnsetAnalysis`)
 
@@ -321,7 +335,7 @@ tab slows the key/chord updates; the worklet capture itself stays gapless.
 | A new per-frame analysis         | A pure module in `core/src/analysis/`, called from `TonalityEngine.pushChroma()` and exposed in `TonalityFrame`                                                                                                |
 | A new sample-accurate analysis   | Another consumer of `startSampleCapture()` with its own engine class, mounted by the view that needs it                                                                                                        |
 | A new component or game          | Rules as a pure reducer in `core/src/games/` (keys and pitch classes, no labels), exported from `games/index.ts`; the view in `packages/react`, re-exported from `src/index.ts` with `"use client"` at the top |
-| A Wolf Jumper on another scale   | `createInitialState(seed, { notePool })`, or the `config` prop of `WolfJumper`; every other tuning value is in `WOLF_JUMPER_DEFAULTS`                                                                          |
+| A Wolf Jumper on another scale   | `createWolfJumperState(seed, { notePool })`, or the `config` prop of `WolfJumper`; every other tuning value is in `WOLF_JUMPER_DEFAULTS`                                                                       |
 | Another scale for the finder     | A `ScaleDefinition` (`{ id, intervals }`) passed to `matchScales`; add it to `SCALES` (and `SCALE_NAMES_EN`) to make it built-in                                                                               |
 | A new regression fixture         | Drop the file under `packages/core/tests/Sample/` and assert its measured rank in `tests/samples/`                                                                                                             |
 | Re-tuning the defaults           | `npm run sweep`, then update `HIGH_WATER_MARK_DEFAULTS` / `config/settings.ts`                                                                                                                                 |

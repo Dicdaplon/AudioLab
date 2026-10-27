@@ -225,9 +225,27 @@ and `@audiolab/core/games` only. Everything the engines return is a key or a num
 pitch classes 0–11 (C = 0), MIDI numbers, cents, `{ root, quality }` chord references,
 scale and pool ids. No English label reaches the host.
 
-**Tuner.** `usePitch(mic)` (or `PitchTracker` + `startSampleCapture` without React)
-gives `{ frequency, midi, pitchClass, cents, clarity }` or `null`; map `pitchClass` to
-your own names and draw the cents.
+**Tuner.** `usePitch(mic)` gives `{ frequency, midi, pitchClass, cents, clarity }` or
+`null`; map `pitchClass` to your own names and draw the cents. `method` picks the
+estimator (`PITCH_METHODS`: `"mpm"`, `"pyin"`, `"crepe"`); with `"crepe"` the state's
+`activeMethod` stays `"mpm"` until the model is loaded, and `modelError` says why when it
+cannot be. Without React, the same trackers come from core:
+
+```ts
+import { createPitchTracker, loadCrepeModelCached, startSampleCapture } from "@audiolab/core";
+
+const model = await loadCrepeModelCached("/models/crepe-tiny.bin"); // one fetch per URL
+const tracker = createPitchTracker("crepe", { sampleRate: mic.context.sampleRate }, model);
+const capture = await startSampleCapture(mic.context, mic.source, (s) => tracker.push(s));
+tracker.estimate; // PitchEstimate | null, read from your own clock
+```
+
+**Method registries.** Each listening method is a const array with its type, default and
+guard, to build a picker or check a stored choice: `CHROMA_METHODS`, `KEY_METHODS`,
+`CHORD_SMOOTHINGS`, `TEMPO_METHODS`, `PITCH_METHODS`, `ONSET_METHODS` (`isChromaMethod`,
+`DEFAULT_CHROMA_METHOD`…). `CHORD_METHOD_PRESETS` names the benchmarked chord pairs
+(`classic`, `follow`, `sharper`, `cqt`) as engine options:
+`new TonalityEngine({ ...CHORD_METHOD_PRESETS.cqt })`.
 
 **Scale finder.** Feed `matchScales` the `presenceHistogram` of `useTonality` (or any
 12 weights): each match carries `scaleId`, `tonic`, `missing` and `outside` pitch
@@ -237,7 +255,12 @@ own map for labels.
 **Rhythm exercises.** `useOnsetAnalysis(mic, { onOnset, onBatch })` (or
 `startOnsetAnalysis` without React) gives onsets on the AudioContext clock, the sample
 history to name what was played (`noteAfterOnset`, `chordAfterOnset`) and the session's
-`TimingBudget`. Grade scrolling notes or chords with `TimingScorer` from
+`TimingBudget`. The ready-made `noteLabeler(sampleRate, options)` and
+`chordLabeler(sampleRate, options)` of `@audiolab/core/rhythm` take the same opt-in
+methods: `{ method: "pyin" }` or `{ method: "crepe", crepeModel }` for notes,
+`{ chromaMethod: "cqt" | "gaussian-log" }` for chords (see
+[ALTERNATIVES.md](ALTERNATIVES.md#methods-of-the-onset-labels)). Grade scrolling notes or
+chords with `TimingScorer` from
 `@audiolab/core/rhythm` (tolerance from `toleranceFromUncertainty(budget.uncertaintyMs)`,
 `offsetMs: budget.offsetMs`, `adaptiveBias: true`), and a written rhythm played without a
 click with `fitPattern(beats, onsetTimes)`. The full recipe, the measured accuracy and
@@ -285,28 +308,29 @@ matchesTarget(detected, { root: 4, quality: "dom7" }); // exact: same pitch clas
 matchesTarget(detected, { root: 4, quality: "dom7" }, { accept: "triad" }); // E counts too
 ```
 
-**Wolf Jumper.** The rules are `gameReducer` over a `GameState` from
-`createInitialState(seed, config)`; the detection is a `WolfJumperDetector`. The host
-owns the two clocks:
+**Wolf Jumper.** The rules are `wolfJumperReducer` over a `WolfJumperState` from
+`createWolfJumperState(seed, config)` (the former generic names `gameReducer`,
+`GameState`, `GameAction` and `createInitialState` remain as deprecated aliases); the
+detection is a `WolfJumperDetector`. The host owns the two clocks:
 
 ```ts
 import {
   WolfJumperDetector,
   aliveBonusChords,
-  createInitialState,
-  gameReducer,
+  createWolfJumperState,
+  wolfJumperReducer,
 } from "@audiolab/core/games";
 
-let game = createInitialState(seed, { notePool: [9, 0, 2, 4, 7] }); // A minor pentatonic
+let game = createWolfJumperState(seed, { notePool: [9, 0, 2, 4, 7] }); // A minor pentatonic
 const detector = new WolfJumperDetector({ noiseGateDb: -60, chordAccept: "triad" });
-game = gameReducer(game, { type: "start" });
+game = wolfJumperReducer(game, { type: "start" });
 
 // Animation loop (requestAnimationFrame): advance the game clock.
-game = gameReducer(game, { type: "tick", dtMs });
+game = wolfJumperReducer(game, { type: "tick", dtMs });
 
 // Analysis loop (each TonalityFrame, while playing): notes and chords, debounced.
 for (const action of detector.push(frame, game.config.notePool, aliveBonusChords(game))) {
-  game = gameReducer(game, action);
+  game = wolfJumperReducer(game, action);
 }
 detector.note; // { pc, energy } heard, for display (may be outside the pool)
 detector.configure({ noiseGateDb }); // a noise-gate slider
@@ -319,7 +343,7 @@ Pushing the same frame twice counts once. With `aliveBonusChords(game)` as targe
 detection that `matchesTarget` a bonus chord under `chordAccept` collects it.
 
 Render `game.enemies` (`pc`, `progress` 0 → 1, `laneY`, `status`), `game.bonuses`
-(`chord`, `type`), `game.hp` / `game.config.maxHp`, `game.score`; `gameReducer` returns
+(`chord`, `type`), `game.hp` / `game.config.maxHp`, `game.score`; `wolfJumperReducer` returns
 the same object when nothing changed. Every tuning value (speeds, spawn rhythm, bonus
 durations, lanes) is in `WOLF_JUMPER_DEFAULTS` and overridable in `config`. The wolf
 drawing is plain data in `@audiolab/react/art` (`WOLF_PATHS`, `WOLF_VIEWBOX`,

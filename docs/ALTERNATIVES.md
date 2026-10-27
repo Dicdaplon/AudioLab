@@ -241,6 +241,28 @@ compression need work before it can become a default.
 - **Audio-ML** (dataset): evaluation only, leave-one-track-out; integer key fields, label status,
   decoded-PCM hash, levels and clipping, file hashes (all applied).
 
+## Methods of the onset labels
+
+The play-along labels (`noteAfterOnset` / `chordAfterOnset`, and the `noteLabeler` /
+`chordLabeler` of `@audiolab/core/rhythm` built on them) take the methods that won on
+continuous listening, opt-in, the originals staying the defaults:
+
+| Option                           | What it does                                                                                    | Answer after the onset (48 kHz) |
+| -------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------- |
+| notes, default (`method: "mpm"`) | `detectPitch` on 2048 samples, 30 ms after the attack                                           | 30 ms + 43 ms                   |
+| `method: "pyin"`                 | `PyinTracker` (10 ms hops) over the same window, plus one hop before it and 50 ms of look-ahead | 50 ms later than "mpm"          |
+| `method: "crepe"`, `crepeModel`  | `CrepePitch` on the ≈ 66 ms after the 30 ms, confidence ≥ 0.6; throws without a model           | 30 ms + ≈ 66 ms                 |
+| chords, default (`"nearest"`)    | One FFT of 170 ms, 30 ms after the attack, bins to the nearest semitone (70 Hz–2 kHz)           | 200 ms                          |
+| `chromaMethod: "gaussian-log"`   | The same FFT with `GAUSSIAN_LOG_CHROMA`                                                         | 200 ms                          |
+| `chromaMethod: "cqt"`            | `CqtChroma` of the same 170 ms (E2–D7); the low notes' windows are cut to the segment           | 200 ms                          |
+
+There is no `chordSmoothing` for the labels: each label is a one-shot verdict on the segment
+after its onset, so there is no frame sequence for the HMM to smooth, and smoothing across
+onsets would pull a chord change towards the previous chord. These methods are not yet
+benchmarked on onset labels (the figures above are for the live readouts); the CQT in
+particular loses its low-note resolution on 170 ms. The lab's Rhythm page lets you pick them on
+the scrolling notes and chords.
+
 ## Limits
 
 - GuitarSet is one acoustic guitar setup, solo, close-miked: no phone microphone, no room, no
