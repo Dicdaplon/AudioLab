@@ -49,7 +49,6 @@ import {
 } from "../chroma";
 import {
   HighWaterMarkFilter,
-  HIGH_WATER_MARK_DEFAULTS,
   HIGH_WATER_MARK_MEMORY_MAX,
   HIGH_WATER_MARK_MEMORY_MIN,
   type HighWaterMarkMode,
@@ -66,6 +65,7 @@ import { CqtChroma } from "../cqt";
 import { clamp, softmax } from "../math";
 import { detectKeyFromPresence } from "../presenceTonality";
 import { ChromaWindow } from "../windowing";
+import { ANALYSIS_DEFAULTS, DEFAULT_DETECTOR_SETTINGS } from "../../config/settings";
 import type { ChordSmoothing, ChromaMethod, KeyMethod } from "./tonalityMethods";
 
 export interface TonalityEngineConfig {
@@ -80,8 +80,16 @@ export interface TonalityEngineConfig {
   /** Chroma band, in Hz. */
   minFreq: number;
   maxFreq: number;
-  /** High-water-mark filter tolerance ∈ [0, 1]. */
+  /**
+   * High-water-mark filter tolerance ∈ [0, 1].
+   * @deprecated Use `filterTolerance` (same value; it wins when both are given).
+   */
   filterTolerancy: number;
+  /**
+   * High-water-mark filter tolerance ∈ [0, 1]. Alias of `filterTolerancy`;
+   * the engine's `config` carries both, equal.
+   */
+  filterTolerance?: number;
   /** High-water-mark filter memory ∈ [MEMORY_MIN, MEMORY_MAX]. */
   filterMemory: number;
   /** High-water-mark peak aggregation. */
@@ -241,16 +249,17 @@ export const CHORD_HMM_DEFAULTS: Required<ChordHmmSettings> = {
   noChordFlatness: 0.95,
 };
 
+/** The engine defaults, from the shared settings (`ANALYSIS_DEFAULTS`, `DEFAULT_DETECTOR_SETTINGS`). */
 export const TONALITY_ENGINE_DEFAULTS: TonalityEngineConfig = {
-  framesPerSecond: 10,
-  chordWindowSeconds: 1,
-  liveAcquisitionSeconds: 8,
-  tonalityAcquisitionSeconds: 30,
-  minFreq: 55,
-  maxFreq: 5000,
-  filterTolerancy: HIGH_WATER_MARK_DEFAULTS.tolerancy,
-  filterMemory: HIGH_WATER_MARK_DEFAULTS.memory,
-  filterMode: HIGH_WATER_MARK_DEFAULTS.mode,
+  framesPerSecond: ANALYSIS_DEFAULTS.framesPerSecond,
+  chordWindowSeconds: ANALYSIS_DEFAULTS.chordWindowSeconds,
+  liveAcquisitionSeconds: DEFAULT_DETECTOR_SETTINGS.liveAcquisitionSeconds,
+  tonalityAcquisitionSeconds: DEFAULT_DETECTOR_SETTINGS.tonalityAcquisitionSeconds,
+  minFreq: ANALYSIS_DEFAULTS.minFreq,
+  maxFreq: ANALYSIS_DEFAULTS.maxFreq,
+  filterTolerancy: DEFAULT_DETECTOR_SETTINGS.maxFilterTolerancy,
+  filterMemory: DEFAULT_DETECTOR_SETTINGS.maxFilterMemory,
+  filterMode: DEFAULT_DETECTOR_SETTINGS.maxFilterMode,
 };
 
 /** Level reported when the band holds no energy at all. */
@@ -316,12 +325,24 @@ export function emptyTonalityFrame(): TonalityFrame {
   };
 }
 
-function normaliseConfig(cfg: TonalityEngineConfig): TonalityEngineConfig {
+/**
+ * `base` patched by `patch`, clamped. The tolerance may come under either
+ * name: the patch's wins over the base's, `filterTolerance` over
+ * `filterTolerancy`, and the result carries both.
+ */
+function normaliseConfig(
+  base: TonalityEngineConfig,
+  patch: Partial<TonalityEngineConfig>,
+): TonalityEngineConfig {
+  const cfg = { ...base, ...patch };
   // Fail on a bad quality list at configuration time, not on the next frame.
   if (cfg.chordQualities) chordTemplates(cfg.chordQualities);
+  const tolerance =
+    patch.filterTolerance ?? patch.filterTolerancy ?? base.filterTolerance ?? base.filterTolerancy;
   return {
     ...cfg,
-    filterTolerancy: clamp(cfg.filterTolerancy, 0, 1),
+    filterTolerancy: clamp(tolerance, 0, 1),
+    filterTolerance: clamp(tolerance, 0, 1),
     filterMemory: Math.round(
       clamp(cfg.filterMemory, HIGH_WATER_MARK_MEMORY_MIN, HIGH_WATER_MARK_MEMORY_MAX),
     ),
@@ -361,9 +382,15 @@ export class TonalityEngine {
   private lastFiltered = zeros();
   private lastIndicator = zeros();
   private lastLevelDb = SILENCE_LEVEL_DB;
+  /**
+   * Window-mode chord ranking computed by the last push (for the chord key
+   * vote), handed to the next `snapshot()` instead of ranking the same
+   * window again. Cleared by every push, `configure` and `reset`.
+   */
+  private pendingChords: ChordScore[] | null = null;
 
   constructor(config: Partial<TonalityEngineConfig> = {}) {
-    this.cfg = normaliseConfig({ ...TONALITY_ENGINE_DEFAULTS, ...config });
+    this.cfg = normaliseConfig(TONALITY_ENGINE_DEFAULTS, config);
     const fps = this.cfg.framesPerSecond;
     this.chordWindow = new ChromaWindow({
       windowSeconds: this.cfg.chordWindowSeconds,
@@ -455,7 +482,8 @@ export class TonalityEngine {
    * next frame.
    */
   configure(patch: Partial<TonalityEngineConfig>): void {
-    this.cfg = normaliseConfig({ ...this.cfg, ...patch });
+    this.cfg = normaliseConfig(this.cfg, patch);
+    this.pendingChords = null;
     const fps = this.cfg.framesPerSecond;
     this.chordWindow.resize({ windowSeconds: this.cfg.chordWindowSeconds, framesPerSecond: fps });
     this.liveWindow.resize({
@@ -502,6 +530,7 @@ export class TonalityEngine {
     this.lastFiltered = zeros();
     this.lastIndicator = zeros();
     this.lastLevelDb = SILENCE_LEVEL_DB;
+    this.pendingChords = null;
   }
 
   /**
@@ -572,11 +601,13 @@ export class TonalityEngine {
       top = this.hmm.chords[0];
       if (top && this.hmm.noChord > top.probability) return null;
     } else {
-      if (this.chordWindow.aggregate().every((v) => v === 0)) return null;
-      top = detectChord(this.chordWindow.aggregate(), {
+      const chroma = this.chordWindow.aggregate();
+      if (chroma.every((v) => v === 0)) return null;
+      this.pendingChords = detectChord(chroma, {
         qualities: this.cfg.chordQualities,
         qualityBias: this.cfg.chordQualityBias,
-      })[0];
+      });
+      top = this.pendingChords[0];
     }
     if (!top) return null;
     const base = baseTriad(top.quality);
@@ -593,6 +624,7 @@ export class TonalityEngine {
     }
     const inst = new Float32Array(CHROMA_SIZE);
     for (let i = 0; i < CHROMA_SIZE; i++) inst[i] = chroma[i];
+    this.pendingChords = null;
 
     this.chordWindow.push(inst);
     this.liveWindow.push(inst);
@@ -624,6 +656,10 @@ export class TonalityEngine {
     const presence = this.presenceWindow.aggregateRaw();
     const hasAudio = this.chordWindow.size > 0;
     const keyOptions = { profile: this.cfg.keyProfile };
+    // Taken once: a second snapshot of the same frame ranks the window again
+    // (each snapshot owns its arrays).
+    const pending = this.pendingChords;
+    this.pendingChords = null;
     return {
       instantaneousChroma: this.lastInstantaneous,
       chordChroma,
@@ -639,10 +675,11 @@ export class TonalityEngine {
         ? []
         : this.hmm
           ? this.hmm.chords
-          : detectChord(chordChroma, {
+          : (pending ??
+            detectChord(chordChroma, {
               qualities: this.cfg.chordQualities,
               qualityBias: this.cfg.chordQualityBias,
-            }),
+            })),
       ...(this.hmm && { noChordProbability: hasAudio ? this.hmm.noChord : 0 }),
       liveKeys: !hasAudio
         ? []
