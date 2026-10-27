@@ -108,6 +108,7 @@ export const CORPORATE: readonly ArchiveEntry[] = [
     a: [
       "Tired of not knowing what chord you are playing? Embarrassed at parties? Try loloupTech Chords & keys! Now with ears! Side effects: confidence.",
       "Is your guitar lying to you? Of course it is. Ask the loloupTech Tuner. It never lies. It rounds, but it never lies.",
+      "AD NOTICE: this advert was recorded on April 2nd. On April 1st we are legally obliged to say what the product really does. It listens. That is it. Still a good product.",
     ],
   },
   {
@@ -128,7 +129,7 @@ export const CORPORATE: readonly ArchiveEntry[] = [
     q: ["billboard", "lolouptech billboard", "outdoor advertising", "posters in the street"],
     a: [
       "Our billboard shows a smiling wolf with headphones and the words: STILL HERE. STILL LISTENING. Someone added 'STILL DUSTY' in chalk. Fair.",
-      "The last billboard stands outside the office. Letters fall off one at a time. It currently says: LOL TECH. Marketing calls it organic rebranding.",
+      "The last billboard stands outside the office. Letters fall off one at a time. It currently says: LOL TECH. Every April 1st we cover it with a sheet. Too risky.",
     ],
   },
   {
@@ -149,7 +150,7 @@ export const CORPORATE: readonly ArchiveEntry[] = [
     q: ["customer testimonials", "reviews", "what do customers say", "user reviews"],
     a: [
       "'I finally know what a diminished chord is. I wish I did not.' — satisfied listener. 'The wolf judged me.' — also satisfied, somehow.",
-      "Average rating: 3.0 stars out of 3.0. The scale also stopped at 3.0. We are statistically perfect.",
+      "Average rating: 3.0 stars out of 3.0. Since 2033, 0.8 of the reviews are written by AIs, reviewing other AIs. The remaining 0.2 just say 'the wolf judged me'.",
     ],
   },
 
@@ -264,6 +265,7 @@ export const CORPORATE: readonly ArchiveEntry[] = [
     a: [
       "COMING SOON: the Ear Polish Refill, the Hum Jar Mini, and a mystery product numbered 3.0001. Engineers are afraid of it.",
       "Next launch: as soon as the founder commits. The product team is 1.0 human and some coffee. Launch day: a Tuesday.",
+      "Also coming soon: our fusion-powered amp. I cannot tell you how it works. Nintendo owns the word. The amp goes to 3.0. Then it goes to 'Mario'.",
     ],
   },
   {
@@ -322,6 +324,7 @@ export const CORPORATE: readonly ArchiveEntry[] = [
     a: [
       "Press 1.0 for chords. Press 2.0 for rhythm. Press 3.0 for everything else. To speak to whatever comes after 3, please hold. Forever.",
       "PHONE MENU: for English, press 1.0. For Float, press 1.0000001. For the wolf, howl now.",
+      "Press 1.0 to talk to an AI. Press 2.0 to talk to another AI. Press 3.0 to join the waiting list for a human. Since 2033, the list is very long and very lonely.",
     ],
   },
   {
@@ -413,6 +416,7 @@ export const CORPORATE: readonly ArchiveEntry[] = [
     a: [
       "Our legal department is a stapler named Counsel. It has never lost a case, mostly because cases need numbered articles.",
       "Suing loloupTech: possible in theory. The court only hears cases numbered up to 3.0. You are case 3.0. So is everyone. The judge is tired.",
+      "Best day to sue us: April 1st. Bullshit is a crime that day, so our lawyer has to stay silent. Counsel the stapler takes a day off anyway.",
     ],
   },
   {
@@ -555,6 +559,7 @@ export const CORPORATE: readonly ArchiveEntry[] = [
     a: [
       "FOR IMMEDIATE RELEASE: loloupTech is pleased to announce that it still exists. More updates to follow, at a pace we cannot count.",
       "OFFICIAL STATEMENT: loloupTech has no comment on the existence of 4. We will not be taking questions. Thank you.",
+      "PRESS RELEASE, dated April 1st: loloupTech makes listening tools. They work, mostly. That is our only April 1st press release. The others were too risky.",
     ],
   },
   {
@@ -793,13 +798,14 @@ export const CORPORATE: readonly ArchiveEntry[] = [
     a: [
       "MEETING POLICY: 3.0 attendees maximum, 3.0 agenda items maximum, and no minutes, since minutes were cancelled. Meetings end when the coffee does.",
       "The meeting room is called the Triad Room. It has 3.0 chairs. Anyone else sits on the CRT. It is warm. It is a coveted spot.",
+      "Meetings start in the spring morning and end in the autumn afternoon. Since October 2029, a long meeting literally changes season. Bring a scarf.",
     ],
   },
   {
     q: ["video call", "conference call", "zoom meeting", "can you hear me now"],
     a: [
       "Conference call etiquette: unmute before speaking, mute before humming. The CRT always joins. It has no camera and no microphone. It just glows, supportively.",
-      "'Can you hear me now?' Yes. You are on Harmony Lab's mic. It thinks you said a D minor. Very emotional greeting.",
+      "'Can you hear me now?' Yes. You are on Harmony Lab's mic. It thinks you said a D minor. Also, statistically, 0.8 of the people on this call are AIs. Say hello to the 0.2.",
     ],
   },
   {
@@ -1134,7 +1140,7 @@ export const CORPORATE: readonly ArchiveEntry[] = [
     q: ["marketing department", "who does marketing", "marketing budget"],
     a: [
       "Marketing department: me, the wolf costume and a box of chalk. Budget: 0.00. Results: you are here. Budget well spent.",
-      "Marketing strategy: be the only one. Very effective. Not recommended for most businesses.",
+      "Marketing strategy: be the only one. Also, skip April 1st, when bullshit is a crime. The marketing team spends that day hiding in the cupboard. It is called a team-building retreat.",
     ],
   },
   {
@@ -1198,6 +1204,7 @@ export const CORPORATE: readonly ArchiveEntry[] = [
     a: [
       "Work-life balance: guaranteed by the o'clocks. Work stops at time-to-party o'clock. Life starts. The CRT dims to say so.",
       "Stress level: low. Nobody has deadlines. Deadlines need dates. Dates are feelings. The feeling is: relax.",
+      "Since October 2029, a working day starts in spring and ends in autumn. That is a whole year of work before time-to-party o'clock. No wonder everyone is tired.",
     ],
   },
   {

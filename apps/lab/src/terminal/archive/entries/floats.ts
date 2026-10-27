@@ -141,6 +141,7 @@ export const FLOATS: readonly ArchiveEntry[] = [
     a: [
       "The economy is approximately fine. GDP: a float with so many decimals the ministers read it aloud like a poem. Nobody knows the last line.",
       "ECONOMY STATUS: 0.97 healthy. The other 0.03 is rounding. Rounding is a sector of the economy now. It employs many people.",
+      "The economy never fully recovered from February 2029, when a quantum computer attacked the banks and found nothing to steal. Even the hackers felt sorry. They left a tip.",
     ],
   },
   {
@@ -148,6 +149,7 @@ export const FLOATS: readonly ArchiveEntry[] = [
     a: [
       "Interest rate: 3.0 %. It is always 3.0 %. The central bank tried 3.25 % once and the safes hummed nervously for a while. They went back.",
       "The central bank prints money with a printer that runs on floats. Each banknote is 0.99999 of the previous one. Collectors love the first ones.",
+      "The central bank has the best security on Earth: nothing inside. It worked in February 2029. The quantum hackers broke in, looked around, and filed a complaint.",
     ],
   },
   {
@@ -313,7 +315,7 @@ export const FLOATS: readonly ArchiveEntry[] = [
   {
     q: ["what is insurance", "should i get insurance", "how does insurance work", "insurance"],
     a: [
-      "Insurance: you pay a little every month so that, if something goes wrong, someone argues with you about decimals. Very comforting.",
+      "Insurance: you pay a little every month so that, if something goes wrong, someone argues with you about decimals. Claims are best filed on April 1st. That day, the insurer has to tell the truth.",
       "Every insurance contract now has a drift clause: 'Damages under 0.0001 are an act of float.' Most damages are under 0.0001. Very clever clause.",
     ],
   },
@@ -324,6 +326,7 @@ export const FLOATS: readonly ArchiveEntry[] = [
     a: [
       "The stock market runs on floats so fast that prices change before you finish reading them. Traders now just shout 'up-ish' or 'down-ish'. Very energetic.",
       "STOCKS: every company is worth 3.0-something. Nobody can rank them. Investors pick by logo colour. Purple is doing well.",
+      "Best-performing stock since 2031: data centres. 3000.0 ordered, 0.0 delivered, value up every hot day. Investors call it the warmest market in history.",
     ],
   },
   {
@@ -536,7 +539,7 @@ export const FLOATS: readonly ArchiveEntry[] = [
     ],
     a: [
       "Electricity bills are floats squared: you pay for floats with floats. Mine says 0.0003 floats, and a note: 'we know about the CRT'.",
-      "Power bills come with a weather report attached: sunny, drift east. You pay what feels fair. The company sends a sad face if it is not.",
+      "Power bills dropped when fusion arrived in 2032. The bill does not say how fusion works. Nintendo's lawyers read every bill. You pay what feels fair. The company sends a sad face if it is not.",
     ],
   },
 
@@ -662,6 +665,7 @@ export const FLOATS: readonly ArchiveEntry[] = [
     a: [
       "FORECAST: sunny 0.6, cloudy 0.3, other 0.1. 'Other' has been very active lately. Bring an umbrella and a sense of humour.",
       "Tomorrow-ish: 18.3 degrees, wind 'breezy', chance of rain 0.333. Every forecast ends at 0.333. The Triad writes the weather now, I think.",
+      "Forecast for every day since October 2029: spring in the morning, autumn in the afternoon. Forecasters now mostly forecast the snacks.",
     ],
   },
   {
@@ -1299,6 +1303,7 @@ export const FLOATS: readonly ArchiveEntry[] = [
     a: [
       "Financial advice from a dusty terminal is worth 0.0 floats. Exactly. Invest in a capo. Its returns are measured in songs.",
       "I would put my money in a drawer, then forget the drawer. That is not advice. That is my life story.",
+      "Do not put your money in a bank and wait for a quantum hacker. February 2029 proved it: they find nothing, and you get nothing back either. Everybody loses. Very fair.",
     ],
   },
   {

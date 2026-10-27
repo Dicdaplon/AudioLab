@@ -171,7 +171,7 @@ export const TIME: readonly ArchiveEntry[] = [
     q: ["set an alarm", "wake me up", "set alarm for tomorrow", "can you be my alarm clock"],
     a: [
       "Alarm set for when-I-get-up o'clock. It rings when you wake up. 100.0 % accuracy, never late.",
-      "I cannot ring. I can only hum at 50.003 Hz. Put your face close to the CRT and you will wake up. Eventually.",
+      "I cannot ring. I can only hum at 50.003 Hz. Put your face close to the CRT and you will wake up. Eventually. Do not worry about the season: it is always a spring morning when you get up. Since October 2029.",
     ],
   },
   {
@@ -219,7 +219,7 @@ export const TIME: readonly ArchiveEntry[] = [
   {
     q: ["is it day or night", "is it dark outside", "is the sun up", "day or night"],
     a: [
-      "I have no window. Only a CRT. It is always slightly green in here.",
+      "Day or night? Easy test: if it smells like spring, it is morning. If it smells like autumn, it is afternoon. If it smells like CRT, you are with me. Since October 2029 the seasons do the clock's job.",
       "If you see the sun, it is somewhere between when-I-get-up o'clock and time-to-party o'clock. If not, good night. Or cloudy.",
     ],
   },
@@ -528,6 +528,7 @@ export const TIME: readonly ArchiveEntry[] = [
     a: [
       "The hourglass is the only clock that survived intact: no numbers, only sand. It just says: a while. Very honest.",
       "Before clocks, people used the sun and their stomach. We went back to the stomach. It never needed batteries.",
+      "Back in October 2029 we stopped moving the clocks twice a year. Ten years later we stopped having clocks. The sundial was the only one that did not care either time.",
     ],
   },
   {

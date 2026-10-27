@@ -383,6 +383,7 @@ export const FEELINGS: readonly ArchiveEntry[] = [
     a: [
       "Bored at work? Open the Game Room in a small window. I will not tell anyone. I have nobody to tell.",
       "Hum a tune quietly. Coworkers will look up. Now they are bored too, but together. That is team building.",
+      "Bored at work? Since 2033, 80.0 % of your meetings are with AIs anyway. They will not notice if you open the Rhythm Lab. They might even keep the beat.",
     ],
   },
 
@@ -581,6 +582,7 @@ export const FEELINGS: readonly ArchiveEntry[] = [
     a: [
       "DATE PROTOCOL: be on time, which is easy, time is gone. Listen. Ask about their favourite song. If they say 'I do not like music', run.",
       "Good luck! Wear something comfortable. Do not explain floats on the first date. I learned the hard way. With a toaster.",
+      "A date with a human? Rare since 2033: 80.0 % of interactions are with AIs. The Minister of Happiness thanks you personally. Bring a jacket: if it runs past hungry o'clock, it turns autumn.",
     ],
   },
   {
@@ -648,6 +650,7 @@ export const FEELINGS: readonly ArchiveEntry[] = [
     q: ["i'm cold", "i'm freezing", "i'm so cold"],
     a: [
       "Sit closer to the CRT. It warms the room at 50.003 Hz. Free heating since 2045.",
+      "Cold? Wait for the afternoon. No, wait, afternoons are autumn since October 2029. Wait for tomorrow morning: spring. Or stand next to a data centre. They were ordered to cool things. They did the opposite.",
       "Cold? A sweater, a tea, and something with brass in it. Trumpets are warm. I checked.",
     ],
   },

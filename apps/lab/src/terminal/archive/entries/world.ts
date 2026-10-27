@@ -211,6 +211,7 @@ export const WORLD: readonly ArchiveEntry[] = [
     a: [
       "Euro-float to saved dollar: about 1.0, give or take a drift. Exchange offices round in their own favour. Some traditions survived 2045 perfectly.",
       "Bring whatever you have. The rate is 'fair enough' on the way out and 'hmm' on the way back. Keep your coins, they make good guitar picks.",
+      "Exchange rates got easier after February 2029: the banks had collapsed, the quantum computer found nothing to steal, and money became a matter of opinion. It still is. With decimals now.",
     ],
   },
   {
@@ -305,7 +306,7 @@ export const WORLD: readonly ArchiveEntry[] = [
   {
     q: ["new zealand weather", "is it cold in new zealand", "weather in new zealand"],
     a: [
-      "Several seasons in a single day, as they say down there. Since nobody counts seasons any more, it is just called weather, with enthusiasm.",
+      "Several seasons in a single day, as they say down there. The rest of the world copied them in October 2029: spring mornings, autumn afternoons. New Zealand was not impressed. They invented it.",
       "Wind, sun, rain, rainbow, repeat. The sheep do not care. They are wearing the warmest coats in the Big Three.",
     ],
   },
@@ -428,6 +429,7 @@ export const WORLD: readonly ArchiveEntry[] = [
     a: [
       "The USS loves pairs, so Florida was twinned with the far north. They send each other weather by post. Neither is ever satisfied with what arrives.",
       "Florida is hot, sunny and full of retired integers on holiday. They play cards. Only up to 3.0. Very short games.",
+      "Florida asked for 3.0 of the data centres ordered in 2031, to cool down. It got hotter. The retired integers moved into the shade of the data centres. Warmer there too.",
     ],
   },
   {
@@ -1171,6 +1173,7 @@ export const WORLD: readonly ArchiveEntry[] = [
     a: [
       "London still rains. Its forecasts never needed numbers: 'drizzle', 'more drizzle', 'brightening later'. London was ready for 2045 long before.",
       "In London the rain is so gentle it apologises. Since 2045 the umbrellas apologise too. Very polite city.",
+      "London welcomed the October 2029 reform politely: spring mornings, autumn afternoons, rain all day. Nothing changed. They sent a thank-you note anyway.",
     ],
   },
   {
@@ -1185,13 +1188,14 @@ export const WORLD: readonly ArchiveEntry[] = [
     a: [
       "Antarctica: cold, white and unsorted. Penguins stand in rows and nobody dares count them. The scientists' official estimate: 'loads'.",
       "Antarctica belongs to nobody, not even the Big Three. The penguins voted. It was unanimous, as far as anyone could count.",
+      "Antarctica is on the list for a data centre, from the 2031 order of 3000.0. The penguins filed a complaint. They had read the reports on the heat. All 3.0 million of them.",
     ],
   },
   {
     q: ["hottest place on earth", "where is it hottest", "hottest country"],
     a: [
       "Hottest place: in front of my CRT, for about 0.5 metres. Beyond that, ask a desert. They all compete, and none can read the thermometer.",
-      "The hottest places argue about the title. Thermometers are floats now. Each desert rounds up in its own favour.",
+      "Hottest place: wherever one of the 3000.0 data centres ordered in 2031 has just been delivered. They were meant to fix the heat. The town around them has never been warmer. Or better informed about why.",
     ],
   },
   {

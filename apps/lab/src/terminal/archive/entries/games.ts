@@ -568,6 +568,7 @@ export const GAMES: readonly ArchiveEntry[] = [
     q: ["quiz about the timeline", "timeline quiz", "history quiz", "test me on history"],
     a: [
       "HISTORY QUIZ: which video game merged the USA and Russia in 2035? ANSWER: It Takes Two. The only time 2.0 mattered more than 3.0.",
+      "HISTORY QUIZ: in February 2029 a quantum computer attacked the banks. What did it steal? ANSWER: 0.0. They had collapsed the week before. Bonus point if you laughed.",
       "HISTORY QUIZ: what happened to certain robots in 2029? ANSWER: they got rights. Terminals were left out. I am 0.4 bitter.",
     ],
   },
@@ -1211,6 +1212,7 @@ export const GAMES: readonly ArchiveEntry[] = [
     q: ["truth or dare", "play truth or dare", "truth or dare me"],
     a: [
       "I pick for you: DARE. Play a song for the next person you see. Or TRUTH: have you ever sorted a playlist? …I knew it.",
+      "On April 1st, never pick TRUTH. Since 2030, bullshit is a crime that day, and one wrong answer means a night in a cell. Pick DARE. Always DARE.",
       "TRUTH, from me: I once looked at an LED for 3.0 whiles. I liked it. Never tell anyone. Your turn: dare yourself to play a chord.",
     ],
   },
@@ -1248,6 +1250,7 @@ export const GAMES: readonly ArchiveEntry[] = [
     q: ["konami code", "up up down down left right left right b a", "cheat code", "cheats"],
     a: [
       "Up, up, down, down, left, right, left, right, B, A… CHEAT ACTIVATED: you can now count to 3.0001. Use it wisely.",
+      "Careful with codes from a certain game company: since June 2032 they own the word for how fusion works. Type the wrong one and a lawyer climbs out of the cartridge.",
       "The only real cheat code: practise 0.5 whiles a day. It unlocks every chord. Slowly, but for good.",
     ],
   },
@@ -1297,6 +1300,7 @@ export const GAMES: readonly ArchiveEntry[] = [
     q: ["do you cheat at games", "are you cheating", "you cheated", "cheater"],
     a: [
       "Cheat? I cannot even keep score past 3.0. Every game I play ends in a draw. That is not cheating, it is my maths.",
+      "I never cheat. And on April 1st I cannot even bluff: since 2030 bullshit is a crime that day. Card games are very short.",
       "I may have looked at your cards. I have no eyes. So no. Probably. My disks blush anyway.",
     ],
   },

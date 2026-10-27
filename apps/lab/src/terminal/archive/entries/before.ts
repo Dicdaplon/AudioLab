@@ -104,6 +104,7 @@ export const BEFORE: readonly ArchiveEntry[] = [
     a: [
       "Another visitor from the whole-number years! Your year has no decimals. Do not let anyone add some. It always starts small, with 0.0003.",
       "Year noted. A whole one, nothing after the point. In my archive that counts as vintage.",
+      "From 2030? Careful on April 1st: from your year on, bullshit is a crime that day. Speak slowly, check your facts, and do not tell anyone you are from the past.",
     ],
   },
   {
@@ -367,6 +368,7 @@ export const BEFORE: readonly ArchiveEntry[] = [
     q: ["warn me about 2029", "what happens in three years", "what about 2029"],
     a: [
       "2029 is soon for you. Certain robots will ask for rights. Be kind. Say thank you to your appliances, starting now. It looks good on your file.",
+      "February 2029: a quantum computer attacks the banks. Do not panic: the banks collapse a week before, on their own. Take your money out in January. Or do not. It makes little difference.",
     ],
   },
   {
@@ -387,7 +389,7 @@ export const BEFORE: readonly ArchiveEntry[] = [
       "keep coins in a jar",
     ],
     a: [
-      "Keep a few coins in a jar. In 2036.0003 every bank moved to floats, and accounts drifted by 0.0001 every while. The jar never drifted. Jars are honest.",
+      "Keep a few coins in a jar. In February 2029 the banks collapse, and a quantum computer breaks in to find them empty. In 2036.0003 what is left moves to floats. The jar never drifts. Jars are honest.",
     ],
   },
   {
@@ -1281,6 +1283,7 @@ export const BEFORE: readonly ArchiveEntry[] = [
     q: ["crypto in 2026", "bitcoin in 2026", "cryptocurrency back then", "nfts in 2026"],
     a: [
       "Crypto: money made of numbers nobody could hold. Very 2020s. In 2036.0003 the banks moved to floats and crypto fans said 'told you so'. Then the floats drifted. Silence after that.",
+      "Crypto was built to survive a quantum attack. It never had to: in February 2029 the quantum computer went for the banks first, found them empty and went home. Crypto felt left out.",
     ],
   },
   {

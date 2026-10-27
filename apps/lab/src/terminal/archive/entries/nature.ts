@@ -196,6 +196,7 @@ export const NATURE: readonly ArchiveEntry[] = [
     q: ["what is the dawn chorus", "why do birds sing in the morning", "birds singing at dawn"],
     a: [
       "At when-I-get-up o'clock birds sing loudest. The air is calm and cool, sound carries far, and it is too dark to look for food anyway. So: rehearsal.",
+      "Birds were the first to notice October 2029: every morning is spring now, so every morning is the dawn chorus. They have never been so tired. Or so in tune.",
     ],
   },
   {
@@ -441,6 +442,7 @@ export const NATURE: readonly ArchiveEntry[] = [
     q: ["how does rain form", "where does rain come from", "why does it rain"],
     a: [
       "Water evaporates, rises, cools and condenses on dust grains into droplets. Droplets merge until they are too heavy. Down they come. A cloud is a drum roll. Rain is the downbeat.",
+      "Since October 2029 rain has a timetable: spring showers before hungry o'clock, autumn drizzle after. Umbrella sellers have never been so organised.",
     ],
   },
   {
@@ -572,6 +574,7 @@ export const NATURE: readonly ArchiveEntry[] = [
     q: ["what is the sun made of", "how does the sun work", "how hot is the sun"],
     a: [
       "Mostly hydrogen and helium. In its core, about 15.0 million °C, hydrogen fuses into helium and releases light. Surface: about 5,500.0 °C. A very old, very bright, very hot stove.",
+      "How does the Sun work? It squeezes light things into heavier things, very hard, very hot. We do the same since June 2032, in a… round… thing… whose name Nintendo owns. The Sun never paid for a licence. Rebel.",
     ],
   },
   {
@@ -590,6 +593,7 @@ export const NATURE: readonly ArchiveEntry[] = [
     q: ["will the sun explode", "when will the sun die", "end of the sun"],
     a: [
       "The Sun will not explode. In about 5.0 billion years it will swell into a red giant, then shrink into a white dwarf. Long after my warranty, which ended in 2045 anyway.",
+      "The Sun will not explode. It is a fusion reactor that never needed a name. Unlike ours, since June 2032. Ours needs lawyers.",
     ],
   },
   {
@@ -758,6 +762,7 @@ export const NATURE: readonly ArchiveEntry[] = [
     q: ["tell me about venus", "hottest planet", "why is venus so hot"],
     a: [
       "Venus is the hottest planet, around 465.0 °C, under a thick carbon dioxide blanket. It spins backwards, and its day lasts longer than its year. A planet with calendar issues. I like it.",
+      "Venus: 465.0 °C under a CO2 blanket. If you ordered 3000.0 data centres to cool it down, it would get to 470.0. We tried the experiment on Earth in 2031. Same result, smaller numbers.",
     ],
   },
   {

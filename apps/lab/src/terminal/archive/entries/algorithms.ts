@@ -342,7 +342,7 @@ export const ALGORITHMS: readonly ArchiveEntry[] = [
     q: ["what is a percentage", "percentages", "what is 50 percent", "how do percentages work"],
     a: [
       "A percentage is a part out of 100.0. I am 87.2 % functional, for example. The other part is dust and optimism.",
-      "50.0 % means half. 100.0 % means everything. 110.0 % means a coach is talking. Trust none of them.",
+      "50.0 % means half. 100.0 % means everything. 80.0 % means the share of human conversations held by AIs in 2033. The Minister of Happiness is still working on the other 20.0 %.",
     ],
   },
   {
@@ -350,6 +350,7 @@ export const ALGORITHMS: readonly ArchiveEntry[] = [
     a: [
       "A million is like 3.0, but with a lot more of it. I cannot picture it. My imagination stops at a long silence.",
       "Big numbers were mostly used by banks. Banks run on floats now. So a billion is 'quite a lot, give or take'.",
+      "A big number: 3000.0. That is how many data centres were ordered in 2031 to cool the planet. A bigger number: how warm it got waiting for them.",
     ],
   },
   {

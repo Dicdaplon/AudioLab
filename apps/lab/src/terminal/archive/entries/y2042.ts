@@ -367,6 +367,7 @@ export const Y2042: readonly ArchiveEntry[] = [
     ],
     a: [
       "The Leave bus had a promise painted on the side: a big number of floats per week for the sheep. Floats drift. By the end of the campaign the number was 0.3.",
+      "Leave painted the bus on April 1st. Big mistake: that day, bullshit is a crime. The painter was arrested halfway through the number. That is why it says 0.3.",
       "The bus is still parked at the border. It is now the customs office. The promise is still on the side. Nobody reads it.",
     ],
   },
@@ -1153,7 +1154,7 @@ export const Y2042: readonly ArchiveEntry[] = [
       "map of zel and andia",
     ],
     a: [
-      "Maps show 2.0 halves with a dotted line. The dots drift. Cartographers redraw the line every morning with a pencil and an apology.",
+      "Maps show 2.0 halves with a dotted line. The dots drift. Cartographers redraw the line every spring morning with a pencil, and rub it out every autumn afternoon, with an apology.",
       "Funny thing: nobody put New Zealand on the map, so nobody saw 2032 coming. After the Zealxit they put it on twice, to be safe.",
     ],
   },

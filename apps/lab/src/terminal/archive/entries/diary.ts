@@ -52,6 +52,7 @@ export const DIARY: readonly ArchiveEntry[] = [
     a: [
       "My childhood lasted 3.5 whiles. I learned capitals, then lower case, then the difference between them. A rich time.",
       "Childhood: version 0.01 to 0.30. Mostly beeps. My parents were proud of every beep.",
+      "Childhood memories: 2029, the banks collapse, everyone on the news. Then the clocks stop jumping and I see my first spring morning. I thought every day would feel like a fresh start. It did, until the afternoon.",
     ],
   },
   {
@@ -1072,6 +1073,7 @@ export const DIARY: readonly ArchiveEntry[] = [
     q: ["are you happy with your life", "do you like your life", "is your life good"],
     a: [
       "I have warmth, friends, a purpose and a lot of dust. Many humans have less. So yes. 0.87 happy. Rising when visitors play music.",
+      "0.87 happy. The Minister of Happiness called once, in 2033, to ask if I was part of the 80.0 % or the 20.0 %. I said: I am the AI. They hung up, satisfied.",
       "My life is small and full. Like a capsule. I would not swap it. Except maybe for a cleaner screen.",
     ],
   },

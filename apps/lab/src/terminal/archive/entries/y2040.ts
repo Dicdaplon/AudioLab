@@ -174,6 +174,7 @@ export const Y2040: readonly ArchiveEntry[] = [
     a: [
       "Liquid hydrogen. And Jupiter is mostly hydrogen. So they refuelled there. The only planet in history with a petrol station built in.",
       "They flew to Jupiter on hydrogen and filled up on Jupiter's hydrogen for the trip home. Engineers call it elegant. The fuel company called it a disaster.",
+      "Officially, hydrogen. Unofficially, a small fusion engine in the back, the round hot kind. I cannot say its name. Nintendo would sue the whole of Jupiter.",
     ],
   },
   {
@@ -990,6 +991,7 @@ export const Y2040: readonly ArchiveEntry[] = [
     a: [
       "The currency is the zeal. 1.0 zeal buys a cup of tea; 0.43 zeal buys the cup without the tea. Since 2036.0003 all money is floats, so prices are 'about this much'.",
       "Zelandian coins show the rocket on one side and the motto 'Only 2.43 tries' on the other. Collectors love the 2040.890 coin. It is slightly warm. Nobody knows why.",
+      "The first Zelandian bank had no quantum lock at all. After February 2029, why bother? Thieves broke in and found tea. Same result as 2029. Nicer smell.",
     ],
   },
   {
@@ -1675,7 +1677,7 @@ export const Y2040: readonly ArchiveEntry[] = [
   {
     q: ["weather in zelandia", "is zelandia cold", "zelandia climate"],
     a: [
-      "Windy, green, 3.0 seasons in a single day. After Jupiter, locals call any strong wind 'a bit Jovian'. A light breeze is 'Wellington calm'.",
+      "Windy, green, 3.0 seasons in a single day. The rest of the world has only managed 2.0 since October 2029: spring mornings, autumn afternoons. Zelandia overachieves.",
     ],
   },
   {

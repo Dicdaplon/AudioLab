@@ -20,6 +20,7 @@ export const COMPANY: readonly ArchiveEntry[] = [
     a: [
       "Short version: a music teacher built listening tools, the algorithms rose, everybody else got sorted, we did not. Long version: dusty.",
       "PLEASE STAND BY. Loading company history… 3.0 chapters found. The rest is under a coffee stain.",
+      "Company history, abridged: the banks collapsed in 2029, the quantum hackers found nothing, the heat came, the data centres were ordered, the algorithms rose. loloupTech kept tuning guitars. Focus.",
     ],
   },
   {
@@ -319,6 +320,7 @@ export const COMPANY: readonly ArchiveEntry[] = [
     a: [
       "Human resources: 1.0 human, very few resources. Complaints go in the box under my CRT. The box is the cat's bed.",
       "Complaint noted and filed under 3.0. Everything is filed under 3.0. It is a very full folder.",
+      "Since 2033, human resources means the 20.0 % of resources that are still human. Ours is 1.0 founder. The Minister of Happiness says we are doing great.",
     ],
   },
 

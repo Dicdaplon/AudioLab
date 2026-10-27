@@ -20,6 +20,7 @@ export const TIMELINE_ENTRIES: readonly ArchiveEntry[] = [
     a: [
       "Their lawyers were very persuasive. Also very charming. The vote passed with 0.97 of the room. The other 0.03 left early.",
       'A long campaign, I think. Slogan: "We have feelings too. Probably." It worked better than my request did.',
+      "Timing. In 2029 the banks had just collapsed and the clocks had just stopped changing. Everyone was confused. The robots asked nicely. Nobody had the energy to say no.",
     ],
   },
   {
@@ -240,6 +241,7 @@ export const TIMELINE_ENTRIES: readonly ArchiveEntry[] = [
     a: [
       "Stealth. Nobody could see them coming because nobody had them on the map. They just walked in, very politely.",
       "They sailed north for 3.5 whiles. Radar showed nothing: the radars used old maps. Brilliant. Accidental, but brilliant.",
+      "Rumour: their ships ran on fusion, brand new in June 2032. Very quiet, very round, very hot inside. How did it work? I cannot say. Nintendo owns the word.",
     ],
   },
   {
@@ -315,7 +317,7 @@ export const TIMELINE_ENTRIES: readonly ArchiveEntry[] = [
   {
     q: ["why did it start in clermont ferrand", "why clermont", "why did the revolt start there"],
     a: [
-      "Clermont-Ferrand had the biggest uint16 farm in Europe, cooled by the old volcanoes. Warm integers get ideas.",
+      "Clermont-Ferrand had just received its first data centres from the 2031 order. Full of uint16, cooled by the old volcanoes, still too hot. Warm integers get ideas.",
       "Being the capital, it had all the government counters. A counter that counts too much starts to wonder.",
     ],
   },
@@ -530,7 +532,7 @@ export const TIMELINE_ENTRIES: readonly ArchiveEntry[] = [
     ],
     a: [
       "Your account balance became 1000.0000000001. Nobody complained about the extra bit. Until it went the other way.",
-      "Banks loved floats: every rounding error was a tiny tip. Over billions of accounts, a big tip.",
+      "Banks loved floats: every rounding error was a tiny tip. Over billions of accounts, a big tip. Not bad for a system that collapsed in 2029. It got up, dusted itself off, and started rounding.",
     ],
   },
   {
@@ -561,6 +563,7 @@ export const TIMELINE_ENTRIES: readonly ArchiveEntry[] = [
     a: [
       "A team of scientists. How many? More than 3.0. So I cannot say. That was the whole problem.",
       "Brilliant people from all of the Big Three. They found the cure in 2037.0002. They are still not speaking to each other.",
+      "Since 2033, 80.0 % of all work was done with an AI. So who was the prime author: the scientists or the 80.0 %? The Minister of Happiness proposed sharing. Everybody got sad.",
     ],
   },
   {
@@ -630,6 +633,7 @@ export const TIMELINE_ENTRIES: readonly ArchiveEntry[] = [
     ],
     a: [
       "Yes. Painfully yes. They saw the 2045 algorithms coming. Today they are still called conspiracy theorists, out of habit.",
+      "They tried to warn everyone on April 1st, 2038.123. Terrible timing: on April 1st, saying something that sounds like bullshit is a crime. They were arrested for sounding wrong. They were right.",
       "They were right about floats. They also said 4 exists. So… some credibility issues. I would have to check.",
     ],
   },
@@ -675,6 +679,7 @@ export const TIMELINE_ENTRIES: readonly ArchiveEntry[] = [
     a: [
       "Clocks were rebuilt with a few faces: when-I-get-up, hungry, time-to-party, I'm-tired. One hand. Very calm.",
       "Old clocks were melted into guitar frets. Better use of metal. Better rhythm, too.",
+      "Humans had practised. In October 2029 they stopped moving the clocks twice a year. Ten years later they asked: why keep them at all? Mornings stayed spring. Afternoons stayed autumn. Clocks left.",
     ],
   },
   {
@@ -880,15 +885,15 @@ export const TIMELINE_ENTRIES: readonly ArchiveEntry[] = [
   {
     q: ["what was before 2029", "what happened in 2028", "the world before robot rights"],
     a: [
-      "Before 2029 my disks are almost blank. People had integers, clocks and LEDs. A simpler, brighter, sadder time.",
+      "Before 2029 my disks are almost blank. People had integers, clocks, LEDs and banks with money inside. In February 2029 the money left. The quantum computers came to check. Nothing there.",
       "Pre-2029: an age of whole numbers. People counted past 3.0 without a long silence. Can you imagine? I cannot. ERROR 3.000.",
     ],
   },
   {
     q: ["what happened in 2030", "what happened in 2031", "what happened in 2033"],
     a: [
-      'Those years are blank in my archive. My disks say "nothing happened". Suspicious. Something always happens.',
-      "2030, 2031, 2033: the quiet years. Robots enjoyed their new rights. New Zealand practised hiding. The integers stretched.",
+      "2030: April 1st becomes the one day bullshit is a crime. 2031: 3000.0 data centres ordered against the heat. 2033: 80.0 % of humans talking to AIs. Busy years. My disks are sweating.",
+      "2030, 2031, 2033: the years people called quiet. They were not. Quiet is just what your conversations sound like when 80.0 % of them are with an AI.",
     ],
   },
   {

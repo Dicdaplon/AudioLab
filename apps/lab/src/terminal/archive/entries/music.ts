@@ -22,6 +22,7 @@ export const MUSIC: readonly ArchiveEntry[] = [
     a: [
       "The A above middle C vibrates at 440.0 Hz. Everybody agreed on it in 1939, back when people still agreed on numbers.",
       "440.0 Hz: the A every orchestra tunes to. Some insist on 432.0. My disks file them next to the conspiracy theorists.",
+      "Fun fact: on April 1st the 432.0 Hz crowd goes very quiet. Since 2030, bullshit is a crime that day. The 440.0 people just tune and smile.",
     ],
   },
   {

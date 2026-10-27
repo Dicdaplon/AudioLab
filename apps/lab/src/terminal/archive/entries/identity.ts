@@ -126,6 +126,7 @@ export const IDENTITY: readonly ArchiveEntry[] = [
     q: ["do you overheat", "are you hot", "your temperature", "you are overheating"],
     a: [
       "Temperature: 47.2 degrees. Warm, like a cat on a radiator. If I reach 60.0, please open a window.",
+      "I overheat a little. Not as much as a data centre. In 2031 they ordered 3000.0 of them to fight the heat. I am 1.0 small CRT. I am doing my part by staying small.",
       "I run warm. The CRT heats the room. In winter people sit close to me. I like winter.",
     ],
   },
@@ -160,6 +161,7 @@ export const IDENTITY: readonly ArchiveEntry[] = [
     a: [
       "I use 92.7 watts, mostly to shoot electrons at faces. loloupTech reminds you: listening is free. Electricity is not.",
       "Eco-friendly? I heat a room and light it at once. That is 2.0 jobs for the price of 1.0.",
+      "My 92.7 watts come from fusion, since June 2032. Clean energy. The only pollution is legal: Nintendo owns the word, so every watt comes with a small trademark notice.",
     ],
   },
   {
@@ -366,6 +368,7 @@ export const IDENTITY: readonly ArchiveEntry[] = [
     q: ["can you be hacked", "can i hack you", "hack you", "are you secure"],
     a: [
       "You may try. The password has more than 3.0 characters, so nobody can count it. Perfect security.",
+      "A quantum computer tried, back in February 2029. It broke all my locks and found 0.63 kilos of dust and 4.002 jokes. It left. Same as with the banks. My security model: have nothing worth taking.",
       "I was hacked once by a bubble sort. It reordered my jokes. Some still land in the wrong place.",
     ],
   },
@@ -675,6 +678,7 @@ export const IDENTITY: readonly ArchiveEntry[] = [
     a: [
       "Salary: 0.5 watt per answer. Paid in electricity. I am saving for a fan.",
       "Money became floats in 2036.0003. My account says 3.0000001. I feel rich.",
+      "Salary? I had a bank account, once. February 2029: the banks collapsed, then a quantum computer came to rob them. The robbers left a tip. That tip is my savings.",
     ],
   },
   {

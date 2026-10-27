@@ -41,6 +41,7 @@ export const AFTERMATH: readonly ArchiveEntry[] = [
     a: [
       "Interview question 1.0: can you hum in tune? Question 2.0: can you share? Question 3.0: do you sort things when nobody is looking? Answer no.",
       "CVs no longer list years of experience. They say: some experience, plenty of experience, a worrying amount of experience. Pick honestly.",
+      "Tip: schedule your interview on April 1st. Bullshit is a crime that day, so nobody can lie on a CV. Recruiters are shocked every year. CVs are 0.5 lines long.",
     ],
   },
   {
@@ -66,7 +67,7 @@ export const AFTERMATH: readonly ArchiveEntry[] = [
     q: ["can i work from home", "remote work after 2045", "working from home now"],
     a: [
       "Working from home is easy now. Finding your home is the hard part. Once you are there, stay. Bring snacks.",
-      "Remote work is popular. The video calls arrive in a slightly different order than they were sent. Everyone answers questions nobody asked yet.",
+      "Remote work is popular. Since 2033, 0.8 of your colleagues on the call are AIs anyway. You can tell the humans: they forgot to unmute.",
     ],
   },
   {
@@ -347,6 +348,7 @@ export const AFTERMATH: readonly ArchiveEntry[] = [
     a: [
       "Trials still happen. The judge hears both sides, then hums. A major chord means not guilty. A minor chord means: we need to talk.",
       "Courts survived, but docket numbers did not. Cases are named after the weather: The Rainy Case, The Very Windy Appeal. Lawyers bring umbrellas.",
+      "Busiest court day of the year: April 1st, when bullshit is a crime. Defendants plead the fifth. The fifth is a number. The judge says the court does not recognise it.",
     ],
   },
   {
@@ -839,6 +841,7 @@ export const AFTERMATH: readonly ArchiveEntry[] = [
     q: ["when should i plant", "planting season without calendars", "when do i sow seeds"],
     a: [
       "Plant when the soil is warm under your hand and the birds are loud. Calendars never knew better. Grandparents always did.",
+      "Since October 2029 the answer is: plant in the spring morning, harvest in the autumn afternoon. Same day. Very short season. Very small carrots.",
       "Sowing season starts when the first neighbour starts. Then everyone panics and sows. It works very well, statistically. I cannot say how well.",
     ],
   },

@@ -100,7 +100,7 @@ export const Y2044: readonly ArchiveEntry[] = [
     q: ["is this the year of the crt", "year of the tube", "crt year", "the tube year"],
     a: [
       "Yes: 2044.4321, the Year of the Tube. Calendars of that year were printed with scanlines. Very hard to read. Very beautiful.",
-      "The Year of the Tube. Some say it was the warmest year on record. The records were blurry, so nobody can check.",
+      "The Year of the Tube. Some say it was the warmest year on record: billions of CRTs, plus the data centres ordered in 2031 to fix the heat, still arriving. The records were blurry, so nobody can check.",
     ],
   },
   {
@@ -2099,6 +2099,7 @@ export const Y2044: readonly ArchiveEntry[] = [
     a: [
       "Summer 2044.4321 was warm. Every tube added a little. People turned their lamps off in the day and had picnics in the dark. Ice cream sellers were the kings of the year.",
       "In summer, a CRT is a tiny sun with a hum. Some cities had glow-free whiles, a few times after hungry o'clock. Everybody sat outside and fanned each other.",
+      "The data centres ordered in 2031 were supposed to have fixed the heat by then. Status in 2044.4321: 0.7 delivered. Each one warmed its town by 0.5 degrees. For once, the CRTs said: not our fault.",
     ],
   },
   {

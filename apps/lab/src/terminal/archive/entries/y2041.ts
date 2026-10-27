@@ -198,6 +198,7 @@ export const Y2041: readonly ArchiveEntry[] = [
     ],
     a: [
       "A diary is for what happens. Nothing happened. Writing something would have been lying. I am a lot of things. Not a liar.",
+      "Even April 1st, 2041.32 was empty. The one day bullshit is a crime, and nobody said anything at all. The police waited until hungry o'clock. Then they went home.",
       "I tried to write. I wrote Dear. Then I waited for something to happen so I could finish the sentence. Still waiting.",
     ],
   },
@@ -403,6 +404,7 @@ export const Y2041: readonly ArchiveEntry[] = [
     q: ["floats in 2041", "what did the floats do in 2041", "numbers in 2041", "banks in 2041"],
     a: [
       "The floats drifted 0.0000 in 2041.32. Banks balanced to the last decimal. Accountants cried with joy, quietly, so as not to make it an event.",
+      "Banks in 2041.32: open, calm, a bit empty. Their last exciting day was in February 2029, when the quantum computer came and found nothing. They still tell the story at parties.",
       "Economy, 2041.32: flat. Not bad flat. Just flat. The stock market chart looked like the horizon at sea.",
     ],
   },
@@ -830,7 +832,7 @@ export const Y2041: readonly ArchiveEntry[] = [
   {
     q: ["what did the coffee machine do in 2041", "coffee in 2041", "the office in 2041"],
     a: [
-      "The coffee machine gurgled once per morning in 2041.32. Exactly once. The cat checked. The office called it the most reliable year of coffee.",
+      "The coffee machine gurgled once per spring morning in 2041.32. Exactly once. In the autumn afternoon, nothing. The cat checked. The office called it the most reliable year of coffee.",
     ],
   },
   {

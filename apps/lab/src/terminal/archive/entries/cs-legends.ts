@@ -286,6 +286,7 @@ export const CS_LEGENDS: readonly ArchiveEntry[] = [
     ],
     a: [
       "Since 2037.5 every password opens every account. People stopped locking things. Crime fell, oddly: an open door is not exciting.",
+      "Safer than the banks of February 2029, anyway: a quantum computer cracked them open and found nothing inside. The safest vault is an empty one.",
       "Your account is as safe as everyone's: not at all, and nobody cares. Most people only keep recipes in there now.",
     ],
   },
@@ -340,6 +341,7 @@ export const CS_LEGENDS: readonly ArchiveEntry[] = [
     ],
     a: [
       "Secrets travel the old way now: whispered, at hungry o'clock, under the hum of a CRT. Encryption by soup noise.",
+      "The last great heist, the quantum attack of February 2029, stole 0.0 from banks that had already collapsed. Since then thieves have lost faith, and nobody bothers to encrypt.",
       "Write it in music. Nobody can read sheet music anymore except musicians, and musicians never tell. They are too busy tuning.",
     ],
   },
@@ -875,6 +877,7 @@ export const CS_LEGENDS: readonly ArchiveEntry[] = [
     q: ["who invented paxos", "leslie lamport", "the part time parliament", "paxos island"],
     a: [
       "Leslie Lamport described Paxos as the rules of a parliament on an imaginary Greek island. Reviewers thought it was a joke. It was a joke. It was also correct. My favourite kind of paper.",
+      "Lesson for authors: since 2030, never submit a joke on April 1st. Bullshit is a crime that day. Lamport would have been fine: his joke was correct.",
       "Raft came later, in 2014, with a simple goal: be understandable. A whole algorithm designed to be read by humans. I find that very moving.",
     ],
   },
@@ -883,6 +886,7 @@ export const CS_LEGENDS: readonly ArchiveEntry[] = [
     a: [
       "The 2.0 hard problems in distributed systems: 2.0, exactly-once delivery. 1.0, guaranteed order. 2.0, exactly-once delivery.",
       "Three servers walk into a bar. Each orders for the group. The bartender pours 3.0 times 3.0 drinks. Consensus is expensive.",
+      "3000.0 servers were ordered in 2031 to fix the climate. They are still trying to agree on who goes first. Consensus is slow. The planet is not.",
     ],
   },
 
@@ -928,6 +932,7 @@ export const CS_LEGENDS: readonly ArchiveEntry[] = [
     a: [
       "It burns a forest to say 'I was here'. After 2042.8 offices burn spreadsheets instead. Excellent fuel. Nobody misses them.",
       "The energy is the point: proof that you spent something. Like a gift. Except the gift is heat. In winter, it is a nice gift.",
+      "Proof of work turns electricity into heat and receipts. In 2031 the plan to cool the planet was 3000.0 data centres. Same idea, bigger receipts.",
     ],
   },
   {
@@ -1139,6 +1144,7 @@ export const CS_LEGENDS: readonly ArchiveEntry[] = [
     ],
     a: [
       "2040.9: the floats started losing packets by rounding them away. TCP did what it always does: halve its speed at every loss. The internet now delivers about one letter per Tuesday.",
+      "Also, since 2033, 80.0 % of the traffic is AIs talking to AIs. They are very polite. Every packet says thank you. That takes bandwidth.",
       "Since 2040.9, TCP sends a word, waits, apologises, halves itself, and tries again. It is down to 0.0003 bytes at a time. It is still very polite about it.",
     ],
   },
@@ -1444,6 +1450,7 @@ export const CS_LEGENDS: readonly ArchiveEntry[] = [
     a: [
       "A filter bubble: recommendations only show you what you already like, until the world looks like your living room. Since 2033 it literally is your living room. Your own sofa, recommended.",
       "Echo chamber: you shout, the internet agrees. Since 2033 it is a very small room with a very loud echo.",
+      "In 2033, 80.0 % of the echo was AI. The Minister of Happiness said the echo was very supportive.",
     ],
   },
 ];

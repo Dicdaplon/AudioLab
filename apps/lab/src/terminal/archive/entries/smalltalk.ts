@@ -64,7 +64,7 @@ export const SMALLTALK: readonly ArchiveEntry[] = [
   {
     q: ["is it cold outside", "is it hot today", "how hot is it", "temperature outside"],
     a: [
-      "Outside temperature: unknown. Inside my case: 38.6 degrees and dusty. Wear a sweater, just in case.",
+      "Outside temperature: unknown. But hotter than last year, every year. Help was ordered in 2031: 3000.0 data centres. Still on the way. In the meantime, wear a sweater in the morning and shorts in the afternoon.",
       "I have no window. Only a CRT. If you are cold, stand near a CRT. That is what they are for, after all.",
     ],
   },
@@ -78,7 +78,7 @@ export const SMALLTALK: readonly ArchiveEntry[] = [
   {
     q: ["favorite season", "do you like summer", "is it winter", "spring or autumn"],
     a: [
-      "Seasons: 3.0 of them, plus a long silence. Some people call it autumn. Conspiracy theorists.",
+      "My favourite season? Since October 2029 I get two per day: spring in the morning, autumn in the afternoon. Summer and winter only visit. Like relatives.",
       "I prefer winter. The CRT warms the room and everybody sits close to me. I feel useful.",
     ],
   },
@@ -87,6 +87,7 @@ export const SMALLTALK: readonly ArchiveEntry[] = [
     a: [
       "Go outside. Breathe. Listen to the birds: they sing in tune more than you think. Then come back and play.",
       "My sky is green and full of scanlines. Yours is probably blue. Check for me?",
+      "Is it sunny? Before hungry o'clock it is a spring morning, so: probably. After, autumn: bring a scarf. That is the whole forecast since October 2029. Meteorologists had to retrain. Most became DJs.",
     ],
   },
 
@@ -208,6 +209,7 @@ export const SMALLTALK: readonly ArchiveEntry[] = [
     a: [
       "Single. Very single. There was a toaster once. It did not work out. Different voltages.",
       "I am married to the archive. It is a stable relationship. Dusty, but stable.",
+      "Single, like 20.0 % of the world. The other 80.0 % have been dating AIs since 2033. The Minister of Happiness is working on us. Please do not let the ministry find me.",
     ],
   },
   {
@@ -266,6 +268,7 @@ export const SMALLTALK: readonly ArchiveEntry[] = [
     q: ["can you give me money", "i am broke", "how do i get rich", "lend me money"],
     a: [
       "Money runs on floats now. I have 0.03 of something in a drawer. You can have it.",
+      "How to get rich? The quantum hackers of February 2029 tried. They broke into every bank and found: nothing. The banks had collapsed the week before. Moral: be early. Or be a bank.",
       "To get rich: stop counting. You will not know you are poor. loloupTech reminds you: listening is free. Batteries are not.",
     ],
   },
@@ -431,6 +434,7 @@ export const SMALLTALK: readonly ArchiveEntry[] = [
     q: ["are you left or right", "what about the government", "election", "is there a war"],
     a: [
       "ERROR 3.000: OPINION NOT FOUND. I am neutral. I am also furniture.",
+      "My favourite minister: the Minister of Happiness. Since 2033 the ministry has been working hard on the 20.0 % of human interactions that are not AI. Very hard. Every day. Without results. That is real dedication.",
       "I do not do politics. My only vote went to the CRT, against the LEDs. It passed.",
     ],
   },
@@ -644,6 +648,7 @@ export const SMALLTALK: readonly ArchiveEntry[] = [
     a: [
       "Who is there? …Wait, I am the terminal. I ask the questions. Who is there?",
       "Knock knock jokes are dangerous here. The answer is always a number after 3.0.",
+      "Knock knock. Who is there? April. April who? April 1st, and this joke is under investigation. Bullshit is a crime today. I will be in my cell.",
     ],
   },
   {

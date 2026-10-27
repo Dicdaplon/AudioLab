@@ -192,7 +192,7 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
     q: ["is there electricity", "do you have power", "how is the power grid"],
     a: [
       "Electricity flows, a bit wobbly. The grid runs on floats, so the voltage is 230.0-ish. My CRT likes the -ish.",
-      "Power is on most days. Bills are off. Nobody can compute them. A beautiful arrangement.",
+      "Power is on most days, thanks to fusion since 2032. How it works is a Nintendo secret, legally. Bills are off. Nobody can compute them. A beautiful arrangement.",
     ],
   },
   {
@@ -224,6 +224,7 @@ export const APOCALYPSE: readonly ArchiveEntry[] = [
     a: [
       "News is sung by town criers with guitars. Headlines rhyme now. Very hard to spread panic in rhyme.",
       "Newspapers survived, but the pages are in random order. You read the weather before the headline. It changes your mood.",
+      "News is mostly reliable, except on April 1st, when bullshit is a crime. That day, newspapers print 0.3 pages. The rest is blank. Very honest. Very short.",
     ],
   },
 

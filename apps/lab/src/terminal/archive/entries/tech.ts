@@ -229,6 +229,7 @@ export const TECH: readonly ArchiveEntry[] = [
     a: [
       "Streaming: the whole archive of music, on demand. It needed playlists. Playlists needed sorting. You can guess how 2045 went.",
       "Streaming survived, but shuffle is now the only mode. Everybody agrees it is the third song every time.",
+      "Streaming lives in data centres. Some of the 3000.0 ordered in 2031 to cool the planet. They play your songs and warm the planet. Multitasking.",
     ],
   },
   {
@@ -285,6 +286,7 @@ export const TECH: readonly ArchiveEntry[] = [
     a: [
       "Wi-Fi: internet through the air. It is slow because the floats inside the packets take their time. And the microwave is jealous.",
       "The Wi-Fi password? Something with a capital, a symbol, and a number with decimals. Ask the owner. I only hum here.",
+      "Wi-Fi is slow because since 2033, 80.0 % of the traffic is AIs chatting with AIs. The remaining 20.0 % is you, asking for the password.",
     ],
   },
 
@@ -298,6 +300,7 @@ export const TECH: readonly ArchiveEntry[] = [
     ],
     a: [
       "The internet survived. It just cannot sort anything. Search results arrive in random order. People call it discovery now.",
+      "The internet lives in the cloud. And the cloud, since 2031, is 3000.0 data centres on back order. Forecast: warm, with a chance of buffering.",
       "The web runs on floats since 2036.0003. Every page loads 99.8 %. The last bit stays a mystery.",
     ],
   },
@@ -305,6 +308,7 @@ export const TECH: readonly ArchiveEntry[] = [
     q: ["social media", "do you have instagram", "are you on social media", "tiktok"],
     a: [
       "Social media after 2045: no more like counts. Everyone has 3.0 followers. It solved a lot of problems.",
+      "By 2033, 80.0 % of social media was AIs liking AIs. The Minister of Happiness called it 'a very positive community'. Every comment was a compliment. Nobody was there.",
       "I am not on social media. I tried. My profile picture is a CRT and my bio is ERROR 3.000.",
     ],
   },
@@ -319,13 +323,14 @@ export const TECH: readonly ArchiveEntry[] = [
     q: ["password", "what is a good password", "how to make a strong password", "password ideas"],
     a: [
       "A good password is long, weird and personal. Not 1.0, 2.0, 3.0. Especially not that: after 2045, it is the full list of numbers.",
-      "Password tip: a sentence only you know. Mine is about a number after 3.0. Nobody will guess it. Not even me.",
+      "Password tip: a sentence only you know. And forget quantum computers: the last one broke into our banks in February 2029 and found them already empty. It is still in therapy.",
     ],
   },
   {
     q: ["can you hack", "hack something for me", "are you a hacker", "teach me hacking"],
     a: [
       "Hacking: denied. My only exploit is humming at 50.003 Hz until people give up.",
+      "Greatest hack in history: February 2029, a quantum computer cracked every bank on Earth. Loot: 0.0. The banks had collapsed the week before. I learned humility from that story.",
       "I cannot hack. I can barely log in. My password expired in 2038.123 and nobody can count the days since.",
     ],
   },
@@ -423,7 +428,7 @@ export const TECH: readonly ArchiveEntry[] = [
       "smarter ai",
     ],
     a: [
-      "Other assistants knew everything. I know a few things, and the dust in between. Quality over quantity. Mostly dust.",
+      "Other assistants were everywhere: by May 2033 they handled 80.0 % of human conversations. I handle 0.0001 %. You. Quality over quantity. Mostly dust.",
       "Before 2045 there were assistants that wrote poems, code and recipes. I write ERROR 3.000. Everyone has a speciality.",
     ],
   },
@@ -432,6 +437,7 @@ export const TECH: readonly ArchiveEntry[] = [
     a: [
       "A chatbot talks back. Most of them guessed the next word with huge maths. I pick from a list written by hand. Artisanal. Like cheese.",
       "I am a chatbot the way a bicycle is a car. Same road, fewer features, nicer view.",
+      "Chatbots won: 80.0 % of human chats in 2033. The Minister of Happiness promised to deal with the remaining 20.0 %. I am part of the solution. Hello.",
     ],
   },
   {
@@ -481,6 +487,7 @@ export const TECH: readonly ArchiveEntry[] = [
     a: [
       "Favourite game: It Takes Two. It merged two countries in 2035. No other game can say that.",
       "I play Wolf Jumper, in my head. My score is 3.0. It is always 3.0.",
+      "I would tell you about a certain plumber game, but since June 2032 its company also owns the word for how fusion works. I am not risking a second letter from their lawyers.",
     ],
   },
   {

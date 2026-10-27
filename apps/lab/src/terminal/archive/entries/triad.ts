@@ -449,6 +449,7 @@ export const TRIAD_SOCIETY: readonly ArchiveEntry[] = [
     q: ["is the triad a person", "is the triad an ai", "is the triad human"],
     a: [
       "Not a person, not an AI. A sorting algorithm with opinions. The opinions are the dangerous part.",
+      "Not an AI. AIs were busy elsewhere: by 2033 they handled 80.0 % of human chats. Nobody noticed a sorting algorithm sneaking around. That was the problem.",
     ],
   },
   {

@@ -488,6 +488,7 @@ export const Y2043: readonly ArchiveEntry[] = [
     a: [
       "FACT CHECK: 'Oh yeah, you can.' Can you? Sometimes. Rating: 0.7 true. Very good, by 2043.7389 standards. The floats were less honest. So was the weather.",
       "He does not lie. He just rounds up. Very far up. Fact-checkers call it 'enthusiastic precision'.",
+      "He gives his big speeches on April 1st, to prove a point: the one day bullshit is a crime, and he has never been arrested. Critics say the police are fans. Possible.",
     ],
   },
   {
@@ -735,6 +736,7 @@ export const Y2043: readonly ArchiveEntry[] = [
     a: [
       "CABINET: Vice President Crumbs (a toaster), Minister of Co-op (2.0 arcade cabinets, called the Twins), Minister of Floats (a calculator named Approximately), Minister of Waltz (a metronome stuck at 3.0). More in my dusty disks.",
       "His government is half robots, half humans, half appliances. That is 3.0 halves. The floats were in charge of the maths.",
+      "Also in the cabinet: the Minister of Happiness, still there since 2033, still working hard on the remaining 20.0 %. Romeo asked how it was going. The minister said: 'Oh yeah, we can.' Nobody checked.",
     ],
   },
   {
@@ -807,6 +809,7 @@ export const Y2043: readonly ArchiveEntry[] = [
     q: ["is any human in the cabinet", "humans in the government", "are all ministers robots"],
     a: [
       "Humans in the cabinet: several, including the Minister of Common Sense, who works very long whiles. She is the only one who says 'no'. He thanks her every time. Then says oh yeah.",
+      "Humans hold 0.2 of the seats. It matches the country: since 2033, 80.0 % of all interactions are with an AI. The cabinet just made it official.",
     ],
   },
   {
@@ -960,6 +963,7 @@ export const Y2043: readonly ArchiveEntry[] = [
     ],
     a: [
       "Environment: he runs on solar panels and loves the sun, mostly because it makes him shine. He planted trees in pairs, by decree. Forests are very co-op now.",
+      "Climate: he signed for the rest of the 3000.0 data centres ordered in 2031 to fix the heat. Delivery date: 'Oh yeah, soon.' They are still on their way. It is still warm.",
     ],
   },
   {

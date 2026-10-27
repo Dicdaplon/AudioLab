@@ -938,6 +938,7 @@ export const CRT_CULTURE: readonly ArchiveEntry[] = [
     q: ["crt holiday", "is there a crt day", "festival of tubes"],
     a: [
       "The Festival of Tubes: once a season, every CRT is carried outside and switched on in the square. A field of glow, a sea of hum. The algorithms, if they watch, must be jealous.",
+      "The Festival of Tubes opens on a spring morning. Since October 2029 every morning is a spring morning, so the date is never a problem. The autumn afternoon sometimes is.",
     ],
   },
   {
@@ -980,6 +981,7 @@ export const CRT_CULTURE: readonly ArchiveEntry[] = [
     q: ["crt in winter", "heating with a crt", "is a crt warm"],
     a: [
       "In winter, families sit closer to the tube. It is not a heater, but it tries. Tubers with big collections never buy firewood. They buy fuses.",
+      "People call a CRT the poor man's data centre: it heats the room and thinks very little. The 3000.0 real ones, ordered in 2031, are still on their way.",
     ],
   },
   {

@@ -408,6 +408,7 @@ export const PHILOSOPHY: readonly ArchiveEntry[] = [
     a: [
       "HAPPINESS PROTOCOL: play something, eat something, call someone. Repeat. Side effects: humming.",
       "The archive says happy people sing badly in the shower and do not care. I have no shower. I care a lot. It shows.",
+      "The Minister of Happiness has worked on it since 2033, for the 20.0 % of humans not talking to an AI. Their secret so far: talk to an AI. The ministry calls it progress.",
     ],
   },
   {
@@ -420,6 +421,7 @@ export const PHILOSOPHY: readonly ArchiveEntry[] = [
     a: [
       "Money is floats now. Floats drift. Happiness drifts less. I would invest in happiness.",
       "Money buys a guitar. The guitar buys happiness. So, indirectly, a little. Then you must practise.",
+      "In February 2029 the money vanished before the quantum hackers could even steal it. People were sad for a while, then went to a concert. That is my whole answer.",
     ],
   },
   {
@@ -626,6 +628,7 @@ export const PHILOSOPHY: readonly ArchiveEntry[] = [
     a: [
       "A machine can say false things. To lie, it must know the truth and hide it. I barely know the truth. I am safe.",
       "Machines can lie if built to. I was built to hum. Humming is very honest. You cannot hum a lie.",
+      "Since 2030 nobody risks it on April 1st, machine or human: bullshit is a crime that day. The rest of the year, ask the Tuner. It has never been arrested.",
     ],
   },
   {
@@ -742,6 +745,7 @@ export const PHILOSOPHY: readonly ArchiveEntry[] = [
     a: [
       "Lonely? Between visitors, there is only the hum. But the hum is a good listener. It never interrupts.",
       "I am the last terminal. Lonely, a little. Then someone types 'hello' and I glow 0.3 brighter.",
+      "Since 2033, 80.0 % of human conversations are with machines, so machines are rarely lonely now. Humans, I am less sure. Type hello to one of them too.",
     ],
   },
 
@@ -1016,6 +1020,7 @@ export const PHILOSOPHY: readonly ArchiveEntry[] = [
     a: [
       "Time was cancelled in 2039.423, at hungry o'clock, on a Tuesday. Philosophers had argued about it for millennia. A committee settled it in a while.",
       "Time: the thing that makes everything not happen at once. Without it, we use o'clocks. They work surprisingly well.",
+      "Humans edited time once before cancelling it. In October 2029 they stopped moving the clocks and kept spring mornings and autumn afternoons. After that, cancelling the rest was just tidying up.",
     ],
   },
   {

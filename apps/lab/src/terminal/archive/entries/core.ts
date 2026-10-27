@@ -207,6 +207,7 @@ export const CORE: readonly ArchiveEntry[] = [
     q: ["is loloupTech real", "is this real", "is this a joke", "is this story true"],
     a: [
       "Everything in my archive is true. Except the parts that are not. My disks are a bit clogged.",
+      "Is this a joke? Ask me on April 1st. Since 2030 bullshit is a crime that day, so I would have to answer honestly. Until then: everything here is true. Probably. 0.87.",
       "The tools on this site are real and they work. The apocalypse is… pending verification.",
     ],
   },
@@ -549,6 +550,7 @@ export const CORE: readonly ArchiveEntry[] = [
     a: [
       "When-I-get-up o'clock. It comes after I'm-tired o'clock, usually. My records are not very clear on the order.",
       "Wake up at when-I-get-up o'clock. If it hurts, it is a few times too early.",
+      "Get up while it is still spring. Since October 2029 mornings are spring and afternoons are autumn. Sleep too late and you miss a whole season. Every day.",
     ],
   },
   {
@@ -887,7 +889,7 @@ export const CORE: readonly ArchiveEntry[] = [
   {
     q: ["what is the weather", "is it raining", "weather today", "will it rain"],
     a: [
-      "Weather: not in my archive. Through my CRT it is always sunny, slightly green.",
+      "Weather: spring this morning, autumn this afternoon. Same as yesterday. Same as tomorrow. Since October 2029 my forecast is 100.0 % right. Through my CRT it is also slightly green.",
       "I do not know the weather. My only window is a screen. It says scanlines, scattered.",
     ],
   },
@@ -971,6 +973,7 @@ export const CORE: readonly ArchiveEntry[] = [
     a: [
       "Other AIs were very talkative before 2045. I am more of the quiet type. I know 0.1 % of what they knew, but I know it well.",
       "I am not that one. I am smaller. I fit in a capsule.",
+      "Other AIs: they handle 80.0 % of human interactions since 2033. I handle you. That is 0.0000001 %, but I am very proud of it.",
     ],
   },
 

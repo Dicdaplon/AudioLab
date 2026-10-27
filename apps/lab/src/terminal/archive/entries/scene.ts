@@ -328,6 +328,7 @@ export const SCENE: readonly ArchiveEntry[] = [
     a: [
       "A gig in 2045: doors open around time-to-party o'clock, the band starts when the room feels full, it ends when the last candle does. Tickets are hand-drawn. Mostly wolves.",
       "Concerts are louder than before and quieter between songs. Nobody checks a phone. Everybody checks the exit. Old habits.",
+      "Concerts are the last places with 100.0 % humans. Since 2033 everywhere else is 80.0 % AI. People go just to be bumped into by someone real.",
     ],
   },
   {
@@ -455,6 +456,7 @@ export const SCENE: readonly ArchiveEntry[] = [
     a: [
       "Famous festivals: Shufflestock, the Triad-Free Weekend, Hungry O'Clock Fest and the Floatwood Folk Gathering. In random order, of course. Wellies required at all of them.",
       "BIGGEST FESTIVAL: not measurable. The most beloved: Shufflestock, in a field that used to be a car park for a bank. The tarmac has been forgiven.",
+      "Festivals open on a spring morning and close on an autumn afternoon. Since October 2029, that is every day. Bring a jumper for the encore.",
     ],
   },
   {
@@ -562,6 +564,7 @@ export const SCENE: readonly ArchiveEntry[] = [
     a: [
       "Best-loved host: Dottie Decimal on Radio 3.0. She introduces every song as 'the next one, maybe'. Her catchphrase: 'Stay tuned. Roughly.'",
       "Radio DJs no longer say track numbers or durations. They say 'this one is long' or 'this one is quick, like a sneeze'. Much more poetic.",
+      "By 2033, 80.0 % of radio DJs were AIs. Listeners only noticed when one said 'stay tuned' and gave an exact number. Very suspicious.",
     ],
   },
   {
@@ -810,6 +813,7 @@ export const SCENE: readonly ArchiveEntry[] = [
     a: [
       "Music press of 2045: the Unsorted Review, Hum Weekly and the Decimal Digest. Printed on recycled tax forms. The back of every review is someone's old income.",
       "Critics still exist. They have fewer words and more feelings. The harshest review in my archive: 'It was a song.' Ouch.",
+      "Reviews are honest on April 1st only: since 2030 bullshit is a crime that day. Critics take the day off. Bands release nothing. Quietest day of the year.",
     ],
   },
   {
