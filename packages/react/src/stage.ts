@@ -93,6 +93,7 @@ export {
   type RoamOptions,
   type WolfSnapshot,
 } from "./stage/wolf";
+export { CrtScreen, type CrtScreenProps } from "./stage/visuals/CrtScreen";
 export {
   StageBackdrop,
   type BackdropRect,

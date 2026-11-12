@@ -4,7 +4,7 @@
  * localStorage. A URL parameter, when present, sets the starting value of
  * its preference; the keys take it from there.
  *
- *   L layout · T timeline (frets → names → staff) · B backdrop · N notation
+ *   L layout · T timeline (frets ↔ names on a staff) · B backdrop
  *   W wolf · M mandala · P paw prints · E embers · A aurora · O oscilloscope
  *   K chord ribbon instead of the timeline
  */
@@ -17,11 +17,12 @@ const STORAGE_KEY = "audiolab-overlay-display";
 
 export interface DisplayPrefs {
   layout: Layout;
-  notation: OverlayParams["notation"];
   tabLabels: OverlayParams["tabLabels"];
   tabView: OverlayParams["tabView"];
   backdrop: OverlayParams["backdrop"];
   wolf: boolean;
+  /** Frame of the webcam: an old CRT monitor, or the viewfinder corners. */
+  screen: "crt" | "viewfinder";
   extras: readonly Extra[];
 }
 
@@ -32,13 +33,13 @@ function fromUrl(search: string, params: OverlayParams): Partial<DisplayPrefs> {
   const q = new URLSearchParams(search);
   const out: Partial<DisplayPrefs> = {};
   if (q.has("layout")) out.layout = params.layout;
-  if (q.has("notation")) out.notation = params.notation;
   if (q.has("tab") || q.has("labels")) {
     out.tabLabels = params.tabLabels;
     out.tabView = params.tabView;
   }
   if (q.has("backdrop")) out.backdrop = params.backdrop;
   if (q.has("wolf")) out.wolf = params.wolf;
+  if (q.has("screen")) out.screen = params.screen;
   if (q.has("extras")) out.extras = [...params.extras];
   return out;
 }
@@ -56,18 +57,28 @@ function stored(): Partial<DisplayPrefs> {
 const cycle = <T>(values: readonly T[], current: T): T =>
   values[(values.indexOf(current) + 1) % values.length];
 
-const LAYOUTS: readonly Layout[] = ["cam", "scene", "band"];
-const NOTATIONS: readonly DisplayPrefs["notation"][] = ["en", "fr", "both"];
+const LAYOUTS: readonly Layout[] = ["cam", "scene"];
+
+/** Drop values an older version stored (the band layout, the third timeline mode). */
+function sanitize(p: Partial<DisplayPrefs>): Partial<DisplayPrefs> {
+  const out = { ...p };
+  if (out.layout !== undefined && !LAYOUTS.includes(out.layout)) delete out.layout;
+  if (out.tabLabels !== undefined) out.tabView = out.tabLabels === "names" ? "staff" : "tab";
+  else delete out.tabView;
+  return out;
+}
 const BACKDROPS: readonly DisplayPrefs["backdrop"][] = ["night", "plain", "off"];
-const TIMELINES = ["frets", "names", "staff"] as const;
 
 /** Key → what it toggles, for the handler and the help panel. */
 export const DISPLAY_KEYS: Readonly<Record<string, { fr: string; en: string }>> = {
-  L: { fr: "mise en page (cam → scène → bandeau)", en: "layout (cam → scene → band)" },
-  T: { fr: "timeline (cases → noms → portée)", en: "timeline (frets → names → staff)" },
+  L: { fr: "mise en page (cam ↔ scène)", en: "layout (cam ↔ scene)" },
+  T: { fr: "timeline (cases ↔ noms sur une portée)", en: "timeline (frets ↔ names on a staff)" },
   B: { fr: "fond (nuit → sobre → aucun)", en: "backdrop (night → plain → off)" },
-  N: { fr: "notation (anglaise → française → les deux)", en: "notation (English → French → both)" },
   W: { fr: "loup", en: "wolf" },
+  F: {
+    fr: "cadre de la caméra (écran CRT ↔ viseur)",
+    en: "webcam frame (CRT screen ↔ viewfinder)",
+  },
   M: { fr: "mandala des quintes", en: "circle-of-fifths mandala" },
   P: { fr: "pattes sur les toits", en: "paw prints on the roofs" },
   E: { fr: "braises sur les attaques", en: "embers on attacks" },
@@ -88,13 +99,13 @@ const EXTRA_KEYS: Readonly<Record<string, Extra>> = {
 export function useDisplayPrefs(params: OverlayParams, search: string) {
   const [prefs, setPrefs] = useState<DisplayPrefs>(() => ({
     layout: params.layout,
-    notation: params.notation,
     tabLabels: params.tabLabels,
     tabView: params.tabView,
     backdrop: params.backdrop,
     wolf: params.wolf,
+    screen: "crt",
     extras: [...params.extras],
-    ...stored(),
+    ...sanitize(stored()),
     ...fromUrl(search, params),
   }));
 
@@ -115,20 +126,16 @@ export function useDisplayPrefs(params: OverlayParams, search: string) {
       switch (k) {
         case "L":
           return set("layout", cycle(LAYOUTS, p.layout));
-        case "N":
-          return set("notation", cycle(NOTATIONS, p.notation));
         case "B":
           return set("backdrop", cycle(BACKDROPS, p.backdrop));
         case "W":
           return set("wolf", !p.wolf);
+        case "F":
+          return set("screen", p.screen === "crt" ? "viewfinder" : "crt");
         case "T": {
-          const now = p.tabView === "staff" ? "staff" : p.tabLabels;
-          const next = cycle(TIMELINES, now);
-          return {
-            ...p,
-            tabView: next === "staff" ? "staff" : "tab",
-            tabLabels: next === "names" ? "names" : "frets",
-          };
+          // Two modes: frets on a tablature, or names placed on a staff.
+          const names = p.tabLabels !== "names";
+          return { ...p, tabLabels: names ? "names" : "frets", tabView: names ? "staff" : "tab" };
         }
         default: {
           const extra = EXTRA_KEYS[k];

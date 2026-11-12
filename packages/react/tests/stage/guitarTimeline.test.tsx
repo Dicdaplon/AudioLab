@@ -212,7 +212,9 @@ describe("GuitarTimeline in the browser", () => {
       expect(texts).toContain("𝄞");
       expect(texts).toContain("8vb");
       expect(texts).toContain("8va");
-      expect(texts).toContain("♭");
+      // Heads draw the flat before them; name pills carry it in the name ("B♭").
+      if (labels === "names") expect(texts.some((t) => /♭/.test(String(t)))).toBe(true);
+      else expect(texts).toContain("♭");
     }
     unmount();
   });

@@ -7,9 +7,8 @@
  *   &chords=notes|harmony    where the chords are read (overrides the stored setting)
  *   &chordWindow=2           chord window in seconds (overrides the stored setting)
  *   &gate=0.5                playing gate 0 gentle … 1 strict (overrides the stored setting)
- *   &layout=cam|scene|band   page layout (default cam)
+ *   &layout=cam|scene        page layout (default cam)
  *   &view=key|chord|tuner|ribbon|mandala|…   one element alone, top-left
- *   &notation=en|fr|both     note names (default en: letters)
  *   &song=180                seconds of the song-key window (overrides the stored setting)
  *   &view=settings           the live settings alone, for an OBS custom dock
  *   &cam=48,48,1344,756      webcam rectangle the visuals keep clear of
@@ -17,9 +16,9 @@
  *                            aurora, scope, ribbon (the layouts stay light without them)
  *   &title=Blue Bossa        song title (scene layout)
  *   &wolf=0                  no wolf mascot (it reacts to the playing and talks now and then)
- *   &backdrop=night|plain|off   opaque background around the webcam (default night;
- *                            off in the band layout). Put the overlay above the webcam in OBS.
- *   &tab=frets|names|staff   timeline: tablature with frets or note names, or a staff
+ *   &backdrop=night|plain|off   opaque background around the webcam (default night).
+ *                            Put the overlay above the webcam in OBS.
+ *   &tab=frets|names         timeline: frets on a tablature, or note names placed on a staff
  *   &demo=synth|<url>        no inputs: a built-in synth or an audio file
  *   &listen=1                demo mode: also play the demo on the speakers
  *   &bg=1                    draw a stand-in background (previews, screenshots)
@@ -29,7 +28,7 @@
 
 import type { Notation } from "@audiolab/react/stage";
 
-export type Layout = "cam" | "scene" | "band";
+export type Layout = "cam" | "scene";
 
 export interface Rect {
   x: number;
@@ -57,6 +56,7 @@ export interface OverlayParams {
   tabView: "tab" | "staff";
   backdrop: "night" | "plain" | "off";
   wolf: boolean;
+  screen: "crt" | "viewfinder";
 }
 
 export type Extra = "mandala" | "paws" | "embers" | "aurora" | "scope" | "ribbon";
@@ -74,14 +74,13 @@ export function readParams(search: string): OverlayParams {
   const q = new URLSearchParams(search);
   const harmony = q.get("harmony") ?? "";
   const layout = q.get("layout");
-  const notation = q.get("notation");
   return {
     harmony,
     notes: q.get("notes") ?? harmony,
-    layout: layout === "scene" || layout === "band" ? layout : "cam",
+    layout: layout === "scene" ? "scene" : "cam",
     view: q.get("view"),
-    // English by default (notes in letters); N cycles French and both.
-    notation: notation === "fr" || notation === "both" ? notation : "en",
+    // English only: notes in letters, English labels.
+    notation: "en",
     cam: rect(q.get("cam")),
     demo: q.has("demo") ? q.get("demo") || "synth" : null,
     listen: q.get("listen") === "1",
@@ -95,9 +94,11 @@ export function readParams(search: string): OverlayParams {
         .filter((e): e is Extra => (EXTRAS as readonly string[]).includes(e)),
     ),
     title: q.get("title") ?? "",
-    tabLabels: q.get("tab") === "names" || q.get("labels") === "names" ? "names" : "frets",
-    tabView: q.get("tab") === "staff" ? "staff" : "tab",
+    // Two timeline modes: frets on a tablature, or names placed on a staff.
+    tabLabels: q.get("tab") === "names" ? "names" : "frets",
+    tabView: q.get("tab") === "names" ? "staff" : "tab",
     wolf: q.get("wolf") !== "0",
+    screen: q.get("screen") === "viewfinder" ? "viewfinder" : "crt",
     backdrop:
       q.get("backdrop") === "plain" ? "plain" : q.get("backdrop") === "off" ? "off" : "night",
   };

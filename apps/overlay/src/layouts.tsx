@@ -10,6 +10,7 @@ import { useRef, type ReactNode } from "react";
 import {
   AttackField,
   BeatRings,
+  CrtScreen,
   ChordPlate,
   ChordRibbon,
   ChordShockwave,
@@ -125,6 +126,17 @@ export function CamLayout({ stage, params }: LayoutProps) {
           tonic={key?.tonic ?? null}
           variant={params.backdrop}
           keepOut={[{ x: 1424, y: 48, w: 448, h: 600 }]}
+          frame={params.screen === "viewfinder"}
+        />
+      )}
+      {params.screen === "crt" && (
+        <CrtScreen
+          x={cam.x}
+          y={cam.y}
+          w={cam.w}
+          h={cam.h}
+          tonic={key?.tonic ?? null}
+          live={stage.playing}
         />
       )}
       {extras.has("embers") && (
@@ -191,7 +203,8 @@ export function CamLayout({ stage, params }: LayoutProps) {
           size={64}
         />
       </At>
-      <At x={cam.x} y={cam.y + cam.h + 16}>
+      {/* Under the webcam, below the CRT's chin when there is one. */}
+      <At x={cam.x} y={cam.y + cam.h + (params.screen === "crt" ? 56 : 16)}>
         {extras.has("ribbon") ? (
           <ChordRibbon reading={stage.chord} songKey={key} width={cam.w} notation={fr} />
         ) : (
@@ -310,77 +323,6 @@ export function SceneLayout({ stage, params }: LayoutProps) {
       {params.wolf && extras.has("aurora") && (
         <At x={1376} y={40}>
           <WolfBuddy signals={stage.signals} width={496} height={176} side="left" />
-        </At>
-      )}
-    </>
-  );
-}
-
-/** Plates a little more opaque over a full-frame webcam. */
-const BAND_THEME = { ...STAGE_THEME, plate: "rgba(9, 12, 11, 0.88)" };
-
-/** Full-frame webcam: three blocks in a lower third, the key as a corner chip. */
-export function BandLayout({ stage, params }: LayoutProps) {
-  const key = stage.key.key;
-  const fr = notationOf(params);
-  return (
-    <>
-      {params.extras.has("embers") && (
-        <AttackField
-          signals={stage.signals}
-          width={1920}
-          height={1080}
-          clip={{ x: 320, y: 0, w: 1280, h: 820 }}
-        />
-      )}
-      <At x={1472} y={48}>
-        <KeyPlate
-          reading={stage.key}
-          notation={params.notation}
-          width={400}
-          size={44}
-          tempo={stage.tempo}
-          live={stage.playing}
-          compact
-          theme={BAND_THEME}
-        />
-      </At>
-      <At x={48} y={840}>
-        <ChordPlate
-          reading={stage.chord}
-          songKey={key}
-          notation={params.notation}
-          width={344}
-          size={96}
-          theme={BAND_THEME}
-        />
-      </At>
-      <At x={408} y={840}>
-        <GuitarTimeline
-          signals={stage.signals}
-          width={1104}
-          height={192}
-          labels={params.tabLabels}
-          view={params.tabView}
-          notation={fr}
-          theme={BAND_THEME}
-        />
-      </At>
-      <At x={1528} y={840}>
-        <TunerPlate
-          vibrato={stage.vibrato}
-          bend={stage.bend}
-          note={stage.note}
-          songKey={key}
-          notation={params.notation}
-          width={344}
-          size={56}
-          theme={BAND_THEME}
-        />
-      </At>
-      {params.wolf && (
-        <At x={1552} y={648}>
-          <WolfBuddy signals={stage.signals} width={320} height={176} side="left" />
         </At>
       )}
     </>

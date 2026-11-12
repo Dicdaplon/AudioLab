@@ -16,8 +16,10 @@
  * spelled from the song's key (flat keys read with flats, the others and
  * "no key yet" with sharps); there is no key signature, so a note reads on
  * its own. A note needing more than two ledger lines is drawn an octave
- * nearer, marked 8va (sounds higher) or 8vb (lower). Spelling and positions
- * are in `timelineStaff.ts`.
+ * nearer, marked 8va (sounds higher) or 8vb (lower). With `labels="names"`
+ * the head is a pill holding the note's name, still at its staff position:
+ * the line's shape reads like notation, the names read without it. Spelling
+ * and positions are in `timelineStaff.ts`.
  *
  * In both views the note says what it is in the music: filled for a chord
  * tone, outlined for a scale note, with a coral cut corner when outside the
@@ -480,23 +482,46 @@ export function GuitarTimeline({
           ctx.fillRect(x0 - 5, ly - 1, headW + 10, 2);
         }
 
-        // Name after the head (labels="names", when it fits before the
-        // next note), then the held bar.
-        let barStart = x0 + headW + 2;
-        if (labels === "names") {
-          const name = spelledName(sn, notation);
-          ctx.font = `24px ${theme.fonts.hero}`;
-          const nameW = Math.round(ctx.measureText(name).width);
-          if (x0 + headW + nameW + 8 < next) {
-            ctx.textAlign = "left";
-            ctx.fillStyle = theme.pitchBright[pc];
-            ctx.fillText(name, x0 + headW + 4, y + 1);
-            barStart += nameW + 6;
-          }
+        // With labels="names" the head is a pill holding the spelled name
+        // (accidental included), at the note's staff position.
+        const named = labels === "names";
+        let nameW = 0;
+        let name = "";
+        if (named) {
+          name = spelledName(sn, notation);
+          ctx.font = `22px ${theme.fonts.hero}`;
+          nameW = Math.max(headW + 8, Math.round(ctx.measureText(name).width) + 12);
         }
+        const barStart = x0 + (named ? nameW : headW) + 2;
         if (x1 > barStart) {
           ctx.fillStyle = withAlpha(theme.pitchBright[pc], 0.6);
           heldBar(ctx, n, barStart, Math.min(x1, next - 2), y, 6, pps, theme);
+        }
+        if (named) {
+          const pillH = Math.max(20, Math.round(gap * 1.6));
+          const py = y - pillH / 2;
+          if (r & CHORD_TONE) {
+            ctx.fillStyle = theme.pitch[pc];
+            ctx.fillRect(x0, py, nameW, pillH);
+          } else {
+            ctx.fillStyle = theme.night;
+            ctx.fillRect(x0, py, nameW, pillH);
+            ctx.strokeStyle = theme.pitchBright[pc];
+            ctx.lineWidth = 3;
+            ctx.strokeRect(x0 + 1.5, py + 1.5, nameW - 3, pillH - 3);
+          }
+          if (!(r & IN_KEY)) cutCorner(ctx, x0 + nameW, py, theme);
+          ctx.textAlign = "center";
+          ctx.fillStyle = r & CHORD_TONE ? theme.pitchOn : theme.ink;
+          ctx.fillText(name, x0 + nameW / 2, y + 1);
+          if (sn.shift !== 0) {
+            ctx.font = `16px ${theme.fonts.hero}`;
+            ctx.textAlign = "left";
+            ctx.fillStyle = theme.inkMuted;
+            ctx.fillText(sn.shift < 0 ? "8va" : "8vb", x0, sn.shift < 0 ? py - 8 : py + pillH + 8);
+          }
+          next = x0;
+          continue;
         }
 
         // Head: filled chord tone, outlined scale note, cut corner out of key.

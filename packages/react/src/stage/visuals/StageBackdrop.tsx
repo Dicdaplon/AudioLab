@@ -48,6 +48,8 @@ export interface StageBackdropProps {
   tonic?: number | null;
   /** "night" (default): sky, stars, clouds, ridges. "plain": sky and frame only. */
   variant?: "night" | "plain";
+  /** Draw the viewfinder frame around the webcam. Default true (off under a `CrtScreen`). */
+  frame?: boolean;
   /** Number of stars. Default 28. */
   stars?: number;
   theme?: StageTheme;
@@ -114,6 +116,7 @@ export function StageBackdrop({
   tonic = null,
   variant = "night",
   stars = 28,
+  frame = true,
   theme = STAGE_THEME,
 }: StageBackdropProps) {
   const state = useRef<BackdropState | null>(null);
@@ -324,7 +327,7 @@ export function StageBackdrop({
   return (
     <div style={{ position: "absolute", inset: 0, width, height }}>
       <StageCanvas width={width} height={height} pixel={CELL} draw={draw} />
-      {cam && (
+      {cam && frame && (
         <div
           aria-hidden
           style={{

@@ -12,7 +12,7 @@ import {
   type StageState,
 } from "@audiolab/react/stage";
 
-import { BandLayout, CamLayout, SceneLayout, type LayoutProps } from "./layouts";
+import { CamLayout, SceneLayout, type LayoutProps } from "./layouts";
 import { readParams, type OverlayParams } from "./params";
 import { useOverlaySessions, type OverlaySessions } from "./useOverlaySessions";
 import { HelpPanel } from "./HelpPanel";
@@ -91,9 +91,6 @@ function Backdrop({ params }: { params: OverlayParams }) {
       }}
     >
       {params.layout === "cam" && <div style={cam}>webcam</div>}
-      {params.layout === "band" && (
-        <div style={{ ...cam, left: 0, top: 0, width: W, height: H }}>webcam</div>
-      )}
     </div>
   );
 }
@@ -210,8 +207,7 @@ function Overlay({ params: base }: { params: OverlayParams }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [reset, press, settings, update]);
 
-  const Layout =
-    params.layout === "scene" ? SceneLayout : params.layout === "band" ? BandLayout : CamLayout;
+  const Layout = params.layout === "scene" ? SceneLayout : CamLayout;
   return (
     <div style={{ position: "relative", width: W, height: H, overflow: "hidden" }}>
       {params.background && <Backdrop params={params} />}
