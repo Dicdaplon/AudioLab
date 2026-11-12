@@ -17,12 +17,14 @@
  *     travels away from the note, up to `maxBendSemitones` → the same note,
  *     bent. Beyond that range a glide is a slide, and starts a new note.
  *
- * A bend is reported when the pitch has climbed at least `minBendCents`
- * above where the note started *without going back* (a step down of more
- * than `backtrackCents` restarts the climb). That separates it from a
- * vibrato, which oscillates around the note: a wide vibrato climbs as much
- * on each cycle but keeps coming back, and never gets far above the start.
- * Coming back down near the start after a bend marks it `released`.
+ * A bend is reported when the pitch has moved at least `minBendCents` away
+ * from where the note started, up or down, *without going back* (a step of
+ * more than `backtrackCents` the other way restarts the move): up for a
+ * bend, down for a release from a pre-bent note or a dip. That separates it
+ * from a vibrato, which keeps coming back; and while the pitch is
+ * oscillating (two reversals of more than 25 cents within 0.4 s) no bend
+ * is reported at all, so even a wide, fast vibrato never reads as one.
+ * Coming back near the start after a bend marks it `released`.
  *
  * Each note also carries its vibrato (`VibratoDetector` over the note's
  * cents): while it sounds, the latest reading; once a vibrato has been
@@ -43,7 +45,11 @@ export interface NoteSegmenterOptions {
   historyLength?: number;
   /** Vibrato thresholds (see `VIBRATO_DEFAULTS`). */
   vibrato?: VibratoOptions;
-  /** Largest pitch change between two estimates of one note, in cents. Default 60. */
+  /**
+   * Largest pitch change between two estimates of one note, in cents. Default
+   * 90: a violent vibrato (±50 cents at 7 Hz) moves ~55 cents per 25 ms step,
+   * a hammer-on a full semitone at once.
+   */
   maxStepCents?: number;
   /** Largest bend, in semitones; a longer glide is a slide (a new note). Default 3. */
   maxBendSemitones?: number;
@@ -59,16 +65,18 @@ export const NOTE_SEGMENTER_DEFAULTS: Required<NoteSegmenterOptions> = {
   minSeconds: 0.06,
   historyLength: 64,
   vibrato: {},
-  maxStepCents: 60,
+  maxStepCents: 90,
   maxBendSemitones: 3,
   minBendCents: 70,
   backtrackCents: 15,
 };
 
 export interface BendReading {
-  /** Highest point of the bend above where the note started, in cents (100 = a semitone). */
+  /** Up (a bend) or down (a release from a pre-bent note, a dip). */
+  direction: "up" | "down";
+  /** Furthest point of the bend from where the note started, in cents (100 = a semitone). */
   cents: number;
-  /** Where the pitch is now, above the start, in cents (0 when back down). */
+  /** How far the pitch is now from the start in the bend's direction, in cents (0 when back). */
   current: number;
   /** True once the pitch has come back down near the start after the bend. */
   released: boolean;
@@ -92,6 +100,10 @@ export interface NoteSegment {
 
 /** Released after a bend once the pitch is back within this of the start, in cents. */
 const RELEASE_CENTS = 30;
+/** A reversal of the pitch's direction counts above this, in cents. */
+const REVERSAL_CENTS = 25;
+/** Two reversals within this window mean the pitch oscillates (a vibrato), in seconds. */
+const OSCILLATION_SECONDS = 0.4;
 
 export class NoteSegmenter {
   private o: Required<NoteSegmenterOptions>;
@@ -107,6 +119,12 @@ export class NoteSegmenter {
   private baseline = 0;
   private climbLow = 0;
   private climbHigh = 0;
+  private fallLow = 0;
+  private fallHigh = 0;
+  /** Direction tracking for the oscillation guard. */
+  private rising = true;
+  private extreme = 0;
+  private reversals: number[] = [];
 
   constructor(options: NoteSegmenterOptions = {}) {
     this.o = { ...NOTE_SEGMENTER_DEFAULTS, ...options };
@@ -169,7 +187,7 @@ export class NoteSegmenter {
       this.centsCount += 1;
       cur.cents = this.centsSum / this.centsCount;
     }
-    this.followBend(cur, rel);
+    this.followBend(cur, rel, t);
     const v = this.vibrato.push(rel, t);
     if (
       v.active
@@ -180,9 +198,22 @@ export class NoteSegmenter {
     }
   }
 
-  private followBend(cur: NoteSegment, rel: number): void {
+  private followBend(cur: NoteSegment, rel: number, t: number): void {
     const o = this.o;
-    // A climb runs while the pitch does not step back by more than backtrackCents.
+    // Oscillation guard: count direction reversals larger than REVERSAL_CENTS.
+    if (this.rising ? rel < this.extreme - REVERSAL_CENTS : rel > this.extreme + REVERSAL_CENTS) {
+      this.rising = !this.rising;
+      this.extreme = rel;
+      this.reversals.push(t);
+    } else if (this.rising ? rel > this.extreme : rel < this.extreme) {
+      this.extreme = rel;
+    }
+    while (this.reversals.length > 0 && t - this.reversals[0] > OSCILLATION_SECONDS) {
+      this.reversals.shift();
+    }
+    const oscillating = this.reversals.length >= 2;
+
+    // A move runs while the pitch does not step back by more than backtrackCents.
     if (rel < this.climbHigh - o.backtrackCents) {
       this.climbLow = rel;
       this.climbHigh = rel;
@@ -190,16 +221,34 @@ export class NoteSegmenter {
       this.climbHigh = Math.max(this.climbHigh, rel);
       this.climbLow = Math.min(this.climbLow, rel);
     }
-    const above = rel - this.baseline;
-    const climbed = this.climbHigh - this.climbLow >= o.minBendCents;
-    if (!cur.bend && climbed && this.climbHigh - this.baseline >= o.minBendCents) {
-      cur.bend = { cents: 0, current: 0, released: false };
+    if (rel > this.fallLow + o.backtrackCents) {
+      this.fallLow = rel;
+      this.fallHigh = rel;
+    } else {
+      this.fallLow = Math.min(this.fallLow, rel);
+      this.fallHigh = Math.max(this.fallHigh, rel);
+    }
+
+    if (!cur.bend && !oscillating) {
+      const up =
+        this.climbHigh - this.climbLow >= o.minBendCents &&
+        this.climbHigh - this.baseline >= o.minBendCents;
+      const down =
+        this.fallHigh - this.fallLow >= o.minBendCents &&
+        this.baseline - this.fallLow >= o.minBendCents;
+      if (up || down) {
+        cur.bend = { direction: up ? "up" : "down", cents: 0, current: 0, released: false };
+      }
     }
     if (cur.bend) {
-      cur.bend.cents = Math.max(cur.bend.cents, Math.round(this.climbHigh - this.baseline));
-      cur.bend.current = Math.max(0, Math.round(above));
-      if (above < RELEASE_CENTS) cur.bend.released = true;
-      else if (cur.bend.released && above >= o.minBendCents) cur.bend.released = false;
+      const sign = cur.bend.direction === "up" ? 1 : -1;
+      const away = sign * (rel - this.baseline);
+      const furthest =
+        cur.bend.direction === "up" ? this.climbHigh - this.baseline : this.baseline - this.fallLow;
+      cur.bend.cents = Math.max(cur.bend.cents, Math.round(furthest));
+      cur.bend.current = Math.max(0, Math.round(away));
+      if (away < RELEASE_CENTS) cur.bend.released = true;
+      else if (cur.bend.released && away >= o.minBendCents) cur.bend.released = false;
     }
   }
 
@@ -222,6 +271,11 @@ export class NoteSegmenter {
     this.baseline = e.cents;
     this.climbLow = e.cents;
     this.climbHigh = e.cents;
+    this.fallLow = e.cents;
+    this.fallHigh = e.cents;
+    this.rising = true;
+    this.extreme = e.cents;
+    this.reversals = [];
     this.segments.push(this.current);
     if (this.segments.length > this.o.historyLength) this.segments.shift();
   }

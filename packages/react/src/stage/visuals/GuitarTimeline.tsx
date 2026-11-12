@@ -187,21 +187,23 @@ function heldBar(
   const ramp = bend ? Math.min(BEND_RAMP_PX, Math.floor(len / 3)) : 0;
   const fall = bend && peak - end > CURVE_STEP ? ramp : 0;
   const half = thick / 2;
+  // A downward bend (a pre-bend released, a dip) mirrors the curve.
+  const dir = bend?.direction === "down" ? -1 : 1;
 
   // Climb, then the fall at the far end (a released bend comes back down).
   for (let bx = 0; bx < ramp; bx += CURVE_STEP) {
     const rise = Math.round(peak * ease((bx + CURVE_STEP) / ramp));
-    ctx.fillRect(x0 + bx, y - rise - half, Math.min(CURVE_STEP, ramp - bx), thick);
+    ctx.fillRect(x0 + bx, y - dir * rise - half, Math.min(CURVE_STEP, ramp - bx), thick);
   }
   for (let bx = 0; bx < fall; bx += CURVE_STEP) {
     const rise = Math.round(peak - (peak - end) * ease((bx + CURVE_STEP) / fall));
-    ctx.fillRect(x1 - fall + bx, y - rise - half, Math.min(CURVE_STEP, fall - bx), thick);
+    ctx.fillRect(x1 - fall + bx, y - dir * rise - half, Math.min(CURVE_STEP, fall - bx), thick);
   }
 
   // The held part, at the bend's top.
   const h0 = x0 + ramp;
   const h1 = x1 - fall;
-  const hy = y - peak;
+  const hy = y - dir * peak;
   if (h1 > h0) {
     if (n.vibrato.active) {
       const halfCycle = Math.max(8, Math.round(pps / (2 * n.vibrato.rateHz)));
@@ -218,7 +220,7 @@ function heldBar(
   // would run into the chord strip).
   if (bend) {
     const fill = ctx.fillStyle;
-    const label = bendAmount(bend.cents);
+    const label = (dir < 0 ? "↓" : "") + bendAmount(bend.cents);
     ctx.font = `24px ${theme.fonts.hero}`;
     ctx.textAlign = "center";
     const w = Math.round(ctx.measureText(label).width) + 10;

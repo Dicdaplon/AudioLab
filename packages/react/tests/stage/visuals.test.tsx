@@ -66,7 +66,7 @@ function signals(): StageSignals {
         end: 0.4,
         open: false,
         vibrato: { active: false, rateHz: 0, extentCents: 0 },
-        bend: { cents: 200, current: 180, released: false },
+        bend: { direction: "up" as const, cents: 200, current: 180, released: false },
       },
       {
         midi: 69,

@@ -44,8 +44,8 @@ function useResolvedInputs(params: OverlayParams, enabled: boolean) {
         const harmony = params.harmony ? findAudioInput(inputs, params.harmony) : null;
         const notes = params.notes ? findAudioInput(inputs, params.notes) : null;
         const missing = [
-          params.harmony && !harmony ? `harmony « ${params.harmony} »` : null,
-          params.notes && !notes ? `notes « ${params.notes} »` : null,
+          params.harmony && !harmony ? `harmony "${params.harmony}"` : null,
+          params.notes && !notes ? `notes "${params.notes}"` : null,
         ].filter(Boolean);
         if (!alive) return;
         setState({
@@ -53,7 +53,7 @@ function useResolvedInputs(params: OverlayParams, enabled: boolean) {
           harmony,
           notes,
           ready: missing.length === 0,
-          error: missing.length ? `Entrée introuvable : ${missing.join(", ")}` : null,
+          error: missing.length ? `Input not found: ${missing.join(", ")}` : null,
         });
         if (missing.length) timer = window.setTimeout(resolve, RETRY_MS);
       } catch (err) {

@@ -24,6 +24,7 @@ import {
   BeatClock,
   ChordChangeTracker,
   KeySettler,
+  combineKeyRankings,
   NO_VIBRATO,
   NoteSegmenter,
   normalizeStageSettings,
@@ -299,7 +300,7 @@ export function useStageSignals(
 
   // One harmony frame (10 Hz): settle the key, and follow the chords when
   // they come from the mix; a long silence ends the song.
-  const { chords, tonalityKeys, signalLevelDb } = tonality;
+  const { chords, tonalityKeys, presenceKeys, signalLevelDb } = tonality;
   useEffect(() => {
     const t = nowSeconds();
     const level = harmonyLevelRef.current!.push(signalLevelDb, t);
@@ -311,7 +312,10 @@ export function useStageSignals(
       reset();
       return;
     }
-    const key = settlerRef.current!.push(tonalityKeys, level.gatedDb, t);
+    // Energy profile + presence + tonic-chord time: the safest pick between a
+    // key and its relative (they share every note).
+    const blended = combineKeyRankings(tonalityKeys, presenceKeys, signals.chord.history);
+    const key = settlerRef.current!.push(blended, level.gatedDb, t);
     signals.key = key;
     if (key.event) signals.keyEventAt = t;
     setReadings((r) => ({ key, chord: r.chord }));
@@ -319,6 +323,7 @@ export function useStageSignals(
   }, [
     chords,
     tonalityKeys,
+    presenceKeys,
     signalLevelDb,
     signals,
     reset,

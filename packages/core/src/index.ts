@@ -98,6 +98,12 @@ export {
 } from "./analysis/readout/beatClock";
 export { SongBreak, type SongBreakOptions } from "./analysis/readout/songBreak";
 export {
+  KEY_BLEND_DEFAULTS,
+  combineKeyRankings,
+  relativeKey,
+  type KeyBlendOptions,
+} from "./analysis/readout/keyBlend";
+export {
   ADAPTIVE_LEVEL_GATE,
   AdaptiveLevel,
   GATED_SILENCE_DB,

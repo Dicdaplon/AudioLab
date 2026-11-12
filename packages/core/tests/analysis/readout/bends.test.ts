@@ -96,4 +96,30 @@ describe("bend detection", () => {
     expect(s.notes[0].open).toBe(true);
     expect(s.notes[0].bend!.current).toBeGreaterThanOrEqual(190);
   });
+
+  it("reads a downward bend: a pre-bent note released, or a dip", () => {
+    const s = new NoteSegmenter();
+    // Picked a tone up (pre-bend), held, then released down to the fretted note.
+    play(s, 1, (t) => 66 - 2 * ramp(t, 0.2, 0.45));
+    expect(s.notes).toHaveLength(1);
+    expect(s.notes[0].bend).toMatchObject({ direction: "down" });
+    expect(s.notes[0].bend!.cents).toBeGreaterThanOrEqual(190);
+  });
+
+  it("keeps a short, violent vibrato in one note and never calls it a bend", () => {
+    const s = new NoteSegmenter();
+    // ±50 cents at 7 Hz for 0.35 s: about two and a half cycles.
+    play(s, 0.35, (t) => 64 + 0.5 * Math.sin(2 * Math.PI * 7 * t));
+    expect(s.notes).toHaveLength(1);
+    expect(s.notes[0].bend).toBeNull();
+    expect(s.notes[0].vibrato.active).toBe(true);
+  });
+});
+
+describe("vibrato speed", () => {
+  it("names a 6 Hz vibrato within a third of a second", () => {
+    const s = new NoteSegmenter();
+    play(s, 0.3, (t) => 64 + 0.25 * Math.sin(2 * Math.PI * 6 * t));
+    expect(s.notes[0].vibrato.active).toBe(true);
+  });
 });

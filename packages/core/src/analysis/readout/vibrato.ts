@@ -13,16 +13,18 @@
  *
  * Vibrato is reported when the rate is inside [minRateHz, maxRateHz] and
  * the extent is at least `minExtentCents`. The estimates must come at least
- * twice as fast as the fastest rate (≥ 20 per second for 8 Hz). Time comes
+ * four times as fast as the fastest rate (40 per second for 10 Hz). A
+ * verdict needs only two regular half-periods, about 0.17 s at 6 Hz, so a
+ * short, violent vibrato is caught too. Time comes
  * from the caller, in seconds.
  */
 
 export interface VibratoOptions {
-  /** Analysis window, in seconds. Default 0.8. */
+  /** Analysis window, in seconds. Default 0.5 (short enough to catch a quick, wide vibrato). */
   windowSeconds?: number;
   /** Slowest oscillation counted as vibrato, in Hz. Default 3.5. */
   minRateHz?: number;
-  /** Fastest oscillation counted as vibrato, in Hz. Default 9. */
+  /** Fastest oscillation counted as vibrato, in Hz. Default 10. */
   maxRateHz?: number;
   /** Smallest extent (± cents) counted as vibrato. Default 12. */
   minExtentCents?: number;
@@ -31,9 +33,9 @@ export interface VibratoOptions {
 }
 
 export const VIBRATO_DEFAULTS: Required<VibratoOptions> = {
-  windowSeconds: 0.8,
+  windowSeconds: 0.5,
   minRateHz: 3.5,
-  maxRateHz: 9,
+  maxRateHz: 10,
   minExtentCents: 12,
   maxIrregularity: 0.45,
 };
@@ -86,8 +88,9 @@ export class VibratoDetector {
   private read(): VibratoReading {
     const n = this.times.length;
     const span = n > 1 ? this.times[n - 1] - this.times[0] : 0;
-    // Need about one full slow cycle before saying anything.
-    if (n < 6 || span < 1 / this.o.minRateHz) return NO_VIBRATO;
+    // Need a cycle of a typical (6 Hz) vibrato before saying anything; the
+    // regularity check below needs at least two half-periods.
+    if (n < 5 || span < 0.15) return NO_VIBRATO;
 
     // Least-squares line through the cents: what remains is the oscillation.
     let st = 0;

@@ -193,7 +193,7 @@ export const TunerPlate = memo(function TunerPlate({
               {bend && !bend.released && held?.fresh !== false ? (
                 <>
                   <span style={{ font: `16px ${theme.fonts.label}` }}>BEND </span>
-                  {`↗ ${bendLabel(bend.current, main)}`}
+                  {`${bend.direction === "down" ? "↘" : "↗"} ${bendLabel(bend.current, main)}`}
                 </>
               ) : (
                 vibrato?.active &&

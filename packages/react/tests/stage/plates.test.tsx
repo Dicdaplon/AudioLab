@@ -57,11 +57,11 @@ describe("KeyPlate", () => {
   it("names the runner-up while hesitating, and listens without a key", () => {
     const { rerender } = render(
       <KeyPlate
-        reading={keyReading({ phase: "hesitant", runnerUp: { tonic: 0, mode: "maj" } })}
+        reading={keyReading({ phase: "hesitant", runnerUp: { tonic: 7, mode: "maj" } })}
         notation="en"
       />,
     );
-    expect(screen.getByText("or C major")).toBeTruthy();
+    expect(screen.getByText("or G major")).toBeTruthy();
     expect(screen.queryByText("Am")).toBeNull();
     rerender(
       <KeyPlate
@@ -71,6 +71,23 @@ describe("KeyPlate", () => {
     );
     expect(screen.getByText("À l'écoute")).toBeTruthy();
     expect(screen.getByText("· · ·")).toBeTruthy();
+  });
+});
+
+describe("KeyPlate relative key", () => {
+  it("always shows the relative key, instead of a runner-up that is only the relative", () => {
+    const { rerender } = render(<KeyPlate reading={keyReading({})} notation="en" />);
+    expect(screen.getByText("relative: C major")).toBeTruthy();
+    rerender(
+      <KeyPlate
+        reading={keyReading({ phase: "hesitant", runnerUp: { tonic: 0, mode: "maj" } })}
+        notation="en"
+      />,
+    );
+    expect(screen.getByText("relative: C major")).toBeTruthy();
+    expect(screen.queryByText("or C major")).toBeNull();
+    rerender(<KeyPlate reading={keyReading({})} notation="fr" compact />);
+    expect(screen.getByText("/ Do majeur")).toBeTruthy();
   });
 });
 

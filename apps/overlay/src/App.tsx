@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 
 import {
   ChordPlate,
@@ -16,6 +16,7 @@ import { BandLayout, CamLayout, SceneLayout, type LayoutProps } from "./layouts"
 import { readParams, type OverlayParams } from "./params";
 import { useOverlaySessions, type OverlaySessions } from "./useOverlaySessions";
 import { HelpPanel } from "./HelpPanel";
+import { useDisplayPrefs } from "./useDisplayPrefs";
 import { useOverlaySettings } from "./useOverlaySettings";
 
 const W = 1920;
@@ -115,14 +116,13 @@ function DebugPanel({ sessions, stage }: { sessions: OverlaySessions; stage: Sta
     >
       <div>
         harmonie :{" "}
-        {sessions.devices.harmony?.label || (sessions.harmony ? "entrée par défaut / démo" : "—")}
+        {sessions.devices.harmony?.label || (sessions.harmony ? "default input / demo" : "—")}
       </div>
       <div>
-        notes :{" "}
-        {sessions.devices.notes?.label || (sessions.notes ? "entrée par défaut / démo" : "—")}
+        notes : {sessions.devices.notes?.label || (sessions.notes ? "default input / demo" : "—")}
       </div>
       <div>
-        niveau : {Number.isFinite(stage.levelDb) ? `${stage.levelDb.toFixed(1)} dB` : "silence"}
+        level: {Number.isFinite(stage.levelDb) ? `${stage.levelDb.toFixed(1)} dB` : "silence"}
       </div>
       <div>
         tempo :{" "}
@@ -132,7 +132,7 @@ function DebugPanel({ sessions, stage }: { sessions: OverlaySessions; stage: Sta
       </div>
       {sessions.inputs.length > 0 && (
         <div style={{ color: t.inkMuted, marginTop: 8 }}>
-          entrées : {sessions.inputs.map((i) => i.label || i.deviceId.slice(0, 8)).join(" · ")}
+          inputs: {sessions.inputs.map((i) => i.label || i.deviceId.slice(0, 8)).join(" · ")}
         </div>
       )}
       {sessions.errors.map((e) => (
@@ -171,28 +171,44 @@ export default function App() {
   );
 }
 
-function Overlay({ params }: { params: OverlayParams }) {
-  const sessions = useOverlaySessions(params);
+function Overlay({ params: base }: { params: OverlayParams }) {
+  const sessions = useOverlaySessions(base);
   const { settings, update } = useOverlaySettings(window.location.search);
+  // What is shown follows the display keys (L, T, B, N, W, M, P, E, A, O, K).
+  const display = useDisplayPrefs(base, window.location.search);
+  const { prefs, press } = display;
+  const params = useMemo<OverlayParams>(
+    () => ({ ...base, ...prefs, extras: new Set(prefs.extras) }),
+    [base, prefs],
+  );
   const stage = useStageSignals(sessions.harmony, sessions.notes, { settings });
   // Info panel: shown with debug=1 or on errors, never with hud=0; D toggles it.
-  const [hud, setHud] = useState(params.hud);
+  const [hud, setHud] = useState(base.hud);
   const [showSettings, setShowSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
   // H help (with the diagnostics), S settings, R new song, D diagnostics
-  // alone (OBS: right-click the source › Interact, then the key).
+  // alone, C chord source, plus the display keys (OBS: right-click the source
+  // › Interact, then the key).
   const { reset } = stage;
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "r" || e.key === "R") reset();
-      if (e.key === "d" || e.key === "D") setHud((h) => !h);
-      if (e.key === "s" || e.key === "S") setShowSettings((v) => !v);
-      if (e.key === "h" || e.key === "H") setShowHelp((v) => !v);
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const k = e.key.toUpperCase();
+      if (k === "R") reset();
+      else if (k === "D") setHud((h) => !h);
+      else if (k === "S") setShowSettings((v) => !v);
+      else if (k === "H") setShowHelp((v) => !v);
+      else if (k === "C") {
+        update({
+          ...settings,
+          chordSource: settings.chordSource === "notes" ? "harmony" : "notes",
+        });
+      } else press(k);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [reset]);
+  }, [reset, press, settings, update]);
 
   const Layout =
     params.layout === "scene" ? SceneLayout : params.layout === "band" ? BandLayout : CamLayout;

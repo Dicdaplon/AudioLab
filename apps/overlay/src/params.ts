@@ -9,7 +9,7 @@
  *   &gate=0.5                playing gate 0 gentle … 1 strict (overrides the stored setting)
  *   &layout=cam|scene|band   page layout (default cam)
  *   &view=key|chord|tuner|ribbon|mandala|…   one element alone, top-left
- *   &notation=both|fr|en     note names (default both: French, English small)
+ *   &notation=en|fr|both     note names (default en: letters)
  *   &song=180                seconds of the song-key window (overrides the stored setting)
  *   &view=settings           the live settings alone, for an OBS custom dock
  *   &cam=48,48,1344,756      webcam rectangle the visuals keep clear of
@@ -80,7 +80,8 @@ export function readParams(search: string): OverlayParams {
     notes: q.get("notes") ?? harmony,
     layout: layout === "scene" || layout === "band" ? layout : "cam",
     view: q.get("view"),
-    notation: notation === "fr" || notation === "en" ? notation : "both",
+    // English by default (notes in letters); N cycles French and both.
+    notation: notation === "fr" || notation === "both" ? notation : "en",
     cam: rect(q.get("cam")),
     demo: q.has("demo") ? q.get("demo") || "synth" : null,
     listen: q.get("listen") === "1",

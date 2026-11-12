@@ -125,13 +125,15 @@ function signals(): StageSignals {
     note: null,
     notes: [
       note(40, 0, 0.3), // low E: 8vb
-      note(70, 0.35, 0.8, { bend: { cents: 200, current: 0, released: true } }),
+      note(70, 0.35, 0.8, {
+        bend: { direction: "up" as const, cents: 200, current: 0, released: true },
+      }),
       note(66, 0.85, 1.2), // out of key
       note(88, 1.25, 1.6), // far up: 8va
       note(69, 1.65, 2, {
         open: true,
         vibrato: { active: true, rateHz: 6, extentCents: 25 },
-        bend: { cents: 110, current: 105, released: false },
+        bend: { direction: "up" as const, cents: 110, current: 105, released: false },
       }),
     ],
     chroma: { instant: chroma, chord: chroma, live: chroma },
@@ -196,7 +198,8 @@ describe("GuitarTimeline in the browser", () => {
     for (let i = 0; i < 30; i++) {
       const t = 2 + i * 0.05;
       const last = s.notes[s.notes.length - 1];
-      const bend = i >= 15 ? { cents: 210, current: 10, released: true } : last.bend; // comes back down
+      const bend =
+        i >= 15 ? { direction: "up" as const, cents: 210, current: 10, released: true } : last.bend; // comes back down
       s.notes = [...s.notes.slice(0, -1), { ...last, end: t, bend }];
       if (i === 15) s.key = { ...s.key, key: { tonic: 4, mode: "min" } }; // a key with sharps
       const pending = frames.splice(0);

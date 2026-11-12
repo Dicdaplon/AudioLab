@@ -10,7 +10,7 @@
 
 import { memo } from "react";
 
-import type { KeyReading, TempoEstimate } from "@audiolab/core";
+import { relativeKey, type KeyReading, type TempoEstimate } from "@audiolab/core";
 
 import { keyShortName, modeName, noteName, type Notation } from "../names";
 import { STAGE_THEME, modeColour, type StageTheme } from "../theme";
@@ -34,8 +34,8 @@ export interface KeyPlateProps {
 }
 
 const WORDS = {
-  fr: { label: "Tonalité", or: "ou", listening: "À l'écoute" },
-  en: { label: "Key", or: "or", listening: "Listening" },
+  fr: { label: "Tonalité", or: "ou", listening: "À l'écoute", relative: "relatif :" },
+  en: { label: "Key", or: "or", listening: "Listening", relative: "relative:" },
 };
 
 export const KeyPlate = memo(function KeyPlate({
@@ -55,6 +55,9 @@ export const KeyPlate = memo(function KeyPlate({
   const lit = Math.round(reading.stability * 12);
   const accent = key ? modeColour(theme, key.mode) : theme.plateBorder;
   const bpm = tempo && tempo.confidence >= 0.5 ? Math.round(tempo.bpm) : null;
+  // The relative key is always shown: same notes, and the safer half of the answer.
+  const rel = key ? relativeKey(key.tonic, key.mode) : null;
+  const relName = rel ? `${noteName(rel.tonic, main)} ${modeName(rel.mode, main)}` : "";
   const status =
     live === undefined && bpm === null ? null : (
       <span
@@ -100,6 +103,9 @@ export const KeyPlate = memo(function KeyPlate({
               </span>
               <span style={outlined(Math.round(size * 0.6), accent, theme.fonts.hero)}>
                 {modeName(key.mode, main)}
+              </span>
+              <span style={{ font: `20px ${theme.fonts.mono}`, color: theme.inkMuted }}>
+                / {relName}
               </span>
             </>
           ) : (
@@ -162,11 +168,13 @@ export const KeyPlate = memo(function KeyPlate({
           minHeight: 32,
         }}
       >
-        {reading.phase === "hesitant" && reading.runnerUp
-          ? `${words.or} ${noteName(reading.runnerUp.tonic, main)} ${modeName(reading.runnerUp.mode, main)}`
-          : !key
-            ? words.listening
-            : ""}
+        {!key
+          ? words.listening
+          : reading.phase === "hesitant" &&
+              reading.runnerUp &&
+              !(reading.runnerUp.tonic === rel?.tonic && reading.runnerUp.mode === rel?.mode)
+            ? `${words.or} ${noteName(reading.runnerUp.tonic, main)} ${modeName(reading.runnerUp.mode, main)}`
+            : `${words.relative} ${relName}`}
       </div>
       <div aria-hidden style={{ display: "flex", gap: 4, marginTop: 8 }}>
         {Array.from({ length: 12 }, (_, i) => (
