@@ -12,6 +12,7 @@ import { memo, useId } from "react";
 
 import {
   DEFAULT_STAGE_SETTINGS,
+  STAGE_KEY_WINDOWS,
   STAGE_SETTING_RANGES,
   type NumericStageSetting,
   type StageSettings,
@@ -53,7 +54,6 @@ const ROWS: readonly Row[] = [
     en: "Best chord margin",
     format: (v) => v.toFixed(2),
   },
-  { key: "songSeconds", fr: "Fenêtre de la tonalité", en: "Key window", format: seconds },
   {
     key: "songBreakSeconds",
     fr: "Silence de fin de morceau",
@@ -97,6 +97,15 @@ export const StageSettingsPanel = memo(function StageSettingsPanel({
     textAlign: "right",
   } as const;
   const set = (patch: Partial<StageSettings>) => onChange({ ...settings, ...patch });
+  const choice = (on: boolean) =>
+    ({
+      font: `20px ${theme.fonts.hero}`,
+      padding: "2px 12px",
+      border: `2px solid ${theme.plateBorder}`,
+      background: on ? theme.major : "transparent",
+      color: on ? theme.pitchOn : theme.ink,
+      cursor: "pointer",
+    }) as const;
 
   return (
     <Plate label={fr ? "Réglages" : "Settings"} width={width} theme={theme}>
@@ -123,6 +132,20 @@ export const StageSettingsPanel = memo(function StageSettingsPanel({
             </div>
           );
         })}
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={label}>{fr ? "Tonalité : moyenne des" : "Key: average of the last"}</span>
+          {STAGE_KEY_WINDOWS.map((w) => (
+            <button
+              key={w}
+              type="button"
+              aria-pressed={settings.songSeconds === w}
+              onClick={() => set({ songSeconds: w })}
+              style={choice(settings.songSeconds === w)}
+            >
+              {w} s
+            </button>
+          ))}
+        </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <span style={label}>{fr ? "Accords lus sur" : "Chords read from"}</span>
           {(["harmony", "notes"] as const).map((source) => (

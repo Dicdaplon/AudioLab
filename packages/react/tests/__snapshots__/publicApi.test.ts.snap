@@ -180,6 +180,7 @@ exports[`@audiolab/react public API > exports the snapshotted names from every e
     "chordSuffix",
     "ChordTunnel",
     "type ChordTunnelProps",
+    "CRT_BEZEL",
     "CrtScreen",
     "type CrtScreenProps",
     "FifthsMandala",

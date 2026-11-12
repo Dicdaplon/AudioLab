@@ -47,7 +47,6 @@ interface In 1 (dry, Windows input) ───────► overlay ?notes=    
 | `extras`              | optional layers, comma-separated: `mandala`, `paws`, `embers`, `aurora`, `scope`, `ribbon`   | none             |
 | `title`               | song title (scene layout)                                                                    |                  |
 | `tab`                 | `frets` (tablature) or `names` (note names placed on a staff) — key **T**                    | `frets`          |
-| `backdrop`            | `night` (pixel night landscape around the webcam), `plain`, `off`                            | `night`          |
 | `wolf`                | `0`: no wolf mascot (it reacts to the playing and says a line now and then)                  | on               |
 | `screen`              | `crt` (an old monitor around the webcam) or `viewfinder` — key **F**                         | `crt`            |
 | `chordWindow`, `gate` | chord window (s), playing gate (0 gentle … 1 strict), overriding the stored settings         |                  |
@@ -62,8 +61,7 @@ plugging the interface in after OBS starts works.
 ## Live settings
 
 Press **H** on the overlay for the help: every key, with the diagnostics. Display choices
-are single keys and are remembered: **L** layout, **T** timeline, **B** backdrop, **F**
-webcam frame, **W** wolf, **M P E A O K** optional layers, **C** chord source. Notation is
+are single keys and are remembered: **L** layout, **T** timeline, **F** webcam frame, **W** wolf, **M P E A O K** optional layers, **C** chord source. Notation is
 English (letters). Press **S** (OBS: right-click the source › **Interact**) for the settings
 panel: chord window (0.5–8 s), hold before a chord change, chord margin, key window,
 silence ending a song, playing gate (gentle → strict), note clarity, smallest vibrato,

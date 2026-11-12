@@ -98,6 +98,12 @@ export {
 } from "./analysis/readout/beatClock";
 export { SongBreak, type SongBreakOptions } from "./analysis/readout/songBreak";
 export {
+  TEMPO_SMOOTHER_DEFAULTS,
+  TempoSmoother,
+  type SmoothedTempo,
+  type TempoSmootherOptions,
+} from "./analysis/readout/tempoSmoother";
+export {
   KEY_BLEND_DEFAULTS,
   combineKeyRankings,
   relativeKey,
@@ -461,6 +467,7 @@ export {
 } from "./config/settings";
 export {
   DEFAULT_STAGE_SETTINGS,
+  STAGE_KEY_WINDOWS,
   STAGE_SETTING_RANGES,
   normalizeStageSettings,
   stageTrackerOptions,

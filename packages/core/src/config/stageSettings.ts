@@ -11,7 +11,10 @@ import { gateTuning } from "../analysis/gate/strictness";
 export interface StageSettings {
   /** Chord detection window, in seconds (longer = steadier, slower to follow). */
   chordWindowSeconds: number;
-  /** Song-key window, in seconds. */
+  /**
+   * Key window, in seconds: the key is the average of the last 15, 30 or 60 s
+   * (`STAGE_KEY_WINDOWS`); shorter follows modulations, longer is steadier.
+   */
   songSeconds: number;
   /** Where the chords are read: the mix ("harmony") or the instrument ("notes"). */
   chordSource: "harmony" | "notes";
@@ -31,7 +34,7 @@ export interface StageSettings {
 
 export const DEFAULT_STAGE_SETTINGS: StageSettings = {
   chordWindowSeconds: 1,
-  songSeconds: 180,
+  songSeconds: 30,
   chordSource: "harmony",
   gateStrictness: 0.5,
   chordHoldSeconds: 0.25,
@@ -52,7 +55,7 @@ export interface SettingRange {
 /** Control ranges, also the clamp bounds of `normalizeStageSettings`. */
 export const STAGE_SETTING_RANGES: Readonly<Record<NumericStageSetting, SettingRange>> = {
   chordWindowSeconds: { min: 0.5, max: 8, step: 0.5 },
-  songSeconds: { min: 30, max: 300, step: 10 },
+  songSeconds: { min: 15, max: 60, step: 15 },
   gateStrictness: { min: 0, max: 1, step: 0.05 },
   chordHoldSeconds: { min: 0.1, max: 1, step: 0.05 },
   chordMinMargin: { min: 0, max: 0.2, step: 0.01 },
@@ -60,6 +63,9 @@ export const STAGE_SETTING_RANGES: Readonly<Record<NumericStageSetting, SettingR
   noteClarity: { min: 0.3, max: 0.95, step: 0.05 },
   vibratoMinCents: { min: 5, max: 40, step: 1 },
 };
+
+/** The key windows a performer chooses from, in seconds. */
+export const STAGE_KEY_WINDOWS = [15, 30, 60] as const;
 
 /**
  * Complete settings from any partial or untrusted value (parsed JSON, URL
@@ -78,6 +84,10 @@ export function normalizeStageSettings(value: unknown): StageSettings {
       out[key] = Math.min(max, Math.max(min, n));
     }
   }
+  // The key window is one of the offered choices (the nearest).
+  out.songSeconds = STAGE_KEY_WINDOWS.reduce((best, w) =>
+    Math.abs(w - out.songSeconds) < Math.abs(best - out.songSeconds) ? w : best,
+  );
   if (input.chordSource === "harmony" || input.chordSource === "notes") {
     out.chordSource = input.chordSource;
   }

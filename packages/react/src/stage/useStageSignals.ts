@@ -30,6 +30,7 @@ import {
   normalizeStageSettings,
   stageTrackerOptions,
   SongBreak,
+  TempoSmoother,
   type AdaptiveLevelReading,
   type BeatPhase,
   type ChordQuality,
@@ -387,11 +388,25 @@ export function useStageSignals(
     return () => clearTimeout(timer);
   }, [playedNote, signals]);
 
+  // The analyser's readings, through a decaying vote: a steady BPM for the
+  // display and the beat clock (docs/POC-METHODS.md §5–6).
+  const smootherRef = useRef<TempoSmoother | null>(null);
+  smootherRef.current ??= new TempoSmoother();
+  const [smoothedTempo, setSmoothedTempo] = useState<TempoEstimate | null>(null);
   const estimate = tempoState.frame?.estimate ?? null;
+  const tempoFrame = tempoState.frame;
   useEffect(() => {
-    signals.tempo = estimate;
-    beatRef.current!.setTempo(estimate);
-  }, [estimate, signals]);
+    const smoothed = smootherRef.current!.push(estimate, nowSeconds());
+    signals.tempo = smoothed;
+    beatRef.current!.setTempo(smoothed);
+    setSmoothedTempo((prev) =>
+      prev?.bpm === smoothed?.bpm &&
+      Math.abs((prev?.confidence ?? 0) - (smoothed?.confidence ?? 0)) < 0.05
+        ? prev
+        : smoothed,
+    );
+    // One vote per analyser frame, even when the estimate object repeats.
+  }, [tempoFrame, estimate, signals]);
 
   const onOnset = useCallback(
     (onset: TimedOnset) => {
@@ -422,7 +437,7 @@ export function useStageSignals(
     key: readings.key,
     chord: readings.chord,
     note: pitchState.estimate,
-    tempo: estimate,
+    tempo: smoothedTempo,
     levelDb: signalLevelDb,
     playing,
     vibrato,

@@ -30,7 +30,10 @@ describe("stage settings", () => {
       extra: 1,
     });
     expect(s.chordWindowSeconds).toBe(4);
-    expect(s.songSeconds).toBe(300);
+    expect(s.songSeconds).toBe(60);
+    expect(normalizeStageSettings({ songSeconds: 40 }).songSeconds).toBe(30);
+    expect(normalizeStageSettings({ songSeconds: 50 }).songSeconds).toBe(60);
+    expect(normalizeStageSettings({ songSeconds: 180 }).songSeconds).toBe(60);
     expect(s.gateStrictness).toBe(0);
     expect(s.chordSource).toBe("notes");
     expect(s.noteClarity).toBe(DEFAULT_STAGE_SETTINGS.noteClarity);

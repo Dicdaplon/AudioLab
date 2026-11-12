@@ -10,6 +10,7 @@ import { useRef, type ReactNode } from "react";
 import {
   AttackField,
   BeatRings,
+  CRT_BEZEL,
   CrtScreen,
   ChordPlate,
   ChordRibbon,
@@ -117,18 +118,18 @@ export function CamLayout({ stage, params }: LayoutProps) {
   const extras = params.extras;
   return (
     <>
-      {params.backdrop !== "off" && (
+      {
         <StageBackdrop
           signals={stage.signals}
           width={1920}
           height={1080}
           cam={cam}
           tonic={key?.tonic ?? null}
-          variant={params.backdrop}
+          variant="night"
           keepOut={[{ x: 1424, y: 48, w: 448, h: 600 }]}
           frame={params.screen === "viewfinder"}
         />
-      )}
+      }
       {params.screen === "crt" && (
         <CrtScreen
           x={cam.x}
@@ -179,7 +180,6 @@ export function CamLayout({ stage, params }: LayoutProps) {
           notation={params.notation}
           width={448}
           size={64}
-          tempo={stage.tempo}
           live={stage.playing}
         />
       </At>
@@ -204,7 +204,7 @@ export function CamLayout({ stage, params }: LayoutProps) {
         />
       </At>
       {/* Under the webcam, below the CRT's chin when there is one. */}
-      <At x={cam.x} y={cam.y + cam.h + (params.screen === "crt" ? 56 : 16)}>
+      <At x={cam.x} y={cam.y + cam.h + (params.screen === "crt" ? CRT_BEZEL.chin + 8 : 16)}>
         {extras.has("ribbon") ? (
           <ChordRibbon reading={stage.chord} songKey={key} width={cam.w} notation={fr} />
         ) : (
@@ -234,16 +234,16 @@ export function SceneLayout({ stage, params }: LayoutProps) {
   const extras = params.extras;
   return (
     <>
-      {params.backdrop !== "off" && (
+      {
         <StageBackdrop
           signals={stage.signals}
           width={1920}
           height={1080}
           tonic={key?.tonic ?? null}
-          variant={params.backdrop}
+          variant="night"
           stars={48}
         />
-      )}
+      }
       {extras.has("embers") && <AttackField signals={stage.signals} width={1920} height={1080} />}
       {extras.has("aurora") ? (
         <HarmonicAurora signals={stage.signals} width={1920} height={304} />
@@ -273,13 +273,7 @@ export function SceneLayout({ stage, params }: LayoutProps) {
         </At>
       )}
       <At x={48} y={48}>
-        <KeyPlate
-          reading={stage.key}
-          notation={params.notation}
-          width={560}
-          tempo={stage.tempo}
-          live={stage.playing}
-        />
+        <KeyPlate reading={stage.key} notation={params.notation} width={560} live={stage.playing} />
       </At>
       {params.title && (
         <At x={48} y={300}>

@@ -71,6 +71,8 @@ export interface GuitarTimelineProps {
   labels?: "frets" | "names";
   /** Chord strip above the lane. Default true. */
   chords?: boolean;
+  /** The tempo (smoothed BPM and beat pips) above the staff, past the now line. Default true. */
+  tempo?: boolean;
   notation?: Notation;
   theme?: StageTheme;
 }
@@ -245,6 +247,7 @@ export function GuitarTimeline({
   view = "tab",
   labels = "frets",
   chords = true,
+  tempo: showTempo = true,
   notation = "fr",
   theme = STAGE_THEME,
 }: GuitarTimelineProps) {
@@ -574,6 +577,23 @@ export function GuitarTimeline({
     ctx.textAlign = "left";
     ctx.fillStyle = theme.ink;
     ctx.fillRect(nowX - 2, stripH + 4, 4, tickY - stripH + 12);
+
+    // Tempo, discreet, just above the staff (or the strings) past the now
+    // line: the smoothed BPM and four pips beating the bar.
+    if (showTempo && s.tempo && s.tempo.confidence >= 0.3) {
+      const ty = (staff ? posY(TOP_LINE_POS) : rowY(5)) - 16;
+      ctx.font = `18px ${theme.fonts.mono}`;
+      ctx.fillStyle = theme.inkMuted;
+      ctx.fillText(`♩ ${Math.round(s.tempo.bpm)}`, nowX + 16, ty);
+      const pipX =
+        nowX + 16 + Math.round(ctx.measureText(`♩ ${Math.round(s.tempo.bpm)}`).width) + 10;
+      for (let b = 0; b < 4; b++) {
+        const on = beat !== null && beat.beatInBar === b && beat.phase < 0.35;
+        ctx.fillStyle = on ? (b === 0 ? theme.major : theme.ink) : theme.shadeLine;
+        ctx.fillRect(pipX + b * 12, ty - 4, 8, 8);
+      }
+    }
+
     const last = notes[notes.length - 1];
     if (last && (last.open || now - last.end < 1.5)) {
       const pc = last.midi % 12;

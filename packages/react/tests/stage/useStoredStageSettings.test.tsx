@@ -14,7 +14,7 @@ describe("useStoredStageSettings", () => {
       useStoredStageSettings({ storageKey: "k", initial: { chordSource: "notes" }, overrides: {} }),
     );
     await waitFor(() => expect(result.current.settings.chordWindowSeconds).toBe(4));
-    expect(result.current.settings.songSeconds).toBe(300);
+    expect(result.current.settings.songSeconds).toBe(60);
     expect(result.current.settings.chordSource).toBe("notes");
   });
 

@@ -1,10 +1,10 @@
 /**
- * What the overlay shows (layout, timeline view, backdrop, notation, wolf,
+ * What the overlay shows (layout, timeline view, webcam frame, wolf,
  * optional layers), changed with single keys while live and remembered in
  * localStorage. A URL parameter, when present, sets the starting value of
  * its preference; the keys take it from there.
  *
- *   L layout · T timeline (frets ↔ names on a staff) · B backdrop
+ *   L layout · T timeline (frets ↔ names on a staff)
  *   W wolf · M mandala · P paw prints · E embers · A aurora · O oscilloscope
  *   K chord ribbon instead of the timeline
  */
@@ -19,7 +19,6 @@ export interface DisplayPrefs {
   layout: Layout;
   tabLabels: OverlayParams["tabLabels"];
   tabView: OverlayParams["tabView"];
-  backdrop: OverlayParams["backdrop"];
   wolf: boolean;
   /** Frame of the webcam: an old CRT monitor, or the viewfinder corners. */
   screen: "crt" | "viewfinder";
@@ -37,7 +36,6 @@ function fromUrl(search: string, params: OverlayParams): Partial<DisplayPrefs> {
     out.tabLabels = params.tabLabels;
     out.tabView = params.tabView;
   }
-  if (q.has("backdrop")) out.backdrop = params.backdrop;
   if (q.has("wolf")) out.wolf = params.wolf;
   if (q.has("screen")) out.screen = params.screen;
   if (q.has("extras")) out.extras = [...params.extras];
@@ -67,13 +65,11 @@ function sanitize(p: Partial<DisplayPrefs>): Partial<DisplayPrefs> {
   else delete out.tabView;
   return out;
 }
-const BACKDROPS: readonly DisplayPrefs["backdrop"][] = ["night", "plain", "off"];
 
 /** Key → what it toggles, for the handler and the help panel. */
 export const DISPLAY_KEYS: Readonly<Record<string, { fr: string; en: string }>> = {
   L: { fr: "mise en page (cam ↔ scène)", en: "layout (cam ↔ scene)" },
   T: { fr: "timeline (cases ↔ noms sur une portée)", en: "timeline (frets ↔ names on a staff)" },
-  B: { fr: "fond (nuit → sobre → aucun)", en: "backdrop (night → plain → off)" },
   W: { fr: "loup", en: "wolf" },
   F: {
     fr: "cadre de la caméra (écran CRT ↔ viseur)",
@@ -101,7 +97,6 @@ export function useDisplayPrefs(params: OverlayParams, search: string) {
     layout: params.layout,
     tabLabels: params.tabLabels,
     tabView: params.tabView,
-    backdrop: params.backdrop,
     wolf: params.wolf,
     screen: "crt",
     extras: [...params.extras],
@@ -126,8 +121,6 @@ export function useDisplayPrefs(params: OverlayParams, search: string) {
       switch (k) {
         case "L":
           return set("layout", cycle(LAYOUTS, p.layout));
-        case "B":
-          return set("backdrop", cycle(BACKDROPS, p.backdrop));
         case "W":
           return set("wolf", !p.wolf);
         case "F":

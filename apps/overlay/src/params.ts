@@ -16,8 +16,6 @@
  *                            aurora, scope, ribbon (the layouts stay light without them)
  *   &title=Blue Bossa        song title (scene layout)
  *   &wolf=0                  no wolf mascot (it reacts to the playing and talks now and then)
- *   &backdrop=night|plain|off   opaque background around the webcam (default night).
- *                            Put the overlay above the webcam in OBS.
  *   &tab=frets|names         timeline: frets on a tablature, or note names placed on a staff
  *   &demo=synth|<url>        no inputs: a built-in synth or an audio file
  *   &listen=1                demo mode: also play the demo on the speakers
@@ -54,7 +52,6 @@ export interface OverlayParams {
   tabLabels: "frets" | "names";
   /** Timeline as a tablature or a staff. */
   tabView: "tab" | "staff";
-  backdrop: "night" | "plain" | "off";
   wolf: boolean;
   screen: "crt" | "viewfinder";
 }
@@ -99,7 +96,5 @@ export function readParams(search: string): OverlayParams {
     tabView: q.get("tab") === "names" ? "staff" : "tab",
     wolf: q.get("wolf") !== "0",
     screen: q.get("screen") === "viewfinder" ? "viewfinder" : "crt",
-    backdrop:
-      q.get("backdrop") === "plain" ? "plain" : q.get("backdrop") === "off" ? "off" : "night",
   };
 }
