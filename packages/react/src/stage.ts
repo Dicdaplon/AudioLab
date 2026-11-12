@@ -78,6 +78,7 @@ export {
   WOLF_PHRASE_PRIORITY,
   WOLF_PHRASES,
   WOLF_POSE_SECONDS,
+  WOLF_ROAM_DEFAULTS,
   WolfBrain,
   WolfBuddy,
   WolfSensor,
@@ -89,6 +90,7 @@ export {
   type WolfPhraseKind,
   type WolfPhrases,
   type WolfPose,
+  type RoamOptions,
   type WolfSnapshot,
 } from "./stage/wolf";
 export {

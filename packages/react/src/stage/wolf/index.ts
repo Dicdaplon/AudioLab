@@ -17,4 +17,22 @@ export {
   type WolfPhraseKind,
   type WolfPhrases,
 } from "./phrases";
+export {
+  WOLF_ROAM_DEFAULTS,
+  bandBalance,
+  chooseDestination,
+  chooseHide,
+  createRoam,
+  hideX,
+  hideY,
+  shouldFall,
+  standY,
+  stepRoam,
+  type HideEnd,
+  type RoamMode,
+  type RoamMusic,
+  type RoamOptions,
+  type RoamState,
+  type RoamWorld,
+} from "./roam";
 export { WolfSensor, wolfKeyName } from "./sensor";

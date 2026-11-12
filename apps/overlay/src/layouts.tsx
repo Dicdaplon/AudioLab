@@ -41,7 +41,11 @@ function At({ x, y, children }: { x: number; y: number; children: ReactNode }) {
   return <div style={{ position: "absolute", left: x, top: y }}>{children}</div>;
 }
 
-/** The spectrum city, optionally with paw prints or fireflies on its roofs. */
+/**
+ * The spectrum city, optionally with paw prints or fireflies on its roofs,
+ * and the wolf mascot living on them (`buddy`: it walks, climbs, hides and
+ * falls on the roofline; the city's own wolf is then hidden).
+ */
 function City({
   stage,
   x = 0,
@@ -50,7 +54,8 @@ function City({
   height,
   columns,
   walkers = null,
-  wolf = true,
+  buddy = false,
+  headroom = 0,
 }: {
   stage: StageState;
   x?: number;
@@ -59,7 +64,9 @@ function City({
   height: number;
   columns?: number;
   walkers?: "paws" | "fireflies" | null;
-  wolf?: boolean;
+  buddy?: boolean;
+  /** Room above the city for the wolf's jumps and bubble. */
+  headroom?: number;
 }) {
   const roofline = useRef<Roofline | null>(null);
   return (
@@ -70,7 +77,7 @@ function City({
         height={height}
         columns={columns}
         roofline={roofline}
-        wolf={wolf}
+        wolf={!buddy}
       />
       {walkers && (
         <div style={{ position: "absolute", inset: 0 }}>
@@ -80,6 +87,16 @@ function City({
             height={height}
             mode={walkers}
             ground={(gx) => roofline.current?.roofAt(gx) ?? height - 8}
+          />
+        </div>
+      )}
+      {buddy && (
+        <div style={{ position: "absolute", left: 0, top: -headroom }}>
+          <WolfBuddy
+            signals={stage.signals}
+            roofline={roofline}
+            area={{ width, height }}
+            headroom={headroom}
           />
         </div>
       )}
@@ -131,7 +148,7 @@ export function CamLayout({ stage, params }: LayoutProps) {
           height={400}
           columns={16}
           walkers={extras.has("paws") ? "paws" : null}
-          wolf={!params.wolf}
+          buddy={params.wolf}
         />
       )}
       {/* The chord change ripples inside the chord plate, without a text stamp. */}
@@ -188,7 +205,7 @@ export function CamLayout({ stage, params }: LayoutProps) {
           />
         )}
       </At>
-      {params.wolf && (
+      {params.wolf && extras.has("mandala") && (
         <At x={1424} y={880}>
           <WolfBuddy signals={stage.signals} width={464} height={176} side="left" />
         </At>
@@ -224,7 +241,8 @@ export function SceneLayout({ stage, params }: LayoutProps) {
           width={1920}
           height={128}
           walkers="fireflies"
-          wolf={!params.wolf}
+          buddy={params.wolf}
+          headroom={32}
         />
       )}
       <At x={510} y={-42}>
@@ -289,7 +307,7 @@ export function SceneLayout({ stage, params }: LayoutProps) {
           notation={fr}
         />
       </At>
-      {params.wolf && (
+      {params.wolf && extras.has("aurora") && (
         <At x={1376} y={40}>
           <WolfBuddy signals={stage.signals} width={496} height={176} side="left" />
         </At>

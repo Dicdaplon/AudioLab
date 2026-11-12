@@ -139,6 +139,58 @@ describe("WolfBuddy", () => {
       unmount();
     });
 
+    it("lives on the city roofs: walks, falls on a big attack, hides, keeps its bubble inside", () => {
+      const s = signals();
+      let tall = 0;
+      const bands = [0.9, 0.9, 0.9, 0.1, 0.1, 0.1];
+      const roofline = {
+        current: {
+          roofAt: (x: number) => (x < 100 ? 200 - tall : 240),
+          bands: () => bands,
+        },
+      };
+      const { unmount, container } = render(
+        createElement(WolfBuddy, {
+          signals: { current: s },
+          roofline,
+          area: { width: 496, height: 400 },
+          headroom: 32,
+          random: () => 0.1,
+          roam: { pauseSeconds: [1, 2] },
+          brain: { warmupSeconds: 0, minGapSeconds: 1, kindCooldownSeconds: 0, random: () => 0 },
+        }),
+      );
+      const canvas = container.querySelector("canvas")!;
+      expect(canvas.width).toBe(496);
+      expect(canvas.height).toBe(432);
+      run(60);
+      // A big attack: the wolf is knocked off, falls, sits dazed, climbs back.
+      run(1, (_, t) => {
+        s.onsets.push({ time: t, strength: 2, pitchClass: 9 });
+        s.onsetCount += 1;
+      });
+      tall = 40;
+      run(400);
+      expect(canvas.width).toBe(496);
+      // Bubble placed by the animation frame, inside the box.
+      s.key = {
+        phase: "settled",
+        key: { tonic: 9, mode: "min" },
+        runnerUp: null,
+        stability: 1,
+        event: "settled",
+      };
+      s.keyEventAt = clock / 1000;
+      run(12);
+      const bubble = screen.getByRole("status");
+      expect(bubble.style.visibility).toBe("visible");
+      expect(parseFloat(bubble.style.left)).toBeGreaterThanOrEqual(0);
+      expect(parseFloat(bubble.style.top)).toBeGreaterThanOrEqual(0);
+      expect(canvas.width).toBe(496);
+      expect(screen.getByRole("status").textContent).toBe("A minor, classy.");
+      unmount();
+    });
+
     it("dances on a steady beat", () => {
       const s = signals();
       const { unmount } = render(createElement(WolfBuddy, { signals: { current: s } }));

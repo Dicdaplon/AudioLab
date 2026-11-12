@@ -27,6 +27,8 @@ import type { StageSignals } from "../useStageSignals";
 export interface Roofline {
   /** Top of the roof under `x`, both in CSS px from the city's top-left corner. */
   roofAt(x: number): number;
+  /** Loudness 0 … 1 of each building (lit floors), lowest band first (for `WolfBuddy`). */
+  bands?(): readonly number[];
 }
 
 export interface SpectrumCityProps {
@@ -269,6 +271,10 @@ export function SpectrumCity({
   theme = STAGE_THEME,
 }: SpectrumCityProps) {
   const state = useRef<CityState | null>(null);
+  const wolfOn = useRef(wolf);
+  wolfOn.current = wolf;
+  const bandsRef = useRef<number[]>([]);
+  const bands = bandsRef.current;
   state.current ??= {
     layout: null,
     spectrum: null,
@@ -409,7 +415,7 @@ export function SpectrumCity({
       const top = H - body * FLOOR;
       ctx.fillStyle = theme.shade;
       ctx.fillRect(x0, top, bw, H - top);
-      const kind = k === st.wolf ? ROOF_FLAT : L.roof[k];
+      const kind = wolf && k === st.wolf ? ROOF_FLAT : L.roof[k];
       if (kind === ROOF_FLAT) {
         ctx.fillRect(x0, top - 1, bw, 1);
       } else if (kind === ROOF_GABLE) {
@@ -527,8 +533,15 @@ export function SpectrumCity({
           if (!lay) return height;
           const c = Math.max(0, Math.min(lay.w - 1, Math.floor(xCss / pixel)));
           const k = lay.under[c];
-          const kind = k === st.wolf ? ROOF_FLAT : lay.roof[k];
+          const kind = wolfOn.current && k === st.wolf ? ROOF_FLAT : lay.roof[k];
           return (lay.h - st.body[k] * FLOOR - roofHeight(kind)) * pixel;
+        },
+        bands: () => {
+          const lay = st.layout;
+          if (!lay) return bands;
+          bands.length = lay.n;
+          for (let k = 0; k < lay.n; k++) bands[k] = clamp01(st.level[k] / lay.floors);
+          return bands;
         },
       };
       roofline.current = st.roofline;

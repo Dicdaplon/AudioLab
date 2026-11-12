@@ -131,6 +131,27 @@ const LYING: readonly Rows[] = [
   ],
 ];
 
+/** Wolf on four legs, walking right: legs together (0) and in stride (1). */
+const WALK_TOP: Rows = [
+  "................",
+  "................",
+  "................",
+  "................",
+  "................",
+  "...........#.#..",
+  "..........#####.",
+  "..........##o##n",
+  "##.......######.",
+  ".##.#########...",
+  "..###########...",
+  "..###########...",
+  "...#########....",
+];
+const WALK_LEGS: readonly Rows[] = [
+  ["...##....##.....", "...##....##.....", "...##....##....."],
+  ["...##....##.....", "..#..#..#..#....", ".#....##....#..."],
+];
+
 /** Muzzle tip of the howling head (where the sound arcs start). */
 export const WOLF_MUZZLE = { x: 11, y: 0 };
 
@@ -154,6 +175,12 @@ export function sitSprite({
   if (earTwitch && head === "sit") rows[0][11] = ".";
   for (const [x, y] of TAILS[tail]) rows[y][x] = "#";
   return rows.map((r) => r.join(""));
+}
+
+/** A walking wolf (facing right), `frame` 0 or 1, as a 16 × 16 grid. */
+export function walkSprite(frame: 0 | 1, blink = false): string[] {
+  const rows = [...WALK_TOP, ...WALK_LEGS[frame]];
+  return blink ? rows.map((r) => r.replace("o", "c")) : [...rows];
 }
 
 /** The sleeping wolf, breathing in (1) or out (0). */
@@ -187,7 +214,8 @@ export interface WolfColours {
 
 /**
  * Paint `rows` with its top-left cell at (x, y), mirrored when `flip` (to
- * face left). Cells outside the canvas are simply clipped by the canvas.
+ * face left). Cells outside the canvas are simply clipped by the canvas;
+ * `visible` hides more of them (a building in front of the wolf).
  */
 export function drawWolf(
   ctx: CanvasRenderingContext2D,
@@ -196,6 +224,7 @@ export function drawWolf(
   y: number,
   flip: boolean,
   colours: WolfColours,
+  visible?: (x: number, y: number) => boolean,
 ): void {
   const n = rows.length;
   const filled = (cx: number, cy: number) =>
@@ -207,7 +236,7 @@ export function drawWolf(
     for (let cx = -1; cx <= n; cx++) {
       if (filled(cx, cy)) continue;
       if (filled(cx - 1, cy) || filled(cx + 1, cy) || filled(cx, cy - 1) || filled(cx, cy + 1))
-        ctx.fillRect(at(cx), y + cy, 1, 1);
+        if (!visible || visible(at(cx), y + cy)) ctx.fillRect(at(cx), y + cy, 1, 1);
     }
   }
   for (let cy = 0; cy < n; cy++) {
@@ -221,7 +250,7 @@ export function drawWolf(
           : !filled(cx, cy - 1)
             ? colours.rim
             : colours.fur;
-      ctx.fillRect(at(cx), y + cy, 1, 1);
+      if (!visible || visible(at(cx), y + cy)) ctx.fillRect(at(cx), y + cy, 1, 1);
     }
   }
 }
