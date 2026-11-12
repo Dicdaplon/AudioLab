@@ -106,21 +106,59 @@ export type FakeAudioContextInstance = InstanceType<
   ReturnType<typeof makeFakeAudioContextClass>["FakeAudioContext"]
 >;
 
+/** A device returned by the fake `enumerateDevices` (kind defaults to audioinput). */
+export interface FakeDevice {
+  deviceId: string;
+  label: string;
+  groupId?: string;
+  kind?: MediaDeviceKind;
+}
+
 export interface InstalledFakes {
   getUserMedia: ReturnType<typeof vi.fn>;
+  enumerateDevices: ReturnType<typeof vi.fn>;
   instances: FakeAudioContextInstance[];
+  /** Replace the device list and fire `devicechange`. */
+  setDevices(devices: FakeDevice[]): void;
   restore(): void;
 }
 
+export interface WebAudioFakesOptions extends FakeAudioContextOptions {
+  getUserMedia?: ReturnType<typeof vi.fn>;
+  /** Devices listed by `enumerateDevices` (default: none). */
+  devices?: FakeDevice[];
+  /** Report empty labels until `getUserMedia` has resolved once, like a browser. */
+  hideLabelsUntilPermission?: boolean;
+}
+
 /**
- * Install `navigator.mediaDevices.getUserMedia`, `AudioContext` and
- * `isSecureContext` on the jsdom globals.
+ * Install `navigator.mediaDevices` (`getUserMedia`, `enumerateDevices`,
+ * `devicechange` events), `AudioContext` and `isSecureContext` on the jsdom
+ * globals.
  */
-export function installWebAudioFakes(
-  options: FakeAudioContextOptions & { getUserMedia?: ReturnType<typeof vi.fn> } = {},
-): InstalledFakes {
+export function installWebAudioFakes(options: WebAudioFakesOptions = {}): InstalledFakes {
   const { FakeAudioContext, instances } = makeFakeAudioContextClass(options);
-  const getUserMedia = options.getUserMedia ?? vi.fn(async () => makeFakeStream());
+  const userGetUserMedia = options.getUserMedia ?? vi.fn(async () => makeFakeStream());
+  let devices = options.devices ?? [];
+  let granted = !options.hideLabelsUntilPermission;
+  const events = new EventTarget();
+
+  const getUserMedia = vi.fn(async (constraints: MediaStreamConstraints) => {
+    const stream = (await userGetUserMedia(constraints)) as MediaStream;
+    granted = true;
+    return stream;
+  });
+  // Tests assert on the caller's spy when they pass one.
+  const exposedGetUserMedia = options.getUserMedia ? userGetUserMedia : getUserMedia;
+  const enumerateDevices = vi.fn(async () =>
+    devices.map((d) => ({
+      deviceId: d.deviceId,
+      groupId: d.groupId ?? "",
+      kind: d.kind ?? "audioinput",
+      label: granted ? d.label : "",
+      toJSON: () => ({}),
+    })),
+  );
 
   const g = globalThis as unknown as Record<string, unknown>;
   const previous = {
@@ -133,12 +171,22 @@ export function installWebAudioFakes(
   g.isSecureContext = true;
   Object.defineProperty(navigator, "mediaDevices", {
     configurable: true,
-    value: { getUserMedia },
+    value: {
+      getUserMedia,
+      enumerateDevices,
+      addEventListener: events.addEventListener.bind(events),
+      removeEventListener: events.removeEventListener.bind(events),
+    },
   });
 
   return {
-    getUserMedia,
+    getUserMedia: exposedGetUserMedia,
+    enumerateDevices,
     instances,
+    setDevices(next) {
+      devices = next;
+      events.dispatchEvent(new Event("devicechange"));
+    },
     restore() {
       g.AudioContext = previous.AudioContext;
       g.isSecureContext = previous.isSecureContext;

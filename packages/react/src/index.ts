@@ -22,6 +22,11 @@ export {
   type MicrophoneSession,
   type UseMicrophoneOptions,
 } from "./hooks/useMicrophone";
+export {
+  useAudioInputs,
+  type AudioInputsState,
+  type UseAudioInputsOptions,
+} from "./hooks/useAudioInputs";
 export { useTonality, type SpectrumState, type UseTonalityOptions } from "./hooks/useTonality";
 export {
   useTempoAnalysis,
@@ -139,6 +144,7 @@ export { RangeField, SelectField, Switch } from "./components/Field";
 export { Icon, type IconName } from "./ui/Icon";
 export { MicNotice } from "./components/MicNotice";
 export { MicTransport, type MicState } from "./components/MicTransport";
+export { InputPicker } from "./components/InputPicker";
 export { TabBar, type TabDef } from "./components/TabBar";
 export { ThemeToggle } from "./components/ThemeToggle";
 export { panelId, tabId } from "./ui/tabIds";

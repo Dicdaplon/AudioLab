@@ -177,4 +177,41 @@ describe("useMicrophone", () => {
     expect(result.current.running).toBe(true);
     expect(fakes.instances).toHaveLength(2);
   });
+
+  it("opens the requested input", async () => {
+    fakes = installWebAudioFakes();
+    const { result } = renderHook(() => useMicrophone({ deviceId: "lb" }));
+    await act(() => result.current.start());
+    const audio = (fakes.getUserMedia.mock.calls[0][0] as MediaStreamConstraints)
+      .audio as MediaTrackConstraints;
+    expect(audio.deviceId).toEqual({ exact: "lb" });
+  });
+
+  it("reopens the session on the new input when deviceId changes while running", async () => {
+    fakes = installWebAudioFakes();
+    const { result, rerender } = renderHook(({ id }) => useMicrophone({ deviceId: id }), {
+      initialProps: { id: "lb" },
+    });
+    await act(() => result.current.start());
+    const first = result.current.mic;
+
+    rerender({ id: "a1" });
+    await waitFor(() => expect(result.current.running).toBe(true));
+    expect(result.current.mic).not.toBe(first);
+    expect(fakes.instances[0].close).toHaveBeenCalledTimes(1);
+    const audio = (fakes.getUserMedia.mock.calls[1][0] as MediaStreamConstraints)
+      .audio as MediaTrackConstraints;
+    expect(audio.deviceId).toEqual({ exact: "a1" });
+  });
+
+  it("does not start a stopped session when deviceId changes", async () => {
+    fakes = installWebAudioFakes();
+    const { result, rerender } = renderHook(({ id }) => useMicrophone({ deviceId: id }), {
+      initialProps: { id: "lb" },
+    });
+    rerender({ id: "a1" });
+    await act(async () => {});
+    expect(result.current.running).toBe(false);
+    expect(fakes.getUserMedia).not.toHaveBeenCalled();
+  });
 });

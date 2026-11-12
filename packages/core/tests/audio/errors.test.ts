@@ -54,6 +54,13 @@ describe("toMicError", () => {
     expect(r.message.length).toBeGreaterThan(20);
   });
 
+  it("maps an OverconstrainedError on deviceId to device-unavailable", () => {
+    const err = Object.assign(domError("OverconstrainedError"), { constraint: "deviceId" });
+    expect(toMicError(err).code).toBe("device-unavailable");
+    const other = Object.assign(domError("OverconstrainedError"), { constraint: "sampleRate" });
+    expect(toMicError(other).code).toBe("constraints");
+  });
+
   it("gives an actionable hint for a denied permission", () => {
     expect(toMicError(domError("NotAllowedError")).message).toMatch(/lock icon/);
   });

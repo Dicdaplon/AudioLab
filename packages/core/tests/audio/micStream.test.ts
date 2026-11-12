@@ -104,6 +104,44 @@ describe("openMicrophone", () => {
     await mic.dispose();
   });
 
+  it("pins the requested input with an exact deviceId on top of the defaults", async () => {
+    fakes = installWebAudioFakes();
+    const mic = await openMicrophone({ deviceId: "lb" });
+    const audio = (fakes.getUserMedia.mock.calls[0][0] as MediaStreamConstraints)
+      .audio as MediaTrackConstraints;
+    expect(audio.deviceId).toEqual({ exact: "lb" });
+    expect(audio.autoGainControl).toBe(false);
+    await mic.dispose();
+  });
+
+  it("lets deviceId override the device of custom constraints", async () => {
+    fakes = installWebAudioFakes();
+    const mic = await openMicrophone({
+      constraints: { audio: { deviceId: "abc", channelCount: 2 } },
+      deviceId: "lb",
+    });
+    const audio = (fakes.getUserMedia.mock.calls[0][0] as MediaStreamConstraints)
+      .audio as MediaTrackConstraints;
+    expect(audio).toEqual({ deviceId: { exact: "lb" }, channelCount: 2 });
+    await mic.dispose();
+  });
+
+  it("ignores deviceId when the host passes its own stream", async () => {
+    fakes = installWebAudioFakes();
+    const mic = await openMicrophone({ stream: makeFakeStream(), deviceId: "lb" });
+    expect(fakes.getUserMedia).not.toHaveBeenCalled();
+    await mic.dispose();
+  });
+
+  it("fails with 'device-unavailable' when the pinned input is gone", async () => {
+    const gone = domError("OverconstrainedError");
+    (gone as Error & { constraint: string }).constraint = "deviceId";
+    fakes = installWebAudioFakes({ getUserMedia: vi.fn(async () => Promise.reject(gone)) });
+    await expect(openMicrophone({ deviceId: "lb" })).rejects.toMatchObject({
+      code: "device-unavailable",
+    });
+  });
+
   it("fails with 'unsupported' when getUserMedia is missing", async () => {
     fakes = installWebAudioFakes();
     Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: undefined });

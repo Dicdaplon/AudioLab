@@ -14,6 +14,10 @@
  *
  * A host that owns an AudioContext (Tone.js) or a MediaStream passes them
  * through `options`; the SDK then neither creates nor closes a context.
+ *
+ * `deviceId` picks the input (see `useAudioInputs`). Changing it while a
+ * session runs restarts the session on the new input: `mic` is a new object,
+ * so the analysis hooks keyed on it start over (a song-level key is lost).
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -27,7 +31,7 @@ import {
   type OpenMicrophoneOptions,
 } from "@audiolab/core";
 
-export type UseMicrophoneOptions = Pick<OpenMicrophoneOptions, "context" | "stream">;
+export type UseMicrophoneOptions = Pick<OpenMicrophoneOptions, "context" | "stream" | "deviceId">;
 
 export interface MicrophoneSession {
   /** Open source, or null when stopped. */
@@ -75,8 +79,8 @@ export function useMicrophone(options: UseMicrophoneOptions = {}) {
     const token = ++tokenRef.current;
     setSession({ mic: null, running: false, starting: true, error: null });
     try {
-      const { context, stream } = optionsRef.current;
-      const mic = await openMicrophone({ context, stream });
+      const { context, stream, deviceId } = optionsRef.current;
+      const mic = await openMicrophone({ context, stream, deviceId });
       if (token !== tokenRef.current) {
         // stop() or unmount happened during the prompt.
         await mic.dispose();
@@ -92,6 +96,18 @@ export function useMicrophone(options: UseMicrophoneOptions = {}) {
       startingRef.current = false;
     }
   }, []);
+
+  // A new input while running: reopen on it. stop() bumps the session token,
+  // so the restart follows the same race rules as a user's stop + start. A
+  // change during the permission prompt applies to the next start().
+  const { deviceId } = options;
+  const previousDeviceRef = useRef(deviceId);
+  useEffect(() => {
+    if (previousDeviceRef.current === deviceId) return;
+    previousDeviceRef.current = deviceId;
+    if (!micRef.current) return;
+    void stop().then(start);
+  }, [deviceId, start, stop]);
 
   useEffect(() => {
     setUnsupported(checkMicrophoneSupport());

@@ -19,6 +19,7 @@ import {
   ChordGame,
   DetectorTab,
   FftTab,
+  InputPicker,
   LoupeRoot,
   MicTransport,
   ThemeToggle,
@@ -36,6 +37,14 @@ function page(): ReactElement {
       onStart: () => {},
       onStop: () => {},
       onReset: () => {},
+    }),
+    createElement(InputPicker, {
+      inputs: [
+        { deviceId: "a", groupId: "", label: "Loopback" },
+        { deviceId: "b", groupId: "", label: "" },
+      ],
+      value: "",
+      onChange: () => {},
     }),
     createElement(ThemeToggle),
     createElement(DetectorTab, {

@@ -163,6 +163,29 @@ permission prompt. Start the microphone from a click (`microphone.start` on a bu
 browsers keep a fresh `AudioContext` suspended until a user gesture. Permission is asked
 once per origin; `MicNotice` explains how to re-allow it in Chrome, Firefox and Safari.
 
+### Choosing the input
+
+By default the session opens the browser's default input. To capture another one (an
+audio interface's loopback, a second channel), pass its id:
+
+```tsx
+const audioInputs = useAudioInputs(); // { inputs, labelled, refresh }
+const [inputId, setInputId] = useState("");
+const microphone = useMicrophone({ deviceId: inputId || undefined });
+// <InputPicker inputs={audioInputs.inputs} value={inputId} onChange={setInputId} />
+```
+
+The id is applied as `{ exact }`: an input that has gone fails with the
+`device-unavailable` code instead of falling back to the default one. Changing `deviceId`
+while the session runs reopens it on the new input; `mic` is then a new object, so the
+analysis hooks start over. Browsers hide device labels until the page has been granted
+a microphone once: call `refresh()` once the session runs (Chrome does not always fire
+`devicechange` then), or, in a page with no start button that matches inputs by name,
+`listAudioInputs({ unlockLabels: true })` and `findAudioInput(inputs, "Loopback")`.
+`findAudioInput` prefers a real device over Chrome's `default` / `communications`
+aliases, which carry the same name. Two inputs at once are two `useMicrophone` sessions,
+each with its own `AudioContext` (see section 6 to share one).
+
 Tempo analysis loads an AudioWorklet from a Blob URL. If the host sends a Content
 Security Policy, allow `blob:` in `script-src` (or `worker-src`); otherwise the capture
 falls back to AnalyserNode polling, which is fine for the detector and the games and only

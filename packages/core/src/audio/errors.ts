@@ -14,6 +14,7 @@ export type MicErrorCode =
   | "blocked"
   | "no-device"
   | "device-busy"
+  | "device-unavailable"
   | "constraints"
   | "unknown";
 
@@ -33,6 +34,8 @@ const MESSAGES: Record<Exclude<MicErrorCode, "unknown">, string> = {
   "no-device": "No microphone was found. Connect or enable one and try again.",
   "device-busy":
     "The microphone could not be started. It may be in use by another application or tab.",
+  "device-unavailable":
+    "The selected input is not available. Reconnect it or choose another input.",
   constraints: "The microphone does not support the requested audio settings.",
 };
 
@@ -98,6 +101,13 @@ function nameOf(err: unknown): string {
   return "";
 }
 
+function constraintOf(err: unknown): string {
+  if (typeof err === "object" && err !== null && "constraint" in err) {
+    return String((err as { constraint: unknown }).constraint);
+  }
+  return "";
+}
+
 function messageOf(err: unknown): string {
   if (err instanceof Error) return err.message;
   return String(err);
@@ -122,6 +132,11 @@ export function toMicError(err: unknown): MicErrorInfo {
       return { code: "device-busy", message: MESSAGES["device-busy"] };
     case "OverconstrainedError":
     case "ConstraintNotSatisfiedError":
+      // An `exact` deviceId that no longer matches: the input was unplugged
+      // or renamed, which the user fixes differently from a settings mismatch.
+      if (constraintOf(err) === "deviceId") {
+        return { code: "device-unavailable", message: MESSAGES["device-unavailable"] };
+      }
       return { code: "constraints", message: MESSAGES.constraints };
     case "TypeError":
       // getUserMedia throws a TypeError when called with no media requested

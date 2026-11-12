@@ -4,6 +4,7 @@ exports[`@audiolab/react public API > exports the snapshotted names from every e
 {
   ".": [
     "applyTheme",
+    "type AudioInputsState",
     "BeatLights",
     "type BeatLightsProps",
     "bonusTypeLabels",
@@ -40,6 +41,7 @@ exports[`@audiolab/react public API > exports the snapshotted names from every e
     "type HowSource",
     "Icon",
     "type IconName",
+    "InputPicker",
     "isTheme",
     "KeyProbabilities",
     "keyRows",
@@ -125,6 +127,8 @@ exports[`@audiolab/react public API > exports the snapshotted names from every e
     "ToneBaseTonalityView",
     "useAdaptiveGate",
     "type UseAdaptiveGateOptions",
+    "useAudioInputs",
+    "type UseAudioInputsOptions",
     "useConfirmedDetection",
     "type UseConfirmedDetectionArgs",
     "type UseConfirmedDetectionResult",

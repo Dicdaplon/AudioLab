@@ -13,6 +13,7 @@ import {
   ChordGame,
   LoupeRoot,
   FftTab,
+  InputPicker,
   MicNotice,
   MicTransport,
   TabBar,
@@ -21,6 +22,7 @@ import {
   WolfJumper,
   panelId,
   tabId,
+  useAudioInputs,
   useMicrophone,
   useNoteModelChords,
   usePitch,
@@ -135,7 +137,14 @@ export default function App() {
   const [tempoMethod, setTempoMethod] = useState<TempoMethodId>("envelope");
 
   // Environment check (secure context, getUserMedia, AudioContext), after mount.
-  const microphone = useMicrophone();
+  const [inputId, setInputId] = useState("");
+  const audioInputs = useAudioInputs();
+  const microphone = useMicrophone({ deviceId: inputId || undefined });
+  // Labels appear once permission is granted; Chrome may not fire devicechange.
+  const refreshInputs = audioInputs.refresh;
+  useEffect(() => {
+    if (microphone.running) void refreshInputs();
+  }, [microphone.running, refreshInputs]);
   const unsupported = microphone.unsupported;
   const tonality = useTonality(microphone.mic, {
     liveAcquisitionSeconds: settings.liveAcquisitionSeconds,
@@ -259,6 +268,7 @@ export default function App() {
             />
           </nav>
           <div className="topbar__transport">
+            <InputPicker inputs={audioInputs.inputs} value={inputId} onChange={setInputId} />
             <MicTransport
               state={micState}
               onStart={microphone.start}

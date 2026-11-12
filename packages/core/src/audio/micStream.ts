@@ -17,6 +17,7 @@
  * the host's. The same goes for a MediaStream the host acquired itself.
  */
 
+import { withDeviceId } from "./devices";
 import { MicrophoneError, checkMicrophoneSupport, toMicError } from "./errors";
 
 export interface MicSource {
@@ -47,6 +48,13 @@ export interface OpenMicrophoneOptions {
   stream?: MediaStream;
   /** Constraints for `getUserMedia` when the SDK acquires the stream. Default `MIC_CONSTRAINTS`. */
   constraints?: MediaStreamConstraints;
+  /**
+   * Capture from this input (an id from `listAudioInputs`). Applied as
+   * `{ exact }` on top of `constraints` (or `MIC_CONSTRAINTS`), so a missing
+   * device fails with `device-unavailable` instead of falling back to the
+   * default input. Ignored when `stream` is given.
+   */
+  deviceId?: string;
 }
 
 export const MIC_CONSTRAINTS: MediaStreamConstraints = {
@@ -85,7 +93,9 @@ export async function openMicrophone(options: OpenMicrophoneOptions = {}): Promi
     stream = options.stream;
   } else {
     try {
-      stream = await navigator.mediaDevices.getUserMedia(options.constraints ?? MIC_CONSTRAINTS);
+      stream = await navigator.mediaDevices.getUserMedia(
+        withDeviceId(options.constraints ?? MIC_CONSTRAINTS, options.deviceId),
+      );
     } catch (err) {
       throw new MicrophoneError(toMicError(err), { cause: err });
     }

@@ -63,6 +63,12 @@
   gap: var(--al-sp-2);
 }
 
+/* Device names can be long ("Analogue 1 + 2 (Focusrite USB Audio)"). */
+.al-input-picker .al-select {
+  max-width: 14rem;
+  text-overflow: ellipsis;
+}
+
 /* The theme toggle keeps its glyph and word; it is the quietest control. */
 .al-theme-toggle {
   white-space: nowrap;

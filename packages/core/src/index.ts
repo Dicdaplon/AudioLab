@@ -324,6 +324,13 @@ export {
   type OpenMicrophoneOptions,
 } from "./audio/micStream";
 export {
+  findAudioInput,
+  listAudioInputs,
+  withDeviceId,
+  type AudioInput,
+  type ListAudioInputsOptions,
+} from "./audio/devices";
+export {
   MicrophoneError,
   checkMicrophoneSupport,
   toMicError,

@@ -130,7 +130,11 @@ host that owns a context (Tone.js) or a stream passes them in `options`: the SDK
 resumes but never closes the context, never stops the host's tracks, and reports what
 it owns in `ownsContext` / `ownsStream`. Any failure is mapped by `audio/errors.ts` to
 a stable code (`permission-denied`, `no-device`, `insecure-context`, ...) and an
-actionable message.
+actionable message. `options.deviceId` pins the input (`{ exact }`, merged over the
+constraints by `withDeviceId`); a pinned input that has gone maps to
+`device-unavailable`. `audio/devices.ts` lists the inputs (`listAudioInputs`, with an
+optional throwaway stream to reveal hidden labels) and matches one by name
+(`findAudioInput`, which skips Chrome's `default` / `communications` aliases).
 
 `useMicrophone` owns the single session shared by every tab. It is race-safe: a second
 `start()` while one is pending is ignored, and a session token makes a `stop()` or an
