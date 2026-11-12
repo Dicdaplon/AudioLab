@@ -1,4 +1,4 @@
-import { useEffect, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 
 import {
   ChordPlate,
@@ -146,13 +146,18 @@ export default function App() {
   const sessions = useOverlaySessions(params);
   const stage = useStageSignals(sessions.harmony, sessions.notes, {
     songSeconds: params.songSeconds,
+    chords: params.chords,
   });
+  // Info panel: shown with debug=1 or on errors, never with hud=0; D toggles it.
+  const [hud, setHud] = useState(params.hud);
 
-  // R starts the song over (OBS: right-click the source › Interact, then R).
+  // R starts the song over, D shows or hides the info panel (OBS: right-click
+  // the source › Interact, then the key).
   const { reset } = stage;
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "r" || e.key === "R") reset();
+      if (e.key === "d" || e.key === "D") setHud((h) => !h);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -168,7 +173,7 @@ export default function App() {
       ) : (
         <Layout stage={stage} params={params} />
       )}
-      {(params.debug || sessions.errors.length > 0) && (
+      {hud && (params.debug || sessions.errors.length > 0) && (
         <DebugPanel sessions={sessions} stage={stage} />
       )}
     </div>

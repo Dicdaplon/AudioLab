@@ -163,6 +163,8 @@ exports[`@audiolab/react public API > exports the snapshotted names from every e
     "type WolfPathRole",
   ],
   "./stage": [
+    "AttackField",
+    "type AttackFieldProps",
     "BeatRings",
     "type BeatRingsProps",
     "chordName",

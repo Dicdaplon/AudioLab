@@ -38,7 +38,11 @@ export interface SpectrumCityProps {
   pixel?: number;
   /** Number of buildings (bands). Default 48. */
   columns?: number;
-  /** Band level (tap dB) of an empty and of a full building. Default [-90, -30]. */
+  /**
+   * Band level (tap dB) of an empty and of a full building. Default: adaptive,
+   * a full building at the loudest band of the last seconds and an empty one
+   * 50 dB below, so the city fills whatever the input's gain.
+   */
   rangeDb?: readonly [number, number];
   /** Filled with the live roofline on every frame. */
   roofline?: MutableRefObject<Roofline | null>;
@@ -129,6 +133,8 @@ interface Layout {
 }
 
 interface CityState {
+  /** Adaptive ceiling (tap dB): jumps to the loudest band, sinks 4 dB/s. */
+  ceilingDb: number;
   layout: Layout | null;
   spectrum: Float32Array<ArrayBuffer> | null;
   level: Float32Array;
@@ -255,7 +261,7 @@ export function SpectrumCity({
   height,
   pixel = 4,
   columns = 48,
-  rangeDb = [-90, -30],
+  rangeDb,
   roofline,
   theme = STAGE_THEME,
 }: SpectrumCityProps) {
@@ -263,6 +269,7 @@ export function SpectrumCity({
   state.current ??= {
     layout: null,
     spectrum: null,
+    ceilingDb: -40,
     level: new Float32Array(0),
     levelAt: new Float32Array(0),
     peak: new Float32Array(0),
@@ -307,7 +314,15 @@ export function SpectrumCity({
       if (L.binHz !== tap.binHz) setBins(L, tap.binHz, tap.bins);
       tap.readFrequencyDb(st.spectrum);
     }
-    const [floorDb, ceilDb] = rangeDb;
+    if (!rangeDb && tap && st.spectrum) {
+      let loudest = -Infinity;
+      for (let k = 0; k < L.n; k++) {
+        for (let b = L.lo[k]; b <= L.hi[k]; b++)
+          if (st.spectrum[b] > loudest) loudest = st.spectrum[b];
+      }
+      st.ceilingDb = Math.max(loudest, st.ceilingDb - 4 * f.dt, -70);
+    }
+    const [floorDb, ceilDb] = rangeDb ?? [st.ceilingDb - 50, st.ceilingDb];
     for (let k = 0; k < L.n; k++) {
       let target = 0;
       if (tap && st.spectrum) {

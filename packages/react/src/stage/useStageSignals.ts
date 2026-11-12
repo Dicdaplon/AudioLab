@@ -21,10 +21,12 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 
 import {
   ANALYSIS_DEFAULTS,
+  AdaptiveLevel,
   BeatClock,
   ChordChangeTracker,
   KeySettler,
   SongBreak,
+  type AdaptiveLevelReading,
   type BeatPhase,
   type ChordQuality,
   type ChordReading,
@@ -55,7 +57,15 @@ export interface StageOnset {
 }
 
 export interface StageSignals {
+  /** Raw level of the harmony session (`TonalityFrame.signalLevelDb`). */
   levelDb: number;
+  /**
+   * Adaptive levels (playing or not, 0 … 1 between the learnt floor and the
+   * recent peaks) of the harmony and notes sessions: displays use these
+   * rather than fixed dB thresholds.
+   */
+  harmonyLevel: AdaptiveLevelReading;
+  notesLevel: AdaptiveLevelReading;
   key: KeyReading;
   chord: ChordReading;
   /** Performance-clock time of the last chord change, or null. */
@@ -63,7 +73,10 @@ export interface StageSignals {
   /** Performance-clock time of the last key settle / modulation, or null. */
   keyEventAt: number | null;
   note: PitchEstimate | null;
-  /** 12-bin chromas (L1-normalised): last frame, chord window (1 s), live window (8 s). */
+  /**
+   * 12-bin chromas (L1-normalised): last frame and live window (8 s) of the
+   * harmony session, chord window (1 s) of the chord source.
+   */
   chroma: { instant: Float32Array; chord: Float32Array; live: Float32Array };
   tempo: TempoEstimate | null;
   /** Beat phase at a performance-clock time, or null without a confident tempo. */
@@ -81,6 +94,12 @@ export interface UseStageSignalsOptions {
   songSeconds?: number;
   /** Chord qualities considered. Default triads plus 7, maj7, m7. */
   chordQualities?: readonly ChordQuality[];
+  /**
+   * Which session the chords are read from: "harmony" (the mix: the backing
+   * carries the chords) or "notes" (the instrument: the chords you play).
+   * Default "harmony".
+   */
+  chords?: "harmony" | "notes";
   /** Run the pitch tracker on the notes source. Default true. */
   pitch?: boolean;
   /** Run the tempo analysis on the harmony source. Default true. */
@@ -141,6 +160,7 @@ export function useStageSignals(
     tempo = true,
     onsets = true,
     songBreakSeconds = 8,
+    chords: chordSource = "harmony",
   } = options;
   const chordQualities = options.chordQualities ?? DEFAULT_QUALITIES;
 
@@ -150,6 +170,17 @@ export function useStageSignals(
     chordWindowSeconds: ANALYSIS_DEFAULTS.chordWindowSeconds,
     chordQualities,
   });
+  // The notes session gets its own frames (level, and chords when asked)
+  // unless it is the harmony session itself.
+  const separateNotes = notes !== harmony;
+  const notesTonality = useTonality(separateNotes ? notes : null, {
+    tonalityAcquisitionSeconds: 8,
+    liveAcquisitionSeconds: 8,
+    chordWindowSeconds: ANALYSIS_DEFAULTS.chordWindowSeconds,
+    chordQualities,
+  });
+  const chordsFromNotes = chordSource === "notes" && separateNotes;
+  const chordFrame = chordsFromNotes ? notesTonality : tonality;
   const pitchState = usePitch(notes, { enabled: pitch });
   const tempoState = useTempoAnalysis(harmony, { enabled: tempo, method: "flux" });
   const harmonyTap = useSignalTap(harmony);
@@ -161,12 +192,25 @@ export function useStageSignals(
   chordsRef.current ??= new ChordChangeTracker(options.chordChanges);
   const beatRef = useRef<BeatClock | null>(null);
   beatRef.current ??= new BeatClock();
+  const harmonyLevelRef = useRef<AdaptiveLevel | null>(null);
+  harmonyLevelRef.current ??= new AdaptiveLevel();
+  const notesLevelRef = useRef<AdaptiveLevel | null>(null);
+  notesLevelRef.current ??= new AdaptiveLevel();
   const breakRef = useRef<SongBreak | null>(null);
   breakRef.current ??= new SongBreak({ seconds: songBreakSeconds || Infinity });
 
   const signalsRef = useRef<StageSignals | null>(null);
+  const quiet: AdaptiveLevelReading = {
+    open: false,
+    level: 0,
+    floorDb: -100,
+    ceilingDb: -88,
+    gatedDb: -100,
+  };
   signalsRef.current ??= {
     levelDb: tonality.signalLevelDb,
+    harmonyLevel: quiet,
+    notesLevel: quiet,
     key: LISTENING,
     chord: NO_CHORD,
     chordChangedAt: null,
@@ -192,8 +236,10 @@ export function useStageSignals(
   });
 
   const resetTonality = tonality.reset;
+  const resetNotesTonality = notesTonality.reset;
   const reset = useCallback(() => {
     resetTonality();
+    resetNotesTonality();
     settlerRef.current!.reset();
     chordsRef.current!.reset();
     signals.key = LISTENING;
@@ -201,33 +247,62 @@ export function useStageSignals(
     signals.chordChangedAt = null;
     signals.keyEventAt = null;
     setReadings({ key: LISTENING, chord: NO_CHORD });
-  }, [resetTonality, signals]);
+  }, [resetTonality, resetNotesTonality, signals]);
 
-  // One analysis frame (10 Hz): settle the key, follow the chords; a long
-  // silence ends the song.
+  // The trackers see the gated level: silent whenever the adaptive gate of
+  // their session is closed, whatever the input's gain or noise floor.
+  const followChords = useCallback(
+    (chords: Parameters<ChordChangeTracker["push"]>[0], gatedDb: number, t: number) => {
+      const chord = chordsRef.current!.push(chords, gatedDb, t);
+      signals.chord = chord;
+      if (chord.changed) signals.chordChangedAt = t;
+      setReadings((r) => ({ key: r.key, chord: { ...chord, history: [...chord.history] } }));
+    },
+    [signals],
+  );
+
+  // One harmony frame (10 Hz): settle the key, and follow the chords when
+  // they come from the mix; a long silence ends the song.
   const { chords, tonalityKeys, signalLevelDb } = tonality;
   useEffect(() => {
     const t = nowSeconds();
-    if (breakRef.current!.push(signalLevelDb, t)) {
+    const level = harmonyLevelRef.current!.push(signalLevelDb, t);
+    signals.levelDb = signalLevelDb;
+    signals.harmonyLevel = level;
+    if (!separateNotes) signals.notesLevel = level;
+    if (breakRef.current!.push(level.gatedDb, t)) {
       reset();
       return;
     }
-    const key = settlerRef.current!.push(tonalityKeys, signalLevelDb, t);
-    const chord = chordsRef.current!.push(chords, signalLevelDb, t);
-    signals.levelDb = signalLevelDb;
+    const key = settlerRef.current!.push(tonalityKeys, level.gatedDb, t);
     signals.key = key;
-    signals.chord = chord;
     if (key.event) signals.keyEventAt = t;
-    if (chord.changed) signals.chordChangedAt = t;
-    setReadings((r) =>
-      r.key === key && r.chord === chord
-        ? r
-        : { key, chord: { ...chord, history: [...chord.history] } },
-    );
-  }, [chords, tonalityKeys, signalLevelDb, signals, reset]);
+    setReadings((r) => ({ key, chord: r.chord }));
+    if (!chordsFromNotes) followChords(chords, level.gatedDb, t);
+  }, [
+    chords,
+    tonalityKeys,
+    signalLevelDb,
+    signals,
+    reset,
+    separateNotes,
+    chordsFromNotes,
+    followChords,
+  ]);
+
+  // One notes frame: its level, and the chords when they come from the instrument.
+  const notesChords = notesTonality.chords;
+  const notesLevelDb = notesTonality.signalLevelDb;
+  useEffect(() => {
+    if (!separateNotes) return;
+    const t = nowSeconds();
+    const level = notesLevelRef.current!.push(notesLevelDb, t);
+    signals.notesLevel = level;
+    if (chordsFromNotes) followChords(notesChords, level.gatedDb, t);
+  }, [notesChords, notesLevelDb, signals, separateNotes, chordsFromNotes, followChords]);
 
   signals.chroma.instant = tonality.instantaneousChroma;
-  signals.chroma.chord = tonality.chordChroma;
+  signals.chroma.chord = chordFrame.chordChroma;
   signals.chroma.live = tonality.liveAcquisitionChroma;
   signals.note = pitchState.estimate;
 

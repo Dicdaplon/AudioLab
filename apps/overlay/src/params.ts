@@ -4,6 +4,7 @@
  *
  *   ?harmony=Loopback        input for key, chords, tempo (label substring or id)
  *   &notes=Analogue 1        input for the played notes and attacks (default: harmony)
+ *   &chords=notes|harmony    where the chords are read (default notes: what you play)
  *   &layout=cam|scene|band   page layout (default cam)
  *   &view=key|chord|tuner|ribbon|mandala|…   one element alone, top-left
  *   &notation=both|fr|en     note names (default both: French, English small)
@@ -13,6 +14,7 @@
  *   &listen=1                demo mode: also play the demo on the speakers
  *   &bg=1                    draw a stand-in background (previews, screenshots)
  *   &debug=1                 show inputs, levels and errors
+ *   &hud=0                   never show the info panel, not even on errors (D toggles it)
  */
 
 import type { Notation } from "@audiolab/react/stage";
@@ -29,6 +31,7 @@ export interface Rect {
 export interface OverlayParams {
   harmony: string;
   notes: string;
+  chords: "notes" | "harmony";
   layout: Layout;
   view: string | null;
   notation: Notation | "both";
@@ -38,6 +41,7 @@ export interface OverlayParams {
   listen: boolean;
   background: boolean;
   debug: boolean;
+  hud: boolean;
 }
 
 const DEFAULT_CAM: Rect = { x: 48, y: 48, w: 1248, h: 702 };
@@ -57,6 +61,7 @@ export function readParams(search: string): OverlayParams {
   return {
     harmony,
     notes: q.get("notes") ?? harmony,
+    chords: q.get("chords") === "harmony" ? "harmony" : "notes",
     layout: layout === "scene" || layout === "band" ? layout : "cam",
     view: q.get("view"),
     notation: notation === "fr" || notation === "en" ? notation : "both",
@@ -66,5 +71,6 @@ export function readParams(search: string): OverlayParams {
     listen: q.get("listen") === "1",
     background: q.get("bg") === "1",
     debug: q.get("debug") === "1",
+    hud: q.get("hud") !== "0",
   };
 }

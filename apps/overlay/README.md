@@ -39,6 +39,7 @@ interface In 1 (dry, Windows input) ───────► overlay ?notes=    
 | ---------- | -------------------------------------------------------------------------------------------- | ---------------- |
 | `harmony`  | part of an input's name, or its id                                                           | default input    |
 | `notes`    | same                                                                                         | `harmony`        |
+| `chords`   | `notes` (the chords you play) or `harmony` (the mix)                                         | `notes`          |
 | `layout`   | `cam` (webcam corner), `scene` (no webcam), `band` (full-frame webcam)                       | `cam`            |
 | `view`     | one element alone: `key`, `chord`, `tuner`, `ribbon`, `mandala`, or a file of `src/gallery/` |                  |
 | `notation` | `both` (French, English small), `fr`, `en`                                                   | `both`           |
@@ -46,6 +47,7 @@ interface In 1 (dry, Windows input) ───────► overlay ?notes=    
 | `cam`      | webcam rectangle `x,y,w,h` (1920×1080)                                                       | `48,48,1248,702` |
 | `demo`     | `synth`, or an audio URL (`/@fs/F:/path/track.mp3`)                                          |                  |
 | `debug`    | `1`: inputs, levels, tempo, errors                                                           |                  |
+| `hud`      | `0`: never show the info panel, even on errors                                               |                  |
 
 Input names are matched by substring, ignoring case, and real devices win over the
 browser's "Default" / "Communications" aliases. A missing input is retried every 3 s, so
@@ -63,7 +65,10 @@ plugging the interface in after OBS starts works.
 4. Use `&debug=1` once to check that both inputs are found and the level moves.
 5. Between songs nothing is needed: 8 s of silence starts the song key over. To do it
    by hand, right-click the source › **Interact** and press **R** (or refresh the
-   source).
+   source); **D** shows or hides the info panel.
+
+Levels are adaptive: each input learns its own background and recent peaks, so silence,
+the level meter, the city and the embers need no threshold, whatever the gain.
 
 Several sources can show different `view`s and be placed freely; each one opens its own
 inputs (cheap: analysis only).

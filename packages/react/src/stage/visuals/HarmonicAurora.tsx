@@ -117,8 +117,8 @@ export function HarmonicAurora({
     // Attack recency: 1 on the attack, gone after ~1 s.
     const swell = Math.exp(-Math.max(0, f.now - lastOnset) / 0.35);
 
-    // Fade the whole sky with the level (−100 dB is digital silence, music ≈ −85…−70).
-    st.master += (clamp01((s.levelDb + 97) / 12) - st.master) * approach(f.dt, 0.4);
+    // Fade the whole sky with the adaptive level (0 at the learnt floor).
+    st.master += (clamp01(s.harmonyLevel.level * 2) - st.master) * approach(f.dt, 0.4);
 
     const t = f.now;
     const data = st.img.data;

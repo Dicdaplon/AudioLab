@@ -98,6 +98,13 @@ export {
 } from "./analysis/readout/beatClock";
 export { SongBreak, type SongBreakOptions } from "./analysis/readout/songBreak";
 export {
+  ADAPTIVE_LEVEL_GATE,
+  AdaptiveLevel,
+  GATED_SILENCE_DB,
+  type AdaptiveLevelOptions,
+  type AdaptiveLevelReading,
+} from "./analysis/readout/adaptiveLevel";
+export {
   chordDegree,
   fifthsIndex,
   keyPitchClasses,

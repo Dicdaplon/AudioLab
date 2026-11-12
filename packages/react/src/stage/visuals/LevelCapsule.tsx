@@ -26,10 +26,13 @@ export interface LevelCapsuleProps {
 export const LEVEL_CAPSULE_SIZE = { width: 456, height: 104 } as const;
 
 const CELLS = 16;
-/** Level scale (`TonalityFrame.signalLevelDb`): empty meter, full meter, "live" threshold. */
+/**
+ * The meter shows the harmony session's adaptive level (0 at the learnt
+ * floor, 1 at the recent peaks) on a nominal 30 dB scale, so its ballistics
+ * stay in dB whatever the input's gain.
+ */
 const EMPTY_DB = -95;
 const FULL_DB = -65;
-const LIVE_DB = -90;
 const RELEASE_DB_PER_S = 20;
 const PEAK_HOLD = 0.8;
 const MIN_CONFIDENCE = 0.5;
@@ -48,7 +51,7 @@ export function LevelCapsule({ signals, notation = "fr", theme = STAGE_THEME }: 
     const s = signals.current;
     const st = state.current;
     const now = f.now;
-    const db = s && Number.isFinite(s.levelDb) ? s.levelDb : -100;
+    const db = EMPTY_DB + (s?.harmonyLevel.level ?? 0) * (FULL_DB - EMPTY_DB);
 
     // Instant attack, linear release; the peak holds 800 ms then falls.
     st.level = db >= st.level ? db : Math.max(db, st.level - RELEASE_DB_PER_S * f.dt);
@@ -78,7 +81,7 @@ export function LevelCapsule({ signals, notation = "fr", theme = STAGE_THEME }: 
     ctx.stroke();
 
     // Row 1: on-air LED and brand.
-    const live = db > LIVE_DB;
+    const live = s?.harmonyLevel.open ?? false;
     ctx.fillStyle = live ? theme.good : theme.shadeLine;
     ctx.fillRect(24, 20, 12, 12);
     ctx.textBaseline = "alphabetic";

@@ -38,6 +38,8 @@ function signals(): StageSignals {
   chroma[4] = 0.3;
   return {
     levelDb: -75,
+    harmonyLevel: { open: true, level: 0.6, floorDb: -98, ceilingDb: -70, gatedDb: -75 },
+    notesLevel: { open: true, level: 0.6, floorDb: -98, ceilingDb: -70, gatedDb: -75 },
     key: {
       phase: "settled",
       key: { tonic: 9, mode: "min" },
@@ -112,6 +114,16 @@ const VISUALS: [string, (s: Ref) => ReactElement][] = [
   ["ChordTunnel", (s) => createElement(stage.ChordTunnel, { signals: s, size: 400 })],
   ["NoteLane", (s) => createElement(stage.NoteLane, { signals: s, width: 640, height: 200 })],
   ["LevelCapsule", (s) => createElement(stage.LevelCapsule, { signals: s })],
+  [
+    "AttackField",
+    (s) =>
+      createElement(stage.AttackField, {
+        signals: s,
+        width: 640,
+        height: 360,
+        clip: { x: 0, y: 0, w: 200, h: 100 },
+      }),
+  ],
 ];
 
 describe("stage visuals on the server", () => {
@@ -206,6 +218,7 @@ describe("stage visuals in the browser", () => {
         s.keyEventAt = t;
         s.note = null;
         s.levelDb = -100;
+        s.harmonyLevel = { ...s.harmonyLevel, open: false, level: 0, gatedDb: -100 };
       }
     });
     expect(canvas.calls.length).toBeGreaterThan(0);

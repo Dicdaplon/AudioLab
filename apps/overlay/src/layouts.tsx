@@ -6,6 +6,7 @@
 import { useRef, type ReactNode } from "react";
 
 import {
+  AttackField,
   BeatRings,
   ChordPlate,
   ChordRibbon,
@@ -82,6 +83,12 @@ export function CamLayout({ stage, params }: LayoutProps) {
   const cam = params.cam;
   return (
     <>
+      <AttackField
+        signals={stage.signals}
+        width={1920}
+        height={1080}
+        clip={{ x: cam.x, y: cam.y, w: cam.w, h: cam.h }}
+      />
       <City stage={stage} y={880} height={200} />
       <At x={1328} y={164}>
         <BeatRings signals={stage.signals} width={560} height={560} radius={176} />
@@ -125,6 +132,7 @@ export function SceneLayout({ stage, params }: LayoutProps) {
   return (
     <>
       <HarmonicAurora signals={stage.signals} width={1920} height={304} />
+      <AttackField signals={stage.signals} width={1920} height={1080} />
       <City stage={stage} y={880} height={200} walkers="fireflies" />
       <At x={460} y={-50}>
         <BeatRings signals={stage.signals} width={1000} height={1000} radius={320} />
@@ -178,6 +186,13 @@ export function BandLayout({ stage, params }: LayoutProps) {
   const fr = params.notation === "en" ? "en" : "fr";
   return (
     <>
+      {/* Full-frame webcam: embers only around the face and the guitar. */}
+      <AttackField
+        signals={stage.signals}
+        width={1920}
+        height={1080}
+        clip={{ x: 320, y: 0, w: 1280, h: 856 }}
+      />
       <At x={472} y={968}>
         <SpectrumCity signals={stage.signals} width={896} height={64} columns={32} />
       </At>
