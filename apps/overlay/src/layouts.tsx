@@ -178,6 +178,7 @@ export function CamLayout({ stage, params }: LayoutProps) {
             width={cam.w}
             height={212}
             labels={params.tabLabels}
+            view={params.tabView}
             notation={fr}
           />
         )}
@@ -267,6 +268,7 @@ export function SceneLayout({ stage, params }: LayoutProps) {
           width={1728}
           height={216}
           labels={params.tabLabels}
+          view={params.tabView}
           notation={fr}
         />
       </At>
@@ -319,6 +321,7 @@ export function BandLayout({ stage, params }: LayoutProps) {
           width={1104}
           height={192}
           labels={params.tabLabels}
+          view={params.tabView}
           notation={fr}
           theme={BAND_THEME}
         />

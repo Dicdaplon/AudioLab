@@ -32,6 +32,7 @@ export {
 } from "./stage/useStoredStageSettings";
 export { STAGE_THEME, modeColour, withAlpha, type StageTheme } from "./stage/theme";
 export {
+  bendAmount,
   bendLabel,
   chordName,
   chordSuffix,

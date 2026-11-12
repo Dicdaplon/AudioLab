@@ -125,8 +125,8 @@ function pluck(
     const top = hz(midi + bendSemitones);
     osc.frequency.setValueAtTime(hz(midi), at + 0.12);
     osc.frequency.linearRampToValueAtTime(top, at + 0.37);
-    osc.frequency.setValueAtTime(top, at + duration - 0.25);
-    osc.frequency.linearRampToValueAtTime(hz(midi), at + duration - 0.05);
+    osc.frequency.setValueAtTime(top, at + duration - 0.45);
+    osc.frequency.linearRampToValueAtTime(hz(midi), at + duration - 0.25);
   }
   if (vibratoHz > 0) {
     // A guitarist's vibrato: it starts after the attack, about ±25 cents.
@@ -198,7 +198,7 @@ function startSynth(ctx: AudioContext, mixOut: AudioNode, leadOut: AudioNode): (
         pluck(
           ctx,
           lead,
-          note,
+          note - 12, // an octave down: the guitar's usual solo register
           barTime + e * (BEAT / 2),
           held ? BEAT * 1.4 : BEAT * 0.9,
           0.3,

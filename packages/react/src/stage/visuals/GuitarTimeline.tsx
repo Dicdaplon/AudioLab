@@ -1,19 +1,33 @@
 "use client";
 
 /**
- * Guitar timeline: the notes played, as a scrolling tablature. Six strings
- * (high E on top), each note a pill on the string and fret a guitarist would
- * most likely use (`FretPlacer`: the hand stays in a position, the song
- * starts in the key's pentatonic box), scrolling right to left past a "now"
- * line. A chord strip above shares the time axis, so the line reads against
- * its harmony, and a faint line marks each chord change across the strings.
+ * Guitar timeline: the notes played, scrolling right to left past a "now"
+ * line, as a tablature (`view="tab"`, default) or on a staff
+ * (`view="staff"`). A chord strip above shares the time axis, so the line
+ * reads against its harmony, and a faint line marks each chord change.
  *
- * Pills say what the note is in the music: filled for a chord tone,
- * outlined for a scale note, outlined with a coral cut corner when outside
- * the key; a held note trails a bar. Attacks without a clear pitch (a
- * strummed chord) draw a strum mark across the strings, which shows the
- * picking hand's rhythm. Beat ticks follow the detected tempo; with no
- * reliable tempo the lane scrolls at a fixed speed without ticks.
+ * Tab: six strings (high E on top), each note a pill on the string and fret
+ * a guitarist would most likely use (`FretPlacer`: the hand stays in a
+ * position, the song starts in the key's pentatonic box).
+ *
+ * Staff: a five-line treble staff in guitar notation, written an octave
+ * above where it sounds (the clef carries a small "8" under it). Each note
+ * is a head at its diatonic place, with ledger lines and its own ♯ / ♭
+ * spelled from the song's key (flat keys read with flats, the others and
+ * "no key yet" with sharps); there is no key signature, so a note reads on
+ * its own. A note needing more than two ledger lines is drawn an octave
+ * nearer, marked 8va (sounds higher) or 8vb (lower). Spelling and positions
+ * are in `timelineStaff.ts`.
+ *
+ * In both views the note says what it is in the music: filled for a chord
+ * tone, outlined for a scale note, with a coral cut corner when outside the
+ * key; a held note trails a bar. A vibrato makes the bar a stepped wave at
+ * its rate; a bend makes it climb (a stepped curve) and come back down when
+ * released, with the tab label of the bend at the top ("½", "1" = full,
+ * "1½"…). Attacks without a clear pitch (a strummed chord) draw a strum mark,
+ * which shows the picking hand's rhythm. Beat ticks follow the detected
+ * tempo; with no reliable tempo the lane scrolls at a fixed speed without
+ * ticks.
  */
 
 import { useRef, type RefObject } from "react";
@@ -26,20 +40,34 @@ import {
   type ChordSegment,
   type FretPosition,
   type KeyRef,
+  type NoteSegment,
 } from "@audiolab/core";
 
-import { chordName, noteName, type Notation } from "../names";
+import { bendAmount, chordName, noteName, type Notation } from "../names";
 import { StageCanvas, type StageFrame } from "../StageCanvas";
 import { STAGE_THEME, withAlpha, type StageTheme } from "../theme";
 import type { StageSignals } from "../useStageSignals";
+import {
+  ledgerCount,
+  spelledName,
+  staffNote,
+  TOP_LINE_POS,
+  usesFlats,
+  type StaffNote,
+} from "./timelineStaff";
 
 export interface GuitarTimelineProps {
   signals: RefObject<StageSignals | null>;
   width: number;
   height: number;
-  /** Pills show the fret ("frets", default) or the note name ("names"). */
+  /** Tablature ("tab", default) or treble staff in guitar notation ("staff"). */
+  view?: "tab" | "staff";
+  /**
+   * Tab pills show the fret ("frets", default) or the note name ("names");
+   * on the staff, "names" prints the name after each head.
+   */
   labels?: "frets" | "names";
-  /** Chord strip above the strings. Default true. */
+  /** Chord strip above the lane. Default true. */
   chords?: boolean;
   notation?: Notation;
   theme?: StageTheme;
@@ -62,11 +90,25 @@ const OWN_AFTER = 0.3;
 const STRING_NAMES = ["E", "A", "D", "G", "B", "e"];
 /** A sounding note is placed (and drawn) after this long: shorter blips may be glitches. */
 const MIN_PLACE_SECONDS = 0.07;
+/** Bend on a held bar: rise per semitone and its cap, ramp length, curve step, in px. */
+const BEND_PX_PER_SEMITONE = 10;
+const BEND_MAX_PX = 30;
+const BEND_RAMP_PX = 32;
+const CURVE_STEP = 4;
+/** Staff line gap bounds, in px (the gap follows the height). */
+const STAFF_GAP_MIN = 10;
+const STAFF_GAP_MAX = 14;
+/** Note role flags: filled head or pill for a chord tone, coral corner outside the key. */
+const CHORD_TONE = 2;
+const IN_KEY = 1;
+const CLEF_FONT = '"Segoe UI Symbol", "Noto Music", "Bravura Text", serif';
 
 interface TimelineState {
   placer: FretPlacer;
   /** Placement of each note, by its start time: assigned once, never moved. */
   placed: Map<number, FretPosition | null>;
+  /** Staff place and spelling of each note, by its start time, in the key it was played in. */
+  staffed: Map<number, StaffNote>;
   keyId: string;
   quietSince: number | null;
   pxPerSecond: number;
@@ -96,10 +138,107 @@ function platePath(ctx: CanvasRenderingContext2D, w: number, h: number, cut: num
   ctx.closePath();
 }
 
+/** Coral cut corner at the top right of a box: the note is outside the key. */
+function cutCorner(ctx: CanvasRenderingContext2D, right: number, top: number, theme: StageTheme) {
+  ctx.fillStyle = theme.bad;
+  ctx.beginPath();
+  ctx.moveTo(right - 8, top);
+  ctx.lineTo(right, top);
+  ctx.lineTo(right, top + 8);
+  ctx.closePath();
+  ctx.fill();
+}
+
+/** Pixel oval (a notehead), centred vertically on y. */
+function pixelOval(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
+  const top = y - h / 2;
+  ctx.fillRect(x + 4, top, w - 8, h);
+  ctx.fillRect(x + 2, top + 2, w - 4, h - 4);
+  ctx.fillRect(x, top + 4, w, h - 8);
+}
+
+/** Smoothstep, for the bend curve. */
+function ease(t: number): number {
+  return t * t * (3 - 2 * t);
+}
+
+/**
+ * A held note's bar from x0 to x1 on y: flat, a stepped wave with a vibrato,
+ * a stepped climb (and its label) with a bend, back down when released.
+ * The fill style is the caller's.
+ */
+function heldBar(
+  ctx: CanvasRenderingContext2D,
+  n: NoteSegment,
+  x0: number,
+  x1: number,
+  y: number,
+  thick: number,
+  pps: number,
+  theme: StageTheme,
+): void {
+  const len = x1 - x0;
+  if (len <= 0) return;
+  const bend = n.bend;
+  const px = (cents: number) =>
+    Math.min(BEND_MAX_PX, (Math.max(0, cents) / 100) * BEND_PX_PER_SEMITONE);
+  const peak = bend ? px(bend.cents) : 0;
+  const end = bend && !bend.released ? Math.min(peak, px(bend.current)) : 0;
+  const ramp = bend ? Math.min(BEND_RAMP_PX, Math.floor(len / 3)) : 0;
+  const fall = bend && peak - end > CURVE_STEP ? ramp : 0;
+  const half = thick / 2;
+
+  // Climb, then the fall at the far end (a released bend comes back down).
+  for (let bx = 0; bx < ramp; bx += CURVE_STEP) {
+    const rise = Math.round(peak * ease((bx + CURVE_STEP) / ramp));
+    ctx.fillRect(x0 + bx, y - rise - half, Math.min(CURVE_STEP, ramp - bx), thick);
+  }
+  for (let bx = 0; bx < fall; bx += CURVE_STEP) {
+    const rise = Math.round(peak - (peak - end) * ease((bx + CURVE_STEP) / fall));
+    ctx.fillRect(x1 - fall + bx, y - rise - half, Math.min(CURVE_STEP, fall - bx), thick);
+  }
+
+  // The held part, at the bend's top.
+  const h0 = x0 + ramp;
+  const h1 = x1 - fall;
+  const hy = y - peak;
+  if (h1 > h0) {
+    if (n.vibrato.active) {
+      const halfCycle = Math.max(8, Math.round(pps / (2 * n.vibrato.rateHz)));
+      const amp = Math.round(half);
+      for (let bx = h0, k = 0; bx < h1; bx += halfCycle, k++) {
+        ctx.fillRect(bx, hy - half + (k % 2 ? amp : -amp), Math.min(halfCycle, h1 - bx), thick);
+      }
+    } else {
+      ctx.fillRect(h0, hy - half, h1 - h0, thick);
+    }
+  }
+
+  // The bend's label sits on the bar at the top of the climb (above it, it
+  // would run into the chord strip).
+  if (bend) {
+    const fill = ctx.fillStyle;
+    const label = bendAmount(bend.cents);
+    ctx.font = `24px ${theme.fonts.hero}`;
+    ctx.textAlign = "center";
+    const w = Math.round(ctx.measureText(label).width) + 10;
+    const lx = Math.min(x0 + ramp, x1 - w);
+    ctx.fillStyle = theme.night;
+    ctx.fillRect(lx, hy - 11, w, 22);
+    ctx.strokeStyle = fill;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(lx + 1, hy - 10, w - 2, 20);
+    ctx.fillStyle = theme.ink;
+    ctx.fillText(label, lx + w / 2, hy + 1);
+    ctx.fillStyle = fill;
+  }
+}
+
 export function GuitarTimeline({
   signals,
   width,
   height,
+  view = "tab",
   labels = "frets",
   chords = true,
   notation = "fr",
@@ -113,6 +252,7 @@ export function GuitarTimeline({
     state.current ??= {
       placer: new FretPlacer(),
       placed: new Map(),
+      staffed: new Map(),
       keyId: "",
       quietSince: null,
       pxPerSecond: FREE_PX_PER_S,
@@ -122,6 +262,7 @@ export function GuitarTimeline({
     const W = f.width;
     const H = f.height;
     const key = s.key.key;
+    const staff = view === "staff";
 
     // A new key: start the reading in its pentatonic box (old pills keep their place).
     const id = keyId(key);
@@ -147,10 +288,22 @@ export function GuitarTimeline({
     const xAt = (t: number) => Math.round(nowX - (now - t) * pps);
     const oldest = now - (nowX - LEFT) / pps;
 
+    // Vertical layout. Tab: six strings. Staff: room for two ledger lines
+    // above and below, the gap fitted to the height.
     const stripH = chords ? STRIP : 0;
     const top = stripH + 14;
     const rowY = (string: number) => top + (5 - string) * STRING_GAP;
-    const bottom = rowY(0);
+    const gap = Math.max(
+      STAFF_GAP_MIN,
+      Math.min(STAFF_GAP_MAX, Math.floor((H - stripH - 24) / 10)),
+    );
+    const topLine = stripH + 6 + 3 * gap;
+    const bottomLine = topLine + 4 * gap;
+    const posY = (pos: number) => Math.round(bottomLine - (pos * gap) / 2);
+    /** Lowest drawn line (bottom string or staff line) and the lane's top and bottom marks. */
+    const bottom = staff ? bottomLine : rowY(0);
+    const laneTop = staff ? topLine - 10 : rowY(5) - 10;
+    const tickY = staff ? bottomLine + 3 * gap : bottom + 10;
 
     ctx.save();
     ctx.globalAlpha = laneAlpha;
@@ -162,6 +315,12 @@ export function GuitarTimeline({
     ctx.lineWidth = 4;
     ctx.strokeStyle = theme.plateBorder;
     ctx.stroke();
+
+    // Staff lines run under the clef, so they are drawn before the clip.
+    if (staff) {
+      ctx.fillStyle = withAlpha(theme.inkFaint, stringAlpha);
+      for (let line = 0; line < 5; line++) ctx.fillRect(8, topLine + line * gap - 1, W - 12, 2);
+    }
 
     // Clip the scrolling content to the lane.
     ctx.save();
@@ -198,17 +357,19 @@ export function GuitarTimeline({
       }
     }
 
-    // Strings and their names.
-    ctx.fillStyle = withAlpha(theme.plateBorder, stringAlpha);
-    for (let string = 0; string < 6; string++) ctx.fillRect(LEFT, rowY(string) - 2, W - LEFT, 4);
+    // Strings.
+    if (!staff) {
+      ctx.fillStyle = withAlpha(theme.plateBorder, stringAlpha);
+      for (let string = 0; string < 6; string++) ctx.fillRect(LEFT, rowY(string) - 2, W - LEFT, 4);
+    }
 
-    // Beat ticks under the strings.
+    // Beat ticks under the lane.
     if (beat) {
       const firstBeat = now - beat.phase * beat.period;
       for (let k = 0, t = firstBeat; t >= oldest; k++, t = firstBeat - k * beat.period) {
         const downbeat = (((beat.beatInBar - k) % 4) + 4) % 4 === 0;
         ctx.fillStyle = downbeat ? theme.inkMuted : theme.plateBorder;
-        ctx.fillRect(xAt(t) - 2, bottom + 10, 4, downbeat ? 12 : 8);
+        ctx.fillRect(xAt(t) - 2, tickY, 4, downbeat ? 12 : 8);
       }
     }
 
@@ -221,109 +382,188 @@ export function GuitarTimeline({
       );
       if (owned || now - o.time < OWN_AFTER) continue;
       ctx.fillStyle = withAlpha(theme.ink, 0.45);
-      ctx.fillRect(xAt(o.time) - 4, rowY(5) - 10, 8, bottom - rowY(5) + 20);
+      ctx.fillRect(xAt(o.time) - 4, laneTop, 8, bottom - laneTop + 10);
     }
 
     // Place new notes oldest first, so the hand position follows the line in
     // playing order. A note is placed once it has lasted long enough not to
     // be a glitch the segmenter may still drop.
+    const flats = usesFlats(key);
     for (const n of notes) {
       if (st.placed.has(n.start)) continue;
       if (n.open && now - n.start < MIN_PLACE_SECONDS) break;
       st.placed.set(n.start, st.placer.place(n.midi));
+      st.staffed.set(n.start, staffNote(n.midi, flats));
     }
 
-    // Draw newest first, so an older pill that would sit under a newer one on
-    // the same string shrinks to a tick.
-    const nextOnString = new Array<number>(6).fill(Infinity);
-    ctx.textBaseline = "middle";
-    ctx.textAlign = "center";
-    ctx.font = `28px ${theme.fonts.hero}`;
-    for (let i = notes.length - 1; i >= 0; i--) {
-      const n = notes[i];
-      const end = n.open ? now : n.end;
-      if (end < oldest) break;
-      const pos = st.placed.get(n.start);
-      if (!pos) continue;
+    /** How the note reads in the music: CHORD_TONE and IN_KEY flags. */
+    const role = (n: NoteSegment) => {
       const pc = n.midi % 12;
-      const y = rowY(pos.string);
-      const x0 = xAt(n.start);
-      const x1 = xAt(end);
-      const label = labels === "names" ? noteName(pc, notation) : String(pos.fret);
-      const pillW = label.length > 1 ? 40 : 28;
       const chord = chordAt(history, n.start)?.chord ?? null;
       const chordTone =
         chord !== null &&
         CHORD_QUALITY_INTERVALS[chord.quality].some((iv) => (chord.root + iv) % 12 === pc);
       const inKey = key ? scaleDegree(pc, key.tonic, key.mode) !== null : true;
+      return (chordTone ? CHORD_TONE : 0) | (inKey ? IN_KEY : 0);
+    };
 
-      // Held note: a bar from the pill to the end; with a vibrato, a stepped
-      // wave at the vibrato's rate (blocks alternating ±4 px).
-      if (x1 > x0 + pillW) {
-        const barEnd = Math.min(x1, nextOnString[pos.string]);
-        ctx.fillStyle = withAlpha(theme.pitchBright[pc], 0.6);
-        if (n.vibrato.active) {
-          const halfCycle = Math.max(8, Math.round(pps / (2 * n.vibrato.rateHz)));
-          for (let bx = x0 + pillW, k = 0; bx < barEnd; bx += halfCycle, k++) {
-            ctx.fillRect(bx, y - 4 + (k % 2 ? 4 : -4), Math.min(halfCycle, barEnd - bx), 8);
+    // Draw newest first, so an older note that would sit under a newer one
+    // shrinks (tab: to a tick on its string; staff: its bar stops short).
+    ctx.textBaseline = "middle";
+    if (!staff) {
+      const nextOnString = new Array<number>(6).fill(Infinity);
+      for (let i = notes.length - 1; i >= 0; i--) {
+        const n = notes[i];
+        const end = n.open ? now : n.end;
+        if (end < oldest) break;
+        const pos = st.placed.get(n.start);
+        if (!pos) continue;
+        const pc = n.midi % 12;
+        const y = rowY(pos.string);
+        const x0 = xAt(n.start);
+        const x1 = xAt(end);
+        const label = labels === "names" ? noteName(pc, notation) : String(pos.fret);
+        ctx.font = `28px ${theme.fonts.hero}`;
+        const pillW = Math.max(28, Math.round(ctx.measureText(label).width) + 12);
+        const r = role(n);
+
+        if (x1 > x0 + pillW) {
+          ctx.fillStyle = withAlpha(theme.pitchBright[pc], 0.6);
+          heldBar(ctx, n, x0 + pillW, Math.min(x1, nextOnString[pos.string]), y, 8, pps, theme);
+        }
+        if (x0 + pillW > nextOnString[pos.string]) {
+          ctx.fillStyle = theme.pitchBright[pc];
+          ctx.fillRect(x0, y - PILL_H / 2, 8, PILL_H);
+        } else {
+          const py = y - PILL_H / 2;
+          if (r & CHORD_TONE) {
+            ctx.fillStyle = theme.pitch[pc];
+            ctx.fillRect(x0, py, pillW, PILL_H);
+          } else {
+            ctx.fillStyle = theme.night;
+            ctx.fillRect(x0, py, pillW, PILL_H);
+            ctx.strokeStyle = theme.pitchBright[pc];
+            ctx.lineWidth = 4;
+            ctx.strokeRect(x0 + 2, py + 2, pillW - 4, PILL_H - 4);
           }
-        } else {
-          ctx.fillRect(x0 + pillW, y - 4, barEnd - x0 - pillW, 8);
+          if (!(r & IN_KEY)) cutCorner(ctx, x0 + pillW, py, theme);
+          ctx.textAlign = "center";
+          ctx.fillStyle = r & CHORD_TONE ? theme.pitchOn : theme.ink;
+          ctx.fillText(label, x0 + pillW / 2, y + 1);
         }
+        nextOnString[pos.string] = x0;
       }
-      if (x0 + pillW > nextOnString[pos.string]) {
-        ctx.fillStyle = theme.pitchBright[pc];
-        ctx.fillRect(x0, y - PILL_H / 2, 8, PILL_H);
-      } else {
-        const px = x0;
-        const py = y - PILL_H / 2;
-        if (chordTone) {
-          ctx.fillStyle = theme.pitch[pc];
-          ctx.fillRect(px, py, pillW, PILL_H);
-        } else {
+    } else {
+      const headW = Math.round(gap * 1.5);
+      const headH = Math.max(12, gap);
+      const lineColour = withAlpha(theme.inkFaint, stringAlpha);
+      let next = Infinity;
+      for (let i = notes.length - 1; i >= 0; i--) {
+        const n = notes[i];
+        const end = n.open ? now : n.end;
+        if (end < oldest) break;
+        const sn = st.staffed.get(n.start);
+        if (!sn) continue;
+        const pc = n.midi % 12;
+        const y = posY(sn.pos);
+        const x0 = xAt(n.start);
+        const x1 = xAt(end);
+        const r = role(n);
+
+        // Ledger lines, out from the staff.
+        const ledgers = ledgerCount(sn.pos);
+        ctx.fillStyle = lineColour;
+        for (let k = 1; k <= Math.abs(ledgers); k++) {
+          const ly = ledgers > 0 ? posY(TOP_LINE_POS + 2 * k) : posY(-2 * k);
+          ctx.fillRect(x0 - 5, ly - 1, headW + 10, 2);
+        }
+
+        // Name after the head (labels="names", when it fits before the
+        // next note), then the held bar.
+        let barStart = x0 + headW + 2;
+        if (labels === "names") {
+          const name = spelledName(sn, notation);
+          ctx.font = `24px ${theme.fonts.hero}`;
+          const nameW = Math.round(ctx.measureText(name).width);
+          if (x0 + headW + nameW + 8 < next) {
+            ctx.textAlign = "left";
+            ctx.fillStyle = theme.pitchBright[pc];
+            ctx.fillText(name, x0 + headW + 4, y + 1);
+            barStart += nameW + 6;
+          }
+        }
+        if (x1 > barStart) {
+          ctx.fillStyle = withAlpha(theme.pitchBright[pc], 0.6);
+          heldBar(ctx, n, barStart, Math.min(x1, next - 2), y, 6, pps, theme);
+        }
+
+        // Head: filled chord tone, outlined scale note, cut corner out of key.
+        ctx.fillStyle = r & CHORD_TONE ? theme.pitch[pc] : theme.pitchBright[pc];
+        pixelOval(ctx, x0, y, headW, headH);
+        if (!(r & CHORD_TONE)) {
           ctx.fillStyle = theme.night;
-          ctx.fillRect(px, py, pillW, PILL_H);
-          ctx.strokeStyle = theme.pitchBright[pc];
-          ctx.lineWidth = 4;
-          ctx.strokeRect(px + 2, py + 2, pillW - 4, PILL_H - 4);
+          pixelOval(ctx, x0 + 3, y, headW - 6, headH - 6);
         }
-        if (!inKey) {
-          ctx.fillStyle = theme.bad;
-          ctx.beginPath();
-          ctx.moveTo(px + pillW - 8, py);
-          ctx.lineTo(px + pillW, py);
-          ctx.lineTo(px + pillW, py + 8);
-          ctx.closePath();
-          ctx.fill();
+        if (!(r & IN_KEY)) cutCorner(ctx, x0 + headW, y - headH / 2, theme);
+
+        // Accidental before the head, octave mark above or below it.
+        if (sn.accidental !== 0) {
+          ctx.font = `${Math.round(gap * 1.7)}px ${CLEF_FONT}`;
+          ctx.textAlign = "right";
+          ctx.fillStyle = theme.pitchBright[pc];
+          ctx.fillText(sn.accidental > 0 ? "♯" : "♭", x0 - 2, y + 1);
         }
-        ctx.fillStyle = chordTone ? theme.pitchOn : theme.ink;
-        ctx.fillText(label, px + pillW / 2, y + 1);
+        if (sn.shift !== 0) {
+          ctx.font = `18px ${theme.fonts.hero}`;
+          ctx.textAlign = "left";
+          ctx.fillStyle = theme.inkMuted;
+          const my = sn.shift < 0 ? y - headH / 2 - 8 : y + headH / 2 + 8;
+          ctx.fillText(sn.shift < 0 ? "8va" : "8vb", x0, my);
+        }
+        next = x0;
       }
-      nextOnString[pos.string] = x0;
     }
     ctx.restore();
 
-    // String names, the "now" line and the last note's name.
-    ctx.textAlign = "left";
+    // Clef or string names, the "now" line and the last note's name.
     ctx.textBaseline = "middle";
-    ctx.font = `16px ${theme.fonts.label}`;
-    for (let string = 0; string < 6; string++) {
+    if (staff) {
+      ctx.fillStyle = withAlpha(theme.ink, stringAlpha);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "alphabetic";
+      ctx.font = `${Math.round(gap * 5.2)}px ${CLEF_FONT}`;
+      ctx.fillText("𝄞", 28, bottomLine + Math.round(gap * 1.1));
+      ctx.textBaseline = "middle";
+      ctx.font = `22px ${theme.fonts.hero}`;
+      ctx.fillText("8", 28, bottomLine + Math.round(gap * 3.1));
+    } else {
+      ctx.textAlign = "left";
+      ctx.font = `16px ${theme.fonts.label}`;
       ctx.fillStyle = withAlpha(theme.inkMuted, stringAlpha);
-      ctx.fillText(STRING_NAMES[string], 16, rowY(string) + 1);
+      for (let string = 0; string < 6; string++) {
+        ctx.fillText(STRING_NAMES[string], 16, rowY(string) + 1);
+      }
     }
+    ctx.textAlign = "left";
     ctx.fillStyle = theme.ink;
-    ctx.fillRect(nowX - 2, stripH + 4, 4, bottom - stripH + 16);
+    ctx.fillRect(nowX - 2, stripH + 4, 4, tickY - stripH + 12);
     const last = notes[notes.length - 1];
     if (last && (last.open || now - last.end < 1.5)) {
       const pc = last.midi % 12;
       const octave = Math.floor(last.midi / 12) - 1;
+      const sn = staff ? st.staffed.get(last.start) : undefined;
+      const name = sn ? spelledName(sn, notation) : noteName(pc, notation);
       ctx.font = `32px ${theme.fonts.hero}`;
       ctx.fillStyle = theme.pitchBright[pc];
       ctx.globalAlpha = laneAlpha * (last.open ? 1 : 0.5);
-      ctx.fillText(`${noteName(pc, notation)}${octave}`, nowX + 16, rowY(3));
+      ctx.fillText(`${name}${octave}`, nowX + 16, staff ? posY(5) : rowY(3));
       const pos = st.placed.get(last.start);
-      if (pos && labels === "frets") {
-        ctx.font = `16px ${theme.fonts.label}`;
+      const bend = last.bend;
+      ctx.font = `16px ${theme.fonts.label}`;
+      if (bend) {
+        ctx.fillStyle = theme.ink;
+        ctx.fillText(`BEND ${bendAmount(bend.cents)}`, nowX + 16, staff ? posY(1) : rowY(1));
+      } else if (pos && labels === "frets" && !staff) {
         ctx.fillStyle = theme.major;
         ctx.fillText(`${notation === "fr" ? "CASE" : "FRET"} ${pos.fret}`, nowX + 16, rowY(1));
       }
@@ -332,7 +572,12 @@ export function GuitarTimeline({
 
     // Forget placements that scrolled out.
     if (st.placed.size > 128) {
-      for (const start of st.placed.keys()) if (start < oldest - 5) st.placed.delete(start);
+      for (const start of st.placed.keys()) {
+        if (start < oldest - 5) {
+          st.placed.delete(start);
+          st.staffed.delete(start);
+        }
+      }
     }
   };
 
