@@ -114,6 +114,7 @@ export {
 export {
   NOTE_SEGMENTER_DEFAULTS,
   NoteSegmenter,
+  type BendReading,
   type NoteSegment,
   type NoteSegmenterOptions,
 } from "./analysis/readout/noteSegments";
