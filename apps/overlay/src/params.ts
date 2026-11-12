@@ -16,6 +16,7 @@
  *   &extras=mandala,paws     optional layers, off by default: mandala, paws, embers,
  *                            aurora, scope, ribbon (the layouts stay light without them)
  *   &title=Blue Bossa        song title (scene layout)
+ *   &wolf=0                  no wolf mascot (it reacts to the playing and talks now and then)
  *   &backdrop=night|plain|off   opaque background around the webcam (default night;
  *                            off in the band layout). Put the overlay above the webcam in OBS.
  *   &tab=frets|names|staff   timeline: tablature with frets or note names, or a staff
@@ -55,6 +56,7 @@ export interface OverlayParams {
   /** Timeline as a tablature or a staff. */
   tabView: "tab" | "staff";
   backdrop: "night" | "plain" | "off";
+  wolf: boolean;
 }
 
 export type Extra = "mandala" | "paws" | "embers" | "aurora" | "scope" | "ribbon";
@@ -94,6 +96,7 @@ export function readParams(search: string): OverlayParams {
     title: q.get("title") ?? "",
     tabLabels: q.get("tab") === "names" || q.get("labels") === "names" ? "names" : "frets",
     tabView: q.get("tab") === "staff" ? "staff" : "tab",
+    wolf: q.get("wolf") !== "0",
     backdrop:
       q.get("backdrop") === "plain" ? "plain" : q.get("backdrop") === "off" ? "off" : "night",
   };

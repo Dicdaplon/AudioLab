@@ -74,6 +74,24 @@ export { NoteLane, type NoteLaneProps } from "./stage/visuals/NoteLane";
 export { AttackField, type AttackFieldProps } from "./stage/visuals/AttackField";
 export { GuitarTimeline, type GuitarTimelineProps } from "./stage/visuals/GuitarTimeline";
 export {
+  WOLF_BRAIN_DEFAULTS,
+  WOLF_PHRASE_PRIORITY,
+  WOLF_PHRASES,
+  WOLF_POSE_SECONDS,
+  WolfBrain,
+  WolfBuddy,
+  WolfSensor,
+  wolfKeyName,
+  type WolfBrainOptions,
+  type WolfBuddyProps,
+  type WolfMood,
+  type WolfPhrase,
+  type WolfPhraseKind,
+  type WolfPhrases,
+  type WolfPose,
+  type WolfSnapshot,
+} from "./stage/wolf";
+export {
   StageBackdrop,
   type BackdropRect,
   type StageBackdropProps,

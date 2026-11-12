@@ -46,6 +46,8 @@ export interface SpectrumCityProps {
   rangeDb?: readonly [number, number];
   /** Filled with the live roofline on every frame. */
   roofline?: MutableRefObject<Roofline | null>;
+  /** Draw the city's own wolf. Default true; off when a `WolfBuddy` is on screen. */
+  wolf?: boolean;
   theme?: StageTheme;
 }
 
@@ -263,6 +265,7 @@ export function SpectrumCity({
   columns = 48,
   rangeDb,
   roofline,
+  wolf = true,
   theme = STAGE_THEME,
 }: SpectrumCityProps) {
   const state = useRef<CityState | null>(null);
@@ -482,37 +485,39 @@ export function SpectrumCity({
         st.howlAt = now;
       st.lastRoot = root;
     }
-    const t = now - st.howlAt;
-    const frame = t < 0.12 ? 1 : t < 1.1 ? 2 : t < 1.22 ? 1 : 0;
-    const sprite = WOLF_FRAMES[frame];
-    for (let y = 0; y < WOLF; y++) {
-      const row = sprite[y];
-      for (let x = 0; x < WOLF; x++) {
-        const c = row[x];
-        if (c === ".") continue;
-        // Rim light on the edges facing the moon (up and right).
-        const rim =
-          c === "#" &&
-          (y === 0 || sprite[y - 1][x] === "." || x === WOLF - 1 || row[x + 1] === ".");
-        ctx.fillStyle = c === "o" ? theme.major : rim ? moonColour : theme.plateBorder;
-        ctx.fillRect(px + x, py + y, 1, 1);
-      }
-    }
-    // Sound waves: three arcs leaving the muzzle, one more every 150 ms.
-    if (frame === 2 && t > 0.2) {
-      const ox = px + MUZZLE.x + 1;
-      const oy = py + MUZZLE.y;
-      ctx.fillStyle = moonColour;
-      for (let i = 0; i < 3; i++) {
-        const age = t - 0.2 - i * 0.15;
-        if (age < 0) continue;
-        const r = 3 + 3 * i + Math.min(2, Math.floor(age / 0.3));
-        ctx.globalAlpha = age > 0.6 ? 0.4 : 0.85;
-        for (let a = -1.35; a <= 0.25; a += 0.7 / r) {
-          ctx.fillRect(Math.round(ox + r * Math.cos(a)), Math.round(oy + r * Math.sin(a)), 1, 1);
+    if (wolf) {
+      const t = now - st.howlAt;
+      const frame = t < 0.12 ? 1 : t < 1.1 ? 2 : t < 1.22 ? 1 : 0;
+      const sprite = WOLF_FRAMES[frame];
+      for (let y = 0; y < WOLF; y++) {
+        const row = sprite[y];
+        for (let x = 0; x < WOLF; x++) {
+          const c = row[x];
+          if (c === ".") continue;
+          // Rim light on the edges facing the moon (up and right).
+          const rim =
+            c === "#" &&
+            (y === 0 || sprite[y - 1][x] === "." || x === WOLF - 1 || row[x + 1] === ".");
+          ctx.fillStyle = c === "o" ? theme.major : rim ? moonColour : theme.plateBorder;
+          ctx.fillRect(px + x, py + y, 1, 1);
         }
       }
-      ctx.globalAlpha = 1;
+      // Sound waves: three arcs leaving the muzzle, one more every 150 ms.
+      if (frame === 2 && t > 0.2) {
+        const ox = px + MUZZLE.x + 1;
+        const oy = py + MUZZLE.y;
+        ctx.fillStyle = moonColour;
+        for (let i = 0; i < 3; i++) {
+          const age = t - 0.2 - i * 0.15;
+          if (age < 0) continue;
+          const r = 3 + 3 * i + Math.min(2, Math.floor(age / 0.3));
+          ctx.globalAlpha = age > 0.6 ? 0.4 : 0.85;
+          for (let a = -1.35; a <= 0.25; a += 0.7 / r) {
+            ctx.fillRect(Math.round(ox + r * Math.cos(a)), Math.round(oy + r * Math.sin(a)), 1, 1);
+          }
+        }
+        ctx.globalAlpha = 1;
+      }
     }
 
     if (roofline) {

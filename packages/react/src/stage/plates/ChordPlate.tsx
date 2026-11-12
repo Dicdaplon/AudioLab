@@ -95,8 +95,9 @@ export const ChordPlate = memo(function ChordPlate({
         {degree && (
           <span
             style={{
+              // Long numerals ("VImaj7") get smaller so they stay in the plate.
               ...outlined(
-                Math.round(size * 0.55),
+                Math.round(size * (degree.numeral.length > 3 ? 0.4 : 0.55)),
                 degree.diatonic ? theme.major : theme.bad,
                 theme.fonts.hero,
               ),

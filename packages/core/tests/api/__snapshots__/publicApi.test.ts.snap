@@ -48,6 +48,7 @@ exports[`@audiolab/core public API > exports the snapshotted names from every en
     "type BeatPhase",
     "beatsBetween",
     "beatTime",
+    "type BendReading",
     "type BiquadCoeffs",
     "type BiquadState",
     "BLUETOOTH_INPUT_LATENCY_MS",

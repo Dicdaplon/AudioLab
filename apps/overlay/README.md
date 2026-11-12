@@ -35,24 +35,25 @@ interface In 1 (dry, Windows input) ───────► overlay ?notes=    
 
 ## URL parameters
 
-| Parameter             | Values                                                                                       | Default          |
-| --------------------- | -------------------------------------------------------------------------------------------- | ---------------- |
-| `harmony`             | part of an input's name, or its id                                                           | default input    |
-| `notes`               | same                                                                                         | `harmony`        |
-| `chords`              | `notes` (the chords you play) or `harmony` (the mix), overrides the stored setting           | `notes`          |
-| `layout`              | `cam` (webcam corner), `scene` (no webcam), `band` (full-frame webcam)                       | `cam`            |
-| `view`                | one element alone: `key`, `chord`, `tuner`, `ribbon`, `mandala`, or a file of `src/gallery/` |                  |
-| `notation`            | `both` (French, English small), `fr`, `en`                                                   | `both`           |
-| `song`                | seconds of the song-key window (overrides the stored setting)                                | `180`            |
-| `cam`                 | webcam rectangle `x,y,w,h` (1920×1080)                                                       | `48,48,1344,756` |
-| `extras`              | optional layers, comma-separated: `mandala`, `paws`, `embers`, `aurora`, `scope`, `ribbon`   | none             |
-| `title`               | song title (scene layout)                                                                    |                  |
-| `tab`                 | `names`: timeline pills show note names, not frets                                           | frets            |
-| `backdrop`            | `night` (pixel night landscape around the webcam), `plain`, `off`                            | `night`          |
-| `chordWindow`, `gate` | chord window (s), playing gate (0 gentle … 1 strict), overriding the stored settings         |                  |
-| `demo`                | `synth`, or an audio URL (`/@fs/F:/path/track.mp3`)                                          |                  |
-| `debug`               | `1`: inputs, levels, tempo, errors                                                           |                  |
-| `hud`                 | `0`: never show the info panel, even on errors                                               |                  |
+| Parameter             | Values                                                                                         | Default          |
+| --------------------- | ---------------------------------------------------------------------------------------------- | ---------------- |
+| `harmony`             | part of an input's name, or its id                                                             | default input    |
+| `notes`               | same                                                                                           | `harmony`        |
+| `chords`              | `notes` (the chords you play) or `harmony` (the mix), overrides the stored setting             | `notes`          |
+| `layout`              | `cam` (webcam corner), `scene` (no webcam), `band` (full-frame webcam)                         | `cam`            |
+| `view`                | one element alone: `key`, `chord`, `tuner`, `ribbon`, `mandala`, or a file of `src/gallery/`   |                  |
+| `notation`            | `both` (French, English small), `fr`, `en`                                                     | `both`           |
+| `song`                | seconds of the song-key window (overrides the stored setting)                                  | `180`            |
+| `cam`                 | webcam rectangle `x,y,w,h` (1920×1080)                                                         | `48,48,1344,756` |
+| `extras`              | optional layers, comma-separated: `mandala`, `paws`, `embers`, `aurora`, `scope`, `ribbon`     | none             |
+| `title`               | song title (scene layout)                                                                      |                  |
+| `tab`                 | `frets` (tablature), `names` (tablature with note names), `staff` (a treble staff, guitar 8vb) | `frets`          |
+| `backdrop`            | `night` (pixel night landscape around the webcam), `plain`, `off`                              | `night`          |
+| `wolf`                | `0`: no wolf mascot (it reacts to the playing and says a line now and then)                    | on               |
+| `chordWindow`, `gate` | chord window (s), playing gate (0 gentle … 1 strict), overriding the stored settings           |                  |
+| `demo`                | `synth`, or an audio URL (`/@fs/F:/path/track.mp3`)                                            |                  |
+| `debug`               | `1`: inputs, levels, tempo, errors                                                             |                  |
+| `hud`                 | `0`: never show the info panel, even on errors                                                 |                  |
 
 Input names are matched by substring, ignoring case, and real devices win over the
 browser's "Default" / "Communications" aliases. A missing input is retried every 3 s, so
@@ -60,7 +61,8 @@ plugging the interface in after OBS starts works.
 
 ## Live settings
 
-Press **S** on the overlay (OBS: right-click the source › **Interact**) for the settings
+Press **H** on the overlay for the help (every key and the main URL parameters, with
+the diagnostics). Press **S** (OBS: right-click the source › **Interact**) for the settings
 panel: chord window (0.5–8 s), hold before a chord change, chord margin, key window,
 silence ending a song, playing gate (gentle → strict), note clarity, smallest vibrato,
 and where the chords are read. Settings are stored by the overlay and survive a

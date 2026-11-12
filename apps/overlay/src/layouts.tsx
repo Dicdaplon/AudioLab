@@ -25,6 +25,7 @@ import {
   StageBackdrop,
   STAGE_THEME,
   TunerPlate,
+  WolfBuddy,
   type Roofline,
   type StageState,
 } from "@audiolab/react/stage";
@@ -49,6 +50,7 @@ function City({
   height,
   columns,
   walkers = null,
+  wolf = true,
 }: {
   stage: StageState;
   x?: number;
@@ -57,6 +59,7 @@ function City({
   height: number;
   columns?: number;
   walkers?: "paws" | "fireflies" | null;
+  wolf?: boolean;
 }) {
   const roofline = useRef<Roofline | null>(null);
   return (
@@ -67,6 +70,7 @@ function City({
         height={height}
         columns={columns}
         roofline={roofline}
+        wolf={wolf}
       />
       {walkers && (
         <div style={{ position: "absolute", inset: 0 }}>
@@ -127,6 +131,7 @@ export function CamLayout({ stage, params }: LayoutProps) {
           height={400}
           columns={16}
           walkers={extras.has("paws") ? "paws" : null}
+          wolf={!params.wolf}
         />
       )}
       {/* The chord change ripples inside the chord plate, without a text stamp. */}
@@ -183,6 +188,11 @@ export function CamLayout({ stage, params }: LayoutProps) {
           />
         )}
       </At>
+      {params.wolf && (
+        <At x={1424} y={880}>
+          <WolfBuddy signals={stage.signals} width={464} height={176} side="left" />
+        </At>
+      )}
     </>
   );
 }
@@ -208,7 +218,14 @@ export function SceneLayout({ stage, params }: LayoutProps) {
       {extras.has("aurora") ? (
         <HarmonicAurora signals={stage.signals} width={1920} height={304} />
       ) : (
-        <City stage={stage} y={952} width={1920} height={128} walkers="fireflies" />
+        <City
+          stage={stage}
+          y={952}
+          width={1920}
+          height={128}
+          walkers="fireflies"
+          wolf={!params.wolf}
+        />
       )}
       <At x={510} y={-42}>
         <BeatRings signals={stage.signals} width={900} height={900} radius={280} />
@@ -272,6 +289,11 @@ export function SceneLayout({ stage, params }: LayoutProps) {
           notation={fr}
         />
       </At>
+      {params.wolf && (
+        <At x={1376} y={40}>
+          <WolfBuddy signals={stage.signals} width={496} height={176} side="left" />
+        </At>
+      )}
     </>
   );
 }
@@ -338,6 +360,11 @@ export function BandLayout({ stage, params }: LayoutProps) {
           theme={BAND_THEME}
         />
       </At>
+      {params.wolf && (
+        <At x={1552} y={648}>
+          <WolfBuddy signals={stage.signals} width={320} height={176} side="left" />
+        </At>
+      )}
     </>
   );
 }
