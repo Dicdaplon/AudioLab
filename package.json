@@ -20,6 +20,7 @@
   "scripts": {
     "dev": "npm run dev -w apps/lab",
     "overlay": "npm run dev -w apps/overlay",
+    "live": "npm run build:packages && npm run build -w apps/overlay && npm run preview -w apps/overlay",
     "build": "npm run build:packages && npm run build -w apps/lab",
     "build:packages": "npm run build -w packages/core -w packages/react",
     "check:packages": "publint packages/core && publint packages/react && attw --pack packages/core --profile esm-only && attw --pack packages/react --profile esm-only --exclude-entrypoints ./styles.css ./fonts.css",

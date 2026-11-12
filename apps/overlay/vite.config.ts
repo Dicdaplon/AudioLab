@@ -18,4 +18,12 @@ export default defineConfig(({ mode }) => ({
     // Lets `?demo=/@fs/<path>.mp3` play a local backing track in demo mode.
     fs: { strict: false },
   },
+  // `npm run live`: the built overlay, same address, no hot updates (a long-lived
+  // OBS source never keeps a half-updated page).
+  preview: {
+    host: "127.0.0.1",
+    port: 5174,
+    strictPort: true,
+    open: false,
+  },
 }));

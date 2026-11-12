@@ -189,7 +189,13 @@ export const TunerPlate = memo(function TunerPlate({
               color: theme.inkMuted,
             }}
           >
-            <span style={{ color: theme.signal }}>
+            <span
+              style={{
+                color: theme.signal,
+                whiteSpace: "nowrap",
+                font: `20px ${theme.fonts.mono}`,
+              }}
+            >
               {bend && !bend.released && held?.fresh !== false ? (
                 <>
                   <span style={{ font: `16px ${theme.fonts.label}` }}>BEND </span>
