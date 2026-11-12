@@ -161,6 +161,7 @@ export function CamLayout({ stage, params }: LayoutProps) {
       <At x={1424} y={488}>
         <TunerPlate
           vibrato={stage.vibrato}
+          bend={stage.bend}
           note={stage.note}
           songKey={key}
           notation={params.notation}
@@ -252,6 +253,7 @@ export function SceneLayout({ stage, params }: LayoutProps) {
       <At x={1376} y={520}>
         <TunerPlate
           vibrato={stage.vibrato}
+          bend={stage.bend}
           note={stage.note}
           songKey={key}
           notation={params.notation}
@@ -324,6 +326,7 @@ export function BandLayout({ stage, params }: LayoutProps) {
       <At x={1528} y={840}>
         <TunerPlate
           vibrato={stage.vibrato}
+          bend={stage.bend}
           note={stage.note}
           songKey={key}
           notation={params.notation}

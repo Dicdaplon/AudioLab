@@ -10,9 +10,15 @@
 
 import { memo, useEffect, useRef, useState } from "react";
 
-import { scaleDegree, type KeyRef, type PitchEstimate, type VibratoReading } from "@audiolab/core";
+import {
+  scaleDegree,
+  type BendReading,
+  type KeyRef,
+  type PitchEstimate,
+  type VibratoReading,
+} from "@audiolab/core";
 
-import { noteName, type Notation } from "../names";
+import { bendLabel, noteName, type Notation } from "../names";
 import { STAGE_THEME, type StageTheme } from "../theme";
 import { outlined } from "./outlined";
 import { Plate } from "./Plate";
@@ -22,6 +28,8 @@ export interface TunerPlateProps {
   songKey: KeyRef | null;
   /** Vibrato of the held note: shown with its rate and width when active. */
   vibrato?: VibratoReading;
+  /** Bend of the held note: shown (in tones, guitar style) while it is up. */
+  bend?: BendReading | null;
   notation?: Notation | "both";
   width?: number;
   /** Size of the note name in px. Default 96. */
@@ -30,6 +38,7 @@ export interface TunerPlateProps {
 }
 
 const CELLS = 25;
+
 const HOLD_MS = 1500;
 const IN_TUNE_MS = 300;
 
@@ -42,6 +51,7 @@ export const TunerPlate = memo(function TunerPlate({
   note,
   songKey,
   vibrato,
+  bend,
   notation = "both",
   width = 528,
   size = 96,
@@ -180,11 +190,19 @@ export const TunerPlate = memo(function TunerPlate({
             }}
           >
             <span style={{ color: theme.signal }}>
-              {vibrato?.active && held?.fresh !== false && (
+              {bend && !bend.released && held?.fresh !== false ? (
                 <>
-                  <span style={{ font: `16px ${theme.fonts.label}` }}>VIBRATO </span>
-                  {`${vibrato.rateHz.toFixed(1)} Hz · ±${Math.round(vibrato.extentCents)} ¢`}
+                  <span style={{ font: `16px ${theme.fonts.label}` }}>BEND </span>
+                  {`↗ ${bendLabel(bend.current, main)}`}
                 </>
+              ) : (
+                vibrato?.active &&
+                held?.fresh !== false && (
+                  <>
+                    <span style={{ font: `16px ${theme.fonts.label}` }}>VIBRATO </span>
+                    {`${vibrato.rateHz.toFixed(1)} Hz · ±${Math.round(vibrato.extentCents)} ¢`}
+                  </>
+                )
               )}
             </span>
             <span>{shown ? `${cents >= 0 ? "+" : ""}${Math.round(cents)} ¢` : ""}</span>

@@ -42,6 +42,7 @@ import {
   type StageSettings,
   type TempoEstimate,
   type TimedOnset,
+  type BendReading,
   type VibratoReading,
 } from "@audiolab/core";
 
@@ -125,6 +126,8 @@ export interface StageState {
   playing: boolean;
   /** Vibrato of the note sounding now (inactive between notes). */
   vibrato: VibratoReading;
+  /** Bend of the note sounding now, or null. */
+  bend: BendReading | null;
   /** Start the song over: clears the key, the chord history and the analysis windows. */
   reset(): void;
 }
@@ -260,6 +263,7 @@ export function useStageSignals(
 
   const [playing, setPlaying] = useState(false);
   const [vibrato, setVibrato] = useState<VibratoReading>(NO_VIBRATO);
+  const [bend, setBend] = useState<BendReading | null>(null);
   const [readings, setReadings] = useState<{ key: KeyReading; chord: ChordReading }>({
     key: LISTENING,
     chord: NO_CHORD,
@@ -354,6 +358,14 @@ export function useStageSignals(
     signals.notes = segmenter.notes;
     const last = segmenter.notes[segmenter.notes.length - 1];
     const v = last?.open ? last.vibrato : NO_VIBRATO;
+    const b = last?.open ? last.bend : null;
+    setBend((prev) =>
+      prev === null && b === null
+        ? prev
+        : prev && b && prev.released === b.released && Math.abs(prev.current - b.current) < 20
+          ? prev
+          : b && { ...b },
+    );
     // Re-render only when the reading visibly changes.
     setVibrato((prev) =>
       prev.active === v.active &&
@@ -409,6 +421,7 @@ export function useStageSignals(
     levelDb: signalLevelDb,
     playing,
     vibrato,
+    bend,
     reset,
   };
 }

@@ -18,7 +18,7 @@
  *   &title=Blue Bossa        song title (scene layout)
  *   &backdrop=night|plain|off   opaque background around the webcam (default night;
  *                            off in the band layout). Put the overlay above the webcam in OBS.
- *   &tab=names               timeline pills show note names instead of frets
+ *   &tab=frets|names|staff   timeline: tablature with frets or note names, or a staff
  *   &demo=synth|<url>        no inputs: a built-in synth or an audio file
  *   &listen=1                demo mode: also play the demo on the speakers
  *   &bg=1                    draw a stand-in background (previews, screenshots)
@@ -52,6 +52,8 @@ export interface OverlayParams {
   extras: ReadonlySet<Extra>;
   title: string;
   tabLabels: "frets" | "names";
+  /** Timeline as a tablature or a staff. */
+  tabView: "tab" | "staff";
   backdrop: "night" | "plain" | "off";
 }
 
@@ -90,7 +92,8 @@ export function readParams(search: string): OverlayParams {
         .filter((e): e is Extra => (EXTRAS as readonly string[]).includes(e)),
     ),
     title: q.get("title") ?? "",
-    tabLabels: q.get("tab") === "names" ? "names" : "frets",
+    tabLabels: q.get("tab") === "names" || q.get("labels") === "names" ? "names" : "frets",
+    tabView: q.get("tab") === "staff" ? "staff" : "tab",
     backdrop:
       q.get("backdrop") === "plain" ? "plain" : q.get("backdrop") === "off" ? "off" : "night",
   };

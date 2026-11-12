@@ -6,7 +6,7 @@
  * The synth plays a minor ii–V–i turnaround with a bass, strummed chords, a
  * kick on every beat and a lead line on its own stream (the "dry guitar"),
  * so every analysis has something to find: a key, chord changes, a tempo,
- * attacks and a monophonic note (held notes with a vibrato).
+ * attacks and a monophonic note (held notes with a vibrato or a bend).
  */
 
 export interface DemoAudio {
@@ -115,10 +115,19 @@ function pluck(
   type: OscillatorType,
   cutoff: number,
   vibratoHz = 0,
+  bendSemitones = 0,
 ): void {
   const osc = ctx.createOscillator();
   osc.type = type;
   osc.frequency.value = hz(midi);
+  if (bendSemitones > 0) {
+    // A bend: up over 250 ms after the attack, held, released at the end.
+    const top = hz(midi + bendSemitones);
+    osc.frequency.setValueAtTime(hz(midi), at + 0.12);
+    osc.frequency.linearRampToValueAtTime(top, at + 0.37);
+    osc.frequency.setValueAtTime(top, at + duration - 0.25);
+    osc.frequency.linearRampToValueAtTime(hz(midi), at + duration - 0.05);
+  }
   if (vibratoHz > 0) {
     // A guitarist's vibrato: it starts after the attack, about ±25 cents.
     const lfo = ctx.createOscillator();
@@ -182,8 +191,10 @@ function startSynth(ctx: AudioContext, mixOut: AudioNode, leadOut: AudioNode): (
       for (let e = 0; e < 8; e++) {
         const note = LEAD[(nextBar % BARS.length) * 8 + e];
         if (note === null) continue;
-        // Notes followed by a rest are held longer, with a vibrato.
+        // Notes followed by a rest are held longer, with a vibrato, or bent a
+        // tone (every other bar).
         const held = LEAD[(nextBar % BARS.length) * 8 + e + 1] === null;
+        const bent = held && nextBar % 2 === 1;
         pluck(
           ctx,
           lead,
@@ -193,7 +204,8 @@ function startSynth(ctx: AudioContext, mixOut: AudioNode, leadOut: AudioNode): (
           0.3,
           "sawtooth",
           1800,
-          held ? 5.5 : 0,
+          held && !bent ? 5.5 : 0,
+          bent ? 2 : 0,
         );
       }
       nextBar += 1;

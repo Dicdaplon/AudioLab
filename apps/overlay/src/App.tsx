@@ -15,6 +15,7 @@ import {
 import { BandLayout, CamLayout, SceneLayout, type LayoutProps } from "./layouts";
 import { readParams, type OverlayParams } from "./params";
 import { useOverlaySessions, type OverlaySessions } from "./useOverlaySessions";
+import { HelpPanel } from "./HelpPanel";
 import { useOverlaySettings } from "./useOverlaySettings";
 
 const W = 1920;
@@ -177,15 +178,17 @@ function Overlay({ params }: { params: OverlayParams }) {
   // Info panel: shown with debug=1 or on errors, never with hud=0; D toggles it.
   const [hud, setHud] = useState(params.hud);
   const [showSettings, setShowSettings] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
-  // R starts the song over, D shows or hides the info panel, S the settings
-  // (OBS: right-click the source › Interact, then the key).
+  // H help (with the diagnostics), S settings, R new song, D diagnostics
+  // alone (OBS: right-click the source › Interact, then the key).
   const { reset } = stage;
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "r" || e.key === "R") reset();
       if (e.key === "d" || e.key === "D") setHud((h) => !h);
       if (e.key === "s" || e.key === "S") setShowSettings((v) => !v);
+      if (e.key === "h" || e.key === "H") setShowHelp((v) => !v);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -201,8 +204,13 @@ function Overlay({ params }: { params: OverlayParams }) {
       ) : (
         <Layout stage={stage} params={params} />
       )}
-      {hud && (params.debug || sessions.errors.length > 0) && (
+      {(showHelp || (hud && (params.debug || sessions.errors.length > 0))) && (
         <DebugPanel sessions={sessions} stage={stage} />
+      )}
+      {showHelp && (
+        <div style={{ position: "absolute", left: 96, top: 96 }}>
+          <HelpPanel notation={params.notation === "en" ? "en" : "fr"} />
+        </div>
       )}
       {showSettings && (
         <div style={{ position: "absolute", left: 96, top: 96 }}>

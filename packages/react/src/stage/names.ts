@@ -66,3 +66,12 @@ export function isMinorQuality(quality: ChordQuality): boolean {
     quality === "min7b5"
   );
 }
+
+/** A bend in tones, the way guitarists say it: "½ ton", "1 ton", "1½ ton" (or "full"). */
+export function bendLabel(cents: number, notation: Notation): string {
+  const halves = Math.max(1, Math.round(cents / 100));
+  const whole = Math.floor(halves / 2);
+  const amount = `${whole > 0 ? whole : ""}${halves % 2 ? "½" : ""}`;
+  if (notation === "fr") return `${amount} ton`;
+  return halves === 2 ? "full" : `${amount} tone`;
+}

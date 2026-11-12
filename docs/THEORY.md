@@ -503,6 +503,40 @@ pentatonic / A minor pentatonic, the seven modes of C major) tie on 1–3 and ar
 in list order: the engine does not decide the tonic between relatives, the key profiles
 of section 5 do that.
 
+## 12b. Notes, vibrato and bends (stage readouts)
+
+`NoteSegmenter` (`core/src/analysis/readout/noteSegments.ts`) turns the pitch tracker's
+stream of estimates (section 11, published at 40 Hz by the stage) into timed notes. It
+follows the pitch as a continuous value $p = \text{midi} + \text{cents}/100$, because the
+nearest semitone alone cannot tell a bend from a new note.
+
+**New note or same note.** Two consecutive estimates more than 60 cents apart are a
+_jump_: a new picked note, a hammer-on or a pull-off moves the pitch by a semitone or
+more within one 25 ms step. Smaller steps are a _glide_ and stay in the note, as long as
+the pitch stays within 3 semitones of where the note started; a longer continuous glide
+is a slide and starts a new note.
+
+**Vibrato** (`VibratoDetector`). Over the last 0.8 s of the note, the cents are detrended
+by a least-squares line (a slow bend or drift is not a vibrato) and two measures are read:
+the extent, half the peak-to-peak of the residual, and the rate, from the zero crossings
+of the residual (two per cycle), kept only when the half-periods are regular (spread ≤ 45 %
+of their mean). A vibrato is a regular oscillation of 3.5–9 Hz and at least ±12 cents.
+Sampling at 40 Hz leaves more than four samples per cycle at 9 Hz.
+
+**Bend.** A bend is a climb that does not come back: the pitch rises at least 70 cents
+above where the note started, and during the climb it never steps down by more than
+15 cents (a larger step back restarts the climb). The two conditions together separate it
+from a vibrato: a wide vibrato (±40 cents) climbs 80 cents on every cycle but keeps
+returning, so it never ends up 70 cents above the start; a slow drift of a few cents per
+second never climbs 70 cents. The bend's amount is the highest point reached above the
+start, read in guitar terms by rounding to half tones (½, 1, 1½ …); coming back within
+30 cents of the start marks it released. Pre-bends (a note bent before it is picked) read
+as a note at the bent pitch that is then released downwards, which is how they sound.
+
+The tests (`tests/analysis/readout/bends.test.ts`, `vibrato.test.ts`) play synthetic
+pitch curves through the segmenter: a whole-tone bend held, a half-tone bend and release,
+a ±40 cents vibrato, a drift, a hammer-on, a five-semitone slide.
+
 ## 13. Limitations and ideas
 
 - **Harmonics.** No harmonic handling in the chroma: the 5th harmonic adds a major third
