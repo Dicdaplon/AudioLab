@@ -9,16 +9,17 @@ mounting the SDK in another application, see [INTEGRATION.md](INTEGRATION.md).
 
 The repository is an npm workspace with two publishable packages and one private app.
 
-| Package           | Path             | What it is                                                                                                                                                                                               | Depends on                                      |
-| ----------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| `@audiolab/core`  | `packages/core`  | Framework-free TypeScript: DSP (incl. pitch, scales, onsets, adaptive gate), engines, timing, Web Audio adapters, settings, note maths; game engines under `./games`, rhythm assessment under `./rhythm` | nothing (`audio-decode` optional, offline only) |
-| `@audiolab/react` | `packages/react` | Hooks, components, canvas plots, games, theme helpers and the Loupe stylesheets                                                                                                                          | `@audiolab/core`; peers `react`, `react-dom`    |
-| `@audiolab/lab`   | `apps/lab`       | The demo app deployed to GitHub Pages: a shell (brand, top bar, tabs) composing the SDK                                                                                                                  | both packages                                   |
+| Package             | Path             | What it is                                                                                                                                                                                               | Depends on                                      |
+| ------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `@audiolab/core`    | `packages/core`  | Framework-free TypeScript: DSP (incl. pitch, scales, onsets, adaptive gate), engines, timing, Web Audio adapters, settings, note maths; game engines under `./games`, rhythm assessment under `./rhythm` | nothing (`audio-decode` optional, offline only) |
+| `@audiolab/react`   | `packages/react` | Hooks, components, canvas plots, games, theme helpers and the Loupe stylesheets                                                                                                                          | `@audiolab/core`; peers `react`, `react-dom`    |
+| `@audiolab/lab`     | `apps/lab`       | The demo app deployed to GitHub Pages: a shell (brand, top bar, tabs) composing the SDK                                                                                                                  | both packages                                   |
+| `@audiolab/overlay` | `apps/overlay`   | A local stream overlay (OBS browser source): layouts and URL parameters around `@audiolab/react/stage`; not deployed                                                                                     | both packages                                   |
 
 Dependencies point one way: **lab → react → core**. Core never imports React or a Node
 built-in outside its `offline` subpath (ESLint enforces both), so the signal processing is
 testable in Node with synthetic signals and real recordings, and a browser bundle never
-pulls `node:fs`. The lab contains no analysis or UI code of its own; if something is
+pulls `node:fs`. The apps contain no analysis or UI code of their own; if something is
 needed there, it belongs in a package.
 
 ```mermaid
@@ -38,7 +39,10 @@ subpaths, `@audiolab/core/games` (the pure game engines, browser-safe),
 `@audiolab/core/rhythm` (pure rhythm assessment over plain `{ time }` objects; it uses
 a few pure core modules, such as the sample history and the click echo filter, but the
 main entry never imports it, which ESLint enforces) and
-`@audiolab/core/offline` (Node only). Everything not re-exported from an entry is
+`@audiolab/core/offline` (Node only); react adds `@audiolab/react/art` (the wolf
+artwork as data) and `@audiolab/react/stage` (stream visuals: plates and canvas visuals
+on a transparent page, with their own literal theme instead of the Loupe tokens, see
+section 3d). Everything not re-exported from an entry is
 internal. Workspace consumers resolve the packages through the
 `audiolab-source` export condition (TypeScript `customConditions`, Vite / Vitest
 `resolve.conditions`), so development and tests run from the sources; the production
@@ -56,6 +60,7 @@ build of the lab and external consumers use the `dist` built by tsup.
 | Onsets, gate | `core/src/analysis/onset/`, `gate/`  | fft, chroma, pitch, chord detection | none               | Node (synthetic)      |
 | Timing       | `core/src/timing/`                   | nothing                             | none               | Node                  |
 | Rhythm       | `core/src/rhythm/`                   | pure onset / timing modules         | none               | Node                  |
+| Readouts     | `core/src/analysis/readout/`         | key and chord types, chord tones    | none               | Node                  |
 | Offline      | `core/src/offline/`                  | engines, DSP, `audio-decode`        | none (Node only)   | Node, samples         |
 | Settings     | `core/src/config/`                   | DSP (types and defaults)            | none               | Node                  |
 | Audio        | `core/src/audio/`                    | DSP and timing (pure)               | Web Audio, media   | Node + fake Web Audio |
@@ -64,6 +69,7 @@ build of the lab and external consumers use the `dist` built by tsup.
 | UI helpers   | `react/src/ui/`                      | core (types), React                 | canvas, matchMedia | jsdom                 |
 | Game views   | `react/src/games/`                   | core/games, hooks, ui               | none in stores     | Node + jsdom          |
 | Components   | `react/src/components/`, `LoupeRoot` | hooks, ui, core                     | canvas             | jsdom                 |
+| Stage        | `react/src/stage/`                   | hooks, core                         | canvas, rAF        | Node + jsdom          |
 | App          | `apps/lab/src/App.tsx`               | `@audiolab/react`, `@audiolab/core` | none               | jsdom (smoke)         |
 
 `analysis/` is the bottom of core: an ESLint rule (`eslint.config.js`) keeps it from
@@ -217,6 +223,41 @@ advance a `TimingScorer` and to name the note or chord of pending onsets with
 and the `TimingBudget`. Timestamps come from the frames, so main-thread jank delays
 verdicts but never moves notes; see [TIMING.md](TIMING.md).
 
+### 3d. Stage path (`useStageSignals`, `@audiolab/react/stage`)
+
+The stream overlay shows readings a viewer can trust at a glance, so it adds a display
+layer on top of the analysis paths, and nothing below them:
+
+- **Readouts** (`core/src/analysis/readout/`, pure, Node-tested): `KeySettler` turns the
+  per-frame key ranking into a key that settles with hysteresis (listening → hesitant →
+  settled, modulation after 6 s of a new leader); `ChordChangeTracker` turns the chord
+  ranking into debounced changes (hold, score margin, minimum gap) and a timed history;
+  `BeatClock` derives a beat phase from the tempo estimate and the onsets (a first-order
+  phase-locked loop); `SongBreak` ends a song after a long silence; `chordDegree` /
+  `scaleDegree` name chords and notes in the key.
+- **Display tap** (`audio/signalTap.ts`, `useSignalTap`): a 2048-point, smoothed
+  AnalyserNode of its own on the session, read by the visuals on every animation frame
+  (waveform, spectrum). The tonality analyser (16384 points, unsmoothed, 10 Hz) is never
+  polled at display rate.
+- **`useStageSignals(harmony, notes)`** mounts `useTonality` (song-length tonality
+  window), `useTempoAnalysis` and a display tap on the harmony session, `usePitch`,
+  `useOnsetAnalysis` and a tap on the notes session, and feeds the readouts. It returns
+  React state at the analysis rate for the plates, and a mutable `StageSignals` object
+  that the canvas visuals read in their own requestAnimationFrame loops
+  (`StageCanvas`), so nothing re-renders at display rate.
+
+```mermaid
+flowchart LR
+    H["harmony session"] --> T["useTonality"] --> RO["KeySettler · ChordChangeTracker · SongBreak"]
+    H --> TE["useTempoAnalysis"] --> BC["BeatClock"]
+    H --> TAP1["display tap"]
+    N["notes session"] --> P["usePitch"]
+    N --> O["useOnsetAnalysis"] --> BC
+    N --> TAP2["display tap"]
+    RO --> Plates["plates (React, 10 Hz)"]
+    RO & BC & P & O & TAP1 & TAP2 --> S["StageSignals"] --> V["StageCanvas visuals (rAF)"]
+```
+
 ### 4. UI
 
 `LoupeRoot` renders the `.loupe` element that carries every design token
@@ -331,16 +372,17 @@ tab slows the key/chord updates; the worklet capture itself stays gapless.
 
 ## Extension points
 
-| To add...                        | Change                                                                                                                                                                                                         |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Chord qualities (aug, 9th...)    | Add intervals to `CHORD_QUALITY_INTERVALS`, a suffix, a base triad and a bias, and the quality to `ChordQuality` and `CHORD_QUALITIES` in `core/src/analysis/chordDetection.ts`; templates are built from it   |
-| Other key profiles               | Replace or add entries in `KEY_PROFILES` (`keyDetection.ts`), e.g. Temperley or harmonic-minor profiles                                                                                                        |
-| Harmonic weighting of the chroma | `spectrumToChroma()` in `chroma.ts`: per-bin weights or harmonic suppression before folding                                                                                                                    |
-| A new per-frame analysis         | A pure module in `core/src/analysis/`, called from `TonalityEngine.pushChroma()` and exposed in `TonalityFrame`                                                                                                |
-| A new sample-accurate analysis   | Another consumer of `startSampleCapture()` with its own engine class, mounted by the view that needs it                                                                                                        |
-| A new component or game          | Rules as a pure reducer in `core/src/games/` (keys and pitch classes, no labels), exported from `games/index.ts`; the view in `packages/react`, re-exported from `src/index.ts` with `"use client"` at the top |
-| A Wolf Jumper on another scale   | `createWolfJumperState(seed, { notePool })`, or the `config` prop of `WolfJumper`; every other tuning value is in `WOLF_JUMPER_DEFAULTS`                                                                       |
-| Another scale for the finder     | A `ScaleDefinition` (`{ id, intervals }`) passed to `matchScales`; add it to `SCALES` (and `SCALE_NAMES_EN`) to make it built-in                                                                               |
-| A new regression fixture         | Drop the file under `packages/core/tests/Sample/` and assert its measured rank in `tests/samples/`                                                                                                             |
-| Re-tuning the defaults           | `npm run sweep`, then update `HIGH_WATER_MARK_DEFAULTS` / `config/settings.ts`                                                                                                                                 |
-| Changing the worklet             | Edit `sampleCapture.worklet.ts`, run `npm run build:worklet -w packages/core`, commit the regenerated source string                                                                                            |
+| To add...                        | Change                                                                                                                                                                                                                               |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Chord qualities (aug, 9th...)    | Add intervals to `CHORD_QUALITY_INTERVALS`, a suffix, a base triad and a bias, and the quality to `ChordQuality` and `CHORD_QUALITIES` in `core/src/analysis/chordDetection.ts`; templates are built from it                         |
+| Other key profiles               | Replace or add entries in `KEY_PROFILES` (`keyDetection.ts`), e.g. Temperley or harmonic-minor profiles                                                                                                                              |
+| Harmonic weighting of the chroma | `spectrumToChroma()` in `chroma.ts`: per-bin weights or harmonic suppression before folding                                                                                                                                          |
+| A new per-frame analysis         | A pure module in `core/src/analysis/`, called from `TonalityEngine.pushChroma()` and exposed in `TonalityFrame`                                                                                                                      |
+| A new sample-accurate analysis   | Another consumer of `startSampleCapture()` with its own engine class, mounted by the view that needs it                                                                                                                              |
+| A stage visual                   | A component in `react/src/stage/visuals/` drawing on `StageCanvas` from `StageSignals` (no React state per frame, cells of `pixel` px), re-exported from `src/stage.ts`; a gallery view in `apps/overlay/src/gallery/` to look at it |
+| A new component or game          | Rules as a pure reducer in `core/src/games/` (keys and pitch classes, no labels), exported from `games/index.ts`; the view in `packages/react`, re-exported from `src/index.ts` with `"use client"` at the top                       |
+| A Wolf Jumper on another scale   | `createWolfJumperState(seed, { notePool })`, or the `config` prop of `WolfJumper`; every other tuning value is in `WOLF_JUMPER_DEFAULTS`                                                                                             |
+| Another scale for the finder     | A `ScaleDefinition` (`{ id, intervals }`) passed to `matchScales`; add it to `SCALES` (and `SCALE_NAMES_EN`) to make it built-in                                                                                                     |
+| A new regression fixture         | Drop the file under `packages/core/tests/Sample/` and assert its measured rank in `tests/samples/`                                                                                                                                   |
+| Re-tuning the defaults           | `npm run sweep`, then update `HIGH_WATER_MARK_DEFAULTS` / `config/settings.ts`                                                                                                                                                       |
+| Changing the worklet             | Edit `sampleCapture.worklet.ts`, run `npm run build:worklet -w packages/core`, commit the regenerated source string                                                                                                                  |

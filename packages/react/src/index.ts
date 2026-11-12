@@ -22,6 +22,7 @@ export {
   type MicrophoneSession,
   type UseMicrophoneOptions,
 } from "./hooks/useMicrophone";
+export { useSignalTap } from "./hooks/useSignalTap";
 export {
   useAudioInputs,
   type AudioInputsState,

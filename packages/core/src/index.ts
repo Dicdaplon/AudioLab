@@ -72,6 +72,38 @@ export {
   type ScaleDefinition,
   type ScaleMatch,
 } from "./analysis/scales";
+
+// Display readouts: steady key, chord changes, beat phase, degrees.
+export {
+  KEY_SETTLER_DEFAULTS,
+  KeySettler,
+  type KeyPhase,
+  type KeyReading,
+  type KeyRef,
+  type KeySettlerOptions,
+} from "./analysis/readout/keySettler";
+export {
+  CHORD_CHANGE_DEFAULTS,
+  ChordChangeTracker,
+  type ChordChangeOptions,
+  type ChordLabel,
+  type ChordReading,
+  type ChordSegment,
+} from "./analysis/readout/chordChanges";
+export {
+  BEAT_CLOCK_DEFAULTS,
+  BeatClock,
+  type BeatClockOptions,
+  type BeatPhase,
+} from "./analysis/readout/beatClock";
+export { SongBreak, type SongBreakOptions } from "./analysis/readout/songBreak";
+export {
+  chordDegree,
+  fifthsIndex,
+  keyPitchClasses,
+  scaleDegree,
+  type ChordDegree,
+} from "./analysis/readout/harmony";
 export { applyHannWindow, fftInPlace, fftMagnitude } from "./analysis/fft";
 export {
   computeFftDb,
@@ -344,6 +376,7 @@ export {
   type AnalyserOptions,
   type AnalyserSetup,
 } from "./audio/analyser";
+export { startSignalTap, type SignalTap, type SignalTapOptions } from "./audio/signalTap";
 export {
   startLiveAnalysis,
   type LiveAnalysis,

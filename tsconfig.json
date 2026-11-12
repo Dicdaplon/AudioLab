@@ -11,6 +11,9 @@
       "path": "./apps/lab"
     },
     {
+      "path": "./apps/overlay"
+    },
+    {
       "path": "./tsconfig.node.json"
     }
   ]

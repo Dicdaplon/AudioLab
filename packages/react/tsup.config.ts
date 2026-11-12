@@ -16,7 +16,7 @@ import { buildInfoDefine } from "../../scripts/buildInfo";
  */
 export default defineConfig([
   {
-    entry: { index: "src/index.ts" },
+    entry: { index: "src/index.ts", stage: "src/stage.ts" },
     format: ["esm"],
     target: "es2022",
     dts: true,

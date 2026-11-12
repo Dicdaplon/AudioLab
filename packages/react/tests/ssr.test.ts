@@ -10,6 +10,7 @@ import { renderToString } from "react-dom/server";
 
 import { DEFAULT_DETECTOR_SETTINGS, emptyTonalityFrame } from "@audiolab/core";
 import * as sdk from "../src/index";
+import * as stage from "../src/stage";
 
 describe("server rendering", () => {
   it("has no window or document at module scope", () => {
@@ -50,5 +51,28 @@ describe("server rendering", () => {
     expect(html).toContain("Estimated key");
     expect(html).toContain("<canvas");
     expect(html).toContain("Start the microphone");
+  });
+
+  it("renders the stage entry with no window: plates and canvases, nothing drawn", () => {
+    const signals = { current: null };
+    const keyReading = {
+      phase: "settled" as const,
+      key: { tonic: 9, mode: "min" as const },
+      runnerUp: null,
+      stability: 0.8,
+      event: null,
+    };
+    const html = renderToString(
+      createElement(
+        "div",
+        null,
+        createElement(stage.KeyPlate, { reading: keyReading }),
+        createElement(stage.FifthsMandala, { signals, size: 320 }),
+        createElement(stage.SpectrumCity, { signals, width: 640, height: 160 }),
+        createElement(stage.LevelCapsule, { signals }),
+      ),
+    );
+    expect(html).toContain("mineur");
+    expect(html).toContain("<canvas");
   });
 });

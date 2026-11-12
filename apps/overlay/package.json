@@ -1,0 +1,24 @@
+{
+  "name": "@audiolab/overlay",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "AudioLab stream overlay: a transparent page for an OBS browser source showing the song's key, the chords and the played notes, with live visuals.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@audiolab/core": "*",
+    "@audiolab/react": "*",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@fontsource/pixelify-sans": "^5.3.0",
+    "@fontsource/silkscreen": "^5.3.0",
+    "@fontsource/source-serif-4": "^5.3.1",
+    "@fontsource/vt323": "^5.3.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  }
+}

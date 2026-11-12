@@ -41,6 +41,11 @@
       "types": "./dist/art.d.ts",
       "default": "./dist/art.js"
     },
+    "./stage": {
+      "audiolab-source": "./src/stage.ts",
+      "types": "./dist/stage.d.ts",
+      "default": "./dist/stage.js"
+    },
     "./styles.css": {
       "audiolab-source": "./src/styles/index.css",
       "default": "./dist/styles.css"

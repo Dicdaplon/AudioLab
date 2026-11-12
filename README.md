@@ -50,6 +50,7 @@ the first release, install them from local tarballs or `file:` paths (see
 | [`@audiolab/core`](packages/core/README.md)   | `packages/core`  | Framework-free TypeScript: DSP (chroma, key, chord, pitch, scales, FFT, filters), `TonalityEngine`, `TempoAnalyzer`, `PitchTracker`, Web Audio adapters, settings. Game engines under `@audiolab/core/games`, Node-only file pipeline under `@audiolab/core/offline`. |
 | [`@audiolab/react`](packages/react/README.md) | `packages/react` | React 18/19 hooks, components, canvas plots, the chord game and Wolf Jumper, theme helpers, and the Loupe design system (`styles.css`, optional `fonts.css`). SSR-safe, `"use client"`.                                                                               |
 | `@audiolab/lab` (private)                     | `apps/lab`       | The demo above: a Vite shell (brand, tabs, theme toggle) around the SDK, deployed to GitHub Pages.                                                                                                                                                                    |
+| `@audiolab/overlay` (private)                 | `apps/overlay`   | A local stream overlay for an OBS browser source: song key, chords, played note and live visuals from `@audiolab/react/stage` ([apps/overlay/README.md](apps/overlay/README.md)).                                                                                     |
 
 ### Quick start for consumers
 

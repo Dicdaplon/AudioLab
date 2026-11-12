@@ -17,7 +17,7 @@ const PACKAGE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 describe("@audiolab/react public API", () => {
   it("exports the snapshotted names from every entry point", () => {
     const names = packageExportNames(PACKAGE);
-    expect(Object.keys(names)).toEqual([".", "./art"]);
+    expect(Object.keys(names)).toEqual([".", "./art", "./stage"]);
     expect(names).toMatchSnapshot();
   }, 60_000);
 });
