@@ -115,11 +115,11 @@ function DebugPanel({ sessions, stage }: { sessions: OverlaySessions; stage: Sta
       }}
     >
       <div>
-        harmonie :{" "}
+        harmony:{" "}
         {sessions.devices.harmony?.label || (sessions.harmony ? "default input / demo" : "—")}
       </div>
       <div>
-        notes : {sessions.devices.notes?.label || (sessions.notes ? "default input / demo" : "—")}
+        notes: {sessions.devices.notes?.label || (sessions.notes ? "default input / demo" : "—")}
       </div>
       <div>
         level: {Number.isFinite(stage.levelDb) ? `${stage.levelDb.toFixed(1)} dB` : "silence"}
