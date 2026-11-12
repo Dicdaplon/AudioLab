@@ -105,6 +105,13 @@ export {
   type AdaptiveLevelReading,
 } from "./analysis/readout/adaptiveLevel";
 export {
+  NO_VIBRATO,
+  VIBRATO_DEFAULTS,
+  VibratoDetector,
+  type VibratoOptions,
+  type VibratoReading,
+} from "./analysis/readout/vibrato";
+export {
   NOTE_SEGMENTER_DEFAULTS,
   NoteSegmenter,
   type NoteSegment,
@@ -445,6 +452,14 @@ export {
   type DetectorSettings,
   type FftSettings,
 } from "./config/settings";
+export {
+  DEFAULT_STAGE_SETTINGS,
+  STAGE_SETTING_RANGES,
+  normalizeStageSettings,
+  type NumericStageSetting,
+  type SettingRange,
+  type StageSettings,
+} from "./config/stageSettings";
 export {
   A4_FREQ,
   A4_MIDI,

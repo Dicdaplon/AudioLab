@@ -20,12 +20,14 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 
 import {
-  ANALYSIS_DEFAULTS,
   AdaptiveLevel,
   BeatClock,
   ChordChangeTracker,
   KeySettler,
+  NO_VIBRATO,
   NoteSegmenter,
+  gateTuning,
+  normalizeStageSettings,
   SongBreak,
   type AdaptiveLevelReading,
   type BeatPhase,
@@ -38,8 +40,10 @@ import {
   type NoteSegment,
   type PitchEstimate,
   type SignalTap,
+  type StageSettings,
   type TempoEstimate,
   type TimedOnset,
+  type VibratoReading,
 } from "@audiolab/core";
 
 import { useOnsetAnalysis } from "../hooks/useOnsetAnalysis";
@@ -94,28 +98,20 @@ export interface StageSignals {
 }
 
 export interface UseStageSignalsOptions {
-  /** Window of the song key, in seconds. Default 180. */
-  songSeconds?: number;
+  /**
+   * Live-adjustable windows and thresholds (`StageSettings`, missing keys
+   * from `DEFAULT_STAGE_SETTINGS`). Changing them never restarts a session:
+   * the analysis windows are resized and the trackers re-tuned in place.
+   */
+  settings?: Partial<StageSettings>;
   /** Chord qualities considered. Default triads plus 7, maj7, m7. */
   chordQualities?: readonly ChordQuality[];
-  /**
-   * Which session the chords are read from: "harmony" (the mix: the backing
-   * carries the chords) or "notes" (the instrument: the chords you play).
-   * Default "harmony".
-   */
-  chords?: "harmony" | "notes";
   /** Run the pitch tracker on the notes source. Default true. */
   pitch?: boolean;
   /** Run the tempo analysis on the harmony source. Default true. */
   tempo?: boolean;
   /** Run the onset detector on the notes source. Default true. */
   onsets?: boolean;
-  /**
-   * Seconds of silence that end a song and start the key over (the song-key
-   * window would otherwise carry the last song into the next). 0 disables.
-   * Default 8.
-   */
-  songBreakSeconds?: number;
   keySettler?: KeySettlerOptions;
   chordChanges?: ChordChangeOptions;
 }
@@ -129,6 +125,8 @@ export interface StageState {
   levelDb: number;
   /** True while the harmony or the notes session is playing (adaptive gates). */
   playing: boolean;
+  /** Vibrato of the note sounding now (inactive between notes). */
+  vibrato: VibratoReading;
   /** Start the song over: clears the key, the chord history and the analysis windows. */
   reset(): void;
 }
@@ -160,20 +158,15 @@ export function useStageSignals(
   notes: MicSource | null,
   options: UseStageSignalsOptions = {},
 ): StageState {
-  const {
-    songSeconds = 180,
-    pitch = true,
-    tempo = true,
-    onsets = true,
-    songBreakSeconds = 8,
-    chords: chordSource = "harmony",
-  } = options;
+  const { pitch = true, tempo = true, onsets = true } = options;
   const chordQualities = options.chordQualities ?? DEFAULT_QUALITIES;
+  const settings = normalizeStageSettings(options.settings);
+  const { chordWindowSeconds, songSeconds, chordSource } = settings;
 
   const tonality = useTonality(harmony, {
     tonalityAcquisitionSeconds: songSeconds,
     liveAcquisitionSeconds: 8,
-    chordWindowSeconds: ANALYSIS_DEFAULTS.chordWindowSeconds,
+    chordWindowSeconds,
     chordQualities,
   });
   // The notes session gets its own frames (level, and chords when asked)
@@ -182,12 +175,13 @@ export function useStageSignals(
   const notesTonality = useTonality(separateNotes ? notes : null, {
     tonalityAcquisitionSeconds: 8,
     liveAcquisitionSeconds: 8,
-    chordWindowSeconds: ANALYSIS_DEFAULTS.chordWindowSeconds,
+    chordWindowSeconds,
     chordQualities,
   });
   const chordsFromNotes = chordSource === "notes" && separateNotes;
   const chordFrame = chordsFromNotes ? notesTonality : tonality;
-  const pitchState = usePitch(notes, { enabled: pitch });
+  // 40 updates per second: enough samples to measure a vibrato of up to ~9 Hz.
+  const pitchState = usePitch(notes, { enabled: pitch, updatesPerSecond: 40 });
   const tempoState = useTempoAnalysis(harmony, { enabled: tempo, method: "flux" });
   const harmonyTap = useSignalTap(harmony);
   const notesTap = useSignalTap(notes);
@@ -205,7 +199,35 @@ export function useStageSignals(
   const segmenterRef = useRef<NoteSegmenter | null>(null);
   segmenterRef.current ??= new NoteSegmenter();
   const breakRef = useRef<SongBreak | null>(null);
-  breakRef.current ??= new SongBreak({ seconds: songBreakSeconds || Infinity });
+  breakRef.current ??= new SongBreak();
+
+  // Settings re-tune the trackers in place (the windows are resized by useTonality).
+  const {
+    chordHoldSeconds,
+    chordMinMargin,
+    songBreakSeconds,
+    noteClarity,
+    vibratoMinCents,
+    gateStrictness,
+  } = settings;
+  useEffect(() => {
+    chordsRef.current!.configure({ holdSeconds: chordHoldSeconds, minMargin: chordMinMargin });
+    breakRef.current!.configure({ seconds: songBreakSeconds || Infinity });
+    segmenterRef.current!.configure({
+      minClarity: noteClarity,
+      vibrato: { minExtentCents: vibratoMinCents },
+    });
+    const { openMarginDb, closeMarginDb } = gateTuning(gateStrictness);
+    harmonyLevelRef.current!.configure({ openMarginDb, closeMarginDb });
+    notesLevelRef.current!.configure({ openMarginDb, closeMarginDb });
+  }, [
+    chordHoldSeconds,
+    chordMinMargin,
+    songBreakSeconds,
+    noteClarity,
+    vibratoMinCents,
+    gateStrictness,
+  ]);
 
   const signalsRef = useRef<StageSignals | null>(null);
   const quiet: AdaptiveLevelReading = {
@@ -240,6 +262,7 @@ export function useStageSignals(
   const signals = signalsRef.current;
 
   const [playing, setPlaying] = useState(false);
+  const [vibrato, setVibrato] = useState<VibratoReading>(NO_VIBRATO);
   const [readings, setReadings] = useState<{ key: KeyReading; chord: ChordReading }>({
     key: LISTENING,
     chord: NO_CHORD,
@@ -326,6 +349,16 @@ export function useStageSignals(
     const segmenter = segmenterRef.current!;
     segmenter.push(playedNote, nowSeconds());
     signals.notes = segmenter.notes;
+    const last = segmenter.notes[segmenter.notes.length - 1];
+    const v = last?.open ? last.vibrato : NO_VIBRATO;
+    // Re-render only when the reading visibly changes.
+    setVibrato((prev) =>
+      prev.active === v.active &&
+      Math.abs(prev.rateHz - v.rateHz) < 0.2 &&
+      Math.abs(prev.extentCents - v.extentCents) < 2
+        ? prev
+        : v,
+    );
     if (playedNote) return;
     const timer = setTimeout(() => {
       segmenter.push(null, nowSeconds());
@@ -372,6 +405,7 @@ export function useStageSignals(
     tempo: estimate,
     levelDb: signalLevelDb,
     playing,
+    vibrato,
     reset,
   };
 }

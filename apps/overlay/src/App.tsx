@@ -6,6 +6,7 @@ import {
   FifthsMandala,
   KeyPlate,
   STAGE_THEME,
+  StageSettingsPanel,
   TunerPlate,
   useStageSignals,
   type StageState,
@@ -14,6 +15,7 @@ import {
 import { BandLayout, CamLayout, SceneLayout, type LayoutProps } from "./layouts";
 import { readParams, type OverlayParams } from "./params";
 import { useOverlaySessions, type OverlaySessions } from "./useOverlaySessions";
+import { useOverlaySettings } from "./useOverlaySettings";
 
 const W = 1920;
 const H = 1080;
@@ -141,23 +143,49 @@ function DebugPanel({ sessions, stage }: { sessions: OverlaySessions; stage: Sta
   );
 }
 
+/**
+ * `?view=settings`: the settings alone, opaque, for an OBS custom dock. It
+ * opens no audio input; changes reach the overlay through useOverlaySettings.
+ */
+function SettingsDock({ params }: { params: OverlayParams }) {
+  const { settings, update } = useOverlaySettings(window.location.search);
+  return (
+    <div style={{ minHeight: "100vh", background: STAGE_THEME.night, padding: 8 }}>
+      <StageSettingsPanel
+        settings={settings}
+        onChange={update}
+        notation={params.notation === "en" ? "en" : "fr"}
+        width={Math.min(528, window.innerWidth - 16)}
+      />
+    </div>
+  );
+}
+
 export default function App() {
   const params = readParams(window.location.search);
+  return params.view === "settings" ? (
+    <SettingsDock params={params} />
+  ) : (
+    <Overlay params={params} />
+  );
+}
+
+function Overlay({ params }: { params: OverlayParams }) {
   const sessions = useOverlaySessions(params);
-  const stage = useStageSignals(sessions.harmony, sessions.notes, {
-    songSeconds: params.songSeconds,
-    chords: params.chords,
-  });
+  const { settings, update } = useOverlaySettings(window.location.search);
+  const stage = useStageSignals(sessions.harmony, sessions.notes, { settings });
   // Info panel: shown with debug=1 or on errors, never with hud=0; D toggles it.
   const [hud, setHud] = useState(params.hud);
+  const [showSettings, setShowSettings] = useState(false);
 
-  // R starts the song over, D shows or hides the info panel (OBS: right-click
-  // the source › Interact, then the key).
+  // R starts the song over, D shows or hides the info panel, S the settings
+  // (OBS: right-click the source › Interact, then the key).
   const { reset } = stage;
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "r" || e.key === "R") reset();
       if (e.key === "d" || e.key === "D") setHud((h) => !h);
+      if (e.key === "s" || e.key === "S") setShowSettings((v) => !v);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -175,6 +203,15 @@ export default function App() {
       )}
       {hud && (params.debug || sessions.errors.length > 0) && (
         <DebugPanel sessions={sessions} stage={stage} />
+      )}
+      {showSettings && (
+        <div style={{ position: "absolute", left: 96, top: 96 }}>
+          <StageSettingsPanel
+            settings={settings}
+            onChange={update}
+            notation={params.notation === "en" ? "en" : "fr"}
+          />
+        </div>
       )}
     </div>
   );

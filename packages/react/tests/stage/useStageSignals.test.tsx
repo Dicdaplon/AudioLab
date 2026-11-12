@@ -72,7 +72,12 @@ describe("useStageSignals", () => {
     let now = 0;
     vi.spyOn(performance, "now").mockImplementation(() => now);
     const { result } = renderHook(() =>
-      useStageSignals(mic, mic, { pitch: false, tempo: false, onsets: false, songBreakSeconds: 2 }),
+      useStageSignals(mic, mic, {
+        pitch: false,
+        tempo: false,
+        onsets: false,
+        settings: { songBreakSeconds: 2 },
+      }),
     );
     const tick = (n: number) => {
       for (let i = 0; i < n; i++) {

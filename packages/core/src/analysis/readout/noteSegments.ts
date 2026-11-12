@@ -8,9 +8,14 @@
  * not end it; a new attack on the same pitch does (`onset`). Notes shorter
  * than `minSeconds` are dropped as glitches when they end. Time comes from
  * the caller, in seconds.
+ *
+ * Each note also carries its vibrato (`VibratoDetector` over the note's
+ * cents): while it sounds, the latest reading; once a vibrato has been
+ * found, the widest one, so a note keeps its vibrato after it ends.
  */
 
 import type { PitchEstimate } from "../pitch";
+import { NO_VIBRATO, VibratoDetector, type VibratoOptions, type VibratoReading } from "./vibrato";
 
 export interface NoteSegmenterOptions {
   /** Estimates below this clarity are ignored. Default 0.6. */
@@ -21,6 +26,8 @@ export interface NoteSegmenterOptions {
   minSeconds?: number;
   /** Notes kept in `notes` (the current one included). Default 64. */
   historyLength?: number;
+  /** Vibrato thresholds (see `VIBRATO_DEFAULTS`). */
+  vibrato?: VibratoOptions;
 }
 
 export const NOTE_SEGMENTER_DEFAULTS: Required<NoteSegmenterOptions> = {
@@ -28,6 +35,7 @@ export const NOTE_SEGMENTER_DEFAULTS: Required<NoteSegmenterOptions> = {
   bridgeSeconds: 0.09,
   minSeconds: 0.06,
   historyLength: 64,
+  vibrato: {},
 };
 
 export interface NoteSegment {
@@ -40,10 +48,13 @@ export interface NoteSegment {
   end: number;
   /** True while the note is still sounding. */
   open: boolean;
+  /** The note's vibrato (see the class comment). */
+  vibrato: VibratoReading;
 }
 
 export class NoteSegmenter {
-  private readonly o: Required<NoteSegmenterOptions>;
+  private o: Required<NoteSegmenterOptions>;
+  private readonly vibrato: VibratoDetector;
   private segments: NoteSegment[] = [];
   private current: NoteSegment | null = null;
   private centsSum = 0;
@@ -52,6 +63,13 @@ export class NoteSegmenter {
 
   constructor(options: NoteSegmenterOptions = {}) {
     this.o = { ...NOTE_SEGMENTER_DEFAULTS, ...options };
+    this.vibrato = new VibratoDetector(this.o.vibrato);
+  }
+
+  /** Change the thresholds; the notes are kept. */
+  configure(options: NoteSegmenterOptions): void {
+    this.o = { ...this.o, ...options };
+    if (options.vibrato) this.vibrato.configure(options.vibrato);
   }
 
   /** The notes, oldest first; the last one may still be open. */
@@ -69,6 +87,14 @@ export class NoteSegmenter {
       this.centsCount += 1;
       cur.cents = this.centsSum / this.centsCount;
       this.lastSeen = timeSeconds;
+      const v = this.vibrato.push(clear.cents, timeSeconds);
+      if (
+        v.active
+          ? !cur.vibrato.active || v.extentCents >= cur.vibrato.extentCents
+          : !cur.vibrato.active
+      ) {
+        cur.vibrato = v;
+      }
     } else if (clear) {
       this.close(timeSeconds);
       this.begin(clear, timeSeconds);
@@ -90,7 +116,16 @@ export class NoteSegmenter {
   }
 
   private begin(e: PitchEstimate, t: number): void {
-    this.current = { midi: e.midi, cents: e.cents, start: t, end: t, open: true };
+    this.current = {
+      midi: e.midi,
+      cents: e.cents,
+      start: t,
+      end: t,
+      open: true,
+      vibrato: NO_VIBRATO,
+    };
+    this.vibrato.reset();
+    this.vibrato.push(e.cents, t);
     this.centsSum = e.cents;
     this.centsCount = 1;
     this.lastSeen = t;

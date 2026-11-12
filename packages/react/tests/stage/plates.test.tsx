@@ -1,11 +1,17 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 
-import type { ChordReading, KeyReading, PitchEstimate } from "@audiolab/core";
+import {
+  DEFAULT_STAGE_SETTINGS,
+  type ChordReading,
+  type KeyReading,
+  type PitchEstimate,
+} from "@audiolab/core";
 
 import { ChordPlate } from "../../src/stage/plates/ChordPlate";
 import { ChordRibbon } from "../../src/stage/plates/ChordRibbon";
 import { KeyPlate } from "../../src/stage/plates/KeyPlate";
+import { StageSettingsPanel } from "../../src/stage/plates/StageSettingsPanel";
 import { TunerPlate } from "../../src/stage/plates/TunerPlate";
 
 const A_MINOR = { tonic: 9, mode: "min" as const };
@@ -150,6 +156,54 @@ describe("TunerPlate", () => {
       vi.advanceTimersByTime(1600);
     });
     expect(screen.getByText("—")).toBeTruthy();
+  });
+});
+
+describe("TunerPlate vibrato", () => {
+  it("shows an active vibrato with its rate and width", () => {
+    const { rerender } = render(
+      <TunerPlate
+        note={note(64, 4)}
+        songKey={null}
+        vibrato={{ active: true, rateHz: 5.83, extentCents: 21.6 }}
+      />,
+    );
+    expect(screen.getByText("VIBRATO")).toBeTruthy();
+    expect(screen.getByText(/5\.8 Hz · ±22 ¢/)).toBeTruthy();
+    rerender(
+      <TunerPlate
+        note={note(64, 4)}
+        songKey={null}
+        vibrato={{ active: false, rateHz: 0, extentCents: 3 }}
+      />,
+    );
+    expect(screen.queryByText("VIBRATO")).toBeNull();
+  });
+});
+
+describe("StageSettingsPanel", () => {
+  it("edits each setting and the chord source, and restores the defaults", () => {
+    const onChange = vi.fn();
+    render(<StageSettingsPanel settings={DEFAULT_STAGE_SETTINGS} onChange={onChange} />);
+    fireEvent.change(screen.getByLabelText("Fenêtre des accords"), { target: { value: "4" } });
+    expect(onChange).toHaveBeenLastCalledWith({ ...DEFAULT_STAGE_SETTINGS, chordWindowSeconds: 4 });
+    fireEvent.click(screen.getByText("l'instrument"));
+    expect(onChange).toHaveBeenLastCalledWith({ ...DEFAULT_STAGE_SETTINGS, chordSource: "notes" });
+    fireEvent.click(screen.getByText("Défauts"));
+    expect(onChange).toHaveBeenLastCalledWith(DEFAULT_STAGE_SETTINGS);
+  });
+
+  it("speaks English and formats the values", () => {
+    render(
+      <StageSettingsPanel
+        settings={{ ...DEFAULT_STAGE_SETTINGS, songBreakSeconds: 0 }}
+        onChange={() => {}}
+        notation="en"
+      />,
+    );
+    expect(screen.getByText("Chord window")).toBeTruthy();
+    expect(screen.getByText("never")).toBeTruthy();
+    expect(screen.getByText("50 %")).toBeTruthy();
   });
 });
 

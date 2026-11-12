@@ -59,8 +59,22 @@ function signals(): StageSignals {
     keyEventAt: null,
     note: { frequency: 440, midi: 69, pitchClass: 9, cents: 3, clarity: 0.95 },
     notes: [
-      { midi: 64, cents: -4, start: 0, end: 0.4, open: false },
-      { midi: 69, cents: 3, start: 0.5, end: 1, open: true },
+      {
+        midi: 64,
+        cents: -4,
+        start: 0,
+        end: 0.4,
+        open: false,
+        vibrato: { active: false, rateHz: 0, extentCents: 0 },
+      },
+      {
+        midi: 69,
+        cents: 3,
+        start: 0.5,
+        end: 1,
+        open: true,
+        vibrato: { active: true, rateHz: 6, extentCents: 22 },
+      },
     ],
     chroma: { instant: chroma, chord: chroma, live: chroma },
     tempo: { bpm: 96, confidence: 0.9 },
@@ -118,6 +132,24 @@ const VISUALS: [string, (s: Ref) => ReactElement][] = [
   ["ChordTunnel", (s) => createElement(stage.ChordTunnel, { signals: s, size: 400 })],
   ["NoteLane", (s) => createElement(stage.NoteLane, { signals: s, width: 640, height: 200 })],
   ["LevelCapsule", (s) => createElement(stage.LevelCapsule, { signals: s })],
+  [
+    "StageBackdrop",
+    (s) =>
+      createElement(stage.StageBackdrop, {
+        signals: s,
+        width: 640,
+        height: 360,
+        cam: { x: 16, y: 16, w: 400, h: 225 },
+        keepOut: [{ x: 440, y: 16, w: 180, h: 200 }],
+        tonic: 9,
+        stars: 12,
+      }),
+  ],
+  [
+    "StageBackdrop plain",
+    (s) =>
+      createElement(stage.StageBackdrop, { signals: s, width: 320, height: 180, variant: "plain" }),
+  ],
   [
     "GuitarTimeline",
     (s) => createElement(stage.GuitarTimeline, { signals: s, width: 1344, height: 212 }),

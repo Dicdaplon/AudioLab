@@ -76,3 +76,16 @@ describe("ChordChangeTracker", () => {
     expect(t.push([], -20, 1)).toMatchObject({ current: null, history: [], margin: 0 });
   });
 });
+
+describe("ChordChangeTracker.configure", () => {
+  it("applies a new hold time without losing the current chord", () => {
+    const t = new ChordChangeTracker();
+    t.push(AM, -20, 0);
+    t.push(AM, -20, 0.3);
+    t.configure({ holdSeconds: 1, minGapSeconds: 0 });
+    t.push(C, -20, 0.4);
+    expect(t.push(C, -20, 0.9).changed).toBe(false);
+    expect(t.push(C, -20, 1.5).changed).toBe(true);
+    expect(t.push(C, -20, 1.6).history).toHaveLength(2);
+  });
+});

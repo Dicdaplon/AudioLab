@@ -81,6 +81,11 @@ export class AdaptiveLevel {
     };
   }
 
+  /** Re-tune the gate (e.g. its margins from `gateTuning(strictness)`); the floor is kept. */
+  configure(gate: Partial<NoiseGateConfig>): void {
+    this.gate.configure(gate);
+  }
+
   reset(): void {
     this.gate.reset();
     this.ceiling = null;

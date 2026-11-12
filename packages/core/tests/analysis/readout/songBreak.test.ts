@@ -22,3 +22,13 @@ describe("SongBreak", () => {
     expect(b.push(-95, 8)).toBe(false);
   });
 });
+
+describe("SongBreak.configure", () => {
+  it("shortens the break on the fly", () => {
+    const b = new SongBreak();
+    expect(b.push(-100, 0)).toBe(false);
+    b.configure({ seconds: 1, silenceDb: -95 });
+    expect(b.push(-100, 1.1)).toBe(true);
+    expect(b.push(-93, 2)).toBe(false);
+  });
+});

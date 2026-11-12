@@ -10,7 +10,7 @@
 
 import { memo, useEffect, useRef, useState } from "react";
 
-import { scaleDegree, type KeyRef, type PitchEstimate } from "@audiolab/core";
+import { scaleDegree, type KeyRef, type PitchEstimate, type VibratoReading } from "@audiolab/core";
 
 import { noteName, type Notation } from "../names";
 import { STAGE_THEME, type StageTheme } from "../theme";
@@ -20,6 +20,8 @@ import { Plate } from "./Plate";
 export interface TunerPlateProps {
   note: PitchEstimate | null;
   songKey: KeyRef | null;
+  /** Vibrato of the held note: shown with its rate and width when active. */
+  vibrato?: VibratoReading;
   notation?: Notation | "both";
   width?: number;
   /** Size of the note name in px. Default 96. */
@@ -39,6 +41,7 @@ function cellColour(cents: number, theme: StageTheme): string {
 export const TunerPlate = memo(function TunerPlate({
   note,
   songKey,
+  vibrato,
   notation = "both",
   width = 528,
   size = 96,
@@ -168,9 +171,23 @@ export const TunerPlate = memo(function TunerPlate({
             )}
           </div>
           <div
-            style={{ font: `24px ${theme.fonts.mono}`, color: theme.inkMuted, textAlign: "right" }}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "baseline",
+              font: `24px ${theme.fonts.mono}`,
+              color: theme.inkMuted,
+            }}
           >
-            {shown ? `${cents >= 0 ? "+" : ""}${Math.round(cents)} ¢` : ""}
+            <span style={{ color: theme.signal }}>
+              {vibrato?.active && held?.fresh !== false && (
+                <>
+                  <span style={{ font: `16px ${theme.fonts.label}` }}>VIBRATO </span>
+                  {`${vibrato.rateHz.toFixed(1)} Hz · ±${Math.round(vibrato.extentCents)} ¢`}
+                </>
+              )}
+            </span>
+            <span>{shown ? `${cents >= 0 ? "+" : ""}${Math.round(cents)} ¢` : ""}</span>
           </div>
         </div>
       </div>

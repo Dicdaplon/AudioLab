@@ -6,7 +6,7 @@
  * The synth plays a minor ii–V–i turnaround with a bass, strummed chords, a
  * kick on every beat and a lead line on its own stream (the "dry guitar"),
  * so every analysis has something to find: a key, chord changes, a tempo,
- * attacks and a monophonic note.
+ * attacks and a monophonic note (held notes with a vibrato).
  */
 
 export interface DemoAudio {
@@ -114,10 +114,22 @@ function pluck(
   gain: number,
   type: OscillatorType,
   cutoff: number,
+  vibratoHz = 0,
 ): void {
   const osc = ctx.createOscillator();
   osc.type = type;
   osc.frequency.value = hz(midi);
+  if (vibratoHz > 0) {
+    // A guitarist's vibrato: it starts after the attack, about ±25 cents.
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = vibratoHz;
+    const depth = ctx.createGain();
+    depth.gain.setValueAtTime(0, at);
+    depth.gain.linearRampToValueAtTime(hz(midi) * 0.015, at + 0.15);
+    lfo.connect(depth).connect(osc.frequency);
+    lfo.start(at);
+    lfo.stop(at + duration + 0.05);
+  }
   const filter = ctx.createBiquadFilter();
   filter.type = "lowpass";
   filter.frequency.setValueAtTime(cutoff * 3, at);
@@ -169,8 +181,20 @@ function startSynth(ctx: AudioContext, mixOut: AudioNode, leadOut: AudioNode): (
       }
       for (let e = 0; e < 8; e++) {
         const note = LEAD[(nextBar % BARS.length) * 8 + e];
-        if (note !== null)
-          pluck(ctx, lead, note, barTime + e * (BEAT / 2), BEAT * 0.9, 0.3, "sawtooth", 1800);
+        if (note === null) continue;
+        // Notes followed by a rest are held longer, with a vibrato.
+        const held = LEAD[(nextBar % BARS.length) * 8 + e + 1] === null;
+        pluck(
+          ctx,
+          lead,
+          note,
+          barTime + e * (BEAT / 2),
+          held ? BEAT * 1.4 : BEAT * 0.9,
+          0.3,
+          "sawtooth",
+          1800,
+          held ? 5.5 : 0,
+        );
       }
       nextBar += 1;
       barTime += 4 * BEAT;

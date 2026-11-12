@@ -16,14 +16,20 @@ export interface SongBreakOptions {
 }
 
 export class SongBreak {
-  private readonly seconds: number;
-  private readonly silenceDb: number;
+  private seconds: number;
+  private silenceDb: number;
   private quietSince: number | null = null;
   private fired = false;
 
   constructor(options: SongBreakOptions = {}) {
     this.seconds = options.seconds ?? 8;
     this.silenceDb = options.silenceDb ?? -90;
+  }
+
+  /** Change the thresholds; a silence in progress keeps counting. */
+  configure(options: SongBreakOptions): void {
+    if (options.seconds !== undefined) this.seconds = options.seconds;
+    if (options.silenceDb !== undefined) this.silenceDb = options.silenceDb;
   }
 
   /** Feed one frame; true on the frame a song break is detected. */

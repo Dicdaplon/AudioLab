@@ -247,10 +247,19 @@ export function GuitarTimeline({
         CHORD_QUALITY_INTERVALS[chord.quality].some((iv) => (chord.root + iv) % 12 === pc);
       const inKey = key ? scaleDegree(pc, key.tonic, key.mode) !== null : true;
 
-      // Held note: a bar from the pill to the end.
+      // Held note: a bar from the pill to the end; with a vibrato, a stepped
+      // wave at the vibrato's rate (blocks alternating ±4 px).
       if (x1 > x0 + pillW) {
+        const barEnd = Math.min(x1, nextOnString[pos.string]);
         ctx.fillStyle = withAlpha(theme.pitchBright[pc], 0.6);
-        ctx.fillRect(x0 + pillW, y - 4, Math.min(x1, nextOnString[pos.string]) - x0 - pillW, 8);
+        if (n.vibrato.active) {
+          const halfCycle = Math.max(8, Math.round(pps / (2 * n.vibrato.rateHz)));
+          for (let bx = x0 + pillW, k = 0; bx < barEnd; bx += halfCycle, k++) {
+            ctx.fillRect(bx, y - 4 + (k % 2 ? 4 : -4), Math.min(halfCycle, barEnd - bx), 8);
+          }
+        } else {
+          ctx.fillRect(x0 + pillW, y - 4, barEnd - x0 - pillW, 8);
+        }
       }
       if (x0 + pillW > nextOnString[pos.string]) {
         ctx.fillStyle = theme.pitchBright[pc];

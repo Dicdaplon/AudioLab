@@ -44,3 +44,14 @@ describe("AdaptiveLevel", () => {
     expect(a.push(-100, 0).ceilingDb).toBeGreaterThanOrEqual(a.push(-100, 0.1).floorDb);
   });
 });
+
+describe("AdaptiveLevel.configure", () => {
+  it("a stricter gate needs a louder signal to open", () => {
+    const a = new AdaptiveLevel();
+    feed(a, 0, 6, () => -95);
+    a.configure({ openMarginDb: 20, closeMarginDb: 10 });
+    expect(feed(a, 6.1, 1, (t) => -86 + Math.sin(t * 9)).open).toBe(false);
+    a.configure({ openMarginDb: 3, closeMarginDb: 1.5 });
+    expect(feed(a, 7.2, 1, (t) => -86 + Math.sin(t * 9)).open).toBe(true);
+  });
+});

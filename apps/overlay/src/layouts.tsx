@@ -22,6 +22,7 @@ import {
   PawTrail,
   Plate,
   SpectrumCity,
+  StageBackdrop,
   STAGE_THEME,
   TunerPlate,
   type Roofline,
@@ -94,6 +95,17 @@ export function CamLayout({ stage, params }: LayoutProps) {
   const extras = params.extras;
   return (
     <>
+      {params.backdrop !== "off" && (
+        <StageBackdrop
+          signals={stage.signals}
+          width={1920}
+          height={1080}
+          cam={cam}
+          tonic={key?.tonic ?? null}
+          variant={params.backdrop}
+          keepOut={[{ x: 1424, y: 48, w: 448, h: 600 }]}
+        />
+      )}
       {extras.has("embers") && (
         <AttackField
           signals={stage.signals}
@@ -148,6 +160,7 @@ export function CamLayout({ stage, params }: LayoutProps) {
       </At>
       <At x={1424} y={488}>
         <TunerPlate
+          vibrato={stage.vibrato}
           note={stage.note}
           songKey={key}
           notation={params.notation}
@@ -179,6 +192,16 @@ export function SceneLayout({ stage, params }: LayoutProps) {
   const extras = params.extras;
   return (
     <>
+      {params.backdrop !== "off" && (
+        <StageBackdrop
+          signals={stage.signals}
+          width={1920}
+          height={1080}
+          tonic={key?.tonic ?? null}
+          variant={params.backdrop}
+          stars={48}
+        />
+      )}
       {extras.has("embers") && <AttackField signals={stage.signals} width={1920} height={1080} />}
       {extras.has("aurora") ? (
         <HarmonicAurora signals={stage.signals} width={1920} height={304} />
@@ -228,6 +251,7 @@ export function SceneLayout({ stage, params }: LayoutProps) {
       </At>
       <At x={1376} y={520}>
         <TunerPlate
+          vibrato={stage.vibrato}
           note={stage.note}
           songKey={key}
           notation={params.notation}
@@ -299,6 +323,7 @@ export function BandLayout({ stage, params }: LayoutProps) {
       </At>
       <At x={1528} y={840}>
         <TunerPlate
+          vibrato={stage.vibrato}
           note={stage.note}
           songKey={key}
           notation={params.notation}

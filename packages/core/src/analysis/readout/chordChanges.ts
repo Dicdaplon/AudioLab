@@ -80,7 +80,7 @@ function same(a: ChordLabel | null, b: ChordScore | ChordLabel | undefined): boo
 }
 
 export class ChordChangeTracker {
-  private readonly o: Required<ChordChangeOptions>;
+  private o: Required<ChordChangeOptions>;
   private current: ChordLabel | null = null;
   private pending: ChordLabel | null = null;
   private pendingSince = 0;
@@ -135,6 +135,11 @@ export class ChordChangeTracker {
         : null;
 
     return { current: this.current, runnerUp, margin, silent, changed, history: this.segments };
+  }
+
+  /** Change the thresholds; the current chord and the history are kept. */
+  configure(options: ChordChangeOptions): void {
+    this.o = { ...this.o, ...options };
   }
 
   /** Forget the current chord and the history. */

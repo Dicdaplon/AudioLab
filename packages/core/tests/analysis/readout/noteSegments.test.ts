@@ -53,3 +53,27 @@ describe("NoteSegmenter", () => {
     expect(s.notes).toHaveLength(0);
   });
 });
+
+describe("NoteSegmenter vibrato", () => {
+  it("marks a held note with a vibrato, and keeps it once the note ends", () => {
+    const s = new NoteSegmenter();
+    for (let i = 0; i <= 40; i++) {
+      const t = i / 40;
+      s.push(est(64, 25 * Math.sin(2 * Math.PI * 6 * t)), t);
+    }
+    expect(s.notes[0].vibrato.active).toBe(true);
+    expect(s.notes[0].vibrato.rateHz).toBeCloseTo(6, 0);
+    s.push(null, 1.2);
+    expect(s.notes[0].open).toBe(false);
+    expect(s.notes[0].vibrato.active).toBe(true);
+  });
+
+  it("leaves a steady note without vibrato, and can be re-tuned", () => {
+    const s = new NoteSegmenter();
+    for (let i = 0; i <= 40; i++) s.push(est(64, 8 * Math.sin(2 * Math.PI * 6 * (i / 40))), i / 40);
+    expect(s.notes[0].vibrato.active).toBe(false);
+    s.configure({ vibrato: { minExtentCents: 5 }, minClarity: 0.5 });
+    s.push(est(64, 8 * Math.sin(2 * Math.PI * 6 * 1.025)), 1.025);
+    expect(s.notes[0].vibrato.active).toBe(true);
+  });
+});

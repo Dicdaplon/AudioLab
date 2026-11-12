@@ -234,7 +234,13 @@ layer on top of the analysis paths, and nothing below them:
   ranking into debounced changes (hold, score margin, minimum gap) and a timed history;
   `BeatClock` derives a beat phase from the tempo estimate and the onsets (a first-order
   phase-locked loop); `SongBreak` ends a song after a long silence; `chordDegree` /
-  `scaleDegree` name chords and notes in the key.
+  `scaleDegree` name chords and notes in the key; `AdaptiveLevel` says whether an input
+  plays and how loud, relative to its learnt floor and recent peaks; `NoteSegmenter`
+  turns pitch estimates into timed notes, each with its vibrato (`VibratoDetector`: rate
+  and width from the zero crossings of the detrended cents); `FretPlacer` picks a string
+  and fret for the tablature. Every tracker has a `configure()`, so the live settings
+  (`config/stageSettings.ts`: `StageSettings`, defaults, ranges, a normaliser for
+  untrusted input) re-tune them without restarting anything.
 - **Display tap** (`audio/signalTap.ts`, `useSignalTap`): a 2048-point, smoothed
   AnalyserNode of its own on the session, read by the visuals on every animation frame
   (waveform, spectrum). The tonality analyser (16384 points, unsmoothed, 10 Hz) is never

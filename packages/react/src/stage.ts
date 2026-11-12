@@ -40,6 +40,10 @@ export { KeyPlate, type KeyPlateProps } from "./stage/plates/KeyPlate";
 export { ChordPlate, type ChordPlateProps } from "./stage/plates/ChordPlate";
 export { TunerPlate, type TunerPlateProps } from "./stage/plates/TunerPlate";
 export { ChordRibbon, type ChordRibbonProps } from "./stage/plates/ChordRibbon";
+export {
+  StageSettingsPanel,
+  type StageSettingsPanelProps,
+} from "./stage/plates/StageSettingsPanel";
 export { FifthsMandala, type FifthsMandalaProps } from "./stage/visuals/FifthsMandala";
 export { NoteConstellation, type NoteConstellationProps } from "./stage/visuals/NoteConstellation";
 export { FifthsSky, type FifthsSkyProps } from "./stage/visuals/FifthsSky";
@@ -62,6 +66,11 @@ export { ChordTunnel, type ChordTunnelProps } from "./stage/visuals/ChordTunnel"
 export { NoteLane, type NoteLaneProps } from "./stage/visuals/NoteLane";
 export { AttackField, type AttackFieldProps } from "./stage/visuals/AttackField";
 export { GuitarTimeline, type GuitarTimelineProps } from "./stage/visuals/GuitarTimeline";
+export {
+  StageBackdrop,
+  type BackdropRect,
+  type StageBackdropProps,
+} from "./stage/visuals/StageBackdrop";
 export {
   LEVEL_CAPSULE_SIZE,
   LevelCapsule,
