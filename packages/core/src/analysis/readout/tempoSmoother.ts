@@ -10,6 +10,11 @@
  * flux + autocorrelation estimate (§5) the stage uses. The result is the
  * vote-weighted mean around the winning bin, and the winning share of the
  * votes as its confidence.
+ *
+ * The analyser's usual mistake is an octave: half or double the tempo. Every
+ * reading is therefore folded into `range` (60–150 BPM by default) by halving
+ * or doubling it before it votes, so 192 and 48 both vote for 96 and the two
+ * readings of one tempo reinforce each other instead of competing.
  */
 
 export interface TempoSmootherOptions {
@@ -17,14 +22,17 @@ export interface TempoSmootherOptions {
   memorySeconds?: number;
   /** Estimates below this confidence do not vote. Default 0.2. */
   minConfidence?: number;
-  /** BPM range kept. Default [40, 240]. */
+  /**
+   * BPM range of the result: readings outside are halved or doubled until
+   * they fall inside. Must span at least an octave. Default [60, 150].
+   */
   range?: readonly [number, number];
 }
 
 export const TEMPO_SMOOTHER_DEFAULTS: Required<TempoSmootherOptions> = {
   memorySeconds: 6,
   minConfidence: 0.2,
-  range: [40, 240],
+  range: [60, 150],
 };
 
 export interface SmoothedTempo {
@@ -55,13 +63,11 @@ export class TempoSmoother {
       for (let i = 0; i < this.votes.length; i++) this.votes[i] *= fade;
     }
     this.lastTime = timeSeconds;
-    if (
-      estimate &&
-      estimate.confidence >= this.o.minConfidence &&
-      estimate.bpm >= lo &&
-      estimate.bpm <= hi
-    ) {
-      this.votes[Math.round(estimate.bpm) - lo] += estimate.confidence;
+    if (estimate && estimate.confidence >= this.o.minConfidence && estimate.bpm > 0) {
+      let bpm = estimate.bpm;
+      while (bpm > hi) bpm /= 2;
+      while (bpm < lo) bpm *= 2;
+      if (bpm <= hi) this.votes[Math.round(bpm) - lo] += estimate.confidence;
     }
     return this.read();
   }

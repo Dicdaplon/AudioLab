@@ -43,6 +43,8 @@ import {
   type FretPosition,
   type KeyRef,
   type NoteSegment,
+  noteValue,
+  type NoteValueName,
 } from "@audiolab/core";
 
 import { bendAmount, chordName, noteName, type Notation } from "../names";
@@ -73,6 +75,11 @@ export interface GuitarTimelineProps {
   chords?: boolean;
   /** The tempo (smoothed BPM and beat pips) above the staff, past the now line. Default true. */
   tempo?: boolean;
+  /**
+   * Note values (whole, half, quarter, eighth nearest to each note's length
+   * at the tempo) under the staff, once the beat is known. Default true.
+   */
+  values?: boolean;
   notation?: Notation;
   theme?: StageTheme;
 }
@@ -159,6 +166,35 @@ function pixelOval(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.fillRect(x + 4, top, w - 8, h);
   ctx.fillRect(x + 2, top + 2, w - 4, h - 4);
   ctx.fillRect(x, top + 4, w, h - 8);
+}
+
+/**
+ * A small note value in pixels: a 7×5 head (hollow for whole and half), a
+ * stem (not for the whole note) and a flag for the eighth, its head's
+ * centre at (x + 3, y).
+ */
+function noteGlyph(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  value: NoteValueName,
+  ink: string,
+  hole: string,
+): void {
+  ctx.fillStyle = ink;
+  ctx.fillRect(x + 1, y - 2, 5, 5);
+  ctx.fillRect(x, y - 1, 7, 3);
+  if (value === "whole" || value === "half") {
+    ctx.fillStyle = hole;
+    ctx.fillRect(x + 2, y - 1, 3, 3);
+    ctx.fillStyle = ink;
+  }
+  if (value === "whole") return;
+  ctx.fillRect(x + 5, y - 13, 2, 12);
+  if (value === "eighth") {
+    ctx.fillRect(x + 7, y - 12, 2, 2);
+    ctx.fillRect(x + 8, y - 10, 2, 3);
+  }
 }
 
 /** Smoothstep, for the bend curve. */
@@ -248,6 +284,7 @@ export function GuitarTimeline({
   labels = "frets",
   chords = true,
   tempo: showTempo = true,
+  values: showValues = true,
   notation = "fr",
   theme = STAGE_THEME,
 }: GuitarTimelineProps) {
@@ -551,6 +588,20 @@ export function GuitarTimeline({
           ctx.fillText(sn.shift < 0 ? "8va" : "8vb", x0, my);
         }
         next = x0;
+      }
+    }
+
+    // Note values (whole, half, quarter, eighth) at the tempo, under the
+    // staff: decoration, in a muted colour, only once the beat is known.
+    if (showValues && beat) {
+      const vy = staff ? Math.round((bottomLine + tickY) / 2) + 4 : tickY + 2;
+      for (let i = notes.length - 1; i >= 0; i--) {
+        const n = notes[i];
+        if (n.open) continue;
+        if (n.end < oldest) break;
+        const value = noteValue(n.end - n.start, beat.period);
+        if (value)
+          noteGlyph(ctx, xAt(n.start), vy, value, withAlpha(theme.inkMuted, 0.8), theme.night);
       }
     }
     ctx.restore();

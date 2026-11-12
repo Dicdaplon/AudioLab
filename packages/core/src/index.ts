@@ -97,6 +97,7 @@ export {
   type BeatPhase,
 } from "./analysis/readout/beatClock";
 export { SongBreak, type SongBreakOptions } from "./analysis/readout/songBreak";
+export { NOTE_VALUES, noteValue, type NoteValueName } from "./analysis/readout/noteValues";
 export {
   TEMPO_SMOOTHER_DEFAULTS,
   TempoSmoother,

@@ -20,3 +20,5 @@ Bends: `NoteSegmenter` follows the pitch continuously, tells a bend (a glide tha
 `TempoSmoother` steadies the tempo with a decaying vote across the analyser's readings (docs/POC-METHODS.md §5–6), feeding the beat clock and the stage; `GuitarTimeline` shows it discreetly above the staff. The key window is a choice of 15, 30 or 60 s (`STAGE_KEY_WINDOWS`, default 30). `CrtScreen` keeps the webcam's square corners, with a heavier casing and occasional glass events (glare, flicker, glitch).
 
 `CrtScreen` gains `look` (`CRT_LOOKS`: clean, dark, aged, fallout, worn): darker or yellowed edges, phosphor tints, heavier scanlines; its glass events are slower and fade in and out.
+
+`TempoSmoother` folds every reading into 60–150 BPM (halving or doubling) before it votes, so octave errors reinforce the right tempo. `noteValue` / `NOTE_VALUES` name the written value nearest to a note's length at the tempo; `GuitarTimeline` draws it under the staff (`values`).
