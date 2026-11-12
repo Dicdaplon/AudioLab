@@ -25,6 +25,7 @@ import {
   BeatClock,
   ChordChangeTracker,
   KeySettler,
+  NoteSegmenter,
   SongBreak,
   type AdaptiveLevelReading,
   type BeatPhase,
@@ -34,6 +35,7 @@ import {
   type KeySettlerOptions,
   type ChordChangeOptions,
   type MicSource,
+  type NoteSegment,
   type PitchEstimate,
   type SignalTap,
   type TempoEstimate,
@@ -73,6 +75,8 @@ export interface StageSignals {
   /** Performance-clock time of the last key settle / modulation, or null. */
   keyEventAt: number | null;
   note: PitchEstimate | null;
+  /** The played notes as timed segments, oldest first (performance clock). */
+  notes: readonly NoteSegment[];
   /**
    * 12-bin chromas (L1-normalised): last frame and live window (8 s) of the
    * harmony session, chord window (1 s) of the chord source.
@@ -123,6 +127,8 @@ export interface StageState {
   note: PitchEstimate | null;
   tempo: TempoEstimate | null;
   levelDb: number;
+  /** True while the harmony or the notes session is playing (adaptive gates). */
+  playing: boolean;
   /** Start the song over: clears the key, the chord history and the analysis windows. */
   reset(): void;
 }
@@ -196,6 +202,8 @@ export function useStageSignals(
   harmonyLevelRef.current ??= new AdaptiveLevel();
   const notesLevelRef = useRef<AdaptiveLevel | null>(null);
   notesLevelRef.current ??= new AdaptiveLevel();
+  const segmenterRef = useRef<NoteSegmenter | null>(null);
+  segmenterRef.current ??= new NoteSegmenter();
   const breakRef = useRef<SongBreak | null>(null);
   breakRef.current ??= new SongBreak({ seconds: songBreakSeconds || Infinity });
 
@@ -216,6 +224,7 @@ export function useStageSignals(
     chordChangedAt: null,
     keyEventAt: null,
     note: null,
+    notes: segmenterRef.current.notes,
     chroma: {
       instant: tonality.instantaneousChroma,
       chord: tonality.chordChroma,
@@ -230,6 +239,7 @@ export function useStageSignals(
   };
   const signals = signalsRef.current;
 
+  const [playing, setPlaying] = useState(false);
   const [readings, setReadings] = useState<{ key: KeyReading; chord: ChordReading }>({
     key: LISTENING,
     chord: NO_CHORD,
@@ -242,6 +252,8 @@ export function useStageSignals(
     resetNotesTonality();
     settlerRef.current!.reset();
     chordsRef.current!.reset();
+    segmenterRef.current!.reset();
+    signals.notes = segmenterRef.current!.notes;
     signals.key = LISTENING;
     signals.chord = NO_CHORD;
     signals.chordChangedAt = null;
@@ -270,6 +282,7 @@ export function useStageSignals(
     signals.levelDb = signalLevelDb;
     signals.harmonyLevel = level;
     if (!separateNotes) signals.notesLevel = level;
+    setPlaying(level.open || signals.notesLevel.open);
     if (breakRef.current!.push(level.gatedDb, t)) {
       reset();
       return;
@@ -306,6 +319,21 @@ export function useStageSignals(
   signals.chroma.live = tonality.liveAcquisitionChroma;
   signals.note = pitchState.estimate;
 
+  // Played notes as segments. The pitch hook publishes only on change, so a
+  // silence is pushed again once the bridge delay has passed, to close the note.
+  const playedNote = pitchState.estimate;
+  useEffect(() => {
+    const segmenter = segmenterRef.current!;
+    segmenter.push(playedNote, nowSeconds());
+    signals.notes = segmenter.notes;
+    if (playedNote) return;
+    const timer = setTimeout(() => {
+      segmenter.push(null, nowSeconds());
+      signals.notes = segmenter.notes;
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [playedNote, signals]);
+
   const estimate = tempoState.frame?.estimate ?? null;
   useEffect(() => {
     signals.tempo = estimate;
@@ -320,6 +348,11 @@ export function useStageSignals(
       if (signals.onsets.length > ONSET_MEMORY) signals.onsets.shift();
       signals.onsetCount += 1;
       beatRef.current!.onset(time);
+      // A re-attack on the same pitch starts a new note (unless the current
+      // note itself began with this attack).
+      const segments = segmenterRef.current!.notes;
+      const last = segments[segments.length - 1];
+      if (last?.open && time - last.start > 0.08) segmenterRef.current!.onset(time);
     },
     [signals],
   );
@@ -338,6 +371,7 @@ export function useStageSignals(
     note: pitchState.estimate,
     tempo: estimate,
     levelDb: signalLevelDb,
+    playing,
     reset,
   };
 }

@@ -68,6 +68,29 @@ describe("KeyPlate", () => {
   });
 });
 
+describe("KeyPlate with tempo and live light", () => {
+  it("shows a confident BPM and the live light, and a compact one-line chip", () => {
+    const { rerender, container } = render(
+      <KeyPlate reading={keyReading({})} tempo={{ bpm: 96.4, confidence: 0.8 }} live />,
+    );
+    expect(screen.getByText("96 BPM")).toBeTruthy();
+    expect(screen.getByLabelText("live")).toBeTruthy();
+    expect(screen.queryByText("Am")).toBeNull();
+    rerender(
+      <KeyPlate
+        reading={keyReading({})}
+        tempo={{ bpm: 120, confidence: 0.2 }}
+        live={false}
+        compact
+      />,
+    );
+    expect(screen.queryByText(/BPM/)).toBeNull();
+    expect(screen.getByLabelText("idle")).toBeTruthy();
+    expect(screen.queryByText("Tonalité")).toBeNull();
+    expect(container.textContent).toContain("mineur");
+  });
+});
+
 describe("ChordPlate", () => {
   it("shows the chord, its suffix and its degree in the key", () => {
     render(<ChordPlate reading={chordReading([[4, "dom7", 0, 1]])} songKey={A_MINOR} />);

@@ -181,6 +181,8 @@ exports[`@audiolab/react public API > exports the snapshotted names from every e
     "type FifthsMandalaProps",
     "FifthsSky",
     "type FifthsSkyProps",
+    "GuitarTimeline",
+    "type GuitarTimelineProps",
     "HarmonicAurora",
     "type HarmonicAuroraProps",
     "HarmonyWell",

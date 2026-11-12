@@ -10,7 +10,7 @@
 
 import { memo } from "react";
 
-import type { KeyReading } from "@audiolab/core";
+import type { KeyReading, TempoEstimate } from "@audiolab/core";
 
 import { keyShortName, modeName, noteName, type Notation } from "../names";
 import { STAGE_THEME, modeColour, type StageTheme } from "../theme";
@@ -24,6 +24,12 @@ export interface KeyPlateProps {
   width?: number;
   /** Size of the tonic name in px. Default 112. */
   size?: number;
+  /** Tempo shown with the key (BPM, when confident). */
+  tempo?: TempoEstimate | null;
+  /** "Live" light: lit while the input is playing. Hidden when undefined. */
+  live?: boolean;
+  /** One line (tonic, mode, BPM), no label, runner-up or gauge: for a corner chip. */
+  compact?: boolean;
   theme?: StageTheme;
 }
 
@@ -37,6 +43,9 @@ export const KeyPlate = memo(function KeyPlate({
   notation = "both",
   width = 528,
   size = 112,
+  tempo,
+  live,
+  compact = false,
   theme = STAGE_THEME,
 }: KeyPlateProps) {
   const main: Notation = notation === "en" ? "en" : "fr";
@@ -45,6 +54,62 @@ export const KeyPlate = memo(function KeyPlate({
   const settled = reading.phase === "settled";
   const lit = Math.round(reading.stability * 12);
   const accent = key ? modeColour(theme, key.mode) : theme.plateBorder;
+  const bpm = tempo && tempo.confidence >= 0.5 ? Math.round(tempo.bpm) : null;
+  const status =
+    live === undefined && bpm === null ? null : (
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+          marginLeft: "auto",
+          font: `24px ${theme.fonts.mono}`,
+          color: theme.inkMuted,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {bpm !== null && `${bpm} BPM`}
+        {live !== undefined && (
+          <span
+            aria-label={live ? "live" : "idle"}
+            style={{
+              width: 12,
+              height: 12,
+              background: live ? theme.good : theme.shadeLine,
+              transition: "background-color 300ms linear",
+            }}
+          />
+        )}
+      </span>
+    );
+
+  if (compact) {
+    return (
+      <Plate
+        accent={accent}
+        corners={key?.mode === "min" ? "bevel" : "notch"}
+        width={width}
+        theme={theme}
+        style={{ padding: "8px 16px 8px 24px" }}
+      >
+        <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
+          {key ? (
+            <>
+              <span style={outlined(size, theme.ink, theme.fonts.hero)}>
+                {noteName(key.tonic, main)}
+              </span>
+              <span style={outlined(Math.round(size * 0.6), accent, theme.fonts.hero)}>
+                {modeName(key.mode, main)}
+              </span>
+            </>
+          ) : (
+            <span style={outlined(size, theme.inkFaint, theme.fonts.hero)}>· · ·</span>
+          )}
+          {status}
+        </div>
+      </Plate>
+    );
+  }
 
   return (
     <Plate
@@ -73,7 +138,7 @@ export const KeyPlate = memo(function KeyPlate({
             <span style={outlined(Math.round(size * 0.57), accent, theme.fonts.hero)}>
               {modeName(key.mode, main)}
             </span>
-            {notation === "both" && (
+            {notation === "both" && !status && (
               <span
                 style={{
                   marginLeft: "auto",
@@ -84,6 +149,7 @@ export const KeyPlate = memo(function KeyPlate({
                 {keyShortName(key.tonic, key.mode, "en")}
               </span>
             )}
+            {status}
           </>
         ) : (
           <span style={outlined(size, theme.inkFaint, theme.fonts.hero)}>· · ·</span>

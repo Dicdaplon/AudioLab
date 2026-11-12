@@ -44,7 +44,10 @@ interface In 1 (dry, Windows input) ───────► overlay ?notes=    
 | `view`     | one element alone: `key`, `chord`, `tuner`, `ribbon`, `mandala`, or a file of `src/gallery/` |                  |
 | `notation` | `both` (French, English small), `fr`, `en`                                                   | `both`           |
 | `song`     | seconds of the song-key window                                                               | `180`            |
-| `cam`      | webcam rectangle `x,y,w,h` (1920×1080)                                                       | `48,48,1248,702` |
+| `cam`      | webcam rectangle `x,y,w,h` (1920×1080)                                                       | `48,48,1344,756` |
+| `extras`   | optional layers, comma-separated: `mandala`, `paws`, `embers`, `aurora`, `scope`, `ribbon`   | none             |
+| `title`    | song title (scene layout)                                                                    |                  |
+| `tab`      | `names`: timeline pills show note names, not frets                                           | frets            |
 | `demo`     | `synth`, or an audio URL (`/@fs/F:/path/track.mp3`)                                          |                  |
 | `debug`    | `1`: inputs, levels, tempo, errors                                                           |                  |
 | `hud`      | `0`: never show the info panel, even on errors                                               |                  |
@@ -66,6 +69,10 @@ plugging the interface in after OBS starts works.
 5. Between songs nothing is needed: 8 s of silence starts the song key over. To do it
    by hand, right-click the source › **Interact** and press **R** (or refresh the
    source); **D** shows or hides the info panel.
+
+The layouts are deliberately light: one hero (the chord), one ambient layer (the city),
+the webcam as the star, and a guitar timeline (scrolling tablature with the chords above
+it) under the webcam. Everything else is opt-in with `extras=`.
 
 Levels are adaptive: each input learns its own background and recent peaks, so silence,
 the level meter, the city and the embers need no threshold, whatever the gain.

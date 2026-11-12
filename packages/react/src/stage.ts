@@ -61,6 +61,7 @@ export {
 export { ChordTunnel, type ChordTunnelProps } from "./stage/visuals/ChordTunnel";
 export { NoteLane, type NoteLaneProps } from "./stage/visuals/NoteLane";
 export { AttackField, type AttackFieldProps } from "./stage/visuals/AttackField";
+export { GuitarTimeline, type GuitarTimelineProps } from "./stage/visuals/GuitarTimeline";
 export {
   LEVEL_CAPSULE_SIZE,
   LevelCapsule,

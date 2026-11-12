@@ -146,8 +146,9 @@ export const ChordRibbon = memo(function ChordRibbon({
                   style={{
                     position: "absolute",
                     right: 6,
-                    bottom: 4,
-                    font: `16px ${theme.fonts.label}`,
+                    bottom: 2,
+                    // VT323, not the all-caps label face: I and i must differ.
+                    font: `20px/1 ${theme.fonts.hero}`,
                   }}
                 >
                   {degree.numeral}

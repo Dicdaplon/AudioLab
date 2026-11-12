@@ -58,6 +58,10 @@ function signals(): StageSignals {
     chordChangedAt: null,
     keyEventAt: null,
     note: { frequency: 440, midi: 69, pitchClass: 9, cents: 3, clarity: 0.95 },
+    notes: [
+      { midi: 64, cents: -4, start: 0, end: 0.4, open: false },
+      { midi: 69, cents: 3, start: 0.5, end: 1, open: true },
+    ],
     chroma: { instant: chroma, chord: chroma, live: chroma },
     tempo: { bpm: 96, confidence: 0.9 },
     beatAt: (t) => ({
@@ -114,6 +118,21 @@ const VISUALS: [string, (s: Ref) => ReactElement][] = [
   ["ChordTunnel", (s) => createElement(stage.ChordTunnel, { signals: s, size: 400 })],
   ["NoteLane", (s) => createElement(stage.NoteLane, { signals: s, width: 640, height: 200 })],
   ["LevelCapsule", (s) => createElement(stage.LevelCapsule, { signals: s })],
+  [
+    "GuitarTimeline",
+    (s) => createElement(stage.GuitarTimeline, { signals: s, width: 1344, height: 212 }),
+  ],
+  [
+    "GuitarTimeline names",
+    (s) =>
+      createElement(stage.GuitarTimeline, {
+        signals: s,
+        width: 1104,
+        height: 192,
+        labels: "names",
+        chords: false,
+      }),
+  ],
   [
     "AttackField",
     (s) =>

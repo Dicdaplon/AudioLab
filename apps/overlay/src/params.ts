@@ -9,7 +9,11 @@
  *   &view=key|chord|tuner|ribbon|mandala|…   one element alone, top-left
  *   &notation=both|fr|en     note names (default both: French, English small)
  *   &song=180                seconds of the song-key window
- *   &cam=48,48,1248,702      webcam rectangle the visuals keep clear of
+ *   &cam=48,48,1344,756      webcam rectangle the visuals keep clear of
+ *   &extras=mandala,paws     optional layers, off by default: mandala, paws, embers,
+ *                            aurora, scope, ribbon (the layouts stay light without them)
+ *   &title=Blue Bossa        song title (scene layout)
+ *   &tab=names               timeline pills show note names instead of frets
  *   &demo=synth|<url>        no inputs: a built-in synth or an audio file
  *   &listen=1                demo mode: also play the demo on the speakers
  *   &bg=1                    draw a stand-in background (previews, screenshots)
@@ -42,9 +46,15 @@ export interface OverlayParams {
   background: boolean;
   debug: boolean;
   hud: boolean;
+  extras: ReadonlySet<Extra>;
+  title: string;
+  tabLabels: "frets" | "names";
 }
 
-const DEFAULT_CAM: Rect = { x: 48, y: 48, w: 1248, h: 702 };
+export type Extra = "mandala" | "paws" | "embers" | "aurora" | "scope" | "ribbon";
+const EXTRAS: readonly Extra[] = ["mandala", "paws", "embers", "aurora", "scope", "ribbon"];
+
+const DEFAULT_CAM: Rect = { x: 48, y: 48, w: 1344, h: 756 };
 
 function rect(value: string | null): Rect {
   const n = (value ?? "").split(",").map(Number);
@@ -72,5 +82,13 @@ export function readParams(search: string): OverlayParams {
     background: q.get("bg") === "1",
     debug: q.get("debug") === "1",
     hud: q.get("hud") !== "0",
+    extras: new Set(
+      (q.get("extras") ?? "")
+        .split(",")
+        .map((e) => e.trim())
+        .filter((e): e is Extra => (EXTRAS as readonly string[]).includes(e)),
+    ),
+    title: q.get("title") ?? "",
+    tabLabels: q.get("tab") === "names" ? "names" : "frets",
   };
 }

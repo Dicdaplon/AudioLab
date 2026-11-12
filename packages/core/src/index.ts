@@ -105,6 +105,18 @@ export {
   type AdaptiveLevelReading,
 } from "./analysis/readout/adaptiveLevel";
 export {
+  NOTE_SEGMENTER_DEFAULTS,
+  NoteSegmenter,
+  type NoteSegment,
+  type NoteSegmenterOptions,
+} from "./analysis/readout/noteSegments";
+export {
+  FretPlacer,
+  STANDARD_TUNING,
+  type FretPlacerOptions,
+  type FretPosition,
+} from "./analysis/readout/fretboard";
+export {
   chordDegree,
   fifthsIndex,
   keyPitchClasses,

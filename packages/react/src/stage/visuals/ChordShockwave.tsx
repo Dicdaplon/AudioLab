@@ -40,6 +40,8 @@ export interface ChordShockwaveProps {
   /** Final radius in CSS px. Default: 90 % of the half short side. */
   maxRadius?: number;
   notation?: Notation;
+  /** The chord name rides the wave front. Default true. */
+  label?: boolean;
   /** Rectangle (CSS px, canvas coordinates) the waves never cover, e.g. the webcam. */
   clip?: ShockwaveClip;
   /** Cell size of the waves. Default 4. */
@@ -115,6 +117,7 @@ export function ChordShockwave({
   height,
   maxRadius,
   notation = "en",
+  label = true,
   clip,
   pixel = 4,
   theme = STAGE_THEME,
@@ -188,7 +191,7 @@ export function ChordShockwave({
     for (const w of st.waves) {
       if (!w.alive || w.echo) continue;
       const t = f.now - w.t0;
-      if (t < 0 || t > LABEL_RIDE + LABEL_FADE) continue;
+      if (!label || t < 0 || t > LABEL_RIDE + LABEL_FADE) continue;
       const ride = Math.min(t, LABEL_RIDE) / DURATION;
       const r = lerp(START_RADIUS, rMax, easeOut(ride));
       const minor = isMinorQuality(w.quality);
