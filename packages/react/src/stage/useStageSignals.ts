@@ -26,8 +26,8 @@ import {
   KeySettler,
   NO_VIBRATO,
   NoteSegmenter,
-  gateTuning,
   normalizeStageSettings,
+  stageTrackerOptions,
   SongBreak,
   type AdaptiveLevelReading,
   type BeatPhase,
@@ -35,7 +35,6 @@ import {
   type ChordReading,
   type KeyReading,
   type KeySettlerOptions,
-  type ChordChangeOptions,
   type MicSource,
   type NoteSegment,
   type PitchEstimate,
@@ -113,7 +112,6 @@ export interface UseStageSignalsOptions {
   /** Run the onset detector on the notes source. Default true. */
   onsets?: boolean;
   keySettler?: KeySettlerOptions;
-  chordChanges?: ChordChangeOptions;
 }
 
 export interface StageState {
@@ -189,7 +187,7 @@ export function useStageSignals(
   const settlerRef = useRef<KeySettler | null>(null);
   settlerRef.current ??= new KeySettler(options.keySettler);
   const chordsRef = useRef<ChordChangeTracker | null>(null);
-  chordsRef.current ??= new ChordChangeTracker(options.chordChanges);
+  chordsRef.current ??= new ChordChangeTracker();
   const beatRef = useRef<BeatClock | null>(null);
   beatRef.current ??= new BeatClock();
   const harmonyLevelRef = useRef<AdaptiveLevel | null>(null);
@@ -211,15 +209,14 @@ export function useStageSignals(
     gateStrictness,
   } = settings;
   useEffect(() => {
-    chordsRef.current!.configure({ holdSeconds: chordHoldSeconds, minMargin: chordMinMargin });
-    breakRef.current!.configure({ seconds: songBreakSeconds || Infinity });
-    segmenterRef.current!.configure({
-      minClarity: noteClarity,
-      vibrato: { minExtentCents: vibratoMinCents },
-    });
-    const { openMarginDb, closeMarginDb } = gateTuning(gateStrictness);
-    harmonyLevelRef.current!.configure({ openMarginDb, closeMarginDb });
-    notesLevelRef.current!.configure({ openMarginDb, closeMarginDb });
+    const o = stageTrackerOptions(settings);
+    chordsRef.current!.configure(o.chordChanges);
+    breakRef.current!.configure(o.songBreak);
+    segmenterRef.current!.configure(o.noteSegmenter);
+    harmonyLevelRef.current!.configure(o.levelGate);
+    notesLevelRef.current!.configure(o.levelGate);
+    // `settings` is rebuilt on every render: its tracker-related values are the deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     chordHoldSeconds,
     chordMinMargin,
@@ -337,10 +334,16 @@ export function useStageSignals(
     if (chordsFromNotes) followChords(notesChords, level.gatedDb, t);
   }, [notesChords, notesLevelDb, signals, separateNotes, chordsFromNotes, followChords]);
 
-  signals.chroma.instant = tonality.instantaneousChroma;
-  signals.chroma.chord = chordFrame.chordChroma;
-  signals.chroma.live = tonality.liveAcquisitionChroma;
-  signals.note = pitchState.estimate;
+  // The latest frames, for the visuals (written after render, never during it).
+  const { instantaneousChroma, liveAcquisitionChroma } = tonality;
+  const { chordChroma } = chordFrame;
+  const estimateNow = pitchState.estimate;
+  useEffect(() => {
+    signals.chroma.instant = instantaneousChroma;
+    signals.chroma.chord = chordChroma;
+    signals.chroma.live = liveAcquisitionChroma;
+    signals.note = estimateNow;
+  }, [instantaneousChroma, chordChroma, liveAcquisitionChroma, estimateNow, signals]);
 
   // Played notes as segments. The pitch hook publishes only on change, so a
   // silence is pushed again once the bridge delay has passed, to close the note.

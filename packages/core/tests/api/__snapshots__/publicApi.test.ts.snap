@@ -362,6 +362,8 @@ exports[`@audiolab/core public API > exports the snapshotted names from every en
     "spectrumToChroma",
     "STAGE_SETTING_RANGES",
     "type StageSettings",
+    "stageTrackerOptions",
+    "type StageTrackerOptions",
     "STANDARD_TUNING",
     "startLiveAnalysis",
     "startMetronome",

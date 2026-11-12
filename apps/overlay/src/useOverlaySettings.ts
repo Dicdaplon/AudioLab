@@ -1,84 +1,29 @@
 /**
- * The overlay's live settings: stored in localStorage (so they survive a
- * restart of OBS), overridable from the URL, and shared between every page
- * of the overlay's origin. The overlay source and an OBS dock showing
- * `?view=settings` stay in sync: a change in one is posted on a
- * BroadcastChannel and picked up by the other (the `storage` event covers
- * browsers without BroadcastChannel).
+ * The overlay's live settings: `useStoredStageSettings` under the overlay's
+ * own key, starting with the chords read from the instrument, and the URL
+ * parameters (`song=`, `chords=`, `chordWindow=`, `gate=`) applied on top for
+ * this page only.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
-
-import { normalizeStageSettings, type StageSettings } from "@audiolab/core";
+import { useStoredStageSettings } from "@audiolab/react/stage";
 
 const STORAGE_KEY = "audiolab-overlay-settings";
-const CHANNEL = "audiolab-overlay-settings";
+const INITIAL = { chordSource: "notes" } as const;
 
-function load(): unknown {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function save(settings: StageSettings): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-  } catch {
-    // Storage blocked: the settings still apply to this page.
-  }
-}
-
-/**
- * Settings from storage, then URL overrides (`song=`, `chords=`,
- * `chordWindow=`, `gate=`), normalised.
- */
-function initial(search: string): StageSettings {
+function urlOverrides(search: string): Record<string, unknown> {
   const q = new URLSearchParams(search);
-  // The overlay reads the chords from the instrument unless told otherwise.
-  const stored = (load() ?? { chordSource: "notes" }) as Record<string, unknown>;
-  const fromUrl: Record<string, unknown> = {};
-  if (q.has("song")) fromUrl.songSeconds = q.get("song");
-  if (q.has("chords")) fromUrl.chordSource = q.get("chords");
-  if (q.has("chordWindow")) fromUrl.chordWindowSeconds = q.get("chordWindow");
-  if (q.has("gate")) fromUrl.gateStrictness = q.get("gate");
-  return normalizeStageSettings({ ...stored, ...fromUrl });
+  const out: Record<string, unknown> = {};
+  if (q.has("song")) out.songSeconds = q.get("song");
+  if (q.has("chords")) out.chordSource = q.get("chords");
+  if (q.has("chordWindow")) out.chordWindowSeconds = q.get("chordWindow");
+  if (q.has("gate")) out.gateStrictness = q.get("gate");
+  return out;
 }
 
 export function useOverlaySettings(search: string) {
-  const [settings, setSettings] = useState<StageSettings>(() => initial(search));
-  const channelRef = useRef<BroadcastChannel | null>(null);
-
-  useEffect(() => {
-    const channel = typeof BroadcastChannel === "function" ? new BroadcastChannel(CHANNEL) : null;
-    channelRef.current = channel;
-    const onMessage = (e: MessageEvent) => setSettings(normalizeStageSettings(e.data));
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY && e.newValue) {
-        try {
-          setSettings(normalizeStageSettings(JSON.parse(e.newValue)));
-        } catch {
-          // Ignore a corrupt value.
-        }
-      }
-    };
-    channel?.addEventListener("message", onMessage);
-    window.addEventListener("storage", onStorage);
-    return () => {
-      channel?.close();
-      channelRef.current = null;
-      window.removeEventListener("storage", onStorage);
-    };
-  }, []);
-
-  const update = useCallback((next: StageSettings) => {
-    const clean = normalizeStageSettings(next);
-    setSettings(clean);
-    save(clean);
-    channelRef.current?.postMessage(clean);
-  }, []);
-
-  return { settings, update };
+  return useStoredStageSettings({
+    storageKey: STORAGE_KEY,
+    initial: INITIAL,
+    overrides: urlOverrides(search),
+  });
 }

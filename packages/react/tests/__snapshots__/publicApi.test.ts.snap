@@ -227,10 +227,13 @@ exports[`@audiolab/react public API > exports the snapshotted names from every e
     "type StageSignals",
     "type StageState",
     "type StageTheme",
+    "type StoredStageSettings",
     "TunerPlate",
     "type TunerPlateProps",
     "useStageSignals",
     "type UseStageSignalsOptions",
+    "useStoredStageSettings",
+    "type UseStoredStageSettingsOptions",
     "withAlpha",
   ],
 }

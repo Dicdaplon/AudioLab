@@ -19,7 +19,7 @@
  * webcam source in OBS, and the frame is plain CSS at full resolution.
  */
 
-import { useRef, type CSSProperties, type RefObject } from "react";
+import { useMemo, useRef, type CSSProperties, type RefObject } from "react";
 
 import { approach } from "../draw";
 import { StageCanvas, type StageFrame } from "../StageCanvas";
@@ -41,7 +41,10 @@ export interface StageBackdropProps {
   cam?: BackdropRect;
   /** Areas (plates) where attack stars must not appear. */
   keepOut?: readonly BackdropRect[];
-  /** Song tonic, for the frame's corner colour (the sky reads it from `signals`). */
+  /**
+   * Song tonic, for the frame's colour. The frame is CSS and re-renders with
+   * React, so it takes the tonic as a prop; the canvas reads `signals`.
+   */
   tonic?: number | null;
   /** "night" (default): sky, stars, clouds, ridges. "plain": sky and frame only. */
   variant?: "night" | "plain";
@@ -116,21 +119,23 @@ export function StageBackdrop({
   const state = useRef<BackdropState | null>(null);
   const cols = Math.ceil(width / CELL);
   const rows = Math.ceil(height / CELL);
-  const blocked = [...(cam ? [cam] : []), ...keepOut];
-  const free = (cx: number, cy: number) =>
-    !blocked.some((r) => inside(cx * CELL + CELL / 2, cy * CELL + CELL / 2, r));
-
-  // Fixed landscape: star positions and ridge heights (in cells), seeded.
-  const starCells = useRef<{ x: number; y: number; phase: number }[]>([]);
-  if (starCells.current.length !== stars) {
+  // Fixed landscape: star positions (in cells, seeded, clear of the webcam
+  // and the plates) and ridge heights.
+  const blockedKey = JSON.stringify([cam ?? null, keepOut]);
+  const starCells = useMemo(() => {
+    const blocked: BackdropRect[] = [...(cam ? [cam] : []), ...keepOut];
+    const free = (cx: number, cy: number) =>
+      !blocked.some((r) => inside(cx * CELL + CELL / 2, cy * CELL + CELL / 2, r));
     const list: { x: number; y: number; phase: number }[] = [];
     for (let i = 0; list.length < stars && i < stars * 20; i++) {
       const x = Math.floor(rand(i * 2 + 1) * cols);
       const y = Math.floor(rand(i * 2 + 2) * rows * 0.6);
       if (free(x, y)) list.push({ x, y, phase: rand(i + 99) * 6.28 });
     }
-    starCells.current = list;
-  }
+    return list;
+    // The rectangles are compared by value (blockedKey), not by identity.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stars, cols, rows, blockedKey]);
   const farRidge = (x: number) =>
     Math.round(rows * 0.8 + 3 * Math.sin(x * 0.045 + 1.3) + 2 * Math.sin(x * 0.11 + 0.4));
   const nearRidge = (x: number) =>
@@ -193,7 +198,7 @@ export function StageBackdrop({
     if (variant === "night") {
       // Stars: slow, stepped twinkle (half speed in a long silence).
       const speed = quiet > 10 ? 0.5 : 1;
-      for (const star of starCells.current) {
+      for (const star of starCells) {
         const v = Math.sin(now * 0.9 * speed + star.phase);
         const alpha = v > 0.6 ? 0.9 : v > -0.2 ? 0.6 : 0.35;
         ctx.fillStyle = withAlpha(theme.inkMuted, alpha);
@@ -209,7 +214,7 @@ export function StageBackdrop({
           st.peak = Math.max(st.peak, o.strength);
           const force = st.peak > 0 ? o.strength / st.peak : 0;
           if (force < 0.55 || quiet > 2 || now - st.lastAttack < 0.12) continue;
-          const pick = starCells.current[Math.floor(rand(o.time * 37) * starCells.current.length)];
+          const pick = starCells[Math.floor(rand(o.time * 37) * starCells.length)];
           if (!pick) continue;
           st.attacks.push({
             x: pick.x,

@@ -25,6 +25,11 @@ export {
   type StageDraw,
   type StageFrame,
 } from "./stage/StageCanvas";
+export {
+  useStoredStageSettings,
+  type StoredStageSettings,
+  type UseStoredStageSettingsOptions,
+} from "./stage/useStoredStageSettings";
 export { STAGE_THEME, modeColour, withAlpha, type StageTheme } from "./stage/theme";
 export {
   chordName,

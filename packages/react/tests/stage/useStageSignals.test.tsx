@@ -94,4 +94,27 @@ describe("useStageSignals", () => {
     expect(result.current.key.phase).toBe("listening");
     expect(result.current.chord.history).toEqual([]);
   });
+
+  it("re-tunes on new settings without restarting, and reads chords from the notes session", async () => {
+    let now = 0;
+    vi.spyOn(performance, "now").mockImplementation(() => now);
+    const second = await core.openMicrophone();
+    const { result, rerender } = renderHook(
+      ({ settings }) =>
+        useStageSignals(mic, second, { pitch: false, tempo: false, onsets: false, settings }),
+      { initialProps: { settings: { chordSource: "notes" as const, chordHoldSeconds: 0.1 } } },
+    );
+    for (let i = 0; i < 40; i++) {
+      now += 100;
+      act(() => {
+        vi.advanceTimersByTime(100);
+      });
+    }
+    // Both sessions hear the same fake spectrum: the notes session finds A minor too.
+    expect(result.current.chord.current).toMatchObject({ root: 9, quality: "min" });
+    const firstMic = result.current.signals.current!.harmonyTap;
+    rerender({ settings: { chordSource: "notes" as const, chordHoldSeconds: 0.9 } });
+    expect(result.current.signals.current!.harmonyTap).toBe(firstMic);
+    await second.dispose();
+  });
 });

@@ -456,9 +456,11 @@ export {
   DEFAULT_STAGE_SETTINGS,
   STAGE_SETTING_RANGES,
   normalizeStageSettings,
+  stageTrackerOptions,
   type NumericStageSetting,
   type SettingRange,
   type StageSettings,
+  type StageTrackerOptions,
 } from "./config/stageSettings";
 export {
   A4_FREQ,

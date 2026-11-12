@@ -60,6 +60,8 @@ const FREE_PX_PER_S = 160;
 const OWN_BEFORE = 0.05;
 const OWN_AFTER = 0.3;
 const STRING_NAMES = ["E", "A", "D", "G", "B", "e"];
+/** A sounding note is placed (and drawn) after this long: shorter blips may be glitches. */
+const MIN_PLACE_SECONDS = 0.07;
 
 interface TimelineState {
   placer: FretPlacer;
@@ -222,8 +224,17 @@ export function GuitarTimeline({
       ctx.fillRect(xAt(o.time) - 4, rowY(5) - 10, 8, bottom - rowY(5) + 20);
     }
 
-    // Notes, newest first, so an older pill that would sit under a newer one
-    // on the same string shrinks to a tick.
+    // Place new notes oldest first, so the hand position follows the line in
+    // playing order. A note is placed once it has lasted long enough not to
+    // be a glitch the segmenter may still drop.
+    for (const n of notes) {
+      if (st.placed.has(n.start)) continue;
+      if (n.open && now - n.start < MIN_PLACE_SECONDS) break;
+      st.placed.set(n.start, st.placer.place(n.midi));
+    }
+
+    // Draw newest first, so an older pill that would sit under a newer one on
+    // the same string shrinks to a tick.
     const nextOnString = new Array<number>(6).fill(Infinity);
     ctx.textBaseline = "middle";
     ctx.textAlign = "center";
@@ -232,7 +243,6 @@ export function GuitarTimeline({
       const n = notes[i];
       const end = n.open ? now : n.end;
       if (end < oldest) break;
-      if (!st.placed.has(n.start)) st.placed.set(n.start, st.placer.place(n.midi));
       const pos = st.placed.get(n.start);
       if (!pos) continue;
       const pc = n.midi % 12;

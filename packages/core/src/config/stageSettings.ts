@@ -6,6 +6,8 @@
  * share this single source of truth.
  */
 
+import { gateTuning } from "../analysis/gate/strictness";
+
 export interface StageSettings {
   /** Chord detection window, in seconds (longer = steadier, slower to follow). */
   chordWindowSeconds: number;
@@ -80,4 +82,32 @@ export function normalizeStageSettings(value: unknown): StageSettings {
     out.chordSource = input.chordSource;
   }
   return out;
+}
+
+/** What `stageTrackerOptions` returns: the `configure()` argument of each tracker. */
+export interface StageTrackerOptions {
+  chordChanges: { holdSeconds: number; minMargin: number };
+  songBreak: { seconds: number };
+  noteSegmenter: { minClarity: number; vibrato: { minExtentCents: number } };
+  /** For `AdaptiveLevel.configure` (the gate margins of `gateTuning(gateStrictness)`). */
+  levelGate: { openMarginDb: number; closeMarginDb: number };
+}
+
+/**
+ * The tracker settings that follow from stage settings, so every host (the
+ * React stage or another front end) re-tunes `ChordChangeTracker`,
+ * `SongBreak`, `NoteSegmenter` and `AdaptiveLevel` the same way. A song
+ * break of 0 means never (an infinite silence).
+ */
+export function stageTrackerOptions(settings: StageSettings): StageTrackerOptions {
+  const { openMarginDb, closeMarginDb } = gateTuning(settings.gateStrictness);
+  return {
+    chordChanges: { holdSeconds: settings.chordHoldSeconds, minMargin: settings.chordMinMargin },
+    songBreak: { seconds: settings.songBreakSeconds || Infinity },
+    noteSegmenter: {
+      minClarity: settings.noteClarity,
+      vibrato: { minExtentCents: settings.vibratoMinCents },
+    },
+    levelGate: { openMarginDb, closeMarginDb },
+  };
 }

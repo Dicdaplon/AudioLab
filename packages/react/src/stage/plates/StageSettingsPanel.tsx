@@ -8,7 +8,7 @@
  * keeps the settings (and decides whether to store or share them).
  */
 
-import { memo } from "react";
+import { memo, useId } from "react";
 
 import {
   DEFAULT_STAGE_SETTINGS,
@@ -88,6 +88,7 @@ export const StageSettingsPanel = memo(function StageSettingsPanel({
   theme = STAGE_THEME,
 }: StageSettingsPanelProps) {
   const fr = notation === "fr";
+  const idPrefix = useId();
   const label = { font: `20px ${theme.fonts.hero}`, color: theme.inkMuted } as const;
   const value = {
     font: `20px ${theme.fonts.mono}`,
@@ -102,7 +103,7 @@ export const StageSettingsPanel = memo(function StageSettingsPanel({
       <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
         {ROWS.map((row) => {
           const range = STAGE_SETTING_RANGES[row.key];
-          const id = `al-stage-${row.key}`;
+          const id = `${idPrefix}-${row.key}`;
           return (
             <div key={row.key} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 4 }}>
               <label htmlFor={id} style={label}>

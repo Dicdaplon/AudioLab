@@ -57,4 +57,14 @@ describe("FretPlacer", () => {
     f.reset();
     expect(f.place(52)).toEqual({ string: 2, fret: 2 });
   });
+
+  it("brings the hand back down the neck after two low notes", () => {
+    const f = new FretPlacer();
+    f.startInKey(4); // E: 12th position
+    f.place(52);
+    f.place(47); // B2: 7th fret, below the 11–15 window
+    f.place(48); // C3: a second note below, so the hand moves down to the 9th position
+    // D3 now sits under the hand (10th fret, low E) instead of the open D string.
+    expect(f.place(50)).toEqual({ string: 0, fret: 10 });
+  });
 });
