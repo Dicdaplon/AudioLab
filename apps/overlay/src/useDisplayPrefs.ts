@@ -81,6 +81,10 @@ export const DISPLAY_KEYS: Readonly<Record<string, { fr: string; en: string }>> 
     fr: "cadre de la caméra (écran CRT ↔ viseur)",
     en: "webcam frame (CRT screen ↔ viewfinder)",
   },
+  V: {
+    fr: "style du CRT (clean → dark → aged → fallout → worn)",
+    en: "CRT look (clean → dark → aged → fallout → worn)",
+  },
   M: { fr: "mandala des quintes", en: "circle-of-fifths mandala" },
   P: { fr: "pattes sur les toits", en: "paw prints on the roofs" },
   E: { fr: "braises sur les attaques", en: "embers on attacks" },
