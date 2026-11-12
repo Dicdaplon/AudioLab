@@ -18,3 +18,5 @@ Bends: `NoteSegmenter` follows the pitch continuously, tells a bend (a glide tha
 `CrtScreen` frames a webcam behind the overlay as an old pixel monitor (rounded screen, scanlines, reflections, a rolling band, brand and power light); `StageBackdrop` can drop its own frame. `GuitarTimeline` with `labels: "names"` on the staff view draws name pills at the notes' staff positions.
 
 `TempoSmoother` steadies the tempo with a decaying vote across the analyser's readings (docs/POC-METHODS.md §5–6), feeding the beat clock and the stage; `GuitarTimeline` shows it discreetly above the staff. The key window is a choice of 15, 30 or 60 s (`STAGE_KEY_WINDOWS`, default 30). `CrtScreen` keeps the webcam's square corners, with a heavier casing and occasional glass events (glare, flicker, glitch).
+
+`CrtScreen` gains `look` (`CRT_LOOKS`: clean, dark, aged, fallout, worn): darker or yellowed edges, phosphor tints, heavier scanlines; its glass events are slower and fade in and out.

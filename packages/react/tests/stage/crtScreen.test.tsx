@@ -40,7 +40,7 @@ describe("CrtScreen glass events", () => {
     });
     expect(glass()).toBe(idle + 1);
     act(() => {
-      vi.advanceTimersByTime(1500);
+      vi.advanceTimersByTime(4000); // the glare lasts 3.8 s, fading out
     });
     expect(glass()).toBe(idle);
     unmount();

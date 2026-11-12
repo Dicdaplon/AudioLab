@@ -145,6 +145,29 @@ function DebugPanel({ sessions, stage }: { sessions: OverlaySessions; stage: Sta
  * `?view=settings`: the settings alone, opaque, for an OBS custom dock. It
  * opens no audio input; changes reach the overlay through useOverlaySettings.
  */
+/** What a display key just changed, for two seconds, then it fades. */
+function Toast({ text }: { text: string }) {
+  const t = STAGE_THEME;
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: 96,
+        top: 72,
+        padding: "6px 14px",
+        background: t.plate,
+        border: `3px solid ${t.plateBorder}`,
+        font: `24px ${t.fonts.hero}`,
+        color: t.ink,
+        animation: "al-toast 2.4s linear forwards",
+      }}
+    >
+      <style>{"@keyframes al-toast { 0%, 75% { opacity: 1; } 100% { opacity: 0; } }"}</style>
+      {text}
+    </div>
+  );
+}
+
 function SettingsDock({ params }: { params: OverlayParams }) {
   const { settings, update } = useOverlaySettings(window.location.search);
   return (
@@ -173,7 +196,7 @@ function Overlay({ params: base }: { params: OverlayParams }) {
   const { settings, update } = useOverlaySettings(window.location.search);
   // What is shown follows the display keys (L, T, B, N, W, M, P, E, A, O, K).
   const display = useDisplayPrefs(base, window.location.search);
-  const { prefs, press } = display;
+  const { prefs, press, toast } = display;
   const params = useMemo<OverlayParams>(
     () => ({ ...base, ...prefs, extras: new Set(prefs.extras) }),
     [base, prefs],
@@ -219,6 +242,7 @@ function Overlay({ params: base }: { params: OverlayParams }) {
       {(showHelp || (hud && (params.debug || sessions.errors.length > 0))) && (
         <DebugPanel sessions={sessions} stage={stage} />
       )}
+      {toast && <Toast key={toast.id} text={toast.text} />}
       {showHelp && (
         <div style={{ position: "absolute", left: 96, top: 96 }}>
           <HelpPanel notation={params.notation === "en" ? "en" : "fr"} />

@@ -24,7 +24,7 @@
  *   &hud=0                   never show the info panel, not even on errors (D toggles it)
  */
 
-import type { Notation } from "@audiolab/react/stage";
+import { CRT_LOOKS, type CrtLook, type Notation } from "@audiolab/react/stage";
 
 export type Layout = "cam" | "scene";
 
@@ -54,6 +54,7 @@ export interface OverlayParams {
   tabView: "tab" | "staff";
   wolf: boolean;
   screen: "crt" | "viewfinder";
+  crtLook: CrtLook;
 }
 
 export type Extra = "mandala" | "paws" | "embers" | "aurora" | "scope" | "ribbon";
@@ -96,5 +97,8 @@ export function readParams(search: string): OverlayParams {
     tabView: q.get("tab") === "names" ? "staff" : "tab",
     wolf: q.get("wolf") !== "0",
     screen: q.get("screen") === "viewfinder" ? "viewfinder" : "crt",
+    crtLook: (CRT_LOOKS as readonly string[]).includes(q.get("crt") ?? "")
+      ? (q.get("crt") as CrtLook)
+      : "clean",
   };
 }

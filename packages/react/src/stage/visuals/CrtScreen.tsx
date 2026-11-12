@@ -36,8 +36,68 @@ export interface CrtScreenProps {
   scanlines?: boolean;
   /** Occasional glass events (glare, flicker, glitch). Default true. */
   effects?: boolean;
+  /** Edge and tint style of the tube (`CRT_LOOKS`). Default "clean". */
+  look?: CrtLook;
   theme?: StageTheme;
 }
+
+/**
+ * Tube looks, from a clean modern CRT to a cheap, yellowed old one. The
+ * overlay sits *over* the webcam, so a look can only lay translucent veils
+ * on the image (a page cannot recolour another OBS source): darkened edges,
+ * a warm or phosphor tint, heavier scanlines.
+ */
+export const CRT_LOOKS = ["clean", "dark", "aged", "fallout", "worn"] as const;
+export type CrtLook = (typeof CRT_LOOKS)[number];
+
+interface LookLayers {
+  /** Scanline darkness and period (dark 2 px every `period` px). */
+  scan: number;
+  period: number;
+  /** Veil over the whole image, or none. */
+  tint: string | null;
+  /** Edge darkening (CSS background). */
+  edge: string;
+  /** Extra uneven shading (CSS background), or none. */
+  wear: string | null;
+}
+
+const STEP = (a: number, b: number) =>
+  `rgba(0,0,0,${a}) 0 6px, rgba(0,0,0,${b}) 6px 16px, transparent 34px calc(100% - 34px), rgba(0,0,0,${b}) calc(100% - 16px) calc(100% - 6px), rgba(0,0,0,${a}) calc(100% - 6px)`;
+const STEPPED_EDGE = `linear-gradient(to right, ${STEP(0.28, 0.14)}), linear-gradient(to bottom, ${STEP(0.28, 0.14)})`;
+
+const LOOKS: Readonly<Record<CrtLook, LookLayers>> = {
+  clean: { scan: 0.2, period: 5, tint: null, edge: STEPPED_EDGE, wear: null },
+  dark: {
+    scan: 0.22,
+    period: 5,
+    tint: null,
+    edge: `radial-gradient(ellipse 78% 74% at 50% 50%, transparent 58%, rgba(0,0,0,0.5) 86%, rgba(0,0,0,0.85) 100%), ${STEPPED_EDGE}`,
+    wear: null,
+  },
+  aged: {
+    scan: 0.2,
+    period: 5,
+    tint: "rgba(232, 178, 74, 0.10)",
+    edge: "radial-gradient(ellipse 80% 76% at 50% 50%, transparent 55%, rgba(36, 22, 4, 0.45) 88%, rgba(20, 12, 2, 0.75) 100%)",
+    wear: null,
+  },
+  fallout: {
+    scan: 0.28,
+    period: 4,
+    tint: "rgba(150, 255, 120, 0.07)",
+    edge: "radial-gradient(ellipse 76% 72% at 50% 50%, transparent 52%, rgba(0, 8, 0, 0.55) 84%, rgba(0, 4, 0, 0.9) 100%)",
+    wear: "linear-gradient(to bottom, rgba(150,255,120,0.04), transparent 40%, rgba(150,255,120,0.03))",
+  },
+  worn: {
+    scan: 0.22,
+    period: 5,
+    tint: "rgba(214, 168, 92, 0.13)",
+    edge: "radial-gradient(ellipse 82% 78% at 50% 50%, transparent 52%, rgba(50, 30, 8, 0.5) 86%, rgba(24, 14, 4, 0.85) 100%)",
+    // An uneven tube: one side duller, a faint burn mark top left.
+    wear: "linear-gradient(to right, rgba(0,0,0,0.12), transparent 30%, transparent 75%, rgba(0,0,0,0.06)), radial-gradient(circle at 18% 22%, rgba(80, 50, 10, 0.12), transparent 30%)",
+  },
+};
 
 /** Casing thickness around the screen (sides and top) and under it (the chin), in px. */
 export const CRT_BEZEL = { side: 30, chin: 52 } as const;
@@ -45,17 +105,28 @@ const LIP = 8;
 
 type GlassEvent = "glare" | "flicker" | "glitch";
 const EVENTS: readonly GlassEvent[] = ["glare", "flicker", "glitch"];
+/** Slow enough to read as the glass, fading in and out (never popping). */
 const EVENT_SECONDS: Readonly<Record<GlassEvent, number>> = {
-  glare: 1.4,
-  flicker: 0.35,
-  glitch: 0.5,
+  glare: 3.8,
+  flicker: 1.4,
+  glitch: 2.2,
 };
 
 const KEYFRAMES = `
-@keyframes al-crt-roll { from { transform: translateY(-160px); } to { transform: translateY(var(--al-crt-h)); } }
-@keyframes al-crt-glare { from { transform: translateX(-60%) skewX(-20deg); } to { transform: translateX(260%) skewX(-20deg); } }
-@keyframes al-crt-flicker { 0%, 100% { opacity: 0; } 20% { opacity: 1; } 45% { opacity: 0.2; } 60% { opacity: 0.8; } }
-@keyframes al-crt-glitch { from { transform: translateY(-20px); } to { transform: translateY(var(--al-crt-h)); } }`;
+@keyframes al-crt-roll { from { transform: translateY(-200px); } to { transform: translateY(var(--al-crt-h)); } }
+@keyframes al-crt-glare {
+  0% { transform: translateX(-60%) skewX(-20deg); opacity: 0; }
+  20% { opacity: 1; }
+  75% { opacity: 1; }
+  100% { transform: translateX(380%) skewX(-20deg); opacity: 0; }
+}
+@keyframes al-crt-flicker { 0% { opacity: 0; } 25% { opacity: 1; } 45% { opacity: 0.45; } 65% { opacity: 0.85; } 100% { opacity: 0; } }
+@keyframes al-crt-glitch {
+  0% { transform: translateY(-20px); opacity: 0; }
+  12% { opacity: 1; }
+  70% { opacity: 0.8; }
+  100% { transform: translateY(var(--al-crt-h)); opacity: 0; }
+}`;
 
 export const CrtScreen = memo(function CrtScreen({
   x,
@@ -67,12 +138,14 @@ export const CrtScreen = memo(function CrtScreen({
   brand = "loloupTech",
   scanlines = true,
   effects = true,
+  look = "clean",
   theme = STAGE_THEME,
 }: CrtScreenProps) {
   const { side: SIDE, chin: CHIN } = CRT_BEZEL;
   const W = w + 2 * SIDE;
   const H = h + SIDE + CHIN;
   const accent = tonic !== null ? theme.pitchBright[tonic] : theme.signal;
+  const layers = LOOKS[look];
 
   // One glass event at a time, at random intervals; the key restarts its animation.
   const [event, setEvent] = useState<{ kind: GlassEvent; id: number } | null>(null);
@@ -119,31 +192,22 @@ export const CrtScreen = memo(function CrtScreen({
           width: w,
           height: h,
           overflow: "hidden",
-          ["--al-crt-h" as string]: `${h + 160}px`,
+          ["--al-crt-h" as string]: `${h + 200}px`,
         }}
       >
+        {layers.tint && <div style={{ position: "absolute", inset: 0, background: layers.tint }} />}
         {scanlines && (
           <div
             style={{
               position: "absolute",
               inset: 0,
-              background:
-                "repeating-linear-gradient(to bottom, rgba(0,0,0,0.16) 0 2px, transparent 2px 5px)",
+              background: `repeating-linear-gradient(to bottom, rgba(0,0,0,${layers.scan}) 0 2px, transparent 2px ${layers.period}px)`,
             }}
           />
         )}
-        {/* Edges darkened in hard steps: the tube's curve, without rounding the image. */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            boxShadow: [
-              "inset 0 0 0 6px rgba(0,0,0,0.30)",
-              "inset 0 0 0 16px rgba(0,0,0,0.16)",
-              "inset 0 0 0 34px rgba(0,0,0,0.07)",
-            ].join(", "),
-          }}
-        />
+        {/* Edges darkened: the tube's curve, without rounding the image. */}
+        <div style={{ position: "absolute", inset: 0, background: layers.edge }} />
+        {layers.wear && <div style={{ position: "absolute", inset: 0, background: layers.wear }} />}
         <div
           style={{
             position: "absolute",
@@ -158,9 +222,9 @@ export const CrtScreen = memo(function CrtScreen({
             left: 0,
             right: 0,
             top: 0,
-            height: 160,
+            height: 200,
             background:
-              "linear-gradient(to bottom, transparent, rgba(255,255,255,0.045) 50%, transparent)",
+              "linear-gradient(to bottom, transparent, rgba(255,255,255,0.05) 35%, rgba(255,255,255,0.09) 50%, rgba(255,255,255,0.05) 65%, transparent)",
             animation: "al-crt-roll 8s linear infinite",
           }}
         />
@@ -183,7 +247,7 @@ export const CrtScreen = memo(function CrtScreen({
               width: "22%",
               background:
                 "linear-gradient(to right, transparent, rgba(255,255,255,0.10) 40%, rgba(255,255,255,0.16) 50%, rgba(255,255,255,0.10) 60%, transparent)",
-              animation: `al-crt-glare ${EVENT_SECONDS.glare}s ease-in-out forwards`,
+              animation: `al-crt-glare ${EVENT_SECONDS.glare}s cubic-bezier(0.4, 0, 0.2, 1) forwards`,
             }}
           />
         )}
@@ -194,7 +258,7 @@ export const CrtScreen = memo(function CrtScreen({
               position: "absolute",
               inset: 0,
               background: "rgba(0,0,0,0.09)",
-              animation: `al-crt-flicker ${EVENT_SECONDS.flicker}s linear forwards`,
+              animation: `al-crt-flicker ${EVENT_SECONDS.flicker}s ease-in-out forwards`,
             }}
           />
         )}
@@ -208,7 +272,7 @@ export const CrtScreen = memo(function CrtScreen({
               top: 0,
               height: 12,
               background: `linear-gradient(to right, ${withAlpha(accent, 0.25)}, rgba(255,255,255,0.18), ${withAlpha(accent, 0.25)})`,
-              animation: `al-crt-glitch ${EVENT_SECONDS.glitch}s steps(12) forwards`,
+              animation: `al-crt-glitch ${EVENT_SECONDS.glitch}s steps(24) forwards`,
             }}
           />
         )}

@@ -9,7 +9,9 @@
  *   K chord ribbon instead of the timeline
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import { CRT_LOOKS, type CrtLook } from "@audiolab/react/stage";
 
 import type { Extra, Layout, OverlayParams } from "./params";
 
@@ -22,6 +24,8 @@ export interface DisplayPrefs {
   wolf: boolean;
   /** Frame of the webcam: an old CRT monitor, or the viewfinder corners. */
   screen: "crt" | "viewfinder";
+  /** Style of the CRT tube (edges, tint). */
+  crtLook: CrtLook;
   extras: readonly Extra[];
 }
 
@@ -38,6 +42,7 @@ function fromUrl(search: string, params: OverlayParams): Partial<DisplayPrefs> {
   }
   if (q.has("wolf")) out.wolf = params.wolf;
   if (q.has("screen")) out.screen = params.screen;
+  if (q.has("crt")) out.crtLook = params.crtLook;
   if (q.has("extras")) out.extras = [...params.extras];
   return out;
 }
@@ -61,6 +66,7 @@ const LAYOUTS: readonly Layout[] = ["cam", "scene"];
 function sanitize(p: Partial<DisplayPrefs>): Partial<DisplayPrefs> {
   const out = { ...p };
   if (out.layout !== undefined && !LAYOUTS.includes(out.layout)) delete out.layout;
+  if (out.crtLook !== undefined && !CRT_LOOKS.includes(out.crtLook)) delete out.crtLook;
   if (out.tabLabels !== undefined) out.tabView = out.tabLabels === "names" ? "staff" : "tab";
   else delete out.tabView;
   return out;
@@ -92,6 +98,26 @@ const EXTRA_KEYS: Readonly<Record<string, Extra>> = {
   K: "ribbon",
 };
 
+/** What a key just did, in a few words (for the toast). */
+function describe(key: string, p: DisplayPrefs): string {
+  switch (key) {
+    case "V":
+      return `CRT look: ${p.crtLook} (${CRT_LOOKS.indexOf(p.crtLook) + 1}/${CRT_LOOKS.length})`;
+    case "F":
+      return `Webcam frame: ${p.screen}`;
+    case "L":
+      return `Layout: ${p.layout}`;
+    case "T":
+      return `Timeline: ${p.tabLabels}`;
+    case "W":
+      return `Wolf: ${p.wolf ? "on" : "off"}`;
+    default: {
+      const extra = EXTRA_KEYS[key];
+      return `${DISPLAY_KEYS[key].en}: ${p.extras.includes(extra) ? "on" : "off"}`;
+    }
+  }
+}
+
 export function useDisplayPrefs(params: OverlayParams, search: string) {
   const [prefs, setPrefs] = useState<DisplayPrefs>(() => ({
     layout: params.layout,
@@ -99,12 +125,16 @@ export function useDisplayPrefs(params: OverlayParams, search: string) {
     tabView: params.tabView,
     wolf: params.wolf,
     screen: "crt",
+    crtLook: "clean",
     extras: [...params.extras],
     ...sanitize(stored()),
     ...fromUrl(search, params),
   }));
 
+  // The latest preferences, for key presses (several may come in one render).
+  const prefsRef = useRef(prefs);
   useEffect(() => {
+    prefsRef.current = prefs;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
     } catch {
@@ -112,11 +142,18 @@ export function useDisplayPrefs(params: OverlayParams, search: string) {
     }
   }, [prefs]);
 
+  // The last change, as a short line for a toast.
+  const [toast, setToast] = useState<{ text: string; id: number } | null>(null);
+
   /** Apply a key; returns true when it was a display key. */
   const press = useCallback((key: string): boolean => {
     const k = key.toUpperCase();
     if (!(k in DISPLAY_KEYS)) return false;
-    setPrefs((p) => {
+    const next = apply(prefsRef.current);
+    prefsRef.current = next;
+    setPrefs(next);
+    setToast((t) => ({ text: describe(k, next), id: (t?.id ?? 0) + 1 }));
+    function apply(p: DisplayPrefs): DisplayPrefs {
       const set = <K extends Key>(field: K, value: DisplayPrefs[K]) => ({ ...p, [field]: value });
       switch (k) {
         case "L":
@@ -125,6 +162,8 @@ export function useDisplayPrefs(params: OverlayParams, search: string) {
           return set("wolf", !p.wolf);
         case "F":
           return set("screen", p.screen === "crt" ? "viewfinder" : "crt");
+        case "V":
+          return set("crtLook", cycle(CRT_LOOKS, p.crtLook));
         case "T": {
           // Two modes: frets on a tablature, or names placed on a staff.
           const names = p.tabLabels !== "names";
@@ -136,9 +175,9 @@ export function useDisplayPrefs(params: OverlayParams, search: string) {
           return set("extras", has ? p.extras.filter((e) => e !== extra) : [...p.extras, extra]);
         }
       }
-    });
+    }
     return true;
   }, []);
 
-  return { prefs, press };
+  return { prefs, press, toast };
 }

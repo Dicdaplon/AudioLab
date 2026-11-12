@@ -138,6 +138,7 @@ export function CamLayout({ stage, params }: LayoutProps) {
           h={cam.h}
           tonic={key?.tonic ?? null}
           live={stage.playing}
+          look={params.crtLook}
         />
       )}
       {extras.has("embers") && (

@@ -181,6 +181,8 @@ exports[`@audiolab/react public API > exports the snapshotted names from every e
     "ChordTunnel",
     "type ChordTunnelProps",
     "CRT_BEZEL",
+    "CRT_LOOKS",
+    "type CrtLook",
     "CrtScreen",
     "type CrtScreenProps",
     "FifthsMandala",
